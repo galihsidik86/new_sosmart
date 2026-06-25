@@ -1,0 +1,60 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { PrismaModule } from './prisma/prisma.module.js';
+import { TenancyModule } from './common/tenancy/tenancy.module.js';
+import { SequenceModule } from './common/sequence/sequence.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { TenantsModule } from './modules/tenants/tenants.module.js';
+import { CabangModule } from './modules/cabang/cabang.module.js';
+import { AccountsModule } from './modules/accounts/accounts.module.js';
+import { ItemsModule } from './modules/items/items.module.js';
+import { VendorsModule } from './modules/vendors/vendors.module.js';
+import { CustomersModule } from './modules/customers/customers.module.js';
+import { PeriodsModule } from './modules/periods/periods.module.js';
+import { JournalsModule } from './modules/journals/journals.module.js';
+import { LedgerModule } from './modules/ledger/ledger.module.js';
+import { SalesModule } from './modules/sales/sales.module.js';
+import { PurchasesModule } from './modules/purchases/purchases.module.js';
+import { CashBankModule } from './modules/cashbank/cashbank.module.js';
+import { InventoryModule } from './modules/inventory/inventory.module.js';
+import { AdjustmentsModule } from './modules/adjustments/adjustments.module.js';
+import { AsetModule } from './modules/aset/aset.module.js';
+import { BuktiPotongModule } from './modules/bukti-potong/bukti-potong.module.js';
+import { PayrollModule } from './modules/payroll/payroll.module.js';
+import { SptModule } from './modules/spt/spt.module.js';
+import { ReportsModule } from './modules/reports/reports.module.js';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
+import { HealthController } from './modules/health/health.controller.js';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env', '.env'] }),
+    PrismaModule,
+    TenancyModule,
+    SequenceModule,
+    AuthModule,
+    TenantsModule,
+    CabangModule,
+    AccountsModule,
+    ItemsModule,
+    VendorsModule,
+    CustomersModule,
+    PeriodsModule,
+    JournalsModule,
+    LedgerModule,
+    SalesModule,
+    PurchasesModule,
+    CashBankModule,
+    InventoryModule,
+    AdjustmentsModule,
+    AsetModule,
+    BuktiPotongModule,
+    PayrollModule,
+    SptModule,
+    ReportsModule,
+  ],
+  controllers: [HealthController],
+  providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
+})
+export class AppModule {}

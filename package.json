@@ -1,0 +1,34 @@
+{
+  "name": "lentera",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Lentera — sistem akuntansi & pajak Indonesia (multi-tenant, multi-cabang)",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:int": "vitest run --config vitest.int.config.ts",
+    "test:coverage": "vitest run --coverage",
+    "db:generate": "pnpm --filter @lentera/db generate",
+    "db:migrate": "pnpm --filter @lentera/db migrate",
+    "db:seed": "pnpm --filter @lentera/db seed",
+    "db:reset": "pnpm --filter @lentera/db reset",
+    "db:studio": "pnpm --filter @lentera/db studio",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.9"
+  }
+}

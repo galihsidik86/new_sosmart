@@ -1,0 +1,75 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
+import {
+  cancelInvoiceInputSchema,
+  createPurchaseInvoiceInputSchema,
+  type CancelInvoiceInput,
+  type CreatePurchaseInvoiceInput,
+} from '@lentera/shared/schemas';
+import { TenantGuard } from '../../common/guards/tenant.guard.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { TenancyInterceptor } from '../../common/interceptors/tenancy.interceptor.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { PurchasesService } from './purchases.service.js';
+import type { InvoiceStatus } from '@lentera/db';
+
+@Controller('purchase-invoices')
+@UseGuards(TenantGuard, RolesGuard)
+@UseInterceptors(TenancyInterceptor)
+export class PurchasesController {
+  constructor(private readonly purchases: PurchasesService) {}
+
+  @Get()
+  list(
+    @Query('status') status?: InvoiceStatus,
+    @Query('vendorId') vendorId?: string,
+    @Query('periodId') periodId?: string,
+  ) {
+    return this.purchases.list({ status, vendorId, periodId });
+  }
+
+  @Get(':id')
+  byId(@Param('id') id: string) {
+    return this.purchases.byId(id);
+  }
+
+  @Post()
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  create(
+    @Body(new ZodValidationPipe(createPurchaseInvoiceInputSchema))
+    body: CreatePurchaseInvoiceInput,
+  ) {
+    return this.purchases.createDraft(body);
+  }
+
+  @Post(':id/post')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  post(@Param('id') id: string) {
+    return this.purchases.post(id);
+  }
+
+  @Post(':id/cancel')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  cancel(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(cancelInvoiceInputSchema)) body: CancelInvoiceInput,
+  ) {
+    return this.purchases.cancel(id, body.alasan);
+  }
+
+  @Delete(':id')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  deleteDraft(@Param('id') id: string) {
+    return this.purchases.deleteDraft(id);
+  }
+}

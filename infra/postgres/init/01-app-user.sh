@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Jalankan saat container Postgres pertama kali boot.
+# Bikin user aplikasi (non-superuser) — RLS hanya berlaku untuk user non-BYPASSRLS.
+# Migrasi & seed pakai POSTGRES_USER (superuser); runtime app pakai APP_DB_USER.
+set -euo pipefail
+
+psql -v ON_ERROR_STOP=1 \
+     --username "$POSTGRES_USER" \
+     --dbname "$POSTGRES_DB" <<-SQL
+  DO \$\$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${APP_DB_USER}') THEN
+      CREATE ROLE ${APP_DB_USER} LOGIN PASSWORD '${APP_DB_PASSWORD}';
+    END IF;
+  END
+  \$\$;
+
+  GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO ${APP_DB_USER};
+  GRANT USAGE ON SCHEMA public TO ${APP_DB_USER};
+  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${APP_DB_USER};
+  GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ${APP_DB_USER};
+
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${APP_DB_USER};
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT USAGE, SELECT ON SEQUENCES TO ${APP_DB_USER};
+SQL

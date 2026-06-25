@@ -1,0 +1,215 @@
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { Topbar } from '@/components/Topbar';
+import { apiFetch } from '@/lib/api';
+import { getActiveTenantId, getSession } from '@/lib/session';
+import { fmtPlain, fmtRp, fmtTanggal, fmtNpwp } from '@/lib/format';
+
+type Status = 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
+
+interface Detail {
+  id: string;
+  nomor: string | null; nomorVendor: string | null;
+  tanggal: string; jatuhTempo: string;
+  termin: 'TUNAI' | 'KREDIT';
+  status: Status;
+  deskripsi: string | null;
+  vendor: { kode: string; nama: string; npwp: string | null; isPkp: boolean };
+  cabang: { kode: string; nama: string };
+  fiscalPeriod: { label: string };
+  akunAp: { kode: string; nama: string };
+  totalDpp: string; totalPpn: string; totalPph23: string;
+  totalDiskon: string; totalNetto: string; totalDibayar: string;
+  journalId: string | null;
+  lines: Array<{
+    no: number; deskripsi: string; qty: string; satuan: string;
+    hargaSatuan: string; diskonPersen: string; klasifikasiPpn: string; isJasa: boolean;
+    dpp: string; ppn: string; pph23: string;
+    item: { kode: string; nama: string } | null;
+    akunDebit: { kode: string; nama: string };
+  }>;
+}
+
+async function postAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId(); if (!tenantId) redirect('/login');
+  const id = String(formData.get('id'));
+  await apiFetch(`/purchase-invoices/${id}/post`, { method: 'POST', tenantId });
+  revalidatePath(`/transaksi/pembelian/${id}`);
+}
+async function cancelAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId(); if (!tenantId) redirect('/login');
+  const id = String(formData.get('id'));
+  await apiFetch(`/purchase-invoices/${id}/cancel`, {
+    method: 'POST', tenantId,
+    body: JSON.stringify({ alasan: String(formData.get('alasan') ?? '') }),
+  });
+  revalidatePath(`/transaksi/pembelian/${id}`);
+}
+async function deleteAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId(); if (!tenantId) redirect('/login');
+  const id = String(formData.get('id'));
+  await apiFetch(`/purchase-invoices/${id}`, { method: 'DELETE', tenantId });
+  redirect('/transaksi/pembelian');
+}
+
+export default async function PembelianDetailPage({
+  params,
+}: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const s = (await getSession())!;
+  const tenantId = (await getActiveTenantId())!;
+  const inv = await apiFetch<Detail>(`/purchase-invoices/${id}`, { tenantId });
+  const sisa = Number(inv.totalNetto) - Number(inv.totalDibayar);
+
+  return (
+    <>
+      <Topbar breadcrumb={`Pembelian / ${inv.nomor ?? 'Draft'}`} tenantNama={s.tenantNama!} />
+      <div className="px-8 py-6 max-w-5xl mx-auto w-full">
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              {inv.nomor ?? '— Draft —'}
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              {fmtTanggal(inv.tanggal)} · jatuh tempo {fmtTanggal(inv.jatuhTempo)} ·
+              cabang {inv.cabang.kode} · termin {inv.termin}
+              {inv.nomorVendor && <span> · faktur vendor {inv.nomorVendor}</span>}
+            </p>
+            {inv.journalId && (
+              <p className="text-xs text-tanah-500 mt-1">
+                Jurnal:{' '}
+                <Link href={`/pembukuan/jurnal/${inv.journalId}`}
+                  className="text-sogan-500 font-mono hover:underline">lihat</Link>
+              </p>
+            )}
+          </div>
+          <StatusBadge status={inv.status} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-white border border-cream-200 rounded-xl p-4 shadow-sm">
+            <div className="text-[10px] uppercase tracking-wider text-tanah-500 font-bold">Vendor</div>
+            <div className="font-semibold text-tanah-700 mt-1">{inv.vendor.nama}</div>
+            <div className="text-xs text-tanah-500 font-mono">{inv.vendor.kode}</div>
+            <div className="text-xs text-tanah-500 mt-1">
+              NPWP {fmtNpwp(inv.vendor.npwp)} {inv.vendor.isPkp && <span className="text-padi-700 font-semibold ml-1">PKP</span>}
+            </div>
+          </div>
+          <div className="bg-white border border-cream-200 rounded-xl p-4 shadow-sm">
+            <div className="text-[10px] uppercase tracking-wider text-tanah-500 font-bold">Akun AP</div>
+            <div className="font-semibold text-tanah-700 font-mono mt-1">{inv.akunAp.kode}</div>
+            <div className="text-xs text-tanah-500">{inv.akunAp.nama}</div>
+            <div className="text-xs text-tanah-500 mt-2">Periode: {inv.fiscalPeriod.label}</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">
+          <table className="w-full text-sm">
+            <thead className="bg-cream-50 text-left">
+              <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
+                <th className="px-3 py-2 font-bold w-8">#</th>
+                <th className="px-3 py-2 font-bold">Deskripsi</th>
+                <th className="px-3 py-2 font-bold text-right">Qty</th>
+                <th className="px-3 py-2 font-bold text-right">Harga</th>
+                <th className="px-3 py-2 font-bold">Klasifikasi</th>
+                <th className="px-3 py-2 font-bold text-right">DPP</th>
+                <th className="px-3 py-2 font-bold text-right">PPN</th>
+                <th className="px-3 py-2 font-bold text-right">PPh 23</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-cream-200">
+              {inv.lines.map((l) => (
+                <tr key={l.no}>
+                  <td className="px-3 py-1.5 text-xs text-tanah-500">{l.no}</td>
+                  <td className="px-3 py-1.5">
+                    <div className="text-tanah-700">{l.deskripsi}</div>
+                    <div className="text-xs text-tanah-500 font-mono">
+                      {l.item?.kode ?? 'manual'} · {l.akunDebit.kode}
+                    </div>
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-mono tabular-nums text-xs">
+                    {Number(l.qty).toLocaleString('id-ID')} {l.satuan}
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-mono tabular-nums">{fmtPlain(l.hargaSatuan)}</td>
+                  <td className="px-3 py-1.5 text-xs text-tanah-500">
+                    {l.klasifikasiPpn}
+                    {l.isJasa && <span className="ml-1 text-emas-700 text-[10px] uppercase">jasa</span>}
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-mono tabular-nums">{fmtPlain(l.dpp)}</td>
+                  <td className="px-3 py-1.5 text-right font-mono tabular-nums">{Number(l.ppn) > 0 ? fmtPlain(l.ppn) : '—'}</td>
+                  <td className="px-3 py-1.5 text-right font-mono tabular-nums text-bata-700">
+                    {Number(l.pph23) > 0 ? fmtPlain(l.pph23) : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="bg-cream-50 font-bold text-tanah-700">
+              <tr><td colSpan={6} className="px-3 py-1.5 text-right">Total DPP</td>
+                <td className="px-3 py-1.5 text-right font-mono tabular-nums" colSpan={2}>{fmtRp(inv.totalDpp)}</td></tr>
+              <tr><td colSpan={6} className="px-3 py-1.5 text-right">PPN Masukan</td>
+                <td className="px-3 py-1.5 text-right font-mono tabular-nums" colSpan={2}>{fmtRp(inv.totalPpn)}</td></tr>
+              <tr><td colSpan={6} className="px-3 py-1.5 text-right text-bata-700">(–) PPh 23 dipotong</td>
+                <td className="px-3 py-1.5 text-right font-mono tabular-nums text-bata-700" colSpan={2}>{fmtRp(inv.totalPph23)}</td></tr>
+              <tr className="border-t-2 border-cream-300">
+                <td colSpan={6} className="px-3 py-2 text-right text-base">YANG DIBAYAR KE VENDOR</td>
+                <td className="px-3 py-2 text-right font-mono tabular-nums text-base" colSpan={2}>{fmtRp(inv.totalNetto)}</td>
+              </tr>
+              {sisa > 0 && inv.status !== 'CANCELLED' && (
+                <tr><td colSpan={6} className="px-3 py-1.5 text-right text-bata-700">Sisa utang</td>
+                  <td className="px-3 py-1.5 text-right font-mono tabular-nums text-bata-700" colSpan={2}>{fmtRp(sisa)}</td></tr>
+              )}
+            </tfoot>
+          </table>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {inv.status === 'DRAFT' && (
+            <>
+              <form action={postAction}>
+                <input type="hidden" name="id" value={inv.id} />
+                <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
+                  Post Tagihan
+                </button>
+              </form>
+              <form action={deleteAction}>
+                <input type="hidden" name="id" value={inv.id} />
+                <button className="px-4 py-2 bg-cream-200 hover:bg-cream-300 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-400">
+                  Hapus Draft
+                </button>
+              </form>
+            </>
+          )}
+          {(inv.status === 'POSTED' || inv.status === 'PARTIAL') && (
+            <form action={cancelAction} className="flex gap-2">
+              <input type="hidden" name="id" value={inv.id} />
+              <input name="alasan" required minLength={5} placeholder="Alasan pembatalan…"
+                className="px-3 py-2 bg-white border border-cream-300 rounded-md text-sm w-72" />
+              <button className="px-4 py-2 bg-bata-500 hover:bg-bata-700 text-cream-50 font-semibold rounded-lg text-sm">
+                Batalkan
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function StatusBadge({ status }: { status: Status }) {
+  const m = {
+    DRAFT: 'bg-emas-100 text-emas-700',
+    POSTED: 'bg-padi-100 text-padi-700',
+    PARTIAL: 'bg-sogan-50 text-sogan-500',
+    PAID: 'bg-padi-300 text-padi-700',
+    CANCELLED: 'bg-cream-200 text-tanah-500 line-through',
+  }[status];
+  return (
+    <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${m}`}>
+      {status}
+    </span>
+  );
+}

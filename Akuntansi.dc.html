@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  body { margin:0; background:var(--bg); }
+  .lentera-scroll::-webkit-scrollbar { width:10px; height:10px; }
+  .lentera-scroll::-webkit-scrollbar-thumb { background:var(--cream-400); border-radius:9999px; border:2px solid var(--bg); }
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  input[type=number] { -moz-appearance:textfield; }
+  @keyframes lent-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+</style>
+</helmet>
+
+<div style="display:flex; min-height:100vh; background:var(--bg); font-family:var(--font-sans); color:var(--fg1);">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside style="width:240px; flex-shrink:0; background:#fff; border-right:1px solid var(--border); height:100vh; position:sticky; top:0; display:flex; flex-direction:column; padding:20px 14px;">
+    <div style="display:flex; align-items:center; gap:11px; padding:2px 8px 18px; border-bottom:1px solid var(--border); margin-bottom:6px;">
+      <div style="width:38px; height:38px; border-radius:10px; background:var(--sogan-500); display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F1E8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H18a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.5.5H6a2 2 0 0 1-2-2z"/><path d="M8 4v16"/><path d="M12 9h4M12 13h4"/></svg>
+      </div>
+      <div>
+        <div style="font:600 19px var(--font-display); color:var(--tanah-700); font-variation-settings:'opsz' 36; letter-spacing:-0.01em;">Lentera</div>
+        <div style="font:700 8.5px var(--font-sans); letter-spacing:0.14em; color:var(--sogan-500); text-transform:uppercase;">Akuntansi · Pajak</div>
+      </div>
+    </div>
+
+    <div class="lentera-scroll" style="overflow-y:auto; flex:1; margin:0 -6px; padding:0 6px;">
+      <div style="font:700 9.5px var(--font-sans); letter-spacing:0.12em; color:var(--fg3); text-transform:uppercase; padding:12px 12px 6px;">Ringkasan</div>
+      <div onClick="{{ go.dashboard }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.dashboard }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard
+      </div>
+
+      <div style="font:700 9.5px var(--font-sans); letter-spacing:0.12em; color:var(--fg3); text-transform:uppercase; padding:14px 12px 6px;">Master data</div>
+      <div onClick="{{ go.mBarang }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.mBarang }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Master barang
+      </div>
+      <div onClick="{{ go.mVendor }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.mVendor }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Data vendor
+      </div>
+      <div onClick="{{ go.mPelanggan }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.mPelanggan }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Data pelanggan
+      </div>
+
+      <div style="font:700 9.5px var(--font-sans); letter-spacing:0.12em; color:var(--fg3); text-transform:uppercase; padding:14px 12px 6px;">Pembukuan</div>
+      <div onClick="{{ go.jurnal }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.jurnal }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Jurnal umum
+      </div>
+      <div onClick="{{ go.bukubesar }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.bukubesar }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>Buku besar
+      </div>
+      <div onClick="{{ go.coa }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.coa }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1.3"/><circle cx="3.5" cy="12" r="1.3"/><circle cx="3.5" cy="18" r="1.3"/></svg>Bagan akun
+      </div>
+
+      <div style="font:700 9.5px var(--font-sans); letter-spacing:0.12em; color:var(--fg3); text-transform:uppercase; padding:14px 12px 6px;">Transaksi</div>
+      <div onClick="{{ go.penjualan }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.penjualan }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16l3-2 2 2 2-2 2 2 3-2V8Z"/><path d="M14 2v6h6"/><path d="M9 12h6M9 16h4"/></svg>Penjualan
+      </div>
+      <div onClick="{{ go.pembelian }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.pembelian }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"/><circle cx="18" cy="21" r="1.5"/><path d="M2 3h3l2.5 13.5A2 2 0 0 0 9.5 18H18a2 2 0 0 0 2-1.6L21.5 8H6"/></svg>Pembelian
+      </div>
+      <div onClick="{{ go.pajak }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.pajak }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-6"/></svg>Pajak
+      </div>
+
+      <div style="font:700 9.5px var(--font-sans); letter-spacing:0.12em; color:var(--fg3); text-transform:uppercase; padding:14px 12px 6px;">Laporan keuangan</div>
+      <div onClick="{{ go.neraca }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.neraca }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="M5 7 2 14h6Z"/><path d="M19 7l-3 7h6Z"/></svg>Neraca
+      </div>
+      <div onClick="{{ go.labarugi }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.labarugi }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Laba rugi
+      </div>
+      <div onClick="{{ go.aruskas }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.aruskas }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 4v9a4 4 0 0 1-4 4H4"/><path d="m8 13-4 4 4 4"/><path d="M7 20v-9a4 4 0 0 1 4-4h9"/><path d="m16 11 4-4-4-4"/></svg>Arus kas
+      </div>
+
+      <div style="font:700 9.5px var(--font-sans); letter-spacing:0.12em; color:var(--fg3); text-transform:uppercase; padding:14px 12px 6px;">Aset</div>
+      <div onClick="{{ go.aset }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px; {{ nv.aset }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01"/></svg>Aset tetap
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:10px; padding:12px 8px 2px; border-top:1px solid var(--border); margin-top:8px;">
+      <div style="width:34px; height:34px; border-radius:9999px; background:var(--sogan-500); color:#F5F1E8; display:flex; align-items:center; justify-content:center; font:700 13px var(--font-sans);">RA</div>
+      <div style="min-width:0;">
+        <div style="font:600 13px var(--font-sans); color:var(--fg1); white-space:nowrap;">Rina Anjani</div>
+        <div style="font:500 11px var(--font-sans); color:var(--fg2);">Staf akuntansi</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main style="flex:1; min-width:0; display:flex; flex-direction:column;">
+    <div style="height:64px; flex-shrink:0; background:rgba(245,241,232,0.86); backdrop-filter:blur(8px); border-bottom:1px solid var(--border); padding:0 32px; display:flex; align-items:center; gap:16px; position:sticky; top:0; z-index:5;">
+      <div style="font:500 13px var(--font-sans); color:var(--fg2);">PT Sinar Niaga Sentosa <span style="color:var(--fg3);">/</span> <span style="color:var(--fg1); font-weight:600;">{{ crumb }}</span></div>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 14px; background:#fff; border:1px solid var(--border-strong); border-radius:8px; font:600 13px var(--font-sans); color:var(--fg1);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--sogan-500)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Periode: Mei 2026
+        </div>
+        <input type="file" accept=".csv,.xlsx,.xls" ref="{{ fileRef }}" onChange="{{ onImportFile }}" style="display:none;">
+        <button onClick="{{ onImportClick }}" title="Impor data dari Excel/CSV" style="display:flex; align-items:center; gap:7px; padding:9px 14px; background:#fff; color:var(--fg1); border:1px solid var(--border-strong); border-radius:8px; font:600 13px var(--font-sans); cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/><path d="m7 9 5-5 5 5"/><path d="M12 4v12"/></svg>
+          Impor
+        </button>
+        <div style="position:relative;">
+          <button onClick="{{ toggleExport }}" style="display:flex; align-items:center; gap:7px; padding:9px 14px; background:var(--sogan-500); color:#F5F1E8; border:none; border-radius:8px; font:600 13px var(--font-sans); cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+            Ekspor
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <sc-if value="{{ exportOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute; right:0; top:48px; background:#fff; border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-lg); padding:6px; width:226px; z-index:30;">
+              <div style="font:700 9.5px var(--font-sans); letter-spacing:0.08em; color:var(--fg3); text-transform:uppercase; padding:6px 10px 4px;">Ekspor {{ moduleName }}</div>
+              <button onClick="{{ exportExcel }}" style="width:100%; display:flex; align-items:center; gap:10px; padding:10px; border:none; background:transparent; border-radius:7px; cursor:pointer; font:600 13px var(--font-sans); color:var(--fg1); text-align:left;" style-hover="background:var(--cream-50);">
+                <span style="width:30px; height:30px; border-radius:7px; background:var(--padi-100); color:var(--padi-700); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 13 2 2 4-4"/></svg></span>
+                <span><span style="display:block;">Excel / CSV</span><span style="display:block; font:500 11px var(--font-sans); color:var(--fg3);">.csv siap dibuka Excel</span></span>
+              </button>
+              <button onClick="{{ exportPDF }}" style="width:100%; display:flex; align-items:center; gap:10px; padding:10px; border:none; background:transparent; border-radius:7px; cursor:pointer; font:600 13px var(--font-sans); color:var(--fg1); text-align:left;" style-hover="background:var(--cream-50);">
+                <span style="width:30px; height:30px; border-radius:7px; background:var(--bata-100); color:var(--bata-700); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 18h4"/></svg></span>
+                <span><span style="display:block;">PDF</span><span style="display:block; font:500 11px var(--font-sans); color:var(--fg3);">cetak / simpan sebagai PDF</span></span>
+              </button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <div class="lentera-scroll" style="flex:1; overflow-y:auto; padding:28px 32px 64px;">
+
+      <!-- ===== DASHBOARD ===== -->
+      <sc-if value="{{ scr.dashboard }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Halo, Rina</div>
+        <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Ringkasan keuangan PT Sinar Niaga Sentosa · per 31 Mei 2026</div>
+
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:24px;">
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.07em; color:var(--fg2); text-transform:uppercase;">Kas &amp; bank</div>
+            <div style="font:600 27px var(--font-display); font-variation-settings:'opsz' 48; color:var(--wedel-900); margin-top:8px; font-feature-settings:'tnum';">Rp 505,0 jt</div>
+            <div style="font:600 12px var(--font-sans); color:var(--padi-500); margin-top:4px;">▲ 2,2% dari April</div>
+          </div>
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.07em; color:var(--fg2); text-transform:uppercase;">Pendapatan bulan ini</div>
+            <div style="font:600 27px var(--font-display); font-variation-settings:'opsz' 48; color:var(--wedel-900); margin-top:8px; font-feature-settings:'tnum';">Rp 1,63 M</div>
+            <div style="font:600 12px var(--font-sans); color:var(--padi-500); margin-top:4px;">▲ 8,4% dari April</div>
+          </div>
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.07em; color:var(--fg2); text-transform:uppercase;">Laba bersih bulan ini</div>
+            <div style="font:600 27px var(--font-display); font-variation-settings:'opsz' 48; color:var(--wedel-900); margin-top:8px; font-feature-settings:'tnum';">Rp 181,0 jt</div>
+            <div style="font:600 12px var(--font-sans); color:var(--padi-500); margin-top:4px;">Margin 11,1%</div>
+          </div>
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.07em; color:var(--fg2); text-transform:uppercase;">Pajak terutang</div>
+            <div style="font:600 27px var(--font-display); font-variation-settings:'opsz' 48; color:var(--wedel-900); margin-top:8px; font-feature-settings:'tnum';">Rp 96,0 jt</div>
+            <div style="font:600 12px var(--font-sans); color:var(--bata-500); margin-top:4px;">PPN jatuh tempo 30 Jun</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-top:20px;">
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px 22px; box-shadow:var(--shadow-sm);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+              <h3 style="font:700 16px var(--font-sans); color:var(--fg1); margin:0;">Arus kas — 6 bulan terakhir</h3>
+              <span style="font:600 12px var(--font-sans); color:var(--fg2);">Kas masuk vs keluar (jt)</span>
+            </div>
+            <div style="height:200px; display:flex; align-items:flex-end; gap:18px; padding-top:8px; border-top:1px solid var(--border);">
+              <sc-for list="{{ cashbars }}" as="b" hint-placeholder-count="6">
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;">
+                  <div style="width:100%; display:flex; gap:5px; align-items:flex-end; height:170px;">
+                    <div style="flex:1; background:linear-gradient(180deg,var(--padi-500),var(--padi-700)); border-radius:4px 4px 0 0; height:{{ b.inH }};"></div>
+                    <div style="flex:1; background:var(--cream-400); border-radius:4px 4px 0 0; height:{{ b.outH }};"></div>
+                  </div>
+                  <div style="font:500 11px var(--font-sans); color:var(--fg3);">{{ b.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex; gap:18px; margin-top:14px;">
+              <div style="display:flex; align-items:center; gap:7px; font:600 12px var(--font-sans); color:var(--fg2);"><span style="width:10px; height:10px; border-radius:3px; background:var(--padi-500);"></span>Kas masuk</div>
+              <div style="display:flex; align-items:center; gap:7px; font:600 12px var(--font-sans); color:var(--fg2);"><span style="width:10px; height:10px; border-radius:3px; background:var(--cream-400);"></span>Kas keluar</div>
+            </div>
+          </div>
+
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px 22px; box-shadow:var(--shadow-sm);">
+            <h3 style="font:700 16px var(--font-sans); color:var(--fg1); margin:0 0 16px;">Perlu tindakan</h3>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="display:flex; gap:11px;"><span style="width:8px; height:8px; border-radius:9999px; background:var(--bata-500); margin-top:6px; flex-shrink:0;"></span><div><div style="font:600 14px var(--font-sans); color:var(--fg1);">SPT Masa PPN Mei belum lapor</div><div style="font:500 12px var(--font-sans); color:var(--fg2); margin-top:2px;">Kurang bayar Rp 58,3 jt · tenggat 30 Jun</div></div></div>
+              <div style="display:flex; gap:11px;"><span style="width:8px; height:8px; border-radius:9999px; background:var(--emas-500); margin-top:6px; flex-shrink:0;"></span><div><div style="font:600 14px var(--font-sans); color:var(--fg1);">3 faktur jatuh tempo minggu ini</div><div style="font:500 12px var(--font-sans); color:var(--fg2); margin-top:2px;">Total piutang Rp 124,5 jt</div></div></div>
+              <div style="display:flex; gap:11px;"><span style="width:8px; height:8px; border-radius:9999px; background:var(--info); margin-top:6px; flex-shrink:0;"></span><div><div style="font:600 14px var(--font-sans); color:var(--fg1);">Rekonsiliasi bank BCA</div><div style="font:500 12px var(--font-sans); color:var(--fg2); margin-top:2px;">12 transaksi belum dicocokkan</div></div></div>
+              <div style="display:flex; gap:11px;"><span style="width:8px; height:8px; border-radius:9999px; background:var(--padi-500); margin-top:6px; flex-shrink:0;"></span><div><div style="font:600 14px var(--font-sans); color:var(--fg1);">Penyusutan Mei sudah dijurnal</div><div style="font:500 12px var(--font-sans); color:var(--fg2); margin-top:2px;">Rp 45,0 jt · otomatis</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px 22px; box-shadow:var(--shadow-sm); margin-top:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h3 style="font:700 16px var(--font-sans); color:var(--fg1); margin:0;">Jurnal terbaru</h3>
+            <button onClick="{{ go.jurnal }}" style="padding:7px 13px; border-radius:7px; border:1px solid var(--border-strong); background:#fff; font:600 12px var(--font-sans); color:var(--fg1); cursor:pointer;">Buka jurnal umum</button>
+          </div>
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr>
+              <th style="text-align:left; padding:10px 12px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Tanggal</th>
+              <th style="text-align:left; padding:10px 12px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">No. bukti</th>
+              <th style="text-align:left; padding:10px 12px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Keterangan</th>
+              <th style="text-align:right; padding:10px 12px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Nilai</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ recentJurnal }}" as="j" hint-placeholder-count="4">
+                <tr>
+                  <td style="padding:12px; font:500 13px var(--font-sans); color:var(--fg2); border-bottom:1px solid var(--cream-200);">{{ j.tgl }}</td>
+                  <td style="padding:12px; font:500 12px var(--font-mono); color:var(--sogan-500); border-bottom:1px solid var(--cream-200);">{{ j.no }}</td>
+                  <td style="padding:12px; font:500 13px var(--font-sans); color:var(--fg1); border-bottom:1px solid var(--cream-200);">{{ j.desc }}</td>
+                  <td style="padding:12px; text-align:right; font:700 13px var(--font-sans); color:var(--fg1); border-bottom:1px solid var(--cream-200); font-feature-settings:'tnum';">{{ j.totalStr }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== JURNAL UMUM (interaktif) ===== -->
+      <sc-if value="{{ scr.jurnal }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Jurnal umum</div>
+        <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Catat transaksi dengan sistem pencatatan berpasangan. Total debit harus sama dengan total kredit.</div>
+
+        <div style="display:flex; gap:20px; margin-top:24px; align-items:flex-start;">
+          <div style="flex:1; min-width:0; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); overflow:hidden;">
+            <div style="padding:18px 22px; border-bottom:1px solid var(--border); display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;">
+              <div style="flex:1; min-width:200px;">
+                <label style="display:block; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; margin-bottom:6px;">Keterangan transaksi</label>
+                <input value="{{ draftDesc }}" onInput="{{ onDesc }}" placeholder="mis. Penjualan tunai barang dagang" style="width:100%; padding:10px 12px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:8px; font:500 14px var(--font-sans); color:var(--fg1); outline:none;">
+              </div>
+              <div style="width:150px;">
+                <label style="display:block; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; margin-bottom:6px;">Tanggal</label>
+                <input value="{{ draftDate }}" onInput="{{ onDate }}" style="width:100%; padding:10px 12px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:8px; font:500 14px var(--font-sans); color:var(--fg1); outline:none;">
+              </div>
+            </div>
+
+            <div style="padding:6px 22px 0;">
+              <div style="display:flex; gap:10px; padding:8px 0;">
+                <div style="flex:1; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase;">Akun</div>
+                <div style="width:150px; text-align:right; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase;">Debit</div>
+                <div style="width:150px; text-align:right; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase;">Kredit</div>
+                <div style="width:30px;"></div>
+              </div>
+              <sc-for list="{{ jurnalLines }}" as="line" hint-placeholder-count="3">
+                <div style="display:flex; gap:10px; align-items:center; padding:5px 0;">
+                  <select value="{{ line.akun }}" onChange="{{ line.onAkun }}" style="flex:1; padding:10px 12px; border:1px solid var(--border-strong); background:#fff; border-radius:8px; font:500 13.5px var(--font-sans); color:var(--fg1); outline:none; cursor:pointer;">
+                    <option value="">— pilih akun —</option>
+                    <sc-for list="{{ accountOptions }}" as="opt" hint-placeholder-count="0">
+                      <option value="{{ opt.kode }}">{{ opt.label }}</option>
+                    </sc-for>
+                  </select>
+                  <input type="number" value="{{ line.debit }}" onInput="{{ line.onDebit }}" placeholder="0" style="width:150px; padding:10px 12px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:8px; font:600 13.5px var(--font-mono); color:var(--fg1); outline:none; text-align:right;">
+                  <input type="number" value="{{ line.kredit }}" onInput="{{ line.onKredit }}" placeholder="0" style="width:150px; padding:10px 12px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:8px; font:600 13.5px var(--font-mono); color:var(--fg1); outline:none; text-align:right;">
+                  <button onClick="{{ line.onRemove }}" title="Hapus baris" style="width:30px; height:30px; border-radius:7px; border:1px solid var(--border); background:#fff; color:var(--fg3); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+              </sc-for>
+              <button onClick="{{ addLine }}" style="margin:8px 0 4px; padding:8px 12px; border-radius:8px; border:1px dashed var(--border-strong); background:transparent; font:600 13px var(--font-sans); color:var(--sogan-500); cursor:pointer; display:flex; align-items:center; gap:6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Tambah baris
+              </button>
+            </div>
+
+            <div style="display:flex; gap:10px; padding:14px 22px; background:{{ balanceBg }}; border-top:1px solid var(--border); align-items:center;">
+              <div style="flex:1; display:flex; align-items:center; gap:9px; font:700 13px var(--font-sans); color:{{ balanceColor }};">
+                <span>{{ balanceIcon }}</span>{{ balanceText }}
+              </div>
+              <div style="width:150px; text-align:right; font:700 14px var(--font-mono); color:var(--fg1);">{{ totDebitStr }}</div>
+              <div style="width:150px; text-align:right; font:700 14px var(--font-mono); color:var(--fg1);">{{ totKreditStr }}</div>
+              <div style="width:30px;"></div>
+            </div>
+
+            <div style="padding:16px 22px; display:flex; gap:10px; border-top:1px solid var(--border);">
+              <button onClick="{{ postJurnal }}" disabled="{{ postDisabled }}" style="padding:11px 20px; border-radius:8px; border:none; background:{{ postBg }}; color:#F5F1E8; font:700 14px var(--font-sans); cursor:{{ postCursor }};">Posting jurnal</button>
+              <button onClick="{{ clearDraft }}" style="padding:11px 18px; border-radius:8px; border:1px solid var(--border-strong); background:#fff; color:var(--fg1); font:600 14px var(--font-sans); cursor:pointer;">Kosongkan</button>
+            </div>
+          </div>
+
+          <div style="width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:16px;">
+            <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); padding:16px 18px;">
+              <div style="font:700 12px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; margin-bottom:12px;">Template cepat</div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <button onClick="{{ tplJual }}" style="text-align:left; padding:11px 13px; border-radius:8px; border:1px solid var(--border); background:var(--cream-50); cursor:pointer; font:600 13px var(--font-sans); color:var(--fg1);">Penjualan tunai + PPN</button>
+                <button onClick="{{ tplBeli }}" style="text-align:left; padding:11px 13px; border-radius:8px; border:1px solid var(--border); background:var(--cream-50); cursor:pointer; font:600 13px var(--font-sans); color:var(--fg1);">Pembelian persediaan</button>
+                <button onClick="{{ tplGaji }}" style="text-align:left; padding:11px 13px; border-radius:8px; border:1px solid var(--border); background:var(--cream-50); cursor:pointer; font:600 13px var(--font-sans); color:var(--fg1);">Bayar gaji (potong PPh 21)</button>
+              </div>
+              <div style="font:500 11.5px var(--font-sans); color:var(--fg3); margin-top:12px; line-height:1.5;">Template mengisi baris debit &amp; kredit otomatis. Kamu masih bisa ubah sebelum posting.</div>
+            </div>
+
+            <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); padding:16px 18px;">
+              <div style="font:700 12px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; margin-bottom:4px;">Sudah diposting hari ini</div>
+              <div style="display:flex; flex-direction:column;">
+                <sc-for list="{{ postedList }}" as="p" hint-placeholder-count="2">
+                  <div style="padding:11px 0; border-bottom:1px solid var(--cream-200);">
+                    <div style="display:flex; justify-content:space-between; gap:8px;">
+                      <span style="font:600 12px var(--font-mono); color:var(--sogan-500);">{{ p.no }}</span>
+                      <span style="font:700 13px var(--font-mono); color:var(--fg1);">{{ p.totalStr }}</span>
+                    </div>
+                    <div style="font:500 12.5px var(--font-sans); color:var(--fg1); margin-top:3px;">{{ p.desc }}</div>
+                    <div style="font:500 11px var(--font-sans); color:var(--fg3); margin-top:1px;">{{ p.tgl }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== BUKU BESAR ===== -->
+      <sc-if value="{{ scr.bukubesar }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Buku besar</div>
+        <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Mutasi per akun beserta saldo berjalan. Pilih akun untuk melihat rinciannya.</div>
+
+        <div style="display:flex; gap:10px; margin-top:22px; flex-wrap:wrap;">
+          <sc-for list="{{ ledgerTabs }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ t.onClick }}" style="padding:9px 16px; border-radius:9999px; border:1px solid {{ t.border }}; background:{{ t.bg }}; color:{{ t.color }}; font:600 13px var(--font-sans); cursor:pointer;">{{ t.label }}</button>
+          </sc-for>
+        </div>
+
+        <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); margin-top:18px; overflow:hidden;">
+          <div style="padding:18px 22px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <div style="font:700 17px var(--font-sans); color:var(--fg1);">{{ ledgerTitle }}</div>
+              <div style="font:500 12.5px var(--font-sans); color:var(--fg2); margin-top:2px;">Saldo normal {{ ledgerNormal }} · periode Mei 2026</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font:700 10px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase;">Saldo akhir</div>
+              <div style="font:600 24px var(--font-display); font-variation-settings:'opsz' 36; color:var(--wedel-900); font-feature-settings:'tnum';">{{ ledgerSaldo }}</div>
+            </div>
+          </div>
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr>
+              <th style="text-align:left; padding:10px 22px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Tanggal</th>
+              <th style="text-align:left; padding:10px 12px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Keterangan</th>
+              <th style="text-align:right; padding:10px 12px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Debit</th>
+              <th style="text-align:right; padding:10px 12px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Kredit</th>
+              <th style="text-align:right; padding:10px 22px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Saldo</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ ledgerRows }}" as="r" hint-placeholder-count="6">
+                <tr>
+                  <td style="padding:13px 22px; font:500 13px var(--font-sans); color:var(--fg2); border-bottom:1px solid var(--cream-200); white-space:nowrap;">{{ r.tgl }}</td>
+                  <td style="padding:13px 12px; font:500 13.5px var(--font-sans); color:var(--fg1); border-bottom:1px solid var(--cream-200);">{{ r.ket }}</td>
+                  <td style="padding:13px 12px; text-align:right; font:600 13px var(--font-mono); color:{{ r.dColor }}; border-bottom:1px solid var(--cream-200);">{{ r.debit }}</td>
+                  <td style="padding:13px 12px; text-align:right; font:600 13px var(--font-mono); color:{{ r.kColor }}; border-bottom:1px solid var(--cream-200);">{{ r.kredit }}</td>
+                  <td style="padding:13px 22px; text-align:right; font:700 13px var(--font-mono); color:var(--fg1); border-bottom:1px solid var(--cream-200);">{{ r.saldo }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== BAGAN AKUN ===== -->
+      <sc-if value="{{ scr.coa }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;">
+          <div>
+            <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Bagan akun</div>
+            <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Struktur akun berjenjang — kelas → induk → akun detail. Klik baris induk untuk buka/tutup. Saldo induk dijumlah otomatis dari anaknya.</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ coaExpandAll }}" style="display:flex; align-items:center; gap:6px; padding:9px 14px; background:#fff; color:var(--fg1); border:1px solid var(--border-strong); border-radius:8px; font:600 12.5px var(--font-sans); cursor:pointer;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 5 5 5-5"/><path d="m7 6 5 5 5-5"/></svg>Buka semua
+            </button>
+            <button onClick="{{ coaCollapseAll }}" style="display:flex; align-items:center; gap:6px; padding:9px 14px; background:#fff; color:var(--fg1); border:1px solid var(--border-strong); border-radius:8px; font:600 12.5px var(--font-sans); cursor:pointer;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 11 5-5 5 5"/><path d="m7 18 5-5 5 5"/></svg>Tutup semua
+            </button>
+          </div>
+        </div>
+
+        <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); margin-top:22px; overflow:hidden;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr>
+              <th style="text-align:left; padding:11px 22px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Kode</th>
+              <th style="text-align:left; padding:11px 12px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Nama akun</th>
+              <th style="text-align:left; padding:11px 12px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Tipe</th>
+              <th style="text-align:right; padding:11px 22px; font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Saldo (31 Mei)</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ coaRows }}" as="c" hint-placeholder-count="12">
+                <tr onClick="{{ c.onToggle }}" style="background:{{ c.rowBg }}; cursor:{{ c.rowCursor }};">
+                  <td style="padding:11px 12px 11px 22px; font:{{ c.kodeFont }}; color:{{ c.kodeColor }}; border-bottom:1px solid var(--cream-200); white-space:nowrap;">{{ c.kode }}</td>
+                  <td style="padding:11px 12px; border-bottom:1px solid var(--cream-200);">
+                    <div style="display:flex; align-items:center; gap:9px; padding-left:{{ c.indent }};">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--fg3)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ c.chevronOpacity }}; transform:{{ c.chevronTransform }}; transition:transform var(--dur-fast) var(--ease); flex-shrink:0;"><path d="m9 18 6-6-6-6"/></svg>
+                      <span style="font:{{ c.namaFont }}; color:{{ c.namaColor }};">{{ c.nama }}</span>
+                    </div>
+                  </td>
+                  <td style="padding:11px 12px; border-bottom:1px solid var(--cream-200);"><span style="display:inline-block; padding:3px 10px; border-radius:9999px; font:700 10px var(--font-sans); letter-spacing:0.04em; text-transform:uppercase; background:{{ c.tipeBg }}; color:{{ c.tipeColor }};">{{ c.tipe }}</span></td>
+                  <td style="padding:11px 22px; text-align:right; font:{{ c.saldoFont }}; color:var(--fg1); border-bottom:1px solid var(--cream-200); font-feature-settings:'tnum';">{{ c.saldo }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== MASTER BARANG ===== -->
+      <sc-if value="{{ scr.mBarang }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;">
+          <div>
+            <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Master barang</div>
+            <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Daftar barang dagang &amp; persediaan. Klik sel mana pun untuk mengubah data. <span style="color:var(--sogan-500); font-weight:600;">{{ mBarangCount }}</span></div>
+          </div>
+          <button onClick="{{ mBarangAdd }}" style="display:flex; align-items:center; gap:7px; padding:10px 16px; background:var(--sogan-500); color:#F5F1E8; border:none; border-radius:8px; font:700 13px var(--font-sans); cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah barang
+          </button>
+        </div>
+        <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); margin-top:22px; overflow:hidden;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr>
+              <th style="text-align:left; padding:11px 12px 11px 22px; width:120px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Kode (SKU)</th>
+              <th style="text-align:left; padding:11px 12px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Nama barang</th>
+              <th style="text-align:left; padding:11px 12px; width:150px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Kategori</th>
+              <th style="text-align:left; padding:11px 12px; width:100px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Satuan</th>
+              <th style="text-align:right; padding:11px 12px; width:150px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Harga jual</th>
+              <th style="text-align:right; padding:11px 12px; width:100px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Stok</th>
+              <th style="width:40px; padding-right:18px; border-bottom:1px solid var(--border);"></th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ mBarangRows }}" as="r" hint-placeholder-count="6">
+                <tr>
+                  <td style="padding:7px 6px 7px 22px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.sku }}" onInput="{{ r.onSku }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:600 12.5px var(--font-mono); color:var(--sogan-500); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.nama }}" onInput="{{ r.onNama }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 13.5px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.kategori }}" onInput="{{ r.onKategori }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 13px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.satuan }}" onInput="{{ r.onSatuan }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 13px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input type="number" value="{{ r.harga }}" onInput="{{ r.onHarga }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:600 13px var(--font-mono); color:var(--fg1); outline:none; text-align:right;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input type="number" value="{{ r.stok }}" onInput="{{ r.onStok }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:600 13px var(--font-mono); color:var(--fg1); outline:none; text-align:right;"></td>
+                  <td style="padding:7px 18px 7px 6px; text-align:right; border-bottom:1px solid var(--cream-200);"><button onClick="{{ r.onRemove }}" title="Hapus" style="width:28px; height:28px; border:1px solid var(--border); background:#fff; color:var(--fg3); border-radius:7px; cursor:pointer;">×</button></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== DATA VENDOR ===== -->
+      <sc-if value="{{ scr.mVendor }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;">
+          <div>
+            <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Data vendor</div>
+            <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Pemasok barang &amp; jasa beserta NPWP untuk faktur pajak masukan. <span style="color:var(--sogan-500); font-weight:600;">{{ mVendorCount }}</span></div>
+          </div>
+          <button onClick="{{ mVendorAdd }}" style="display:flex; align-items:center; gap:7px; padding:10px 16px; background:var(--sogan-500); color:#F5F1E8; border:none; border-radius:8px; font:700 13px var(--font-sans); cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah vendor
+          </button>
+        </div>
+        <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); margin-top:22px; overflow:hidden;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr>
+              <th style="text-align:left; padding:11px 12px 11px 22px; width:110px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Kode</th>
+              <th style="text-align:left; padding:11px 12px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Nama vendor</th>
+              <th style="text-align:left; padding:11px 12px; width:200px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">NPWP</th>
+              <th style="text-align:left; padding:11px 12px; width:140px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Kategori</th>
+              <th style="text-align:left; padding:11px 12px; width:150px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Telepon</th>
+              <th style="width:40px; padding-right:18px; border-bottom:1px solid var(--border);"></th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ mVendorRows }}" as="r" hint-placeholder-count="5">
+                <tr>
+                  <td style="padding:7px 6px 7px 22px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.kode }}" onInput="{{ r.onKode }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:600 12.5px var(--font-mono); color:var(--sogan-500); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.nama }}" onInput="{{ r.onNama }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 13.5px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.npwp }}" onInput="{{ r.onNpwp }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 12.5px var(--font-mono); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.kategori }}" onInput="{{ r.onKategori }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 13px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.telp }}" onInput="{{ r.onTelp }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 13px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 18px 7px 6px; text-align:right; border-bottom:1px solid var(--cream-200);"><button onClick="{{ r.onRemove }}" title="Hapus" style="width:28px; height:28px; border:1px solid var(--border); background:#fff; color:var(--fg3); border-radius:7px; cursor:pointer;">×</button></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== DATA PELANGGAN ===== -->
+      <sc-if value="{{ scr.mPelanggan }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;">
+          <div>
+            <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Data pelanggan</div>
+            <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Pelanggan beserta NPWP untuk penerbitan faktur penjualan &amp; faktur pajak. <span style="color:var(--sogan-500); font-weight:600;">{{ mPelangganCount }}</span></div>
+          </div>
+          <button onClick="{{ mPelangganAdd }}" style="display:flex; align-items:center; gap:7px; padding:10px 16px; background:var(--sogan-500); color:#F5F1E8; border:none; border-radius:8px; font:700 13px var(--font-sans); cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah pelanggan
+          </button>
+        </div>
+        <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); margin-top:22px; overflow:hidden;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr>
+              <th style="text-align:left; padding:11px 12px 11px 22px; width:110px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Kode</th>
+              <th style="text-align:left; padding:11px 12px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Nama pelanggan</th>
+              <th style="text-align:left; padding:11px 12px; width:200px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">NPWP</th>
+              <th style="text-align:left; padding:11px 12px; width:140px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Tipe</th>
+              <th style="text-align:left; padding:11px 12px; width:150px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Telepon</th>
+              <th style="width:40px; padding-right:18px; border-bottom:1px solid var(--border);"></th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ mPelangganRows }}" as="r" hint-placeholder-count="5">
+                <tr>
+                  <td style="padding:7px 6px 7px 22px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.kode }}" onInput="{{ r.onKode }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:600 12.5px var(--font-mono); color:var(--sogan-500); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.nama }}" onInput="{{ r.onNama }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 13.5px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.npwp }}" onInput="{{ r.onNpwp }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 12.5px var(--font-mono); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.tipe }}" onInput="{{ r.onTipe }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 13px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 6px; border-bottom:1px solid var(--cream-200);"><input value="{{ r.telp }}" onInput="{{ r.onTelp }}" style="width:100%; padding:8px 10px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:7px; font:500 13px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                  <td style="padding:7px 18px 7px 6px; text-align:right; border-bottom:1px solid var(--cream-200);"><button onClick="{{ r.onRemove }}" title="Hapus" style="width:28px; height:28px; border:1px solid var(--border); background:#fff; color:var(--fg3); border-radius:7px; cursor:pointer;">×</button></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== PENJUALAN (interaktif, toggle barang/jasa) ===== -->
+      <sc-if value="{{ scr.penjualan }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;">
+          <div>
+            <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Penjualan</div>
+            <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">{{ jualSub }}</div>
+          </div>
+          <div style="display:flex; padding:4px; background:var(--cream-200); border-radius:10px; gap:4px;">
+            <button onClick="{{ jualSeg.onBarang }}" style="padding:9px 20px; border-radius:7px; border:none; cursor:pointer; font:700 13px var(--font-sans); display:flex; align-items:center; gap:7px; {{ jualSeg.barangStyle }}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Barang
+            </button>
+            <button onClick="{{ jualSeg.onJasa }}" style="padding:9px 20px; border-radius:7px; border:none; cursor:pointer; font:700 13px var(--font-sans); display:flex; align-items:center; gap:7px; {{ jualSeg.jasaStyle }}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>Jasa
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:20px; margin-top:22px; align-items:flex-start;">
+          <div style="flex:1; min-width:0; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); overflow:hidden;">
+            <div style="padding:20px 24px; background:var(--sogan-500); color:#F5F1E8; display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;"><div style="font:700 9px var(--font-sans); letter-spacing:0.14em; text-transform:uppercase; opacity:0.85;">Faktur penjualan</div><span style="padding:2px 8px; border-radius:9999px; background:rgba(255,255,255,0.18); font:700 9px var(--font-sans); letter-spacing:0.08em; text-transform:uppercase;">{{ jualTipe }}</span></div>
+                <div style="font:600 22px var(--font-display); font-variation-settings:'opsz' 36; margin-top:3px;">{{ jualNo }}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font:500 12px var(--font-sans); opacity:0.85;">Tanggal</div>
+                <div style="font:700 14px var(--font-sans);">31 Mei 2026</div>
+              </div>
+            </div>
+            <div style="padding:18px 24px; display:flex; gap:32px; border-bottom:1px solid var(--border);">
+              <div style="flex:1;"><div style="font:700 10px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; margin-bottom:5px;">Pelanggan</div><div style="font:600 14px var(--font-sans); color:var(--fg1);">{{ jualCust }}</div><div style="font:500 12.5px var(--font-sans); color:var(--fg2); margin-top:2px;">{{ jualCustInfo }}</div></div>
+              <div style="flex:1;"><div style="font:700 10px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; margin-bottom:5px;">Termin</div><div style="font:600 14px var(--font-sans); color:var(--fg1);">Net 30 hari</div><div style="font:500 12.5px var(--font-sans); color:var(--fg2); margin-top:2px;">Jatuh tempo 30 Jun 2026</div></div>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse;">
+              <thead><tr>
+                <th style="text-align:left; padding:11px 24px; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">{{ jualItemLabel }}</th>
+                <th style="text-align:center; padding:11px 8px; width:80px; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">{{ jualQtyLabel }}</th>
+                <th style="text-align:right; padding:11px 8px; width:140px; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">{{ jualHargaLabel }}</th>
+                <th style="text-align:right; padding:11px 24px; width:150px; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Jumlah</th>
+                <th style="width:24px; border-bottom:1px solid var(--border);"></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ jualItems }}" as="it" hint-placeholder-count="3">
+                  <tr>
+                    <td style="padding:8px 24px; border-bottom:1px solid var(--cream-200);"><input value="{{ it.nama }}" onInput="{{ it.onNama }}" style="width:100%; padding:7px 9px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:6px; font:500 13.5px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                    <td style="padding:8px 8px; border-bottom:1px solid var(--cream-200);"><input type="number" value="{{ it.qty }}" onInput="{{ it.onQty }}" style="width:100%; padding:7px 8px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:6px; font:600 13px var(--font-mono); color:var(--fg1); outline:none; text-align:center;"></td>
+                    <td style="padding:8px 8px; border-bottom:1px solid var(--cream-200);"><input type="number" value="{{ it.harga }}" onInput="{{ it.onHarga }}" style="width:100%; padding:7px 8px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:6px; font:600 13px var(--font-mono); color:var(--fg1); outline:none; text-align:right;"></td>
+                    <td style="padding:8px 24px; text-align:right; font:700 13px var(--font-mono); color:var(--fg1); border-bottom:1px solid var(--cream-200);">{{ it.jumlah }}</td>
+                    <td style="padding:8px 0; border-bottom:1px solid var(--cream-200);"><button onClick="{{ it.onRemove }}" style="width:24px; height:24px; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:16px;">×</button></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+            <div style="padding:10px 24px;">
+              <button onClick="{{ jualAddItem }}" style="padding:8px 12px; border-radius:8px; border:1px dashed var(--border-strong); background:transparent; font:600 13px var(--font-sans); color:var(--sogan-500); cursor:pointer;">+ Tambah {{ jualAddLabel }}</button>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; padding:6px 24px 22px;">
+              <div style="width:320px;">
+                <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 13.5px var(--font-sans); color:var(--fg2);"><span>DPP (dasar pengenaan pajak)</span><span style="font-family:var(--font-mono); color:var(--fg1); font-weight:600;">{{ jualDPP }}</span></div>
+                <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 13.5px var(--font-sans); color:var(--fg2);"><span>PPN {{ ppnLabel }}</span><span style="font-family:var(--font-mono); color:var(--fg1); font-weight:600;">{{ jualPPN }}</span></div>
+                <div style="display:flex; justify-content:space-between; padding:12px 0 0; margin-top:6px; border-top:1.5px solid var(--border-strong); font:700 16px var(--font-sans); color:var(--fg1);"><span>Total tagihan</span><span style="font-family:var(--font-display); font-variation-settings:'opsz' 36;">{{ jualTotal }}</span></div>
+                <sc-if value="{{ jualIsJasa }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; justify-content:space-between; padding:9px 0 7px; margin-top:8px; font:500 13px var(--font-sans); color:var(--bata-700);"><span>PPh 23 dipotong pelanggan ({{ pph23Label }})</span><span style="font-family:var(--font-mono); font-weight:600;">({{ jualPph23 }})</span></div>
+                  <div style="display:flex; justify-content:space-between; padding:8px 0; background:var(--padi-100); border-radius:8px; padding-left:10px; padding-right:10px; font:700 14px var(--font-sans); color:var(--padi-700);"><span>Kas diterima bersih</span><span style="font-family:var(--font-mono);">{{ jualDiterima }}</span></div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+
+          <div style="width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:16px;">
+            <div style="background:var(--emas-100); border:1px solid var(--emas-300); border-radius:12px; padding:16px 18px;">
+              <div style="font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--emas-700); text-transform:uppercase; margin-bottom:8px;">Faktur pajak</div>
+              <div style="font:600 13px var(--font-mono); color:var(--tanah-700);">010.000-26.00000188</div>
+              <div style="font:500 12px var(--font-sans); color:var(--tanah-500); margin-top:6px; line-height:1.5;">{{ jualSideNote }}</div>
+            </div>
+            <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); padding:16px 18px;">
+              <div style="font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; margin-bottom:10px;">Faktur terbaru</div>
+              <sc-for list="{{ jualList }}" as="f" hint-placeholder-count="4">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--cream-200);">
+                  <div><div style="font:600 12px var(--font-mono); color:var(--sogan-500);">{{ f.no }}</div><div style="font:500 12px var(--font-sans); color:var(--fg2); margin-top:1px;">{{ f.cust }}</div></div>
+                  <span style="padding:3px 9px; border-radius:9999px; font:700 9.5px var(--font-sans); letter-spacing:0.04em; text-transform:uppercase; background:{{ f.badgeBg }}; color:{{ f.badgeColor }};">{{ f.status }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== PEMBELIAN (interaktif, toggle barang/jasa) ===== -->
+      <sc-if value="{{ scr.pembelian }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;">
+          <div>
+            <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Pembelian</div>
+            <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">{{ beliSub }}</div>
+          </div>
+          <div style="display:flex; padding:4px; background:var(--cream-200); border-radius:10px; gap:4px;">
+            <button onClick="{{ beliSeg.onBarang }}" style="padding:9px 20px; border-radius:7px; border:none; cursor:pointer; font:700 13px var(--font-sans); display:flex; align-items:center; gap:7px; {{ beliSeg.barangStyle }}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Barang
+            </button>
+            <button onClick="{{ beliSeg.onJasa }}" style="padding:9px 20px; border-radius:7px; border:none; cursor:pointer; font:700 13px var(--font-sans); display:flex; align-items:center; gap:7px; {{ beliSeg.jasaStyle }}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>Jasa
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:20px; margin-top:22px; align-items:flex-start;">
+          <div style="flex:1; min-width:0; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); overflow:hidden;">
+            <div style="padding:20px 24px; background:var(--tanah-700); color:#F5F1E8; display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;"><div style="font:700 9px var(--font-sans); letter-spacing:0.14em; text-transform:uppercase; opacity:0.85;">Tagihan pembelian</div><span style="padding:2px 8px; border-radius:9999px; background:rgba(255,255,255,0.18); font:700 9px var(--font-sans); letter-spacing:0.08em; text-transform:uppercase;">{{ beliTipe }}</span></div>
+                <div style="font:600 22px var(--font-display); font-variation-settings:'opsz' 36; margin-top:3px;">{{ beliNo }}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font:500 12px var(--font-sans); opacity:0.85;">Tanggal</div>
+                <div style="font:700 14px var(--font-sans);">28 Mei 2026</div>
+              </div>
+            </div>
+            <div style="padding:18px 24px; display:flex; gap:32px; border-bottom:1px solid var(--border);">
+              <div style="flex:1;"><div style="font:700 10px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; margin-bottom:5px;">Pemasok</div><div style="font:600 14px var(--font-sans); color:var(--fg1);">{{ beliVendor }}</div><div style="font:500 12.5px var(--font-sans); color:var(--fg2); margin-top:2px;">{{ beliVendorInfo }}</div></div>
+              <div style="flex:1;"><div style="font:700 10px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase; margin-bottom:5px;">Termin</div><div style="font:600 14px var(--font-sans); color:var(--fg1);">Net 14 hari</div><div style="font:500 12.5px var(--font-sans); color:var(--fg2); margin-top:2px;">Jatuh tempo 11 Jun 2026</div></div>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse;">
+              <thead><tr>
+                <th style="text-align:left; padding:11px 24px; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">{{ beliItemLabel }}</th>
+                <th style="text-align:center; padding:11px 8px; width:80px; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">{{ beliQtyLabel }}</th>
+                <th style="text-align:right; padding:11px 8px; width:140px; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">{{ beliHargaLabel }}</th>
+                <th style="text-align:right; padding:11px 24px; width:150px; font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Jumlah</th>
+                <th style="width:24px; border-bottom:1px solid var(--border);"></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ beliItems }}" as="it" hint-placeholder-count="3">
+                  <tr>
+                    <td style="padding:8px 24px; border-bottom:1px solid var(--cream-200);"><input value="{{ it.nama }}" onInput="{{ it.onNama }}" style="width:100%; padding:7px 9px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:6px; font:500 13.5px var(--font-sans); color:var(--fg1); outline:none;"></td>
+                    <td style="padding:8px 8px; border-bottom:1px solid var(--cream-200);"><input type="number" value="{{ it.qty }}" onInput="{{ it.onQty }}" style="width:100%; padding:7px 8px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:6px; font:600 13px var(--font-mono); color:var(--fg1); outline:none; text-align:center;"></td>
+                    <td style="padding:8px 8px; border-bottom:1px solid var(--cream-200);"><input type="number" value="{{ it.harga }}" onInput="{{ it.onHarga }}" style="width:100%; padding:7px 8px; border:1px solid var(--border-strong); background:var(--cream-50); border-radius:6px; font:600 13px var(--font-mono); color:var(--fg1); outline:none; text-align:right;"></td>
+                    <td style="padding:8px 24px; text-align:right; font:700 13px var(--font-mono); color:var(--fg1); border-bottom:1px solid var(--cream-200);">{{ it.jumlah }}</td>
+                    <td style="padding:8px 0; border-bottom:1px solid var(--cream-200);"><button onClick="{{ it.onRemove }}" style="width:24px; height:24px; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:16px;">×</button></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+            <div style="padding:10px 24px;">
+              <button onClick="{{ beliAddItem }}" style="padding:8px 12px; border-radius:8px; border:1px dashed var(--border-strong); background:transparent; font:600 13px var(--font-sans); color:var(--tanah-700); cursor:pointer;">+ Tambah {{ beliAddLabel }}</button>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; padding:6px 24px 22px;">
+              <div style="width:320px;">
+                <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 13.5px var(--font-sans); color:var(--fg2);"><span>DPP (dasar pengenaan pajak)</span><span style="font-family:var(--font-mono); color:var(--fg1); font-weight:600;">{{ beliDPP }}</span></div>
+                <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 13.5px var(--font-sans); color:var(--fg2);"><span>PPN masukan {{ ppnLabel }}</span><span style="font-family:var(--font-mono); color:var(--fg1); font-weight:600;">{{ beliPPN }}</span></div>
+                <div style="display:flex; justify-content:space-between; padding:12px 0 0; margin-top:6px; border-top:1.5px solid var(--border-strong); font:700 16px var(--font-sans); color:var(--fg1);"><span>Total tagihan</span><span style="font-family:var(--font-display); font-variation-settings:'opsz' 36;">{{ beliTotal }}</span></div>
+                <sc-if value="{{ beliIsJasa }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; justify-content:space-between; padding:9px 0 7px; margin-top:8px; font:500 13px var(--font-sans); color:var(--bata-700);"><span>PPh 23 kami potong ({{ pph23Label }})</span><span style="font-family:var(--font-mono); font-weight:600;">({{ beliPph23 }})</span></div>
+                  <div style="display:flex; justify-content:space-between; padding:8px 10px; background:var(--cream-100); border-radius:8px; font:700 14px var(--font-sans); color:var(--tanah-700);"><span>Kas dibayar ke pemasok</span><span style="font-family:var(--font-mono);">{{ beliDibayar }}</span></div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+
+          <div style="width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:16px;">
+            <div style="background:var(--padi-100); border:1px solid var(--padi-300); border-radius:12px; padding:16px 18px;">
+              <div style="font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--padi-700); text-transform:uppercase; margin-bottom:8px;">Catatan pajak</div>
+              <div style="font:500 12px var(--font-sans); color:var(--tanah-700); line-height:1.55;">{{ beliSideNote }}</div>
+            </div>
+            <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); padding:16px 18px;">
+              <div style="font:700 11px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; margin-bottom:10px;">Tagihan masuk</div>
+              <sc-for list="{{ beliList }}" as="f" hint-placeholder-count="4">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--cream-200);">
+                  <div><div style="font:600 12px var(--font-mono); color:var(--tanah-700);">{{ f.no }}</div><div style="font:500 12px var(--font-sans); color:var(--fg2); margin-top:1px;">{{ f.cust }}</div></div>
+                  <span style="padding:3px 9px; border-radius:9999px; font:700 9.5px var(--font-sans); letter-spacing:0.04em; text-transform:uppercase; background:{{ f.badgeBg }}; color:{{ f.badgeColor }};">{{ f.status }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== NERACA ===== -->
+      <sc-if value="{{ scr.neraca }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Laporan posisi keuangan</div>
+        <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Neraca · PT Sinar Niaga Sentosa · per 31 Mei 2026 (dalam Rupiah penuh)</div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:24px; align-items:start;">
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); padding:8px 24px 18px;">
+            <div style="padding:16px 0 10px; border-bottom:2px solid var(--sogan-500); font:700 14px var(--font-sans); letter-spacing:0.04em; color:var(--sogan-500); text-transform:uppercase;">Aset</div>
+            <div style="font:700 12px var(--font-sans); color:var(--fg2); padding:14px 0 6px; text-transform:uppercase; letter-spacing:0.05em;">Aset lancar</div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Kas</span><span style="font-family:var(--font-mono); font-weight:600;">85.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Bank</span><span style="font-family:var(--font-mono); font-weight:600;">420.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Piutang usaha</span><span style="font-family:var(--font-mono); font-weight:600;">310.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Persediaan barang</span><span style="font-family:var(--font-mono); font-weight:600;">540.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>PPN masukan</span><span style="font-family:var(--font-mono); font-weight:600;">24.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Beban dibayar dimuka</span><span style="font-family:var(--font-mono); font-weight:600;">36.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:9px 0; margin-top:3px; border-top:1px solid var(--border); font:700 14px var(--font-sans); color:var(--fg1);"><span>Total aset lancar</span><span style="font-family:var(--font-mono);">1.415.000.000</span></div>
+
+            <div style="font:700 12px var(--font-sans); color:var(--fg2); padding:16px 0 6px; text-transform:uppercase; letter-spacing:0.05em;">Aset tetap</div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Aset tetap — harga perolehan</span><span style="font-family:var(--font-mono); font-weight:600;">1.250.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg2);"><span>Akumulasi penyusutan</span><span style="font-family:var(--font-mono); font-weight:600;">(320.000.000)</span></div>
+            <div style="display:flex; justify-content:space-between; padding:9px 0; margin-top:3px; border-top:1px solid var(--border); font:700 14px var(--font-sans); color:var(--fg1);"><span>Nilai buku aset tetap</span><span style="font-family:var(--font-mono);">930.000.000</span></div>
+
+            <div style="display:flex; justify-content:space-between; padding:14px 0 8px; margin-top:8px; border-top:2px solid var(--sogan-500); font:700 16px var(--font-sans); color:var(--sogan-500);"><span>Total aset</span><span style="font-family:var(--font-display); font-variation-settings:'opsz' 36;">2.345.000.000</span></div>
+          </div>
+
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); padding:8px 24px 18px;">
+            <div style="padding:16px 0 10px; border-bottom:2px solid var(--tanah-700); font:700 14px var(--font-sans); letter-spacing:0.04em; color:var(--tanah-700); text-transform:uppercase;">Liabilitas &amp; ekuitas</div>
+            <div style="font:700 12px var(--font-sans); color:var(--fg2); padding:14px 0 6px; text-transform:uppercase; letter-spacing:0.05em;">Liabilitas jangka pendek</div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Utang usaha</span><span style="font-family:var(--font-mono); font-weight:600;">268.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Utang pajak (PPN &amp; PPh)</span><span style="font-family:var(--font-mono); font-weight:600;">96.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Beban masih harus dibayar</span><span style="font-family:var(--font-mono); font-weight:600;">41.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:9px 0; margin-top:3px; border-top:1px solid var(--border); font:700 14px var(--font-sans); color:var(--fg1);"><span>Total jangka pendek</span><span style="font-family:var(--font-mono);">405.000.000</span></div>
+
+            <div style="font:700 12px var(--font-sans); color:var(--fg2); padding:16px 0 6px; text-transform:uppercase; letter-spacing:0.05em;">Liabilitas jangka panjang</div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Utang bank</span><span style="font-family:var(--font-mono); font-weight:600;">560.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:9px 0; margin-top:3px; border-top:1px solid var(--border); font:700 14px var(--font-sans); color:var(--fg1);"><span>Total liabilitas</span><span style="font-family:var(--font-mono);">965.000.000</span></div>
+
+            <div style="font:700 12px var(--font-sans); color:var(--fg2); padding:16px 0 6px; text-transform:uppercase; letter-spacing:0.05em;">Ekuitas</div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Modal saham</span><span style="font-family:var(--font-mono); font-weight:600;">1.000.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 14px var(--font-sans); color:var(--fg1);"><span>Saldo laba</span><span style="font-family:var(--font-mono); font-weight:600;">380.000.000</span></div>
+            <div style="display:flex; justify-content:space-between; padding:9px 0; margin-top:3px; border-top:1px solid var(--border); font:700 14px var(--font-sans); color:var(--fg1);"><span>Total ekuitas</span><span style="font-family:var(--font-mono);">1.380.000.000</span></div>
+
+            <div style="display:flex; justify-content:space-between; padding:14px 0 8px; margin-top:8px; border-top:2px solid var(--tanah-700); font:700 16px var(--font-sans); color:var(--tanah-700);"><span>Total liabilitas &amp; ekuitas</span><span style="font-family:var(--font-display); font-variation-settings:'opsz' 36;">2.345.000.000</span></div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:16px; padding:12px 16px; background:var(--padi-100); border:1px solid var(--padi-300); border-radius:8px; font:600 13px var(--font-sans); color:var(--padi-700);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Neraca seimbang — total aset sama dengan total liabilitas dan ekuitas (Rp 2.345.000.000).
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== LABA RUGI ===== -->
+      <sc-if value="{{ scr.labarugi }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Laporan laba rugi</div>
+        <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Untuk periode berjalan Mei 2026 · metode beban berdasarkan fungsi (dalam Rupiah penuh)</div>
+
+        <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); padding:8px 28px 22px; margin-top:24px; max-width:760px;">
+          <div style="font:700 12px var(--font-sans); color:var(--fg2); padding:16px 0 4px; text-transform:uppercase; letter-spacing:0.05em;">Pendapatan</div>
+          <div style="display:flex; justify-content:space-between; padding:8px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Penjualan barang dagang</span><span style="font-family:var(--font-mono); font-weight:600;">1.450.000.000</span></div>
+          <div style="display:flex; justify-content:space-between; padding:8px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Pendapatan jasa</span><span style="font-family:var(--font-mono); font-weight:600;">180.000.000</span></div>
+          <div style="display:flex; justify-content:space-between; padding:9px 0; border-top:1px solid var(--border); font:700 15px var(--font-sans); color:var(--fg1);"><span>Total pendapatan</span><span style="font-family:var(--font-mono);">1.630.000.000</span></div>
+          <div style="display:flex; justify-content:space-between; padding:8px 0; font:500 15px var(--font-sans); color:var(--fg2);"><span>Beban pokok penjualan</span><span style="font-family:var(--font-mono); font-weight:600;">(920.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--border-strong); border-bottom:1px solid var(--border-strong); font:700 15px var(--font-sans); color:var(--sogan-500);"><span>Laba kotor</span><span style="font-family:var(--font-mono);">710.000.000</span></div>
+
+          <div style="font:700 12px var(--font-sans); color:var(--fg2); padding:16px 0 4px; text-transform:uppercase; letter-spacing:0.05em;">Beban operasional</div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Beban gaji &amp; tunjangan</span><span style="font-family:var(--font-mono); font-weight:600;">(240.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Beban sewa</span><span style="font-family:var(--font-mono); font-weight:600;">(60.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Beban penyusutan</span><span style="font-family:var(--font-mono); font-weight:600;">(45.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Beban pemasaran</span><span style="font-family:var(--font-mono); font-weight:600;">(52.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Beban listrik &amp; utilitas</span><span style="font-family:var(--font-mono); font-weight:600;">(28.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Beban administrasi &amp; umum</span><span style="font-family:var(--font-mono); font-weight:600;">(35.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--border-strong); border-bottom:1px solid var(--border-strong); font:700 15px var(--font-sans); color:var(--fg1);"><span>Laba usaha</span><span style="font-family:var(--font-mono);">250.000.000</span></div>
+
+          <div style="display:flex; justify-content:space-between; padding:9px 0; margin-top:6px; font:500 15px var(--font-sans); color:var(--fg1);"><span>Beban bunga</span><span style="font-family:var(--font-mono); font-weight:600;">(18.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--border-strong); font:700 15px var(--font-sans); color:var(--fg1);"><span>Laba sebelum pajak</span><span style="font-family:var(--font-mono);">232.000.000</span></div>
+          <div style="display:flex; justify-content:space-between; padding:9px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Beban pajak penghasilan (22%)</span><span style="font-family:var(--font-mono); font-weight:600;">(51.040.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:14px 0 8px; margin-top:6px; border-top:2px solid var(--sogan-500); font:700 19px var(--font-sans); color:var(--sogan-500);"><span>Laba bersih</span><span style="font-family:var(--font-display); font-variation-settings:'opsz' 36;">180.960.000</span></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== ARUS KAS ===== -->
+      <sc-if value="{{ scr.aruskas }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Laporan arus kas</div>
+        <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Metode tidak langsung · periode Mei 2026 (dalam Rupiah penuh)</div>
+
+        <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); padding:8px 28px 22px; margin-top:24px; max-width:760px;">
+          <div style="font:700 12px var(--font-sans); color:var(--padi-700); padding:16px 0 4px; text-transform:uppercase; letter-spacing:0.05em;">Arus kas dari aktivitas operasi</div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Laba bersih</span><span style="font-family:var(--font-mono); font-weight:600;">180.960.000</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Penyusutan</span><span style="font-family:var(--font-mono); font-weight:600;">45.000.000</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Kenaikan piutang usaha</span><span style="font-family:var(--font-mono); font-weight:600;">(40.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Kenaikan persediaan</span><span style="font-family:var(--font-mono); font-weight:600;">(60.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Kenaikan utang usaha</span><span style="font-family:var(--font-mono); font-weight:600;">35.000.000</span></div>
+          <div style="display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--border-strong); border-bottom:1px solid var(--border-strong); font:700 15px var(--font-sans); color:var(--padi-700);"><span>Kas bersih dari operasi</span><span style="font-family:var(--font-mono);">160.960.000</span></div>
+
+          <div style="font:700 12px var(--font-sans); color:var(--bata-700); padding:16px 0 4px; text-transform:uppercase; letter-spacing:0.05em;">Arus kas dari aktivitas investasi</div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Pembelian peralatan</span><span style="font-family:var(--font-mono); font-weight:600;">(120.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--border-strong); border-bottom:1px solid var(--border-strong); font:700 15px var(--font-sans); color:var(--fg1);"><span>Kas bersih untuk investasi</span><span style="font-family:var(--font-mono);">(120.000.000)</span></div>
+
+          <div style="font:700 12px var(--font-sans); color:var(--info); padding:16px 0 4px; text-transform:uppercase; letter-spacing:0.05em;">Arus kas dari aktivitas pendanaan</div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg1);"><span>Pembayaran pokok utang bank</span><span style="font-family:var(--font-mono); font-weight:600;">(30.000.000)</span></div>
+          <div style="display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--border-strong); border-bottom:1px solid var(--border-strong); font:700 15px var(--font-sans); color:var(--fg1);"><span>Kas bersih dari pendanaan</span><span style="font-family:var(--font-mono);">(30.000.000)</span></div>
+
+          <div style="display:flex; justify-content:space-between; padding:10px 0; margin-top:8px; font:600 15px var(--font-sans); color:var(--fg1);"><span>Kenaikan kas bersih</span><span style="font-family:var(--font-mono); font-weight:700;">10.960.000</span></div>
+          <div style="display:flex; justify-content:space-between; padding:7px 0; font:500 15px var(--font-sans); color:var(--fg2);"><span>Saldo kas awal periode</span><span style="font-family:var(--font-mono); font-weight:600;">494.040.000</span></div>
+          <div style="display:flex; justify-content:space-between; padding:14px 0 8px; margin-top:6px; border-top:2px solid var(--sogan-500); font:700 18px var(--font-sans); color:var(--sogan-500);"><span>Saldo kas akhir periode</span><span style="font-family:var(--font-display); font-variation-settings:'opsz' 36;">505.000.000</span></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===== PAJAK ===== -->
+      <sc-if value="{{ scr.pajak }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Pajak</div>
+        <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Rekap PPN, PPh, dan faktur pajak masa Mei 2026. Terintegrasi format SPT &amp; Coretax DJP.</div>
+
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:24px;">
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase;">PPN keluaran</div>
+            <div style="font:600 24px var(--font-display); font-variation-settings:'opsz' 36; color:var(--wedel-900); margin-top:8px; font-feature-settings:'tnum';">Rp 159,5 jt</div>
+            <div style="font:500 12px var(--font-sans); color:var(--fg2); margin-top:3px;">dari penjualan kena pajak</div>
+          </div>
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase;">PPN masukan</div>
+            <div style="font:600 24px var(--font-display); font-variation-settings:'opsz' 36; color:var(--wedel-900); margin-top:8px; font-feature-settings:'tnum';">Rp 101,2 jt</div>
+            <div style="font:500 12px var(--font-sans); color:var(--fg2); margin-top:3px;">dapat dikreditkan</div>
+          </div>
+          <div style="background:var(--sogan-500); border:1px solid var(--sogan-500); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.06em; color:#F5F1E8; text-transform:uppercase; opacity:0.9;">PPN kurang bayar</div>
+            <div style="font:600 24px var(--font-display); font-variation-settings:'opsz' 36; color:#fff; margin-top:8px; font-feature-settings:'tnum';">Rp 58,3 jt</div>
+            <div style="font:600 12px var(--font-sans); color:var(--emas-300); margin-top:3px;">Setor SPT Masa · tenggat 30 Jun</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:20px; margin-top:20px; align-items:start;">
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); overflow:hidden;">
+            <div style="padding:16px 22px; border-bottom:1px solid var(--border); font:700 16px var(--font-sans); color:var(--fg1);">Faktur pajak keluaran</div>
+            <table style="width:100%; border-collapse:collapse;">
+              <thead><tr>
+                <th style="text-align:left; padding:10px 22px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">NSFP</th>
+                <th style="text-align:left; padding:10px 8px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Lawan transaksi</th>
+                <th style="text-align:right; padding:10px 8px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">PPN</th>
+                <th style="text-align:center; padding:10px 22px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Status</th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ fpRows }}" as="fp" hint-placeholder-count="5">
+                  <tr>
+                    <td style="padding:12px 22px; font:500 12px var(--font-mono); color:var(--sogan-500); border-bottom:1px solid var(--cream-200);">{{ fp.nsfp }}</td>
+                    <td style="padding:12px 8px; font:500 13px var(--font-sans); color:var(--fg1); border-bottom:1px solid var(--cream-200);">{{ fp.lawan }}</td>
+                    <td style="padding:12px 8px; text-align:right; font:600 13px var(--font-mono); color:var(--fg1); border-bottom:1px solid var(--cream-200);">{{ fp.ppn }}</td>
+                    <td style="padding:12px 22px; text-align:center; border-bottom:1px solid var(--cream-200);"><span style="padding:3px 10px; border-radius:9999px; font:700 9.5px var(--font-sans); letter-spacing:0.04em; text-transform:uppercase; background:{{ fp.badgeBg }}; color:{{ fp.badgeColor }};">{{ fp.status }}</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); overflow:hidden;">
+            <div style="padding:16px 22px; border-bottom:1px solid var(--border); font:700 16px var(--font-sans); color:var(--fg1);">PPh terutang &amp; bukti potong</div>
+            <div style="padding:6px 22px 14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--cream-200);"><div><div style="font:600 14px var(--font-sans); color:var(--fg1);">PPh 21 — karyawan</div><div style="font:500 12px var(--font-sans); color:var(--fg2);">e-Bupot 21 · 38 pegawai</div></div><span style="font:700 14px var(--font-mono); color:var(--fg1);">12.400.000</span></div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--cream-200);"><div><div style="font:600 14px var(--font-sans); color:var(--fg1);">PPh 23 — jasa</div><div style="font:500 12px var(--font-sans); color:var(--fg2);">e-Bupot 23 · 5 bukti potong</div></div><span style="font:700 14px var(--font-mono); color:var(--fg1);">3.600.000</span></div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--cream-200);"><div><div style="font:600 14px var(--font-sans); color:var(--fg1);">PPh 25 — angsuran</div><div style="font:500 12px var(--font-sans); color:var(--fg2);">Angsuran masa berjalan</div></div><span style="font:700 14px var(--font-mono); color:var(--fg1);">18.000.000</span></div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0 4px;"><div style="font:700 14px var(--font-sans); color:var(--sogan-500);">Total PPh masa Mei</div><span style="font:700 16px var(--font-display); font-variation-settings:'opsz' 36; color:var(--sogan-500);">Rp 34,0 jt</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="font:500 12px var(--font-sans); color:var(--fg3); margin-top:14px; line-height:1.5;">Catatan: tarif PPN mengikuti pengaturan {{ ppnLabel }}. Untuk barang/jasa tertentu DPP memakai nilai lain (11/12 × harga jual) sesuai PMK 131/2024.</div>
+      </div>
+      </sc-if>
+
+      <!-- ===== ASET TETAP ===== -->
+      <sc-if value="{{ scr.aset }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:lent-fade var(--dur-base) var(--ease);">
+        <div style="font:600 32px var(--font-display); font-variation-settings:'opsz' 48,'SOFT' 30; color:var(--wedel-900); letter-spacing:-0.02em;">Aset tetap &amp; penyusutan</div>
+        <div style="font:500 15px var(--font-sans); color:var(--fg2); margin-top:4px;">Penyusutan metode garis lurus · pengelompokan masa manfaat sesuai pajak (Pasal 11 UU PPh).</div>
+
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:24px;">
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase;">Harga perolehan</div>
+            <div style="font:600 24px var(--font-display); font-variation-settings:'opsz' 36; color:var(--wedel-900); margin-top:8px;">Rp 1,25 M</div>
+          </div>
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase;">Akumulasi penyusutan</div>
+            <div style="font:600 24px var(--font-display); font-variation-settings:'opsz' 36; color:var(--bata-500); margin-top:8px;">(Rp 320,0 jt)</div>
+          </div>
+          <div style="background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow-sm);">
+            <div style="font:700 11px var(--font-sans); letter-spacing:0.06em; color:var(--fg2); text-transform:uppercase;">Nilai buku</div>
+            <div style="font:600 24px var(--font-display); font-variation-settings:'opsz' 36; color:var(--padi-500); margin-top:8px;">Rp 930,0 jt</div>
+          </div>
+        </div>
+
+        <div style="background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-sm); margin-top:20px; overflow:hidden;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr>
+              <th style="text-align:left; padding:11px 22px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Aset</th>
+              <th style="text-align:left; padding:11px 8px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Perolehan</th>
+              <th style="text-align:center; padding:11px 8px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Masa</th>
+              <th style="text-align:right; padding:11px 8px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Harga perolehan</th>
+              <th style="text-align:right; padding:11px 8px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Penyusutan/bln</th>
+              <th style="text-align:right; padding:11px 8px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Akum. penyusutan</th>
+              <th style="text-align:right; padding:11px 22px; font:700 10.5px var(--font-sans); letter-spacing:0.05em; color:var(--fg2); text-transform:uppercase; border-bottom:1px solid var(--border);">Nilai buku</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ asetRows }}" as="a" hint-placeholder-count="5">
+                <tr>
+                  <td style="padding:13px 22px; border-bottom:1px solid var(--cream-200);"><div style="font:600 13.5px var(--font-sans); color:var(--fg1);">{{ a.nama }}</div><div style="font:500 11.5px var(--font-sans); color:var(--fg3);">{{ a.kelompok }}</div></td>
+                  <td style="padding:13px 8px; font:500 12.5px var(--font-sans); color:var(--fg2); border-bottom:1px solid var(--cream-200);">{{ a.tgl }}</td>
+                  <td style="padding:13px 8px; text-align:center; font:500 12.5px var(--font-sans); color:var(--fg2); border-bottom:1px solid var(--cream-200);">{{ a.masa }}</td>
+                  <td style="padding:13px 8px; text-align:right; font:600 12.5px var(--font-mono); color:var(--fg1); border-bottom:1px solid var(--cream-200);">{{ a.perolehan }}</td>
+                  <td style="padding:13px 8px; text-align:right; font:600 12.5px var(--font-mono); color:var(--fg2); border-bottom:1px solid var(--cream-200);">{{ a.penyusutan }}</td>
+                  <td style="padding:13px 8px; text-align:right; font:600 12.5px var(--font-mono); color:var(--fg2); border-bottom:1px solid var(--cream-200);">{{ a.akum }}</td>
+                  <td style="padding:13px 22px; text-align:right; font:700 12.5px var(--font-mono); color:var(--fg1); border-bottom:1px solid var(--cream-200);">{{ a.nilaibuku }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+
+    <sc-if value="{{ toastShow }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--wedel-900); color:#F5F1E8; padding:13px 20px; border-radius:10px; box-shadow:var(--shadow-lg); font:600 13.5px var(--font-sans); display:flex; align-items:center; gap:10px; z-index:60; animation:lent-fade var(--dur-base) var(--ease);">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--padi-300)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        {{ toastMsg }}
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1280, &quot;height&quot;: 860}, &quot;tarifPPN&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;11&quot;, &quot;12&quot;], &quot;default&quot;: &quot;11&quot;, &quot;tsType&quot;: &quot;string&quot;}, &quot;tarifPPh23&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;2&quot;, &quot;4&quot;], &quot;default&quot;: &quot;2&quot;, &quot;tsType&quot;: &quot;string&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'dashboard',
+    exportOpen: false,
+    toast: '',
+    draftDesc: 'Penjualan tunai barang dagang',
+    draftDate: '31 Mei 2026',
+    draft: [
+      { akun: '1-101', debit: 11100000, kredit: 0 },
+      { akun: '4-101', debit: 0, kredit: 10000000 },
+      { akun: '2-1021', debit: 0, kredit: 1100000 },
+    ],
+    posted: [
+      { no: 'JU-0512', tgl: '31 Mei 2026', desc: 'Penyusutan aset tetap Mei', total: 45000000 },
+      { no: 'JU-0511', tgl: '31 Mei 2026', desc: 'Pembayaran sewa gudang', total: 15000000 },
+    ],
+    ledgerAcc: '1-101',
+    coaCollapsed: {},
+    jualMode: 'barang',
+    beliMode: 'barang',
+    jualBarang: [
+      { nama: 'Beras premium 25 kg', qty: 120, harga: 320000 },
+      { nama: 'Minyak goreng 2 L (karton)', qty: 200, harga: 38000 },
+      { nama: 'Gula pasir 50 kg', qty: 40, harga: 720000 },
+    ],
+    jualJasa: [
+      { nama: 'Jasa pengiriman & distribusi', qty: 1, harga: 25000000 },
+      { nama: 'Jasa pergudangan (storage) Mei', qty: 1, harga: 15000000 },
+    ],
+    beliBarang: [
+      { nama: 'Beras premium 25 kg', qty: 200, harga: 295000 },
+      { nama: 'Minyak goreng 2 L (karton)', qty: 300, harga: 34000 },
+      { nama: 'Kardus & kemasan distribusi', qty: 1000, harga: 3500 },
+    ],
+    beliJasa: [
+      { nama: 'Jasa konsultan pajak', qty: 1, harga: 12000000 },
+      { nama: 'Jasa kebersihan kantor', qty: 1, harga: 6000000 },
+    ],
+    mBarang: [
+      { sku: 'BRG-001', nama: 'Beras premium 25 kg', kategori: 'Sembako', satuan: 'Sak', harga: 360000, stok: 420 },
+      { sku: 'BRG-002', nama: 'Minyak goreng 2 L', kategori: 'Sembako', satuan: 'Karton', harga: 42000, stok: 880 },
+      { sku: 'BRG-003', nama: 'Gula pasir 50 kg', kategori: 'Sembako', satuan: 'Sak', harga: 760000, stok: 150 },
+      { sku: 'BRG-004', nama: 'Tepung terigu 25 kg', kategori: 'Sembako', satuan: 'Sak', harga: 285000, stok: 310 },
+      { sku: 'BRG-005', nama: 'Kardus distribusi', kategori: 'Kemasan', satuan: 'Pcs', harga: 4500, stok: 5200 },
+      { sku: 'BRG-006', nama: 'Telur ayam negeri', kategori: 'Sembako', satuan: 'Tray', harga: 58000, stok: 240 },
+    ],
+    mVendor: [
+      { kode: 'VEN-001', nama: 'PT Pangan Makmur Sentosa', npwp: '03.111.222.3-503.000', kategori: 'Barang dagang', telp: '031-555-1020' },
+      { kode: 'VEN-002', nama: 'Sumber Beras Tani', npwp: '05.123.456.7-505.000', kategori: 'Barang dagang', telp: '0271-640-220' },
+      { kode: 'VEN-003', nama: 'CV Kemasan Prima', npwp: '06.234.567.8-506.000', kategori: 'Kemasan', telp: '024-760-330' },
+      { kode: 'VEN-004', nama: 'KAP Wijaya & Rekan', npwp: '04.222.333.4-504.000', kategori: 'Jasa', telp: '021-720-9100' },
+      { kode: 'VEN-005', nama: 'Bersih Sentosa Servis', npwp: '09.333.444.5-509.000', kategori: 'Jasa', telp: '024-330-7711' },
+    ],
+    mPelanggan: [
+      { kode: 'PLG-001', nama: 'CV Berkah Jaya Mandiri', npwp: '01.234.567.8-501.000', tipe: 'Distributor', telp: '024-841-220' },
+      { kode: 'PLG-002', nama: 'Toko Maju Jaya', npwp: '07.345.678.9-507.000', tipe: 'Ritel', telp: '0298-321-441' },
+      { kode: 'PLG-003', nama: 'PT Logistik Andal Nusantara', npwp: '02.345.678.9-502.000', tipe: 'Korporat', telp: '024-700-8800' },
+      { kode: 'PLG-004', nama: 'UD Sumber Rejeki', npwp: '—', tipe: 'Ritel', telp: '0271-220-118' },
+      { kode: 'PLG-005', nama: 'Koperasi Tani Sejahtera', npwp: '08.456.789.0-508.000', tipe: 'Koperasi', telp: '0276-330-552' },
+    ],
+  };
+
+  fileRef = React.createRef();
+
+  fmt(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+  plain(n) { return Math.round(n).toLocaleString('id-ID'); }
+  ppnRate() { return (Number(this.props.tarifPPN ?? 11)) / 100; }
+  pph23Rate() { return (Number(this.props.tarifPPh23 ?? 2)) / 100; }
+  set(screen) { this.setState({ screen, exportOpen: false }); }
+  showToast(msg) { this.setState({ toast: msg }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 3400); }
+  moduleLabel() { return ({ dashboard:'Dashboard', mBarang:'Master barang', mVendor:'Data vendor', mPelanggan:'Data pelanggan', jurnal:'Jurnal umum', bukubesar:'Buku besar', coa:'Bagan akun', penjualan:'Penjualan', pembelian:'Pembelian', pajak:'Pajak', neraca:'Neraca', labarugi:'Laba rugi', aruskas:'Arus kas', aset:'Aset tetap' })[this.state.screen]; }
+
+  upd(i, field, val) { this.setState(s => { const d = s.draft.slice(); d[i] = { ...d[i], [field]: val }; return { draft: d }; }); }
+  addLine() { this.setState(s => ({ draft: [...s.draft, { akun: '', debit: 0, kredit: 0 }] })); }
+  removeLine(i) { this.setState(s => ({ draft: s.draft.filter((_, k) => k !== i) })); }
+  clearDraft() { this.setState({ draft: [{ akun: '', debit: 0, kredit: 0 }, { akun: '', debit: 0, kredit: 0 }], draftDesc: '' }); }
+  loadTpl(desc, lines) { this.setState({ draftDesc: desc, draft: lines }); }
+  tplJual() { this.loadTpl('Penjualan tunai barang dagang', [{ akun: '1-101', debit: 11100000, kredit: 0 }, { akun: '4-101', debit: 0, kredit: 10000000 }, { akun: '2-1021', debit: 0, kredit: 1100000 }]); }
+  tplBeli() { this.loadTpl('Pembelian persediaan barang', [{ akun: '1-104', debit: 5000000, kredit: 0 }, { akun: '1-105', debit: 550000, kredit: 0 }, { akun: '1-1021', debit: 0, kredit: 5550000 }]); }
+  tplGaji() { this.loadTpl('Pembayaran gaji karyawan', [{ akun: '6-101', debit: 20000000, kredit: 0 }, { akun: '2-1022', debit: 0, kredit: 600000 }, { akun: '1-1021', debit: 0, kredit: 19400000 }]); }
+  postJurnal() {
+    const d = this.state.draft;
+    const totD = d.reduce((a, l) => a + (Number(l.debit) || 0), 0);
+    const totK = d.reduce((a, l) => a + (Number(l.kredit) || 0), 0);
+    if (totD !== totK || totD === 0) return;
+    const no = 'JU-0' + (513 + (this.state.posted.length - 2));
+    const entry = { no, tgl: this.state.draftDate || '31 Mei 2026', desc: this.state.draftDesc || 'Jurnal manual', total: totD };
+    this.setState(s => ({ posted: [entry, ...s.posted], draft: [{ akun: '', debit: 0, kredit: 0 }, { akun: '', debit: 0, kredit: 0 }], draftDesc: '' }));
+    this.showToast('Jurnal ' + no + ' berhasil diposting');
+  }
+
+  updItem(key, i, field, val) { this.setState(s => { const a = s[key].slice(); a[i] = { ...a[i], [field]: val }; return { [key]: a }; }); }
+  addItem(key) { this.setState(s => ({ [key]: [...s[key], { nama: '', qty: 1, harga: 0 }] })); }
+  addRow(key, blank) { this.setState(s => ({ [key]: [...s[key], { ...blank }] })); }
+  removeItem(key, i) { this.setState(s => ({ [key]: s[key].filter((_, k) => k !== i) })); }
+  buildItems(key) {
+    return this.state[key].map((it, i) => ({
+      nama: it.nama, qty: it.qty, harga: it.harga,
+      jumlah: this.plain((Number(it.qty) || 0) * (Number(it.harga) || 0)),
+      onNama: e => this.updItem(key, i, 'nama', e.target.value),
+      onQty: e => this.updItem(key, i, 'qty', Number(e.target.value) || 0),
+      onHarga: e => this.updItem(key, i, 'harga', Number(e.target.value) || 0),
+      onRemove: () => this.removeItem(key, i),
+    }));
+  }
+  sumItems(key) { return this.state[key].reduce((a, it) => a + (Number(it.qty) || 0) * (Number(it.harga) || 0), 0); }
+
+  ledgerData() {
+    return {
+      '1-101': { title: '1-101 · Kas', normal: 'debit', awal: 74040000, tx: [
+        { tgl: '03 Mei 2026', ket: 'Penjualan tunai barang', d: 22200000, k: 0 },
+        { tgl: '08 Mei 2026', ket: 'Setor ke bank BCA', d: 0, k: 30000000 },
+        { tgl: '15 Mei 2026', ket: 'Penjualan tunai barang', d: 18800000, k: 0 },
+        { tgl: '22 Mei 2026', ket: 'Bayar beban operasional', d: 0, k: 5040000 },
+        { tgl: '29 Mei 2026', ket: 'Penjualan tunai barang', d: 5000000, k: 0 } ] },
+      '1-102': { title: '1-102 · Bank BCA', normal: 'debit', awal: 357450000, tx: [
+        { tgl: '08 Mei 2026', ket: 'Setoran dari kas', d: 30000000, k: 0 },
+        { tgl: '12 Mei 2026', ket: 'Pelunasan piutang CV Berkah', d: 88800000, k: 0 },
+        { tgl: '18 Mei 2026', ket: 'Bayar pemasok (utang usaha)', d: 0, k: 46250000 },
+        { tgl: '25 Mei 2026', ket: 'Pembayaran gaji karyawan', d: 0, k: 19400000 },
+        { tgl: '30 Mei 2026', ket: 'Angsuran pokok utang bank', d: 0, k: 30000000 } ] },
+      '4-101': { title: '4-101 · Penjualan barang dagang', normal: 'kredit', awal: 0, tx: [
+        { tgl: '03 Mei 2026', ket: 'Penjualan tunai', d: 0, k: 20000000 },
+        { tgl: '11 Mei 2026', ket: 'Penjualan kredit CV Berkah', d: 0, k: 80000000 },
+        { tgl: '15 Mei 2026', ket: 'Penjualan tunai', d: 0, k: 17000000 },
+        { tgl: '20 Mei 2026', ket: 'Penjualan kredit Toko Maju', d: 0, k: 65000000 },
+        { tgl: '27 Mei 2026', ket: 'Retur penjualan', d: 2000000, k: 0 } ] },
+    };
+  }
+  selLedger(kode) { this.setState({ ledgerAcc: kode }); }
+
+  coaData() {
+    return [
+      { t: 'group', kode: '1', nama: 'ASET' },
+      { t: 'acct', kode: '1-101', nama: 'Kas', grp: 'Aset lancar', saldo: '85.000.000' },
+      { t: 'acct', kode: '1-102', nama: 'Bank BCA', grp: 'Aset lancar', saldo: '420.000.000' },
+      { t: 'acct', kode: '1-103', nama: 'Piutang usaha', grp: 'Aset lancar', saldo: '310.000.000' },
+      { t: 'acct', kode: '1-104', nama: 'Persediaan barang', grp: 'Aset lancar', saldo: '540.000.000' },
+      { t: 'acct', kode: '1-105', nama: 'PPN masukan', grp: 'Aset lancar', saldo: '24.000.000' },
+      { t: 'acct', kode: '1-106', nama: 'Beban dibayar dimuka', grp: 'Aset lancar', saldo: '36.000.000' },
+      { t: 'acct', kode: '1-201', nama: 'Peralatan & kendaraan', grp: 'Aset tetap', saldo: '1.250.000.000' },
+      { t: 'acct', kode: '1-202', nama: 'Akumulasi penyusutan', grp: 'Aset tetap', saldo: '(320.000.000)' },
+      { t: 'group', kode: '2', nama: 'LIABILITAS' },
+      { t: 'acct', kode: '2-101', nama: 'Utang usaha', grp: 'Jangka pendek', saldo: '268.000.000' },
+      { t: 'acct', kode: '2-102', nama: 'Utang PPN (kurang bayar)', grp: 'Jangka pendek', saldo: '58.300.000' },
+      { t: 'acct', kode: '2-103', nama: 'Utang PPh 21', grp: 'Jangka pendek', saldo: '12.400.000' },
+      { t: 'acct', kode: '2-104', nama: 'Utang PPh 23', grp: 'Jangka pendek', saldo: '3.600.000' },
+      { t: 'acct', kode: '2-105', nama: 'Utang PPh 25/29', grp: 'Jangka pendek', saldo: '21.700.000' },
+      { t: 'acct', kode: '2-110', nama: 'Beban masih harus dibayar', grp: 'Jangka pendek', saldo: '41.000.000' },
+      { t: 'acct', kode: '2-201', nama: 'Utang bank', grp: 'Jangka panjang', saldo: '560.000.000' },
+      { t: 'group', kode: '3', nama: 'EKUITAS' },
+      { t: 'acct', kode: '3-101', nama: 'Modal saham', grp: 'Ekuitas', saldo: '1.000.000.000' },
+      { t: 'acct', kode: '3-102', nama: 'Saldo laba', grp: 'Ekuitas', saldo: '380.000.000' },
+      { t: 'group', kode: '4', nama: 'PENDAPATAN' },
+      { t: 'acct', kode: '4-101', nama: 'Penjualan barang dagang', grp: 'Pendapatan', saldo: '1.450.000.000' },
+      { t: 'acct', kode: '4-102', nama: 'Pendapatan jasa', grp: 'Pendapatan', saldo: '180.000.000' },
+      { t: 'group', kode: '5', nama: 'BEBAN POKOK' },
+      { t: 'acct', kode: '5-101', nama: 'Beban pokok penjualan', grp: 'Beban pokok', saldo: '920.000.000' },
+      { t: 'group', kode: '6', nama: 'BEBAN OPERASIONAL' },
+      { t: 'acct', kode: '6-101', nama: 'Beban gaji & tunjangan', grp: 'Beban operasi', saldo: '240.000.000' },
+      { t: 'acct', kode: '6-102', nama: 'Beban sewa', grp: 'Beban operasi', saldo: '60.000.000' },
+      { t: 'acct', kode: '6-103', nama: 'Beban penyusutan', grp: 'Beban operasi', saldo: '45.000.000' },
+      { t: 'acct', kode: '6-104', nama: 'Beban pemasaran', grp: 'Beban operasi', saldo: '52.000.000' },
+      { t: 'acct', kode: '6-105', nama: 'Beban listrik & utilitas', grp: 'Beban operasi', saldo: '28.000.000' },
+      { t: 'acct', kode: '6-106', nama: 'Beban administrasi & umum', grp: 'Beban operasi', saldo: '35.000.000' },
+      { t: 'acct', kode: '6-107', nama: 'Beban bunga', grp: 'Beban operasi', saldo: '18.000.000' },
+    ];
+  }
+  asetData() {
+    return [
+      { nama: 'Gedung kantor & gudang', kelompok: 'Bangunan permanen', tgl: 'Jan 2021', masa: '20 thn', perolehan: '600.000.000', penyusutan: '2.500.000', akum: '130.000.000', nilaibuku: '470.000.000' },
+      { nama: 'Kendaraan box distribusi', kelompok: 'Kelompok II', tgl: 'Mar 2023', masa: '8 thn', perolehan: '320.000.000', penyusutan: '3.333.333', akum: '128.000.000', nilaibuku: '192.000.000' },
+      { nama: 'Forklift & alat gudang', kelompok: 'Kelompok I', tgl: 'Jul 2024', masa: '4 thn', perolehan: '180.000.000', penyusutan: '3.750.000', akum: '41.250.000', nilaibuku: '138.750.000' },
+      { nama: 'Komputer & server', kelompok: 'Kelompok I', tgl: 'Feb 2025', masa: '4 thn', perolehan: '90.000.000', penyusutan: '1.875.000', akum: '16.875.000', nilaibuku: '73.125.000' },
+      { nama: 'Furnitur kantor', kelompok: 'Kelompok I', tgl: 'Jan 2022', masa: '4 thn', perolehan: '60.000.000', penyusutan: '1.250.000', akum: '3.875.000', nilaibuku: '56.125.000' },
+    ];
+  }
+
+  coaTree() {
+    return [
+      { kode: '1', nama: 'ASET', children: [
+        { kode: '1-10', nama: 'Aset lancar', children: [
+          { kode: '1-101', nama: 'Kas', saldo: 85000000 },
+          { kode: '1-102', nama: 'Bank', children: [
+            { kode: '1-1021', nama: 'Bank BCA', saldo: 320000000 },
+            { kode: '1-1022', nama: 'Bank Mandiri', saldo: 100000000 },
+          ] },
+          { kode: '1-103', nama: 'Piutang usaha', saldo: 310000000 },
+          { kode: '1-104', nama: 'Persediaan barang', saldo: 540000000 },
+          { kode: '1-105', nama: 'PPN masukan', saldo: 24000000 },
+          { kode: '1-106', nama: 'Beban dibayar dimuka', saldo: 36000000 },
+        ] },
+        { kode: '1-20', nama: 'Aset tetap', children: [
+          { kode: '1-201', nama: 'Peralatan & kendaraan', saldo: 1250000000 },
+          { kode: '1-202', nama: 'Akumulasi penyusutan', saldo: -320000000 },
+        ] },
+      ] },
+      { kode: '2', nama: 'LIABILITAS', children: [
+        { kode: '2-10', nama: 'Liabilitas jangka pendek', children: [
+          { kode: '2-101', nama: 'Utang usaha', saldo: 268000000 },
+          { kode: '2-102', nama: 'Utang pajak', children: [
+            { kode: '2-1021', nama: 'Utang PPN keluaran', saldo: 58300000 },
+            { kode: '2-1022', nama: 'Utang PPh 21', saldo: 12400000 },
+            { kode: '2-1023', nama: 'Utang PPh 23', saldo: 3600000 },
+            { kode: '2-1024', nama: 'Utang PPh 25/29', saldo: 21700000 },
+          ] },
+          { kode: '2-110', nama: 'Beban masih harus dibayar', saldo: 41000000 },
+        ] },
+        { kode: '2-20', nama: 'Liabilitas jangka panjang', children: [
+          { kode: '2-201', nama: 'Utang bank', saldo: 560000000 },
+        ] },
+      ] },
+      { kode: '3', nama: 'EKUITAS', children: [
+        { kode: '3-101', nama: 'Modal saham', saldo: 1000000000 },
+        { kode: '3-102', nama: 'Saldo laba', saldo: 380000000 },
+      ] },
+      { kode: '4', nama: 'PENDAPATAN', children: [
+        { kode: '4-101', nama: 'Penjualan barang dagang', saldo: 1450000000 },
+        { kode: '4-102', nama: 'Pendapatan jasa', saldo: 180000000 },
+      ] },
+      { kode: '5', nama: 'BEBAN POKOK', children: [
+        { kode: '5-101', nama: 'Beban pokok penjualan', saldo: 920000000 },
+      ] },
+      { kode: '6', nama: 'BEBAN OPERASIONAL', children: [
+        { kode: '6-101', nama: 'Beban gaji & tunjangan', saldo: 240000000 },
+        { kode: '6-102', nama: 'Beban sewa', saldo: 60000000 },
+        { kode: '6-103', nama: 'Beban penyusutan', saldo: 45000000 },
+        { kode: '6-104', nama: 'Beban pemasaran', saldo: 52000000 },
+        { kode: '6-105', nama: 'Beban listrik & utilitas', saldo: 28000000 },
+        { kode: '6-106', nama: 'Beban administrasi & umum', saldo: 35000000 },
+        { kode: '6-107', nama: 'Beban bunga', saldo: 18000000 },
+      ] },
+    ];
+  }
+  sumNode(n) { return n.children ? n.children.reduce((a, c) => a + this.sumNode(c), 0) : (n.saldo || 0); }
+  fmtSaldo(n) { return n < 0 ? '(' + this.plain(-n) + ')' : this.plain(n); }
+  leafList() { const out = []; const walk = ns => ns.forEach(n => { if (n.children) walk(n.children); else out.push(n); }); walk(this.coaTree()); return out; }
+  flattenCoa(nodes, depth, rows, all) { nodes.forEach(n => { const isParent = !!n.children; const collapsed = !!this.state.coaCollapsed[n.kode]; rows.push({ node: n, depth, isParent, collapsed, total: this.sumNode(n) }); if (isParent && (all || !collapsed)) this.flattenCoa(n.children, depth + 1, rows, all); }); }
+  toggleCoa(kode) { this.setState(s => { const c = { ...s.coaCollapsed }; if (c[kode]) delete c[kode]; else c[kode] = true; return { coaCollapsed: c }; }); }
+  expandCoaAll() { this.setState({ coaCollapsed: {} }); }
+  collapseCoaAll() { const c = {}; const walk = ns => ns.forEach(n => { if (n.children) { c[n.kode] = true; walk(n.children); } }); walk(this.coaTree()); this.setState({ coaCollapsed: c }); }
+
+  navStyle(id) {
+    return this.state.screen === id
+      ? 'background:var(--sogan-50); color:var(--sogan-500); font-weight:700;'
+      : 'background:transparent; color:var(--fg2); font-weight:500;';
+  }
+
+  toggleExport() { this.setState(s => ({ exportOpen: !s.exportOpen })); }
+  onImportClick() { this.setState({ exportOpen: false }); if (this.fileRef.current) this.fileRef.current.click(); }
+  onImportFile(e) {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const mod = this.moduleLabel();
+    const reader = new FileReader();
+    reader.onload = () => {
+      let msg;
+      if (/\.csv$/i.test(f.name)) {
+        const lines = String(reader.result || '').split(/\r?\n/).filter(l => l.trim().length);
+        const n = Math.max(0, lines.length - 1);
+        msg = 'Berhasil impor ' + n + ' baris ke ' + mod + ' dari ' + f.name;
+      } else {
+        msg = 'Berhasil impor data ke ' + mod + ' dari ' + f.name;
+      }
+      this.showToast(msg);
+    };
+    reader.readAsText(f);
+    e.target.value = '';
+  }
+  exportMatrix() {
+    const sc = this.state.screen;
+    const name = 'lentera-' + sc + '-mei2026.csv';
+    let m = [];
+    if (sc === 'jurnal') { m = [['No bukti', 'Tanggal', 'Keterangan', 'Nilai (Rp)']]; this.state.posted.forEach(p => m.push([p.no, p.tgl, p.desc, this.plain(p.total)])); }
+    else if (sc === 'bukubesar') { const ld = this.ledgerData()[this.state.ledgerAcc]; m = [['Akun', ld.title], ['Tanggal', 'Keterangan', 'Debit', 'Kredit', 'Saldo']]; let run = ld.awal; m.push(['01 Mei 2026', 'Saldo awal', '', '', this.plain(run)]); ld.tx.forEach(t => { run += ld.normal === 'debit' ? (t.d - t.k) : (t.k - t.d); m.push([t.tgl, t.ket, t.d ? this.plain(t.d) : '', t.k ? this.plain(t.k) : '', this.plain(run)]); }); }
+    else if (sc === 'coa') { m = [['Kode', 'Nama akun', 'Tipe', 'Level', 'Saldo (Rp)']]; const fl = []; this.flattenCoa(this.coaTree(), 0, fl, true); fl.forEach(({ node, depth, isParent, total }) => m.push([node.kode, node.nama, depth === 0 ? 'Kelas' : (isParent ? 'Induk' : 'Detail'), depth + 1, this.fmtSaldo(total)])); }
+    else if (sc === 'penjualan' || sc === 'pembelian') { const isJual = sc === 'penjualan'; const mode = this.state[(isJual ? 'jual' : 'beli') + 'Mode']; const key = (isJual ? 'jual' : 'beli') + (mode === 'barang' ? 'Barang' : 'Jasa'); const items = this.state[key]; m = [[(isJual ? 'Faktur penjualan' : 'Tagihan pembelian'), mode], ['Item', 'Qty', 'Harga', 'Jumlah']]; let dpp = 0; items.forEach(it => { const j = (Number(it.qty) || 0) * (Number(it.harga) || 0); dpp += j; m.push([it.nama, it.qty, this.plain(it.harga), this.plain(j)]); }); const ppn = Math.round(dpp * this.ppnRate()); m.push(['', '', 'DPP', this.plain(dpp)]); m.push(['', '', 'PPN', this.plain(ppn)]); m.push(['', '', 'Total', this.plain(dpp + ppn)]); if (mode === 'jasa') m.push(['', '', 'PPh 23', this.plain(Math.round(dpp * this.pph23Rate()))]); }
+    else if (sc === 'pajak') { m = [['Jenis', 'Keterangan', 'Nilai (Rp)'], ['PPN keluaran', 'Penjualan kena pajak', '159.500.000'], ['PPN masukan', 'Dapat dikreditkan', '101.200.000'], ['PPN kurang bayar', 'Setor SPT Masa', '58.300.000'], ['PPh 21', 'Karyawan', '12.400.000'], ['PPh 23', 'Jasa', '3.600.000'], ['PPh 25', 'Angsuran', '18.000.000']]; }
+    else if (sc === 'neraca') { m = [['Pos', 'Nilai (Rp)'], ['Kas', '85.000.000'], ['Bank', '420.000.000'], ['Piutang usaha', '310.000.000'], ['Persediaan', '540.000.000'], ['PPN masukan', '24.000.000'], ['Beban dibayar dimuka', '36.000.000'], ['Aset tetap (perolehan)', '1.250.000.000'], ['Akumulasi penyusutan', '-320.000.000'], ['Total aset', '2.345.000.000'], ['Utang usaha', '268.000.000'], ['Utang pajak', '96.000.000'], ['Beban masih harus dibayar', '41.000.000'], ['Utang bank', '560.000.000'], ['Modal saham', '1.000.000.000'], ['Saldo laba', '380.000.000'], ['Total liabilitas & ekuitas', '2.345.000.000']]; }
+    else if (sc === 'labarugi') { m = [['Pos', 'Nilai (Rp)'], ['Penjualan barang', '1.450.000.000'], ['Pendapatan jasa', '180.000.000'], ['Total pendapatan', '1.630.000.000'], ['Beban pokok penjualan', '-920.000.000'], ['Laba kotor', '710.000.000'], ['Beban gaji', '-240.000.000'], ['Beban sewa', '-60.000.000'], ['Beban penyusutan', '-45.000.000'], ['Beban pemasaran', '-52.000.000'], ['Beban listrik & utilitas', '-28.000.000'], ['Beban administrasi', '-35.000.000'], ['Laba usaha', '250.000.000'], ['Beban bunga', '-18.000.000'], ['Laba sebelum pajak', '232.000.000'], ['Beban pajak (22%)', '-51.040.000'], ['Laba bersih', '180.960.000']]; }
+    else if (sc === 'aruskas') { m = [['Pos', 'Nilai (Rp)'], ['Laba bersih', '180.960.000'], ['Penyusutan', '45.000.000'], ['Kenaikan piutang', '-40.000.000'], ['Kenaikan persediaan', '-60.000.000'], ['Kenaikan utang usaha', '35.000.000'], ['Kas bersih operasi', '160.960.000'], ['Pembelian peralatan', '-120.000.000'], ['Kas bersih investasi', '-120.000.000'], ['Angsuran utang bank', '-30.000.000'], ['Kas bersih pendanaan', '-30.000.000'], ['Kenaikan kas bersih', '10.960.000'], ['Kas awal', '494.040.000'], ['Kas akhir', '505.000.000']]; }
+    else if (sc === 'aset') { m = [['Aset', 'Kelompok', 'Perolehan', 'Masa', 'Harga perolehan', 'Penyusutan/bln', 'Akum penyusutan', 'Nilai buku']]; this.asetData().forEach(a => m.push([a.nama, a.kelompok, a.tgl, a.masa, a.perolehan, a.penyusutan, a.akum, a.nilaibuku])); }
+    else if (sc === 'mBarang') { m = [['Kode', 'Nama barang', 'Kategori', 'Satuan', 'Harga jual', 'Stok']]; this.state.mBarang.forEach(r => m.push([r.sku, r.nama, r.kategori, r.satuan, this.plain(r.harga), r.stok])); }
+    else if (sc === 'mVendor') { m = [['Kode', 'Nama vendor', 'NPWP', 'Kategori', 'Telepon']]; this.state.mVendor.forEach(r => m.push([r.kode, r.nama, r.npwp, r.kategori, r.telp])); }
+    else if (sc === 'mPelanggan') { m = [['Kode', 'Nama pelanggan', 'NPWP', 'Tipe', 'Telepon']]; this.state.mPelanggan.forEach(r => m.push([r.kode, r.nama, r.npwp, r.tipe, r.telp])); }
+    else { m = [['Ringkasan', 'PT Sinar Niaga Sentosa - Mei 2026'], ['Metrik', 'Nilai (Rp)'], ['Kas & bank', '505.000.000'], ['Pendapatan bulan ini', '1.630.000.000'], ['Laba bersih', '180.960.000'], ['Pajak terutang', '96.000.000']]; }
+    return { name, matrix: m };
+  }
+  exportExcel() {
+    const { name, matrix } = this.exportMatrix();
+    const csv = '\ufeff' + matrix.map(r => r.map(c => { const s = String(c == null ? '' : c); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(';')).join('\n');
+    try {
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (err) {}
+    this.setState({ exportOpen: false });
+    this.showToast('Data ' + this.moduleLabel() + ' diekspor ke Excel (' + name + ')');
+  }
+  exportPDF() { this.setState({ exportOpen: false }); this.showToast('Menyiapkan PDF ' + this.moduleLabel() + '…'); setTimeout(() => { try { window.print(); } catch (e) {} }, 400); }
+
+  renderVals() {
+    const s = this.state;
+    const ids = ['dashboard', 'mBarang', 'mVendor', 'mPelanggan', 'jurnal', 'bukubesar', 'coa', 'penjualan', 'pembelian', 'pajak', 'neraca', 'labarugi', 'aruskas', 'aset'];
+    const scr = {}; const nv = {}; const go = {};
+    ids.forEach(id => { scr[id] = s.screen === id; nv[id] = this.navStyle(id); go[id] = () => this.set(id); });
+    const crumb = this.moduleLabel();
+
+    const cash = [
+      { label: 'Des', inN: 62, outN: 48 }, { label: 'Jan', inN: 70, outN: 55 },
+      { label: 'Feb', inN: 58, outN: 60 }, { label: 'Mar', inN: 82, outN: 64 },
+      { label: 'Apr', inN: 90, outN: 70 }, { label: 'Mei', inN: 100, outN: 78 },
+    ];
+    const cashbars = cash.map(c => ({ label: c.label, inH: c.inN + '%', outH: c.outN + '%' }));
+    const recentJurnal = s.posted.slice(0, 4).map(p => ({ tgl: p.tgl, no: p.no, desc: p.desc, totalStr: this.fmt(p.total) }));
+
+    const accountOptions = this.leafList().map(c => ({ kode: c.kode, label: c.kode + '  ' + c.nama }));
+    const jurnalLines = s.draft.map((ln, i) => ({
+      akun: ln.akun, debit: ln.debit || '', kredit: ln.kredit || '',
+      onAkun: e => this.upd(i, 'akun', e.target.value),
+      onDebit: e => this.upd(i, 'debit', Number(e.target.value) || 0),
+      onKredit: e => this.upd(i, 'kredit', Number(e.target.value) || 0),
+      onRemove: () => this.removeLine(i),
+    }));
+    const totD = s.draft.reduce((a, l) => a + (Number(l.debit) || 0), 0);
+    const totK = s.draft.reduce((a, l) => a + (Number(l.kredit) || 0), 0);
+    const balanced = totD === totK && totD > 0;
+    const hasVal = totD > 0 || totK > 0;
+    const balanceBg = balanced ? 'var(--padi-100)' : (hasVal ? 'var(--bata-100)' : 'var(--cream-50)');
+    const balanceColor = balanced ? 'var(--padi-700)' : (hasVal ? 'var(--bata-700)' : 'var(--fg2)');
+    const balanceIcon = balanced ? '✓' : '⚠';
+    const balanceText = balanced ? 'Seimbang — siap diposting' : (totD === totK ? 'Isi nominal debit & kredit dulu' : 'Belum seimbang · selisih Rp ' + this.plain(Math.abs(totD - totK)));
+    const postedList = s.posted.map(p => ({ no: p.no, tgl: p.tgl, desc: p.desc, totalStr: this.fmt(p.total) }));
+
+    const ld = this.ledgerData();
+    const ledgerTabs = Object.keys(ld).map(k => {
+      const on = s.ledgerAcc === k;
+      return { label: ld[k].title.split(' · ')[1], onClick: () => this.selLedger(k), bg: on ? 'var(--sogan-500)' : '#fff', color: on ? '#F5F1E8' : 'var(--fg1)', border: on ? 'var(--sogan-500)' : 'var(--border-strong)' };
+    });
+    const cur = ld[s.ledgerAcc];
+    let run = cur.awal;
+    const ledgerRows = [{ tgl: '01 Mei 2026', ket: 'Saldo awal', debit: '—', kredit: '—', saldo: this.plain(run), dColor: 'var(--fg3)', kColor: 'var(--fg3)' }];
+    cur.tx.forEach(t => {
+      run += (cur.normal === 'debit') ? (t.d - t.k) : (t.k - t.d);
+      ledgerRows.push({ tgl: t.tgl, ket: t.ket, debit: t.d ? this.plain(t.d) : '—', kredit: t.k ? this.plain(t.k) : '—', dColor: t.d ? 'var(--fg1)' : 'var(--fg3)', kColor: t.k ? 'var(--fg1)' : 'var(--fg3)', saldo: this.plain(run) });
+    });
+
+    const coaFlat = [];
+    this.flattenCoa(this.coaTree(), 0, coaFlat, false);
+    const coaRows = coaFlat.map(({ node, depth, isParent, collapsed, total }) => ({
+      kode: node.kode, nama: node.nama,
+      tipe: depth === 0 ? 'Kelas' : (isParent ? 'Induk' : 'Detail'),
+      tipeBg: depth === 0 ? 'var(--emas-100)' : (isParent ? 'var(--sogan-50)' : 'var(--cream-200)'),
+      tipeColor: depth === 0 ? 'var(--emas-700)' : (isParent ? 'var(--sogan-500)' : 'var(--tanah-500)'),
+      saldo: this.fmtSaldo(total),
+      indent: (depth * 24) + 'px',
+      chevronOpacity: isParent ? '1' : '0',
+      chevronTransform: (isParent && !collapsed) ? 'rotate(90deg)' : 'rotate(0deg)',
+      onToggle: isParent ? (() => this.toggleCoa(node.kode)) : (() => {}),
+      rowBg: depth === 0 ? 'var(--cream-100)' : (depth === 1 ? 'var(--cream-50)' : '#fff'),
+      rowCursor: isParent ? 'pointer' : 'default',
+      kodeFont: depth === 0 ? '800 13px var(--font-mono)' : (isParent ? '700 12.5px var(--font-mono)' : '500 12.5px var(--font-mono)'),
+      kodeColor: depth === 0 ? 'var(--sogan-500)' : (isParent ? 'var(--tanah-700)' : 'var(--fg2)'),
+      namaFont: depth === 0 ? '800 13.5px var(--font-sans)' : (isParent ? '700 13px var(--font-sans)' : '500 13.5px var(--font-sans)'),
+      namaColor: depth === 0 ? 'var(--wedel-900)' : 'var(--fg1)',
+      saldoFont: isParent ? '700 13px var(--font-mono)' : '600 13px var(--font-mono)',
+    }));
+
+    const segActive = 'background:#fff; color:var(--sogan-500); box-shadow:var(--shadow-xs);';
+    const segIdle = 'background:transparent; color:var(--fg2);';
+    const ppnLabel = (this.props.tarifPPN ?? 11) + '%';
+    const pph23Label = (this.props.tarifPPh23 ?? 2) + '%';
+
+    // penjualan
+    const jm = s.jualMode; const jualKey = 'jual' + (jm === 'barang' ? 'Barang' : 'Jasa');
+    const jualItems = this.buildItems(jualKey); const jDpp = this.sumItems(jualKey);
+    const jPpn = Math.round(jDpp * this.ppnRate()); const jPph = Math.round(jDpp * this.pph23Rate());
+    const jualSeg = { onBarang: () => this.setState({ jualMode: 'barang' }), onJasa: () => this.setState({ jualMode: 'jasa' }), barangStyle: jm === 'barang' ? segActive : segIdle, jasaStyle: jm === 'jasa' ? segActive : segIdle };
+
+    // pembelian
+    const bm = s.beliMode; const beliKey = 'beli' + (bm === 'barang' ? 'Barang' : 'Jasa');
+    const beliItems = this.buildItems(beliKey); const bDpp = this.sumItems(beliKey);
+    const bPpn = Math.round(bDpp * this.ppnRate()); const bPph = Math.round(bDpp * this.pph23Rate());
+    const beliSeg = { onBarang: () => this.setState({ beliMode: 'barang' }), onJasa: () => this.setState({ beliMode: 'jasa' }), barangStyle: bm === 'barang' ? segActive : segIdle, jasaStyle: bm === 'jasa' ? segActive : segIdle };
+
+    const bd = (bg, color) => ({ bg, color });
+    const jualList = [
+      { no: 'INV/05/0188', cust: 'CV Berkah Jaya', status: 'Lunas', badgeBg: 'var(--padi-100)', badgeColor: 'var(--padi-700)' },
+      { no: 'INV/05/0185', cust: 'Toko Maju', status: 'Jatuh tempo', badgeBg: 'var(--emas-100)', badgeColor: 'var(--emas-700)' },
+      { no: 'INV/05/0182', cust: 'PT Logistik Andal', status: 'Terkirim', badgeBg: 'var(--info-soft)', badgeColor: 'var(--info)' },
+      { no: 'INV/05/0179', cust: 'UD Sumber Rejeki', status: 'Lunas', badgeBg: 'var(--padi-100)', badgeColor: 'var(--padi-700)' },
+    ];
+    const beliList = [
+      { no: 'BILL/05/0241', cust: 'PT Pangan Makmur', status: 'Disetujui', badgeBg: 'var(--padi-100)', badgeColor: 'var(--padi-700)' },
+      { no: 'BILL/05/0239', cust: 'KAP Wijaya & Rekan', status: 'Menunggu', badgeBg: 'var(--emas-100)', badgeColor: 'var(--emas-700)' },
+      { no: 'BILL/05/0236', cust: 'CV Kemasan Prima', status: 'Dibayar', badgeBg: 'var(--info-soft)', badgeColor: 'var(--info)' },
+      { no: 'BILL/05/0233', cust: 'Sumber Beras Tani', status: 'Dibayar', badgeBg: 'var(--info-soft)', badgeColor: 'var(--info)' },
+    ];
+
+    const fpRows = [
+      { nsfp: '010.000-26.00000188', lawan: 'CV Berkah Jaya Mandiri', ppn: '8.800.000', status: 'Diunggah', badgeBg: 'var(--padi-100)', badgeColor: 'var(--padi-700)' },
+      { nsfp: '010.000-26.00000187', lawan: 'Toko Maju Jaya', ppn: '7.150.000', status: 'Diunggah', badgeBg: 'var(--padi-100)', badgeColor: 'var(--padi-700)' },
+      { nsfp: '010.000-26.00000186', lawan: 'PT Logistik Andal', ppn: '2.750.000', status: 'Draf', badgeBg: 'var(--emas-100)', badgeColor: 'var(--emas-700)' },
+      { nsfp: '010.000-26.00000185', lawan: 'UD Sumber Rejeki', ppn: '1.870.000', status: 'Diunggah', badgeBg: 'var(--padi-100)', badgeColor: 'var(--padi-700)' },
+      { nsfp: '010.000-26.00000184', lawan: 'Koperasi Tani Sejahtera', ppn: '4.400.000', status: 'Diunggah', badgeBg: 'var(--padi-100)', badgeColor: 'var(--padi-700)' },
+    ];
+    const asetRows = this.asetData();
+
+    const mBarangRows = s.mBarang.map((row, i) => ({
+      sku: row.sku, nama: row.nama, kategori: row.kategori, satuan: row.satuan, harga: row.harga, stok: row.stok,
+      onSku: e => this.updItem('mBarang', i, 'sku', e.target.value),
+      onNama: e => this.updItem('mBarang', i, 'nama', e.target.value),
+      onKategori: e => this.updItem('mBarang', i, 'kategori', e.target.value),
+      onSatuan: e => this.updItem('mBarang', i, 'satuan', e.target.value),
+      onHarga: e => this.updItem('mBarang', i, 'harga', Number(e.target.value) || 0),
+      onStok: e => this.updItem('mBarang', i, 'stok', Number(e.target.value) || 0),
+      onRemove: () => this.removeItem('mBarang', i),
+    }));
+    const mVendorRows = s.mVendor.map((row, i) => ({
+      kode: row.kode, nama: row.nama, npwp: row.npwp, kategori: row.kategori, telp: row.telp,
+      onKode: e => this.updItem('mVendor', i, 'kode', e.target.value),
+      onNama: e => this.updItem('mVendor', i, 'nama', e.target.value),
+      onNpwp: e => this.updItem('mVendor', i, 'npwp', e.target.value),
+      onKategori: e => this.updItem('mVendor', i, 'kategori', e.target.value),
+      onTelp: e => this.updItem('mVendor', i, 'telp', e.target.value),
+      onRemove: () => this.removeItem('mVendor', i),
+    }));
+    const mPelangganRows = s.mPelanggan.map((row, i) => ({
+      kode: row.kode, nama: row.nama, npwp: row.npwp, tipe: row.tipe, telp: row.telp,
+      onKode: e => this.updItem('mPelanggan', i, 'kode', e.target.value),
+      onNama: e => this.updItem('mPelanggan', i, 'nama', e.target.value),
+      onNpwp: e => this.updItem('mPelanggan', i, 'npwp', e.target.value),
+      onTipe: e => this.updItem('mPelanggan', i, 'tipe', e.target.value),
+      onTelp: e => this.updItem('mPelanggan', i, 'telp', e.target.value),
+      onRemove: () => this.removeItem('mPelanggan', i),
+    }));
+
+    return {
+      mBarangRows, mVendorRows, mPelangganRows,
+      mBarangCount: s.mBarang.length + ' barang', mVendorCount: s.mVendor.length + ' vendor', mPelangganCount: s.mPelanggan.length + ' pelanggan',
+      mBarangAdd: () => this.addRow('mBarang', { sku: '', nama: '', kategori: '', satuan: '', harga: 0, stok: 0 }),
+      mVendorAdd: () => this.addRow('mVendor', { kode: '', nama: '', npwp: '', kategori: '', telp: '' }),
+      mPelangganAdd: () => this.addRow('mPelanggan', { kode: '', nama: '', npwp: '', tipe: '', telp: '' }),
+      scr, nv, go, crumb, moduleName: crumb,
+      fileRef: this.fileRef, onImportClick: () => this.onImportClick(), onImportFile: e => this.onImportFile(e),
+      toggleExport: () => this.toggleExport(), exportOpen: s.exportOpen, exportExcel: () => this.exportExcel(), exportPDF: () => this.exportPDF(),
+      toastShow: !!s.toast, toastMsg: s.toast,
+      cashbars, recentJurnal,
+      draftDesc: s.draftDesc, draftDate: s.draftDate, onDesc: e => this.setState({ draftDesc: e.target.value }), onDate: e => this.setState({ draftDate: e.target.value }),
+      jurnalLines, accountOptions, addLine: () => this.addLine(), clearDraft: () => this.clearDraft(),
+      tplJual: () => this.tplJual(), tplBeli: () => this.tplBeli(), tplGaji: () => this.tplGaji(),
+      totDebitStr: this.plain(totD), totKreditStr: this.plain(totK), balanceBg, balanceColor, balanceIcon, balanceText,
+      postJurnal: () => this.postJurnal(), postDisabled: !balanced, postBg: balanced ? 'var(--sogan-500)' : 'var(--cream-400)', postCursor: balanced ? 'pointer' : 'not-allowed', postedList,
+      ledgerTabs, ledgerTitle: cur.title, ledgerNormal: cur.normal, ledgerSaldo: this.fmt(run), ledgerRows,
+      coaRows, coaExpandAll: () => this.expandCoaAll(), coaCollapseAll: () => this.collapseCoaAll(),
+      ppnLabel, pph23Label,
+      jualSeg, jualItems, jualAddItem: () => this.addItem(jualKey), jualIsJasa: jm === 'jasa',
+      jualTipe: jm === 'barang' ? 'Barang' : 'Jasa', jualNo: jm === 'barang' ? 'INV/2026/05/0188' : 'INV/2026/05/0190',
+      jualSub: jm === 'barang' ? 'Faktur penjualan barang dagang — PPN dipungut, faktur pajak ber-NSFP otomatis.' : 'Faktur penjualan jasa — kena PPN dan dipotong PPh 23 oleh pelanggan.',
+      jualCust: jm === 'barang' ? 'CV Berkah Jaya Mandiri' : 'PT Logistik Andal Nusantara',
+      jualCustInfo: jm === 'barang' ? 'NPWP 01.234.567.8-501.000 · Jl. Gajah Mada 14, Semarang' : 'NPWP 02.345.678.9-502.000 · Jl. Pemuda 88, Semarang',
+      jualItemLabel: jm === 'barang' ? 'Barang' : 'Uraian jasa', jualQtyLabel: jm === 'barang' ? 'Qty' : 'Vol', jualHargaLabel: jm === 'barang' ? 'Harga' : 'Tarif', jualAddLabel: jm === 'barang' ? 'barang' : 'jasa',
+      jualDPP: this.fmt(jDpp), jualPPN: this.fmt(jPpn), jualTotal: this.fmt(jDpp + jPpn), jualPph23: this.fmt(jPph), jualDiterima: this.fmt(jDpp + jPpn - jPph),
+      jualSideNote: jm === 'barang' ? 'Nomor seri faktur pajak (NSFP) otomatis dari jatah DJP. Siap diunggah ke Coretax DJP.' : 'Penjualan jasa: terbit faktur pajak (PPN) sekaligus dipotong PPh 23 oleh pelanggan. Minta bukti potong e-Bupot.',
+      jualList,
+      beliSeg, beliItems, beliAddItem: () => this.addItem(beliKey), beliIsJasa: bm === 'jasa',
+      beliTipe: bm === 'barang' ? 'Barang' : 'Jasa', beliNo: bm === 'barang' ? 'BILL/2026/05/0241' : 'BILL/2026/05/0243',
+      beliSub: bm === 'barang' ? 'Tagihan pembelian barang dagang — PPN masukan dapat dikreditkan.' : 'Tagihan pembelian jasa — PPN masukan dikreditkan dan kami potong PPh 23 dari pemasok.',
+      beliVendor: bm === 'barang' ? 'PT Pangan Makmur Sentosa' : 'KAP Wijaya & Rekan',
+      beliVendorInfo: bm === 'barang' ? 'NPWP 03.111.222.3-503.000 · Surabaya' : 'NPWP 04.222.333.4-504.000 · Jakarta',
+      beliItemLabel: bm === 'barang' ? 'Barang' : 'Uraian jasa', beliQtyLabel: bm === 'barang' ? 'Qty' : 'Vol', beliHargaLabel: bm === 'barang' ? 'Harga' : 'Tarif', beliAddLabel: bm === 'barang' ? 'barang' : 'jasa',
+      beliDPP: this.fmt(bDpp), beliPPN: this.fmt(bPpn), beliTotal: this.fmt(bDpp + bPpn), beliPph23: this.fmt(bPph), beliDibayar: this.fmt(bDpp + bPpn - bPph),
+      beliSideNote: bm === 'barang' ? 'PPN masukan dapat dikreditkan dengan PPN keluaran pada SPT Masa PPN. Simpan faktur pajak dari pemasok.' : 'Atas jasa ini kamu wajib memotong PPh 23 (' + pph23Label + ') dan menyetorkannya. Terbitkan bukti potong e-Bupot untuk pemasok.',
+      beliList,
+      fpRows, asetRows,
+    };
+  }
+}
+</script>
+</body>
+</html>

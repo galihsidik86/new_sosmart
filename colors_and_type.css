@@ -1,0 +1,373 @@
+/* =============================================================
+   Sembada Design System — Foundations
+   Warna, tipografi, spacing, shadow, radius.
+   Import di top of every UI kit / preview HTML:
+     <link rel="stylesheet" href="/colors_and_type.css">
+   ============================================================= */
+
+/* --- Webfonts ----------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ============================================================
+     COLORS — base palette (raw hex, never reference directly in UI)
+     ============================================================ */
+
+  /* Sogan (merah maroon, primary) */
+  --sogan-50:  #FBF2EE;
+  --sogan-100: #F4DDD3;
+  --sogan-200: #E5B4A4;
+  --sogan-300: #D08672;
+  --sogan-400: #B85A48;
+  --sogan-500: #8B2E2E;   /* PRIMARY */
+  --sogan-600: #7A2828;
+  --sogan-700: #5E1F1F;
+  --sogan-800: #421717;
+  --sogan-900: #2A0F0F;
+
+  /* Cream / Gading (background warmth) */
+  --cream-50:  #FBF9F4;
+  --cream-100: #F5F1E8;   /* DEFAULT BG */
+  --cream-200: #ECE5D8;   /* divider, border */
+  --cream-300: #E5DDD0;
+  --cream-400: #D6C9B3;
+  --cream-500: #BFAE94;
+
+  /* Sogan Coklat (teks) */
+  --tanah-100: #EFE6DA;
+  --tanah-300: #B89A7A;
+  --tanah-500: #8C6B4A;
+  --tanah-700: #5C3A1E;   /* TEXT PRIMARY */
+  --tanah-900: #2E1D0F;
+
+  /* Hijau Padi (success / positive) */
+  --padi-100:  #E4F0DE;
+  --padi-300:  #95BD83;
+  --padi-500:  #4A7C3A;   /* SUCCESS */
+  --padi-700:  #335829;
+
+  /* Emas Kunyit (accent / SHU / highlight) */
+  --emas-100:  #FAEFC9;
+  --emas-300:  #ECC979;
+  --emas-500:  #D4A437;   /* ACCENT */
+  --emas-700:  #97751F;
+
+  /* Bata (warning / alert) */
+  --bata-100:  #FBE3DD;
+  --bata-300:  #E48975;
+  --bata-500:  #C44536;   /* WARNING */
+  --bata-700:  #8C2C1F;
+
+  /* Wedel (deep neutral, headlines & contrast) */
+  --wedel-900: #1F1B16;
+
+  /* Putih murni — hanya untuk surface card */
+  --putih: #FFFFFF;
+
+  /* ============================================================
+     SEMANTIC TOKENS — use these in components
+     ============================================================ */
+
+  /* Surfaces */
+  --bg:              var(--cream-100);   /* page bg */
+  --bg-subtle:       var(--cream-50);
+  --bg-strong:       var(--cream-200);
+  --surface:         var(--putih);       /* cards */
+  --surface-hover:   var(--cream-50);
+  --surface-inverse: var(--sogan-500);   /* hero, dark sections */
+
+  /* Foreground */
+  --fg1:             var(--tanah-700);   /* primary text */
+  --fg2:             var(--tanah-500);   /* secondary text */
+  --fg3:             var(--tanah-300);   /* tertiary / hint */
+  --fg-on-primary:   var(--cream-50);    /* text on sogan-500 */
+  --fg-on-accent:    var(--wedel-900);   /* text on emas-500 */
+
+  /* Brand */
+  --primary:         var(--sogan-500);
+  --primary-hover:   var(--sogan-600);
+  --primary-press:   var(--sogan-700);
+  --primary-soft:    var(--sogan-50);
+
+  --accent:          var(--emas-500);
+  --accent-soft:     var(--emas-100);
+
+  /* Status */
+  --success:         var(--padi-500);
+  --success-soft:    var(--padi-100);
+  --warning:         var(--emas-500);
+  --warning-soft:    var(--emas-100);
+  --danger:          var(--bata-500);
+  --danger-soft:     var(--bata-100);
+  --info:            #2A6FA8;
+  --info-soft:       #DDEAF5;
+
+  /* Borders */
+  --border:          var(--cream-200);
+  --border-strong:   var(--cream-400);
+  --border-focus:    var(--sogan-500);
+
+  /* ============================================================
+     TYPOGRAPHY
+     ============================================================ */
+  --font-sans:    "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Fraunces", "Plus Jakarta Sans", serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Scale */
+  --t-xs:   12px;
+  --t-sm:   14px;
+  --t-base: 16px;
+  --t-md:   18px;
+  --t-lg:   20px;
+  --t-xl:   24px;
+  --t-2xl:  32px;
+  --t-3xl:  40px;
+  --t-4xl:  56px;
+  --t-5xl:  72px;
+
+  /* Weights */
+  --w-regular:  400;
+  --w-medium:   500;
+  --w-semibold: 600;
+  --w-bold:     700;
+  --w-extra:    800;
+
+  /* Line heights */
+  --lh-tight:   1.1;
+  --lh-snug:    1.25;
+  --lh-normal:  1.45;
+  --lh-relaxed: 1.6;
+
+  /* Letter spacing */
+  --ls-tight:   -0.02em;
+  --ls-snug:    -0.01em;
+  --ls-normal:   0;
+  --ls-wide:    0.04em;
+  --ls-eyebrow: 0.12em;
+
+  /* ============================================================
+     SPACING (4px grid)
+     ============================================================ */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  20px;
+  --s-6:  24px;
+  --s-8:  32px;
+  --s-10: 40px;
+  --s-14: 56px;
+  --s-18: 72px;
+  --s-24: 96px;
+
+  /* ============================================================
+     RADIUS
+     ============================================================ */
+  --r-xs:   4px;
+  --r-sm:   8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  24px;
+  --r-2xl: 32px;
+  --r-full: 9999px;
+
+  /* ============================================================
+     SHADOWS — warm-tinted (sogan-based, not gray)
+     ============================================================ */
+  --shadow-xs: 0 1px 2px rgba(92, 58, 30, 0.06);
+  --shadow-sm: 0 2px 6px rgba(92, 58, 30, 0.08);
+  --shadow-md: 0 6px 16px rgba(92, 58, 30, 0.10);
+  --shadow-lg: 0 16px 32px rgba(92, 58, 30, 0.12);
+  --shadow-xl: 0 32px 64px rgba(92, 58, 30, 0.16);
+
+  --shadow-focus: 0 0 0 3px rgba(139, 46, 46, 0.18);
+  --shadow-inner: inset 0 1px 2px rgba(92, 58, 30, 0.08);
+
+  /* ============================================================
+     MOTION
+     ============================================================ */
+  --ease:        cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast:    120ms;
+  --dur-base:    240ms;
+  --dur-slow:    400ms;
+
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+  --container-narrow: 720px;
+  --container:        1080px;
+  --container-wide:   1280px;
+  --container-mkt:    1200px;
+
+  --nav-height-mobile:  56px;
+  --nav-height-desktop: 64px;
+  --bottom-nav-height:  64px;
+  --sidebar-width:      240px;
+}
+
+/* ===============================================================
+   BASE / RESET-ish
+   =============================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-base);
+  line-height: var(--lh-normal);
+  color: var(--fg1);
+  background: var(--bg);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ===============================================================
+   SEMANTIC TYPE CLASSES (use as className, e.g. <h1 class="t-display-1">)
+   =============================================================== */
+
+.t-display-1 {
+  font-family: var(--font-display);
+  font-size: var(--t-5xl);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  font-weight: var(--w-semibold);
+  font-variation-settings: "opsz" 96, "SOFT" 30;
+  color: var(--wedel-900);
+}
+
+.t-display-2 {
+  font-family: var(--font-display);
+  font-size: var(--t-4xl);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  font-weight: var(--w-semibold);
+  font-variation-settings: "opsz" 72, "SOFT" 30;
+  color: var(--wedel-900);
+}
+
+.t-display-3 {
+  font-family: var(--font-display);
+  font-size: var(--t-3xl);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-snug);
+  font-weight: var(--w-semibold);
+  font-variation-settings: "opsz" 48, "SOFT" 30;
+  color: var(--wedel-900);
+}
+
+.t-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--t-2xl);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-snug);
+  font-weight: var(--w-bold);
+  color: var(--fg1);
+}
+
+.t-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--t-xl);
+  line-height: var(--lh-snug);
+  font-weight: var(--w-bold);
+  color: var(--fg1);
+}
+
+.t-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--t-lg);
+  line-height: var(--lh-snug);
+  font-weight: var(--w-semibold);
+  color: var(--fg1);
+}
+
+.t-body-lg {
+  font-family: var(--font-sans);
+  font-size: var(--t-md);
+  line-height: var(--lh-relaxed);
+  font-weight: var(--w-regular);
+  color: var(--fg1);
+}
+
+.t-body {
+  font-family: var(--font-sans);
+  font-size: var(--t-base);
+  line-height: var(--lh-relaxed);
+  font-weight: var(--w-regular);
+  color: var(--fg1);
+}
+
+.t-body-sm {
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+  line-height: var(--lh-normal);
+  font-weight: var(--w-regular);
+  color: var(--fg2);
+}
+
+.t-label {
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+  font-weight: var(--w-semibold);
+  line-height: var(--lh-snug);
+  color: var(--fg1);
+}
+
+.t-eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--t-xs);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--sogan-500);
+}
+
+.t-caption {
+  font-family: var(--font-sans);
+  font-size: var(--t-xs);
+  line-height: var(--lh-normal);
+  color: var(--fg3);
+}
+
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  font-feature-settings: "tnum", "zero";
+}
+
+.t-money {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 48, "SOFT" 30;
+  font-weight: var(--w-semibold);
+  letter-spacing: var(--ls-tight);
+  font-feature-settings: "tnum";
+}
+
+/* native element defaults — used when class isn't applied */
+h1 { font: var(--w-bold) var(--t-2xl)/var(--lh-snug) var(--font-sans); margin: 0; color: var(--fg1); }
+h2 { font: var(--w-bold) var(--t-xl)/var(--lh-snug) var(--font-sans); margin: 0; color: var(--fg1); }
+h3 { font: var(--w-semibold) var(--t-lg)/var(--lh-snug) var(--font-sans); margin: 0; color: var(--fg1); }
+p  { margin: 0; }
+small { font-size: var(--t-xs); color: var(--fg3); }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--cream-200); padding: 1px 6px; border-radius: var(--r-xs); }
+
+/* ===============================================================
+   UTILITY HELPERS (used sparingly inside UI kits)
+   =============================================================== */
+.tabular { font-feature-settings: "tnum"; }
+.serif   { font-family: var(--font-display); }
+.mono    { font-family: var(--font-mono); }
+
+/* Batik pattern overlay helper */
+.batik-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/assets/patterns/kawung.svg");
+  background-size: 80px 80px;
+  opacity: 0.05;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
