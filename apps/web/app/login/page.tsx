@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { apiLogin } from '@/lib/api';
-import { setSession, getSession } from '@/lib/session';
+import { setSession, getSession, clearSession } from '@/lib/session';
 
 async function loginAction(formData: FormData) {
   'use server';
@@ -21,7 +21,17 @@ async function loginAction(formData: FormData) {
   redirect(single ? '/dashboard' : '/pilih-tenant');
 }
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ session_expired?: string }>;
+}) {
+  const sp = await searchParams;
+  // Kalau redirect karena session expired, hapus cookie stale dulu — supaya
+  // user TIDAK ke-loop balik ke /dashboard via cek `getSession()` di bawah.
+  if (sp.session_expired) {
+    await clearSession();
+  }
   const s = await getSession();
   if (s?.tenantId) redirect('/dashboard');
 
@@ -37,6 +47,12 @@ export default async function LoginPage() {
         </div>
         <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-1">Masuk ke akun</h1>
         <p className="text-sm text-tanah-500 mb-6">Sistem akuntansi & pajak Indonesia.</p>
+
+        {sp.session_expired && (
+          <div className="mb-4 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+            Sesi sudah berakhir. Silakan masuk ulang.
+          </div>
+        )}
 
         <form action={loginAction} className="space-y-4">
           <div>
