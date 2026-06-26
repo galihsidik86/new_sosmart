@@ -11,7 +11,9 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
+import { type ReplyLike, sendXlsx, sendPdf } from '../../common/http/reply.js';
+import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { SalesPdfService } from './sales-pdf.service.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
@@ -30,7 +32,18 @@ import type { InvoiceStatus } from '@lentera/db';
 @UseGuards(TenantGuard, RolesGuard)
 @UseInterceptors(TenancyInterceptor)
 export class SalesController {
-  constructor(private readonly sales: SalesService) {}
+  constructor(
+    private readonly sales: SalesService,
+    private readonly salesPdf: SalesPdfService,
+    private readonly tenancy: TenancyService,
+  ) {}
+
+  private async tenantNama(): Promise<string> {
+    const t = await this.tenancy.run((tx) =>
+      tx.tenant.findFirst({ select: { nama: true } }),
+    );
+    return t?.nama ?? 'Tenant';
+  }
 
   @Get()
   list(
@@ -50,6 +63,16 @@ export class SalesController {
   ) {
     sendXlsx(reply, 'penjualan.xlsx',
       await this.sales.exportXlsx({ status, customerId, periodId }));
+  }
+
+  @Get(':id/print.pdf')
+  async printPdf(@Res() reply: ReplyLike, @Param('id') id: string) {
+    const [inv, nama] = await Promise.all([
+      this.sales.byId(id),
+      this.tenantNama(),
+    ]);
+    sendPdf(reply, `faktur-${inv.nomor ?? 'draft'}.pdf`,
+      await this.salesPdf.build(inv, nama));
   }
 
   @Get(':id')

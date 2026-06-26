@@ -11,7 +11,9 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
+import { type ReplyLike, sendXlsx, sendPdf } from '../../common/http/reply.js';
+import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { JournalPdfService } from './journal-pdf.service.js';
 import {
   createJournalInputSchema,
   reverseJournalInputSchema,
@@ -30,7 +32,18 @@ import type { JournalStatus, JournalSource } from '@lentera/db';
 @UseGuards(TenantGuard, RolesGuard)
 @UseInterceptors(TenancyInterceptor)
 export class JournalsController {
-  constructor(private readonly journals: JournalsService) {}
+  constructor(
+    private readonly journals: JournalsService,
+    private readonly jurnalPdf: JournalPdfService,
+    private readonly tenancy: TenancyService,
+  ) {}
+
+  private async tenantNama(): Promise<string> {
+    const t = await this.tenancy.run((tx) =>
+      tx.tenant.findFirst({ select: { nama: true } }),
+    );
+    return t?.nama ?? 'Tenant';
+  }
 
   @Get()
   list(
@@ -54,6 +67,16 @@ export class JournalsController {
   ) {
     sendXlsx(reply, 'jurnal.xlsx',
       await this.journals.exportXlsx({ periodId, cabangId, status, sumber, search }));
+  }
+
+  @Get(':id/print.pdf')
+  async printPdf(@Res() reply: ReplyLike, @Param('id') id: string) {
+    const [j, nama] = await Promise.all([
+      this.journals.byId(id),
+      this.tenantNama(),
+    ]);
+    sendPdf(reply, `jurnal-${j.nomor ?? 'draft'}.pdf`,
+      await this.jurnalPdf.build(j, nama));
   }
 
   @Get(':id')

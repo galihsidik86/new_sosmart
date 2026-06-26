@@ -2,11 +2,13 @@ import { createRequire } from 'node:module';
 import { Injectable } from '@nestjs/common';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces.js';
 
-// pdfmake's Node-side `PdfPrinter` ships as CommonJS only (printer.js) — no
-// ESM entry and no proper type declarations for it. Load via createRequire so
-// it works under "type: module" without bundler shenanigans.
+// pdfmake's Node-side `PdfPrinter` ships at `pdfmake/src/printer.js` as
+// CommonJS — the package's main entry exports a different (HTML5-oriented)
+// API. Load PdfPrinter directly via createRequire so it works under
+// "type: module".
 const require = createRequire(import.meta.url);
-const PdfPrinter = require('pdfmake') as unknown as PrinterCtor;
+const printerModule = require('pdfmake/js/printer.js');
+const PdfPrinter = (printerModule.default ?? printerModule) as PrinterCtor;
 
 interface PrinterCtor {
   new (fonts: Record<string, Record<string, string>>): {

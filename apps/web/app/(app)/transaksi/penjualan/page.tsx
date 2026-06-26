@@ -42,10 +42,16 @@ export default async function PenjualanPage({
               {rows.length} faktur · POST otomatis jurnal & buat piutang/penerimaan kas.
             </p>
           </div>
-          <Link href="/transaksi/penjualan/baru"
-            className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-            + Faktur Baru
-          </Link>
+          <div className="flex items-center gap-2">
+            <a href={`/proxy/sales-invoices/export.xlsx${sp.status ? '?status=' + sp.status : ''}`}
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+              Export Excel
+            </a>
+            <Link href="/transaksi/penjualan/baru"
+              className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
+              + Faktur Baru
+            </Link>
+          </div>
         </div>
 
         <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-2 shadow-sm text-sm">

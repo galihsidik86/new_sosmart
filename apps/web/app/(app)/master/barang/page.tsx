@@ -76,17 +76,25 @@ export default async function MasterBarangPage({
               {items.length} item · klasifikasi PPN mengikuti PMK 131/2024.
             </p>
           </div>
-          <form className="flex items-center gap-2">
-            <input
-              name="search"
-              defaultValue={sp.search ?? ''}
-              placeholder="Cari kode / nama…"
-              className="px-3 py-2 bg-white border border-cream-300 rounded-lg text-sm w-64 focus:outline-none focus:border-sogan-500"
-            />
-            <button className="px-3 py-2 bg-cream-100 border border-cream-300 rounded-lg text-sm font-semibold text-tanah-700">
-              Cari
-            </button>
-          </form>
+          <div className="flex items-center gap-2">
+            <a
+              href="/proxy/items/export.xlsx"
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+            >
+              Export Excel
+            </a>
+            <form className="flex items-center gap-2">
+              <input
+                name="search"
+                defaultValue={sp.search ?? ''}
+                placeholder="Cari kode / nama…"
+                className="px-3 py-2 bg-white border border-cream-300 rounded-lg text-sm w-64 focus:outline-none focus:border-sogan-500"
+              />
+              <button className="px-3 py-2 bg-cream-100 border border-cream-300 rounded-lg text-sm font-semibold text-tanah-700">
+                Cari
+              </button>
+            </form>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6">

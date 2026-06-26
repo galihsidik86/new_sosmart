@@ -25,14 +25,22 @@ export default async function CoaPage() {
     <>
       <Topbar breadcrumb="Bagan Akun" tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Bagan Akun (Chart of Accounts)
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Hierarki akun standar perusahaan dagang Indonesia.
-            Hanya akun <em>postable</em> (leaf) yang bisa dijurnal.
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              Bagan Akun (Chart of Accounts)
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              Hierarki akun standar perusahaan dagang Indonesia.
+              Hanya akun <em>postable</em> (leaf) yang bisa dijurnal.
+            </p>
+          </div>
+          <a
+            href="/proxy/accounts/export.xlsx"
+            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+          >
+            Export Excel
+          </a>
         </div>
 
         <div className="bg-white rounded-xl border border-cream-200 shadow-sm">

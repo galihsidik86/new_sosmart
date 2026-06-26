@@ -11,7 +11,9 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
+import { type ReplyLike, sendXlsx, sendPdf } from '../../common/http/reply.js';
+import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { PurchasePdfService } from './purchase-pdf.service.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
@@ -30,7 +32,18 @@ import type { InvoiceStatus } from '@lentera/db';
 @UseGuards(TenantGuard, RolesGuard)
 @UseInterceptors(TenancyInterceptor)
 export class PurchasesController {
-  constructor(private readonly purchases: PurchasesService) {}
+  constructor(
+    private readonly purchases: PurchasesService,
+    private readonly purchPdf: PurchasePdfService,
+    private readonly tenancy: TenancyService,
+  ) {}
+
+  private async tenantNama(): Promise<string> {
+    const t = await this.tenancy.run((tx) =>
+      tx.tenant.findFirst({ select: { nama: true } }),
+    );
+    return t?.nama ?? 'Tenant';
+  }
 
   @Get()
   list(
@@ -50,6 +63,16 @@ export class PurchasesController {
   ) {
     sendXlsx(reply, 'pembelian.xlsx',
       await this.purchases.exportXlsx({ status, vendorId, periodId }));
+  }
+
+  @Get(':id/print.pdf')
+  async printPdf(@Res() reply: ReplyLike, @Param('id') id: string) {
+    const [inv, nama] = await Promise.all([
+      this.purchases.byId(id),
+      this.tenantNama(),
+    ]);
+    sendPdf(reply, `tagihan-${inv.nomor ?? 'draft'}.pdf`,
+      await this.purchPdf.build(inv, nama));
   }
 
   @Get(':id')

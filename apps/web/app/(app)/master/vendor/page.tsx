@@ -57,6 +57,12 @@ export default async function VendorPage() {
               {vendors.length} pemasok · status PKP menentukan PPN masukan dapat dikreditkan.
             </p>
           </div>
+          <a
+            href="/proxy/vendors/export.xlsx"
+            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+          >
+            Export Excel
+          </a>
         </div>
 
         <div className="grid grid-cols-3 gap-6">

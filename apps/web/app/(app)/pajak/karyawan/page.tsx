@@ -68,13 +68,21 @@ export default async function KaryawanPage() {
     <>
       <Topbar breadcrumb="Karyawan" tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Master Karyawan
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            {rows.length} karyawan · PTKP menentukan kategori TER PMK 168/2023 untuk PPh 21 bulanan.
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              Master Karyawan
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              {rows.length} karyawan · PTKP menentukan kategori TER PMK 168/2023 untuk PPh 21 bulanan.
+            </p>
+          </div>
+          <a
+            href="/proxy/karyawan/export.xlsx"
+            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+          >
+            Export Excel
+          </a>
         </div>
 
         <div className="grid grid-cols-3 gap-6">

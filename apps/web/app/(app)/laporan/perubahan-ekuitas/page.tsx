@@ -36,13 +36,23 @@ export default async function PerubahanEkuitasPage({
     <>
       <Topbar breadcrumb="Perubahan Ekuitas" tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-4xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Laporan Perubahan Ekuitas
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Rekonsiliasi saldo awal → saldo akhir ekuitas via tambahan modal, laba bersih, & dividen.
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              Laporan Perubahan Ekuitas
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              Rekonsiliasi saldo awal → saldo akhir ekuitas via tambahan modal, laba bersih, & dividen.
+            </p>
+          </div>
+          {periodId && (
+            <a
+              href={`/proxy/reports/perubahan-ekuitas.pdf?periodId=${periodId}`}
+              className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
+            >
+              Cetak PDF
+            </a>
+          )}
         </div>
 
         <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm">

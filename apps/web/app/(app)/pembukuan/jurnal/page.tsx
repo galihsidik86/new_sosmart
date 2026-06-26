@@ -62,12 +62,20 @@ export default async function JurnalPage({
               {jurnals.length} jurnal · invariant debit = kredit dipaksakan di DB.
             </p>
           </div>
-          <Link
-            href="/pembukuan/jurnal/baru"
-            className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm"
-          >
-            + Jurnal Baru
-          </Link>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/proxy/journals/export.xlsx${qs.toString() ? '?' + qs : ''}`}
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+            >
+              Export Excel
+            </a>
+            <Link
+              href="/pembukuan/jurnal/baru"
+              className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm"
+            >
+              + Jurnal Baru
+            </Link>
+          </div>
         </div>
 
         <form className="bg-white border border-cream-200 rounded-xl p-4 mb-6 flex items-end gap-4 shadow-sm">

@@ -162,6 +162,12 @@ export default async function JurnalDetailPage({
         </div>
 
         <div className="mt-6 flex items-center gap-3">
+          <a
+            href={`/proxy/journals/${j.id}/print.pdf`}
+            className="px-4 py-2 bg-bata-100 hover:bg-bata-200 text-bata-700 font-semibold rounded-lg text-sm border border-bata-300"
+          >
+            Cetak PDF
+          </a>
           {j.status === 'DRAFT' && (
             <>
               <form action={postAction}>
