@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { Topbar } from '@/components/Topbar';
@@ -205,9 +204,10 @@ export default async function PayrollListPage({
               {runs.map((r) => (
                 <tr key={r.id} className="hover:bg-cream-50">
                   <td className="px-4 py-2">
-                    <Link href={`/pajak/payroll/${r.id}`} className="font-mono text-sogan-500 font-semibold hover:underline">
+                    {/* Detail page /pajak/payroll/[id] belum dibuat — tampilkan plain. */}
+                    <span className="font-mono text-sogan-500 font-semibold">
                       {r.nomor ?? '— draft —'}
-                    </Link>
+                    </span>
                     <div className="text-xs text-tanah-500">{r.periode}</div>
                   </td>
                   <td className="px-4 py-2 font-mono text-xs text-tanah-500">{r.cabang.kode}</td>

@@ -45,7 +45,8 @@ async function persistRotatedTokens(accessToken: string, refreshToken: string): 
 
 async function doFetch(path: string, access: string | undefined, opts: FetchOpts): Promise<Response> {
   const headers = new Headers(opts.headers);
-  headers.set('content-type', 'application/json');
+  // Set content-type HANYA kalau ada body — Fastify reject application/json + empty body (400).
+  if (opts.body != null) headers.set('content-type', 'application/json');
   if (access) headers.set('authorization', `Bearer ${access}`);
   if (opts.tenantId) headers.set('x-tenant-id', opts.tenantId);
   if (opts.cabangId) headers.set('x-cabang-id', opts.cabangId);
@@ -71,10 +72,11 @@ export async function apiFetch<T>(
     }
   }
 
-  // 401 setelah refresh attempt (atau tanpa refresh cookie) → session expired,
-  // arahkan ke /login. `redirect()` throw NEXT_REDIRECT yang di-handle Next.js.
+  // 401 setelah refresh attempt → session expired. Redirect ke /logout
+  // (Route Handler) supaya cookie stale bisa di-delete sebelum landing /login.
+  // `cookies().delete()` ilegal di RSC, jadi tidak bisa clear di sini.
   if (res.status === 401) {
-    redirect('/login?session_expired=1');
+    redirect('/logout?reason=session_expired');
   }
 
   if (!res.ok) {

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { apiLogin } from '@/lib/api';
-import { setSession, getSession, clearSession } from '@/lib/session';
+import { setSession, getSession } from '@/lib/session';
 
 async function loginAction(formData: FormData) {
   'use server';
@@ -27,11 +27,8 @@ export default async function LoginPage({
   searchParams: Promise<{ session_expired?: string }>;
 }) {
   const sp = await searchParams;
-  // Kalau redirect karena session expired, hapus cookie stale dulu — supaya
-  // user TIDAK ke-loop balik ke /dashboard via cek `getSession()` di bawah.
-  if (sp.session_expired) {
-    await clearSession();
-  }
+  // Cookie clearing untuk session_expired sudah dilakukan di /logout Route Handler.
+  // Di sini cukup cek session aktif — kalau ada, user memang sudah login.
   const s = await getSession();
   if (s?.tenantId) redirect('/dashboard');
 
