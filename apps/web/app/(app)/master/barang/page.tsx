@@ -1,9 +1,19 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { Topbar } from '@/components/Topbar';
+import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
+import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
+
+async function importItemsAction(formData: FormData) {
+  'use server';
+  const file = formData.get('file') as File;
+  const result = await uploadXlsx('/items/import', file);
+  revalidatePath('/master/barang');
+  return result;
+}
 
 interface ItemRow {
   id: string;
@@ -83,6 +93,7 @@ export default async function MasterBarangPage({
             >
               Export Excel
             </a>
+            <ImportExcelButton importAction={importItemsAction} />
             <form className="flex items-center gap-2">
               <input
                 name="search"

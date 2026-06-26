@@ -12,6 +12,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
+import { type RequestWithFile, readXlsxUpload } from '../../common/http/multipart.js';
+import { Req } from '@nestjs/common';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   createCustomerInputSchema,
@@ -32,6 +34,13 @@ export class CustomersController {
   @Get('export.xlsx')
   async exportXlsx(@Res() reply: ReplyLike) {
     sendXlsx(reply, 'pelanggan.xlsx', await this.customers.exportXlsx());
+  }
+
+  @Post('import')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  async import(@Req() req: RequestWithFile) {
+    const { buffer } = await readXlsxUpload(req);
+    return this.customers.importXlsx(buffer);
   }
 
   @Get()

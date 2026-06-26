@@ -7,6 +7,8 @@ import { Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import type { ImportResult } from '../../common/http/multipart.js';
+import { PtkpStatus, JenisKaryawan } from '@lentera/db';
 import type { CreateKaryawanInput } from '@lentera/shared/schemas';
 
 @Injectable()
@@ -16,6 +18,89 @@ export class KaryawanService {
     private readonly ctx: TenantContext,
     private readonly excel: ExcelService,
   ) {}
+
+  async importXlsx(buffer: Buffer): Promise<ImportResult> {
+    const tenantId = this.ctx.require().tenantId;
+    const rows = await this.excel.parseBuffer(buffer, ['Kode', 'Nama', 'NIK', 'PTKP']);
+    const result: ImportResult = { created: 0, skipped: 0, errors: [] };
+    const allowedPtkp = new Set(Object.values(PtkpStatus) as string[]);
+    const allowedJenis = new Set(Object.values(JenisKaryawan) as string[]);
+
+    return this.tenancy.run(async (tx) => {
+      const cabang = await tx.cabang.findMany({ select: { id: true, kode: true } });
+      const cabangByKode = new Map(cabang.map((c) => [c.kode, c.id]));
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]!;
+        const xlsRow = i + 2;
+        const kode = String(row['Kode'] ?? '').trim();
+        const nama = String(row['Nama'] ?? '').trim();
+        const nik = String(row['NIK'] ?? '').replace(/\D/g, '');
+        if (!kode || !nama || !nik) {
+          result.errors.push({ row: xlsRow, message: 'Kode, Nama & NIK wajib diisi' });
+          result.skipped++;
+          continue;
+        }
+        if (nik.length !== 16) {
+          result.errors.push({ row: xlsRow, message: `NIK harus 16 digit (sekarang ${nik.length})` });
+          result.skipped++;
+          continue;
+        }
+        const ptkpRaw = String(row['PTKP'] ?? '').trim().toUpperCase().replace('/', '_');
+        if (!allowedPtkp.has(ptkpRaw)) {
+          result.errors.push({ row: xlsRow, message: `PTKP "${ptkpRaw}" tidak valid (mis. TK_0, K_1, HB_0)` });
+          result.skipped++;
+          continue;
+        }
+        const jenisRaw = String(row['Jenis'] ?? 'PEGAWAI_TETAP').trim().toUpperCase();
+        if (!allowedJenis.has(jenisRaw)) {
+          result.errors.push({ row: xlsRow, message: `Jenis "${jenisRaw}" tidak valid` });
+          result.skipped++;
+          continue;
+        }
+
+        const cabangKode = String(row['Cabang'] ?? '').trim();
+        const cabangId = cabangKode ? cabangByKode.get(cabangKode) ?? null : null;
+
+        const tanggalMasukRaw = row['Tanggal Masuk'];
+        let tanggalMasuk: Date;
+        if (tanggalMasukRaw instanceof Date) {
+          tanggalMasuk = tanggalMasukRaw;
+        } else if (typeof tanggalMasukRaw === 'string' && tanggalMasukRaw) {
+          tanggalMasuk = new Date(tanggalMasukRaw);
+        } else {
+          tanggalMasuk = new Date();
+        }
+
+        try {
+          await tx.karyawan.create({
+            data: {
+              tenantId,
+              cabangId,
+              kode, nama, nik,
+              npwp: String(row['NPWP'] ?? '').replace(/\D/g, '') || null,
+              jabatan: String(row['Jabatan'] ?? '').trim() || null,
+              ptkpStatus: ptkpRaw as PtkpStatus,
+              jenisKaryawan: jenisRaw as JenisKaryawan,
+              tanggalMasuk,
+              gajiPokok: String(Number(row['Gaji Pokok'] ?? 0)),
+              tunjanganTetap: String(Number(row['Tunjangan'] ?? row['Tunjangan Tetap'] ?? 0)),
+              iuranBpjsKaryawan: String(Number(row['BPJS Karyawan'] ?? row['Iuran BPJS Karyawan'] ?? 0)),
+            },
+          });
+          result.created++;
+        } catch (e) {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+            result.errors.push({ row: xlsRow, message: `Kode/NIK "${kode}/${nik}" sudah ada` });
+          } else {
+            result.errors.push({ row: xlsRow, message: e instanceof Error ? e.message : String(e) });
+          }
+          result.skipped++;
+        }
+      }
+      return result;
+    });
+  }
 
   async exportXlsx(): Promise<Buffer> {
     const rows = await this.list({ isActive: false });

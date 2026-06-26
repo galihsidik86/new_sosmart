@@ -1,9 +1,19 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { Topbar } from '@/components/Topbar';
+import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
+import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp } from '@/lib/format';
+
+async function importCustomersAction(formData: FormData) {
+  'use server';
+  const file = formData.get('file') as File;
+  const result = await uploadXlsx('/customers/import', file);
+  revalidatePath('/master/pelanggan');
+  return result;
+}
 
 type Tipe = 'DISTRIBUTOR' | 'RITEL' | 'KORPORAT' | 'KOPERASI' | 'PEMERINTAH' | 'LAINNYA';
 
@@ -70,12 +80,15 @@ export default async function PelangganPage() {
               {customers.length} pelanggan · pelanggan PKP berhak terima faktur pajak.
             </p>
           </div>
-          <a
-            href="/proxy/customers/export.xlsx"
-            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-          >
-            Export Excel
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href="/proxy/customers/export.xlsx"
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+            >
+              Export Excel
+            </a>
+            <ImportExcelButton importAction={importCustomersAction} />
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6">

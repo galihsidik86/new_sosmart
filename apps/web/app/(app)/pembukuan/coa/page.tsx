@@ -1,9 +1,20 @@
 import Link from 'next/link';
 import type { Route } from 'next';
+import { revalidatePath } from 'next/cache';
 import { Topbar } from '@/components/Topbar';
+import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
+import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
+
+async function importAccountsAction(formData: FormData) {
+  'use server';
+  const file = formData.get('file') as File;
+  const result = await uploadXlsx('/accounts/import', file);
+  revalidatePath('/pembukuan/coa');
+  return result;
+}
 
 interface AccountNode {
   id: string;
@@ -35,12 +46,15 @@ export default async function CoaPage() {
               Hanya akun <em>postable</em> (leaf) yang bisa dijurnal.
             </p>
           </div>
-          <a
-            href="/proxy/accounts/export.xlsx"
-            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-          >
-            Export Excel
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href="/proxy/accounts/export.xlsx"
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+            >
+              Export Excel
+            </a>
+            <ImportExcelButton importAction={importAccountsAction} />
+          </div>
         </div>
 
         <div className="bg-white rounded-xl border border-cream-200 shadow-sm">

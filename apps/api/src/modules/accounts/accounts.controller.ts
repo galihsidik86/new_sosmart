@@ -1,8 +1,9 @@
 import {
-  Body, Controller, Get, Param, Patch, Query, Res,
+  Body, Controller, Get, Param, Patch, Post, Query, Req, Res,
   UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
+import { type RequestWithFile, readXlsxUpload } from '../../common/http/multipart.js';
 import {
   updateAccountInputSchema,
   type UpdateAccountInput,
@@ -23,6 +24,13 @@ export class AccountsController {
   @Get('export.xlsx')
   async exportXlsx(@Res() reply: ReplyLike) {
     sendXlsx(reply, 'coa.xlsx', await this.accounts.exportXlsx());
+  }
+
+  @Post('import')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  async import(@Req() req: RequestWithFile) {
+    const { buffer } = await readXlsxUpload(req);
+    return this.accounts.importXlsx(buffer);
   }
 
   @Get()

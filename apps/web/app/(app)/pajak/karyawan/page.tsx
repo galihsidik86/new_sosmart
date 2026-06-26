@@ -2,9 +2,19 @@ import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { Topbar } from '@/components/Topbar';
+import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
+import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp } from '@/lib/format';
+
+async function importKaryawanAction(formData: FormData) {
+  'use server';
+  const file = formData.get('file') as File;
+  const result = await uploadXlsx('/karyawan/import', file);
+  revalidatePath('/pajak/karyawan');
+  return result;
+}
 
 type Ptkp = 'TK_0' | 'TK_1' | 'TK_2' | 'TK_3' | 'K_0' | 'K_1' | 'K_2' | 'K_3' | 'HB_0' | 'HB_1' | 'HB_2' | 'HB_3';
 type Jenis = 'PEGAWAI_TETAP' | 'PEGAWAI_TIDAK_TETAP' | 'BUKAN_PEGAWAI' | 'PENERIMA_PENSIUN';
@@ -77,12 +87,15 @@ export default async function KaryawanPage() {
               {rows.length} karyawan · PTKP menentukan kategori TER PMK 168/2023 untuk PPh 21 bulanan.
             </p>
           </div>
-          <a
-            href="/proxy/karyawan/export.xlsx"
-            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-          >
-            Export Excel
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href="/proxy/karyawan/export.xlsx"
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+            >
+              Export Excel
+            </a>
+            <ImportExcelButton importAction={importKaryawanAction} />
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6">

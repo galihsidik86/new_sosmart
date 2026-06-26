@@ -7,6 +7,8 @@ import { Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import type { ImportResult } from '../../common/http/multipart.js';
+import { KlasifikasiPpn } from '@lentera/db';
 import type { CreateItemInput } from '@lentera/shared/schemas';
 
 @Injectable()
@@ -110,6 +112,88 @@ export class ItemsService {
     return this.tenancy.run((tx) =>
       tx.item.update({ where: { id }, data: { isAktif: false } }),
     );
+  }
+
+  /**
+   * Import items dari .xlsx. Header yang dibutuhkan: Kode, Nama.
+   * Optional headers: Kategori, Satuan, Harga Jual, Klasifikasi PPN, Jasa,
+   * Akun Pendapatan (format "1-101" atau "1-101 nama"), Akun Persediaan, Akun HPP.
+   *
+   * Conflict (kode sudah ada) di-report sebagai skipped + error message,
+   * tidak menggagalkan whole batch.
+   */
+  async importXlsx(buffer: Buffer): Promise<ImportResult> {
+    const tenantId = this.ctx.require().tenantId;
+    const rows = await this.excel.parseBuffer(buffer, ['Kode', 'Nama']);
+    const result: ImportResult = { created: 0, skipped: 0, errors: [] };
+
+    return this.tenancy.run(async (tx) => {
+      // Pre-load akun untuk resolve by kode
+      const accounts = await tx.account.findMany({ select: { id: true, kode: true } });
+      const akunByKode = new Map(accounts.map((a) => [a.kode, a.id]));
+      const resolveAkun = (raw: unknown): string | null => {
+        if (!raw) return null;
+        const s = String(raw).trim();
+        if (!s) return null;
+        // accept "1-101" or "1-101 nama akun"
+        const kode = s.split(/\s/)[0]!;
+        return akunByKode.get(kode) ?? null;
+      };
+
+      const allowedKlasifikasi = new Set(Object.values(KlasifikasiPpn) as string[]);
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]!;
+        const xlsRow = i + 2; // 1-indexed + 1 for header
+
+        const kode = String(row['Kode'] ?? '').trim();
+        const nama = String(row['Nama'] ?? '').trim();
+        if (!kode || !nama) {
+          result.errors.push({ row: xlsRow, message: 'Kode & Nama wajib diisi' });
+          result.skipped++;
+          continue;
+        }
+
+        const klasifikasiRaw = String(row['Klasifikasi PPN'] ?? 'BKP').trim().toUpperCase();
+        if (!allowedKlasifikasi.has(klasifikasiRaw)) {
+          result.errors.push({
+            row: xlsRow,
+            message: `Klasifikasi PPN "${klasifikasiRaw}" tidak valid (BKP/JKP/NON_BKP/BKP_STRATEGIS/BEBAS_PPN)`,
+          });
+          result.skipped++;
+          continue;
+        }
+
+        const isJasa = ['ya', 'y', 'true', '1'].includes(String(row['Jasa'] ?? '').toLowerCase().trim());
+
+        try {
+          await tx.item.create({
+            data: {
+              tenantId,
+              kode,
+              nama,
+              kategori: String(row['Kategori'] ?? '').trim() || null,
+              satuan: String(row['Satuan'] ?? 'Pcs').trim() || 'Pcs',
+              hargaJualDefault: String(Number(row['Harga Jual'] ?? 0)),
+              klasifikasiPpn: klasifikasiRaw as KlasifikasiPpn,
+              isJasa,
+              akunPendapatanId: resolveAkun(row['Akun Pendapatan']),
+              akunPersediaanId: isJasa ? null : resolveAkun(row['Akun Persediaan']),
+              akunHppId: isJasa ? null : resolveAkun(row['Akun HPP']),
+            },
+          });
+          result.created++;
+        } catch (e) {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+            result.errors.push({ row: xlsRow, message: `Kode "${kode}" sudah ada` });
+          } else {
+            result.errors.push({ row: xlsRow, message: e instanceof Error ? e.message : String(e) });
+          }
+          result.skipped++;
+        }
+      }
+      return result;
+    });
   }
 
   async exportXlsx(): Promise<Buffer> {

@@ -1,9 +1,19 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { Topbar } from '@/components/Topbar';
+import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
+import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp } from '@/lib/format';
+
+async function importVendorsAction(formData: FormData) {
+  'use server';
+  const file = formData.get('file') as File;
+  const result = await uploadXlsx('/vendors/import', file);
+  revalidatePath('/master/vendor');
+  return result;
+}
 
 interface VendorRow {
   id: string;
@@ -57,12 +67,15 @@ export default async function VendorPage() {
               {vendors.length} pemasok · status PKP menentukan PPN masukan dapat dikreditkan.
             </p>
           </div>
-          <a
-            href="/proxy/vendors/export.xlsx"
-            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-          >
-            Export Excel
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href="/proxy/vendors/export.xlsx"
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+            >
+              Export Excel
+            </a>
+            <ImportExcelButton importAction={importVendorsAction} />
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6">

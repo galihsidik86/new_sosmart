@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { UpdateAccountInput } from '@lentera/shared/schemas';
+import { Prisma, AccountKind, NormalBalance } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import type { ImportResult } from '../../common/http/multipart.js';
 
 @Injectable()
 export class AccountsService {
@@ -11,6 +13,104 @@ export class AccountsService {
     private readonly ctx: TenantContext,
     private readonly excel: ExcelService,
   ) {}
+
+  /**
+   * Import COA dari .xlsx. Headers wajib: Kode, Nama, Jenis, Saldo Normal.
+   * Optional: Parent (kode), Postable (Ya/Tidak), Saldo Awal, Aktif.
+   *
+   * Catatan: parent harus sudah ada (di DB existing atau imported di baris
+   * lebih awal). Import dilakukan 2 pass: pass 1 insert tanpa parent, pass 2
+   * update parent — supaya order baris di Excel tidak matter.
+   */
+  async importXlsx(buffer: Buffer): Promise<ImportResult> {
+    const tenantId = this.ctx.require().tenantId;
+    const rows = await this.excel.parseBuffer(buffer, ['Kode', 'Nama', 'Jenis', 'Saldo Normal']);
+    const result: ImportResult = { created: 0, skipped: 0, errors: [] };
+    const allowedKind = new Set(Object.values(AccountKind) as string[]);
+    const allowedNb = new Set(Object.values(NormalBalance) as string[]);
+
+    return this.tenancy.run(async (tx) => {
+      // Existing accounts untuk resolve parent + dedup
+      const existing = await tx.account.findMany({ select: { id: true, kode: true } });
+      const byKode = new Map(existing.map((a) => [a.kode, a.id]));
+
+      // Pass 1: create akun (skip parent dulu)
+      const parentToResolve: Array<{ kode: string; parentKode: string; xlsRow: number }> = [];
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]!;
+        const xlsRow = i + 2;
+        const kode = String(row['Kode'] ?? '').trim();
+        const nama = String(row['Nama'] ?? '').trim();
+        const kindRaw = String(row['Jenis'] ?? '').trim().toUpperCase();
+        const nbRaw = String(row['Saldo Normal'] ?? '').trim().toUpperCase();
+
+        if (!kode || !nama) {
+          result.errors.push({ row: xlsRow, message: 'Kode & Nama wajib diisi' });
+          result.skipped++;
+          continue;
+        }
+        if (!allowedKind.has(kindRaw)) {
+          result.errors.push({ row: xlsRow, message: `Jenis "${kindRaw}" tidak valid` });
+          result.skipped++;
+          continue;
+        }
+        if (!allowedNb.has(nbRaw)) {
+          result.errors.push({ row: xlsRow, message: `Saldo Normal "${nbRaw}" tidak valid (DEBIT/KREDIT)` });
+          result.skipped++;
+          continue;
+        }
+        if (byKode.has(kode)) {
+          result.errors.push({ row: xlsRow, message: `Kode "${kode}" sudah ada` });
+          result.skipped++;
+          continue;
+        }
+
+        const parentKode = String(row['Parent'] ?? '').trim().split(/\s/)[0] ?? '';
+
+        try {
+          const created = await tx.account.create({
+            data: {
+              tenantId,
+              kode, nama,
+              kind: kindRaw as AccountKind,
+              normalBalance: nbRaw as NormalBalance,
+              isPostable: !['tidak', 'no', 'false', '0'].includes(
+                String(row['Postable'] ?? 'Ya').toLowerCase().trim()),
+              isActive: !['tidak', 'no', 'false', '0'].includes(
+                String(row['Aktif'] ?? 'Ya').toLowerCase().trim()),
+              saldoAwal: String(Number(row['Saldo Awal'] ?? 0)),
+              catatan: String(row['Catatan'] ?? '').trim() || null,
+            },
+            select: { id: true, kode: true },
+          });
+          byKode.set(created.kode, created.id);
+          if (parentKode) parentToResolve.push({ kode, parentKode, xlsRow });
+          result.created++;
+        } catch (e) {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+            result.errors.push({ row: xlsRow, message: `Kode "${kode}" sudah ada` });
+          } else {
+            result.errors.push({ row: xlsRow, message: e instanceof Error ? e.message : String(e) });
+          }
+          result.skipped++;
+        }
+      }
+
+      // Pass 2: set parentId
+      for (const { kode, parentKode, xlsRow } of parentToResolve) {
+        const id = byKode.get(kode);
+        const parentId = byKode.get(parentKode);
+        if (!id) continue; // already errored above
+        if (!parentId) {
+          result.errors.push({ row: xlsRow, message: `Parent "${parentKode}" tidak ditemukan` });
+          continue;
+        }
+        await tx.account.update({ where: { id }, data: { parentId } });
+      }
+
+      return result;
+    });
+  }
 
   async exportXlsx(): Promise<Buffer> {
     const rows = await this.tenancy.run((tx) =>
