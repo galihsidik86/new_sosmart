@@ -225,6 +225,26 @@ export const trialBalanceQuerySchema = z.object({
 });
 export type TrialBalanceQuery = z.infer<typeof trialBalanceQuerySchema>;
 
+// ---------- ACCOUNT (COA) EDIT ----------
+
+/**
+ * Field yang boleh diubah pada akun COA yang sudah ada.
+ * Tidak boleh diubah: `kind`, `normalBalance` — keduanya mengubah arti
+ * historis di buku besar (sign aplly di LedgerService). Tidak boleh diubah:
+ * `id`, `tenantId`. Postable status diizinkan tapi service akan reject kalau
+ * akun sudah punya journal_lines (postable=false).
+ */
+export const updateAccountInputSchema = z.object({
+  kode: z.string().min(1).max(20),
+  nama: z.string().min(1).max(200),
+  parentId: z.string().uuid().nullable().optional(),
+  isPostable: z.boolean(),
+  isActive: z.boolean(),
+  saldoAwal: z.union([z.number(), z.string()]).transform((v) => String(v)),
+  catatan: z.string().max(500).nullable().optional(),
+});
+export type UpdateAccountInput = z.infer<typeof updateAccountInputSchema>;
+
 // ---------- TRANSAKSI: FAKTUR ----------
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal YYYY-MM-DD');

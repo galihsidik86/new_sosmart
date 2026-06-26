@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import type { Route } from 'next';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -42,6 +44,7 @@ export default async function CoaPage() {
                 <th className="px-4 py-3 font-bold">Jenis</th>
                 <th className="px-4 py-3 font-bold text-center">Saldo Normal</th>
                 <th className="px-4 py-3 font-bold text-right">Saldo Awal</th>
+                <th className="px-4 py-3 font-bold text-right w-16"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-cream-200">
@@ -85,6 +88,14 @@ function renderRow(n: AccountNode, depth: number): React.ReactNode[] {
       </td>
       <td className="px-4 py-2 text-right font-mono tabular-nums text-tanah-700">
         {Number(n.saldoAwal) > 0 ? fmtRp(n.saldoAwal) : ''}
+      </td>
+      <td className="px-4 py-2 text-right">
+        <Link
+          href={`/pembukuan/coa/${n.id}/edit` as Route}
+          className="text-xs text-sogan-500 font-semibold hover:underline"
+        >
+          Edit
+        </Link>
       </td>
     </tr>,
   ];
