@@ -3,13 +3,16 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   createItemInputSchema,
@@ -26,6 +29,11 @@ import { ItemsService } from './items.service.js';
 @UseInterceptors(TenancyInterceptor)
 export class ItemsController {
   constructor(private readonly items: ItemsService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(@Res() reply: ReplyLike) {
+    sendXlsx(reply, 'items.xlsx', await this.items.exportXlsx());
+  }
 
   @Get()
   list(

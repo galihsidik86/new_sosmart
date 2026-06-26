@@ -2,13 +2,43 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import type { UpdateAccountInput } from '@lentera/shared/schemas';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 @Injectable()
 export class AccountsService {
   constructor(
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(): Promise<Buffer> {
+    const rows = await this.tenancy.run((tx) =>
+      tx.account.findMany({
+        orderBy: { kode: 'asc' },
+        include: { parent: { select: { kode: true, nama: true } } },
+      }),
+    );
+    return this.excel.buildBuffer(
+      'COA',
+      [
+        { header: 'Kode', key: 'kode', width: 12, value: (r) => r.kode },
+        { header: 'Nama', key: 'nama', width: 36, value: (r) => r.nama },
+        { header: 'Jenis', key: 'kind', width: 18, value: (r) => r.kind },
+        { header: 'Saldo Normal', key: 'normalBalance', width: 12,
+          value: (r) => r.normalBalance },
+        { header: 'Postable', key: 'isPostable', width: 10,
+          value: (r) => (r.isPostable ? 'Ya' : 'Tidak') },
+        { header: 'Parent', key: 'parent', width: 24,
+          value: (r) => r.parent ? `${r.parent.kode} ${r.parent.nama}` : '' },
+        { header: 'Saldo Awal', key: 'saldoAwal', width: 16, format: 'currency',
+          value: (r) => r.saldoAwal },
+        { header: 'Aktif', key: 'isActive', width: 8,
+          value: (r) => (r.isActive ? 'Ya' : 'Tidak') },
+      ],
+      rows,
+    );
+  }
 
   /** Daftar COA datar (untuk dropdown). */
   flat() {

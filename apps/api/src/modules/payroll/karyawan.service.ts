@@ -6,6 +6,7 @@ import {
 import { Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 import type { CreateKaryawanInput } from '@lentera/shared/schemas';
 
 @Injectable()
@@ -13,7 +14,30 @@ export class KaryawanService {
   constructor(
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(): Promise<Buffer> {
+    const rows = await this.list({ isActive: false });
+    return this.excel.buildBuffer(
+      'Karyawan',
+      [
+        { header: 'Kode', key: 'kode', width: 12, value: (r) => r.kode },
+        { header: 'Nama', key: 'nama', width: 28, value: (r) => r.nama },
+        { header: 'NIK', key: 'nik', width: 20, value: (r) => r.nik },
+        { header: 'NPWP', key: 'npwp', width: 20, value: (r) => r.npwp ?? '' },
+        { header: 'Jabatan', key: 'jabatan', width: 18, value: (r) => r.jabatan ?? '' },
+        { header: 'PTKP', key: 'ptkp', width: 8, value: (r) => r.ptkpStatus },
+        { header: 'Jenis', key: 'jenis', width: 18, value: (r) => r.jenisKaryawan },
+        { header: 'Cabang', key: 'cabang', width: 12, value: (r) => r.cabang?.kode ?? '' },
+        { header: 'Gaji Pokok', key: 'gajiPokok', width: 14, format: 'currency', value: (r) => r.gajiPokok },
+        { header: 'Tunjangan', key: 'tunjangan', width: 14, format: 'currency', value: (r) => r.tunjanganTetap },
+        { header: 'BPJS Karyawan', key: 'bpjs', width: 14, format: 'currency', value: (r) => r.iuranBpjsKaryawan },
+        { header: 'Aktif', key: 'aktif', width: 8, value: (r) => (r.isActive ? 'Ya' : 'Tidak') },
+      ],
+      rows,
+    );
+  }
 
   list(opts: { isActive?: boolean; cabangId?: string; search?: string }) {
     const where: Prisma.KaryawanWhereInput = {};

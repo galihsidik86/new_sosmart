@@ -17,6 +17,7 @@ import type {
   PurchaseLineInput,
 } from '@lentera/shared/schemas';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
@@ -35,7 +36,34 @@ export class PurchasesService {
     private readonly journals: JournalsService,
     private readonly inventory: InventoryService,
     private readonly buktiPotong: BuktiPotongService,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(filter: { status?: InvoiceStatus; vendorId?: string; periodId?: string }): Promise<Buffer> {
+    const rows = await this.list(filter);
+    return this.excel.buildBuffer(
+      'Pembelian',
+      [
+        { header: 'Nomor', key: 'nomor', width: 18, value: (r) => r.nomor ?? '— DRAFT —' },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Jatuh Tempo', key: 'jatuhTempo', width: 12, format: 'date', value: (r) => r.jatuhTempo },
+        { header: 'Nomor Vendor', key: 'nomorVendor', width: 16, value: (r) => r.nomorVendor ?? '' },
+        { header: 'Vendor', key: 'vendor', width: 28,
+          value: (r) => `${r.vendor.kode} ${r.vendor.nama}${r.vendor.isPkp ? ' (PKP)' : ''}` },
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabang.kode },
+        { header: 'Periode', key: 'periode', width: 14, value: (r) => r.fiscalPeriod.label },
+        { header: 'Termin', key: 'termin', width: 10, value: (r) => r.termin },
+        { header: 'Status', key: 'status', width: 12, value: (r) => r.status },
+        { header: 'DPP', key: 'dpp', width: 16, format: 'currency', value: (r) => r.totalDpp },
+        { header: 'PPN', key: 'ppn', width: 14, format: 'currency', value: (r) => r.totalPpn },
+        { header: 'PPh 23', key: 'pph23', width: 14, format: 'currency', value: (r) => r.totalPph23 },
+        { header: 'Diskon', key: 'diskon', width: 14, format: 'currency', value: (r) => r.totalDiskon },
+        { header: 'Netto', key: 'netto', width: 16, format: 'currency', value: (r) => r.totalNetto },
+        { header: 'Dibayar', key: 'dibayar', width: 16, format: 'currency', value: (r) => r.totalDibayar },
+      ],
+      rows,
+    );
+  }
 
   list(filter: { status?: InvoiceStatus; vendorId?: string; periodId?: string }) {
     const where: Prisma.PurchaseInvoiceWhereInput = {};

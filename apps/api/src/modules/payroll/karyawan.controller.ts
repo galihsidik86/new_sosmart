@@ -7,9 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   createKaryawanInputSchema,
@@ -26,6 +28,11 @@ import { KaryawanService } from './karyawan.service.js';
 @UseInterceptors(TenancyInterceptor)
 export class KaryawanController {
   constructor(private readonly karyawan: KaryawanService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(@Res() reply: ReplyLike) {
+    sendXlsx(reply, 'karyawan.xlsx', await this.karyawan.exportXlsx());
+  }
 
   @Get()
   list(

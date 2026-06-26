@@ -6,6 +6,7 @@ import {
 import { Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 import type { CreateItemInput } from '@lentera/shared/schemas';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class ItemsService {
   constructor(
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
+    private readonly excel: ExcelService,
   ) {}
 
   list(opts: { search?: string; onlyActive?: boolean }) {
@@ -107,6 +109,32 @@ export class ItemsService {
   async deactivate(id: string) {
     return this.tenancy.run((tx) =>
       tx.item.update({ where: { id }, data: { isAktif: false } }),
+    );
+  }
+
+  async exportXlsx(): Promise<Buffer> {
+    const rows = await this.list({ onlyActive: false });
+    return this.excel.buildBuffer(
+      'Items',
+      [
+        { header: 'Kode', key: 'kode', width: 14, value: (r) => r.kode },
+        { header: 'Nama', key: 'nama', width: 36, value: (r) => r.nama },
+        { header: 'Kategori', key: 'kategori', width: 16, value: (r) => r.kategori ?? '' },
+        { header: 'Satuan', key: 'satuan', width: 10, value: (r) => r.satuan },
+        { header: 'Harga Jual', key: 'hargaJual', width: 14, format: 'currency',
+          value: (r) => r.hargaJualDefault },
+        { header: 'Klasifikasi PPN', key: 'klasifikasiPpn', width: 16,
+          value: (r) => r.klasifikasiPpn },
+        { header: 'Jasa', key: 'isJasa', width: 8, value: (r) => (r.isJasa ? 'Ya' : '') },
+        { header: 'Akun Pendapatan', key: 'akunPendapatan', width: 24,
+          value: (r) => r.akunPendapatan ? `${r.akunPendapatan.kode} ${r.akunPendapatan.nama}` : '' },
+        { header: 'Akun Persediaan', key: 'akunPersediaan', width: 24,
+          value: (r) => r.akunPersediaan ? `${r.akunPersediaan.kode} ${r.akunPersediaan.nama}` : '' },
+        { header: 'Akun HPP', key: 'akunHpp', width: 24,
+          value: (r) => r.akunHpp ? `${r.akunHpp.kode} ${r.akunHpp.nama}` : '' },
+        { header: 'Aktif', key: 'isAktif', width: 8, value: (r) => (r.isAktif ? 'Ya' : 'Tidak') },
+      ],
+      rows,
     );
   }
 }

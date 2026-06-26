@@ -7,9 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import {
   createJournalInputSchema,
   reverseJournalInputSchema,
@@ -39,6 +41,19 @@ export class JournalsController {
     @Query('search') search?: string,
   ) {
     return this.journals.list({ periodId, cabangId, status, sumber, search });
+  }
+
+  @Get('export.xlsx')
+  async exportXlsx(
+    @Res() reply: ReplyLike,
+    @Query('periodId') periodId?: string,
+    @Query('cabangId') cabangId?: string,
+    @Query('status') status?: JournalStatus,
+    @Query('sumber') sumber?: JournalSource,
+    @Query('search') search?: string,
+  ) {
+    sendXlsx(reply, 'jurnal.xlsx',
+      await this.journals.exportXlsx({ periodId, cabangId, status, sumber, search }));
   }
 
   @Get(':id')

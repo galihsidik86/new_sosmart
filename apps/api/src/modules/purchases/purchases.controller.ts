@@ -7,9 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
@@ -37,6 +39,17 @@ export class PurchasesController {
     @Query('periodId') periodId?: string,
   ) {
     return this.purchases.list({ status, vendorId, periodId });
+  }
+
+  @Get('export.xlsx')
+  async exportXlsx(
+    @Res() reply: ReplyLike,
+    @Query('status') status?: InvoiceStatus,
+    @Query('vendorId') vendorId?: string,
+    @Query('periodId') periodId?: string,
+  ) {
+    sendXlsx(reply, 'pembelian.xlsx',
+      await this.purchases.exportXlsx({ status, vendorId, periodId }));
   }
 
   @Get(':id')

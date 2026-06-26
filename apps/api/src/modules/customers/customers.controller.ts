@@ -7,9 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   createCustomerInputSchema,
@@ -26,6 +28,11 @@ import { CustomersService } from './customers.service.js';
 @UseInterceptors(TenancyInterceptor)
 export class CustomersController {
   constructor(private readonly customers: CustomersService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(@Res() reply: ReplyLike) {
+    sendXlsx(reply, 'pelanggan.xlsx', await this.customers.exportXlsx());
+  }
 
   @Get()
   list(

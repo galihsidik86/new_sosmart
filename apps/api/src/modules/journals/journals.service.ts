@@ -19,6 +19,7 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { PeriodsService } from '../periods/periods.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 interface ListFilter {
   periodId?: string;
@@ -45,7 +46,31 @@ export class JournalsService {
     private readonly ctx: TenantContext,
     private readonly seq: SequenceService,
     private readonly periods: PeriodsService,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(f: ListFilter): Promise<Buffer> {
+    const rows = await this.list(f);
+    return this.excel.buildBuffer(
+      'Jurnal',
+      [
+        { header: 'Nomor', key: 'nomor', width: 18, value: (r) => r.nomor ?? '— DRAFT —' },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabang.kode },
+        { header: 'Periode', key: 'periode', width: 14, value: (r) => r.fiscalPeriod.label },
+        { header: 'Sumber', key: 'sumber', width: 12, value: (r) => r.sumber },
+        { header: 'Status', key: 'status', width: 10, value: (r) => r.status },
+        { header: 'Deskripsi', key: 'deskripsi', width: 40, value: (r) => r.deskripsi },
+        { header: 'Total Debit', key: 'totalDebit', width: 16, format: 'currency',
+          value: (r) => r.totalDebit },
+        { header: 'Total Kredit', key: 'totalKredit', width: 16, format: 'currency',
+          value: (r) => r.totalKredit },
+        { header: 'Baris', key: 'lines', width: 8, format: 'number',
+          value: (r) => r._count.lines },
+      ],
+      rows,
+    );
+  }
 
   // -----------------------------------------------------------
   // QUERY

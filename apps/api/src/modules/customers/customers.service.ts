@@ -6,6 +6,7 @@ import {
 import { Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 import type { CreateCustomerInput } from '@lentera/shared/schemas';
 
 @Injectable()
@@ -13,7 +14,30 @@ export class CustomersService {
   constructor(
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(): Promise<Buffer> {
+    const rows = await this.list({ onlyActive: false });
+    return this.excel.buildBuffer(
+      'Pelanggan',
+      [
+        { header: 'Kode', key: 'kode', width: 14, value: (r) => r.kode },
+        { header: 'Nama', key: 'nama', width: 36, value: (r) => r.nama },
+        { header: 'NPWP', key: 'npwp', width: 20, value: (r) => r.npwp ?? '' },
+        { header: 'PKP', key: 'isPkp', width: 8, value: (r) => (r.isPkp ? 'Ya' : '') },
+        { header: 'Tipe', key: 'tipe', width: 14, value: (r) => r.tipe },
+        { header: 'Kota', key: 'kota', width: 16, value: (r) => r.kota ?? '' },
+        { header: 'Telp', key: 'telp', width: 16, value: (r) => r.telp ?? '' },
+        { header: 'Termin (hari)', key: 'terminHari', width: 12, format: 'number',
+          value: (r) => r.terminHari },
+        { header: 'Limit Kredit', key: 'kreditLimit', width: 16, format: 'currency',
+          value: (r) => r.kreditLimit },
+        { header: 'Aktif', key: 'isAktif', width: 8, value: (r) => (r.isAktif ? 'Ya' : 'Tidak') },
+      ],
+      rows,
+    );
+  }
 
   list(opts: { search?: string; onlyActive?: boolean; tipe?: string }) {
     const where: Prisma.CustomerWhereInput = {};

@@ -7,9 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
@@ -37,6 +39,17 @@ export class SalesController {
     @Query('periodId') periodId?: string,
   ) {
     return this.sales.list({ status, customerId, periodId });
+  }
+
+  @Get('export.xlsx')
+  async exportXlsx(
+    @Res() reply: ReplyLike,
+    @Query('status') status?: InvoiceStatus,
+    @Query('customerId') customerId?: string,
+    @Query('periodId') periodId?: string,
+  ) {
+    sendXlsx(reply, 'penjualan.xlsx',
+      await this.sales.exportXlsx({ status, customerId, periodId }));
   }
 
   @Get(':id')

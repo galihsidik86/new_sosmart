@@ -5,6 +5,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import fastifyCookie from '@fastify/cookie';
+import fastifyMultipart from '@fastify/multipart';
 import { Logger } from '@nestjs/common';
 import { AppModule } from './app.module.js';
 
@@ -15,6 +16,9 @@ async function bootstrap() {
   );
 
   await app.register(fastifyCookie);
+  await app.register(fastifyMultipart, {
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max — cukup untuk Excel master data
+  });
 
   app.enableCors({
     origin: process.env.NEXT_PUBLIC_WEB_URL?.split(',') ?? [

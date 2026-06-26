@@ -21,6 +21,7 @@ import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 /**
  * Skema PPN per item (sesuai PMK 131/2024):
@@ -40,7 +41,32 @@ export class SalesService {
     private readonly seq: SequenceService,
     private readonly journals: JournalsService,
     private readonly inventory: InventoryService,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(filter: { status?: InvoiceStatus; customerId?: string; periodId?: string }): Promise<Buffer> {
+    const rows = await this.list(filter);
+    return this.excel.buildBuffer(
+      'Penjualan',
+      [
+        { header: 'Nomor', key: 'nomor', width: 18, value: (r) => r.nomor ?? '— DRAFT —' },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Jatuh Tempo', key: 'jatuhTempo', width: 12, format: 'date', value: (r) => r.jatuhTempo },
+        { header: 'Customer', key: 'customer', width: 28,
+          value: (r) => `${r.customer.kode} ${r.customer.nama}${r.customer.isPkp ? ' (PKP)' : ''}` },
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabang.kode },
+        { header: 'Periode', key: 'periode', width: 14, value: (r) => r.fiscalPeriod.label },
+        { header: 'Termin', key: 'termin', width: 10, value: (r) => r.termin },
+        { header: 'Status', key: 'status', width: 12, value: (r) => r.status },
+        { header: 'DPP', key: 'dpp', width: 16, format: 'currency', value: (r) => r.totalDpp },
+        { header: 'PPN', key: 'ppn', width: 14, format: 'currency', value: (r) => r.totalPpn },
+        { header: 'Diskon', key: 'diskon', width: 14, format: 'currency', value: (r) => r.totalDiskon },
+        { header: 'Netto', key: 'netto', width: 16, format: 'currency', value: (r) => r.totalNetto },
+        { header: 'Dibayar', key: 'dibayar', width: 16, format: 'currency', value: (r) => r.totalDibayar },
+      ],
+      rows,
+    );
+  }
 
   // ----------------------------------------------------
   // LIST / DETAIL

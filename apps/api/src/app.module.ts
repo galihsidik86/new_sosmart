@@ -4,6 +4,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { TenancyModule } from './common/tenancy/tenancy.module.js';
 import { SequenceModule } from './common/sequence/sequence.module.js';
+import { ExcelModule } from './common/excel/excel.module.js';
+import { PdfModule } from './common/pdf/pdf.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
 import { CabangModule } from './modules/cabang/cabang.module.js';
@@ -33,6 +35,8 @@ import { HealthController } from './modules/health/health.controller.js';
     PrismaModule,
     TenancyModule,
     SequenceModule,
+    ExcelModule,
+    PdfModule,
     AuthModule,
     TenantsModule,
     CabangModule,

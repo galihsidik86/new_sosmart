@@ -4,6 +4,7 @@ import { LabaRugiService } from './laba-rugi.service.js';
 import { NeracaService } from './neraca.service.js';
 import { ArusKasService } from './arus-kas.service.js';
 import { PerubahanEkuitasService } from './perubahan-ekuitas.service.js';
+import { ReportsPdfService } from './reports-pdf.service.js';
 
 @Module({
   controllers: [ReportsController],
@@ -12,6 +13,7 @@ import { PerubahanEkuitasService } from './perubahan-ekuitas.service.js';
     NeracaService,
     ArusKasService,
     PerubahanEkuitasService,
+    ReportsPdfService,
   ],
   exports: [
     LabaRugiService,

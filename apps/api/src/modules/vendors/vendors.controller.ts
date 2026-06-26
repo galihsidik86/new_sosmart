@@ -7,9 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   createVendorInputSchema,
@@ -26,6 +28,11 @@ import { VendorsService } from './vendors.service.js';
 @UseInterceptors(TenancyInterceptor)
 export class VendorsController {
   constructor(private readonly vendors: VendorsService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(@Res() reply: ReplyLike) {
+    sendXlsx(reply, 'vendor.xlsx', await this.vendors.exportXlsx());
+  }
 
   @Get()
   list(

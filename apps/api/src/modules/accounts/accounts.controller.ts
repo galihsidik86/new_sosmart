@@ -1,7 +1,8 @@
 import {
-  Body, Controller, Get, Param, Patch, Query,
+  Body, Controller, Get, Param, Patch, Query, Res,
   UseGuards, UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import {
   updateAccountInputSchema,
   type UpdateAccountInput,
@@ -18,6 +19,11 @@ import { AccountsService } from './accounts.service.js';
 @UseInterceptors(TenancyInterceptor)
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(@Res() reply: ReplyLike) {
+    sendXlsx(reply, 'coa.xlsx', await this.accounts.exportXlsx());
+  }
 
   @Get()
   list(@Query('view') view?: 'flat' | 'tree') {
