@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -50,6 +51,16 @@ export class SalesController {
     body: CreateSalesInvoiceInput,
   ) {
     return this.sales.createDraft(body);
+  }
+
+  @Patch(':id')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN', 'KASIR')
+  update(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(createSalesInvoiceInputSchema))
+    body: CreateSalesInvoiceInput,
+  ) {
+    return this.sales.updateDraft(id, body);
   }
 
   @Post(':id/post')

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 
 interface Account {
   id: string;
@@ -19,11 +20,24 @@ interface Line {
   deskripsi: string;
 }
 
+interface DefaultValues {
+  tanggal: string;          // 'YYYY-MM-DD'
+  cabangId: string;
+  deskripsi: string;
+  lines: Line[];
+}
+
 interface JurnalFormProps {
   accounts: Account[];
   cabang: Cabang[];
   /** Server action: terima FormData berisi JSON di field 'payload'. */
   submit: (formData: FormData) => Promise<void>;
+  /** Kalau diisi, form jalan dalam mode edit (prefilled). */
+  defaultValues?: DefaultValues;
+  /** Path redirect setelah submit sukses (default '/pembukuan/jurnal'). */
+  redirectTo?: string;
+  /** Label tombol submit (default 'Simpan draft'). */
+  submitLabel?: string;
 }
 
 const TEMPLATES: Array<{ label: string; desc: string; lines: Array<{ kode: string; d?: number; k?: number; ket: string }> }> = [
@@ -56,15 +70,19 @@ const TEMPLATES: Array<{ label: string; desc: string; lines: Array<{ kode: strin
   },
 ];
 
-export function JurnalForm({ accounts, cabang, submit }: JurnalFormProps) {
+export function JurnalForm({
+  accounts, cabang, submit, defaultValues, redirectTo, submitLabel,
+}: JurnalFormProps) {
   const today = new Date().toISOString().slice(0, 10);
-  const [tanggal, setTanggal] = useState(today);
-  const [deskripsi, setDeskripsi] = useState('');
-  const [cabangId, setCabangId] = useState(cabang[0]?.id ?? '');
-  const [lines, setLines] = useState<Line[]>([
-    { accountId: '', debit: '0', kredit: '0', deskripsi: '' },
-    { accountId: '', debit: '0', kredit: '0', deskripsi: '' },
-  ]);
+  const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
+  const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
+  const [cabangId, setCabangId] = useState(defaultValues?.cabangId ?? cabang[0]?.id ?? '');
+  const [lines, setLines] = useState<Line[]>(
+    defaultValues?.lines ?? [
+      { accountId: '', debit: '0', kredit: '0', deskripsi: '' },
+      { accountId: '', debit: '0', kredit: '0', deskripsi: '' },
+    ],
+  );
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -132,7 +150,7 @@ export function JurnalForm({ accounts, cabang, submit }: JurnalFormProps) {
     startTransition(async () => {
       try {
         await submit(fd);
-        router.push('/pembukuan/jurnal');
+        router.push((redirectTo ?? '/pembukuan/jurnal') as Route);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }
@@ -304,7 +322,7 @@ export function JurnalForm({ accounts, cabang, submit }: JurnalFormProps) {
             type="submit" disabled={submitting || !totals.balanced}
             className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 disabled:bg-cream-400 disabled:cursor-not-allowed text-cream-50 rounded-lg text-sm font-semibold"
           >
-            {submitting ? 'Menyimpan…' : 'Simpan sebagai DRAFT'}
+            {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
           </button>
         </div>
       </div>

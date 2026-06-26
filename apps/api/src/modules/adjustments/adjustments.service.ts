@@ -151,6 +151,71 @@ export class AdjustmentsService {
     });
   }
 
+  async updateDraft(id: string, input: CreateStokAdjustmentInput) {
+    const tenantId = this.ctx.require().tenantId;
+    const tanggal = new Date(input.tanggal + 'T00:00:00Z');
+    return this.tenancy.run(async (tx) => {
+      const existing = await tx.stokAdjustment.findUnique({ where: { id } });
+      if (!existing) throw new NotFoundException('Penyesuaian tidak ditemukan');
+      if (existing.status !== InvoiceStatus.DRAFT) {
+        throw new BadRequestException('Hanya draft yang bisa diedit');
+      }
+      const period = await tx.fiscalPeriod.findFirst({
+        where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
+      });
+      if (!period) throw new BadRequestException('Tanggal di luar tahun buku');
+      if (period.status === PeriodStatus.CLOSED) {
+        throw new ForbiddenException(`Periode ${period.label} sudah ditutup`);
+      }
+      const linesData: Array<{
+        no: number; itemId: string; qtySaatIni: string;
+        qtyFisik: string; delta: string;
+        hargaPokok: string; nilaiDelta: string;
+        keterangan: string | null;
+      }> = [];
+      let totalDeltaNilai = new Decimal(0);
+      for (let i = 0; i < input.lines.length; i++) {
+        const l = input.lines[i]!;
+        const item = await tx.item.findUnique({ where: { id: l.itemId } });
+        if (!item) throw new BadRequestException(`Item ${l.itemId} tidak ditemukan`);
+        const saldo = await this.inventory.getSaldo(tx, l.itemId, input.cabangId);
+        const qtyFisik = new Decimal(l.qtyFisik);
+        const delta = qtyFisik.minus(saldo.qty);
+        const hargaPokok = saldo.qty.gt(0)
+          ? saldo.nilai.div(saldo.qty) : new Decimal(0);
+        const nilaiDelta = delta.mul(hargaPokok).toDecimalPlaces(2);
+        totalDeltaNilai = totalDeltaNilai.plus(nilaiDelta);
+        linesData.push({
+          no: i + 1, itemId: l.itemId,
+          qtySaatIni: saldo.qty.toFixed(4), qtyFisik: qtyFisik.toFixed(4),
+          delta: delta.toFixed(4), hargaPokok: hargaPokok.toFixed(4),
+          nilaiDelta: nilaiDelta.toFixed(2), keterangan: l.keterangan ?? null,
+        });
+      }
+      await tx.stokAdjustmentLine.deleteMany({ where: { adjustmentId: id } });
+      return tx.stokAdjustment.update({
+        where: { id },
+        data: {
+          cabangId: input.cabangId,
+          fiscalPeriodId: period.id,
+          tanggal,
+          alasan: input.alasan,
+          totalDeltaNilai: totalDeltaNilai.toFixed(2),
+          lines: {
+            create: linesData.map((l) => ({
+              tenantId,
+              no: l.no, itemId: l.itemId,
+              qtySaatIni: l.qtySaatIni, qtyFisik: l.qtyFisik,
+              delta: l.delta, hargaPokok: l.hargaPokok,
+              nilaiDelta: l.nilaiDelta, keterangan: l.keterangan,
+            })),
+          },
+        },
+        include: { lines: true },
+      });
+    });
+  }
+
   async post(id: string) {
     const userId = this.ctx.require().userId;
     return this.tenancy.run(async (tx) => {

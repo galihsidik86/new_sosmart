@@ -138,6 +138,62 @@ export class CashBankService {
     });
   }
 
+  async updateDraft(id: string, input: CreateCashBankInput) {
+    const tenantId = this.ctx.require().tenantId;
+    const tanggal = new Date(input.tanggal + 'T00:00:00Z');
+    return this.tenancy.run(async (tx) => {
+      const existing = await tx.cashBankEntry.findUnique({ where: { id } });
+      if (!existing) throw new NotFoundException('Bukti tidak ditemukan');
+      if (existing.status !== InvoiceStatus.DRAFT) {
+        throw new BadRequestException('Hanya draft yang bisa diedit');
+      }
+      const period = await tx.fiscalPeriod.findFirst({
+        where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
+      });
+      if (!period) throw new BadRequestException('Tanggal di luar tahun buku');
+      if (period.status === PeriodStatus.CLOSED) {
+        throw new ForbiddenException(`Periode ${period.label} sudah ditutup`);
+      }
+      const total = new Decimal(input.total);
+      if (input.tipe !== CashBankType.TRANSFER) {
+        const sumLines = input.lines.reduce(
+          (a, l) => a.plus(new Decimal(l.nilai)), new Decimal(0));
+        if (!sumLines.eq(total)) {
+          throw new BadRequestException(
+            `Total baris (${sumLines}) tidak sama dengan total header (${total})`);
+        }
+      }
+      await tx.cashBankEntryLine.deleteMany({ where: { entryId: id } });
+      return tx.cashBankEntry.update({
+        where: { id },
+        data: {
+          cabangId: input.cabangId,
+          fiscalPeriodId: period.id,
+          tanggal,
+          tipe: input.tipe,
+          akunKasBankId: input.akunKasBankId,
+          akunKasBankLawanId:
+            input.tipe === CashBankType.TRANSFER ? input.akunKasBankLawanId : null,
+          total: total.toFixed(2),
+          kontak: input.kontak,
+          deskripsi: input.deskripsi,
+          salesInvoiceId: input.salesInvoiceId,
+          purchaseInvoiceId: input.purchaseInvoiceId,
+          lines: {
+            create: input.lines.map((l, i) => ({
+              tenantId,
+              no: i + 1,
+              accountId: l.accountId,
+              nilai: l.nilai,
+              deskripsi: l.deskripsi,
+            })),
+          },
+        },
+        include: { lines: true },
+      });
+    });
+  }
+
   async post(id: string) {
     const userId = this.ctx.require().userId;
     return this.tenancy.run(async (tx) => {

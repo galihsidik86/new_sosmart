@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -52,6 +53,16 @@ export class JournalsController {
     body: CreateJournalInput,
   ) {
     return this.journals.createDraft(body);
+  }
+
+  @Patch(':id')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN', 'KASIR')
+  update(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(createJournalInputSchema))
+    body: CreateJournalInput,
+  ) {
+    return this.journals.updateDraft(id, body);
   }
 
   @Post(':id/post')

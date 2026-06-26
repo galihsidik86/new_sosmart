@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -49,6 +50,16 @@ export class CashBankController {
     body: CreateCashBankInput,
   ) {
     return this.cb.createDraft(body);
+  }
+
+  @Patch(':id')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN', 'KASIR')
+  update(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(createCashBankInputSchema))
+    body: CreateCashBankInput,
+  ) {
+    return this.cb.updateDraft(id, body);
   }
 
   @Post(':id/post')

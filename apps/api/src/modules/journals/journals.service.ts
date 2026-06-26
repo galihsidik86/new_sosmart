@@ -283,6 +283,64 @@ export class JournalsService {
   }
 
   // -----------------------------------------------------------
+  // UPDATE DRAFT (hanya status DRAFT)
+  // -----------------------------------------------------------
+
+  async updateDraft(id: string, input: CreateJournalInput) {
+    return this.tenancy.run(async (tx) => {
+      const existing = await tx.journal.findUnique({ where: { id } });
+      if (!existing) throw new NotFoundException('Jurnal tidak ditemukan');
+      if (existing.status !== JournalStatus.DRAFT) {
+        throw new BadRequestException('Hanya draft yang bisa diedit');
+      }
+
+      const tanggal = new Date(input.tanggal + 'T00:00:00.000Z');
+      const period = await tx.fiscalPeriod.findFirst({
+        where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
+      });
+      if (!period) {
+        throw new BadRequestException(
+          `Tanggal ${input.tanggal} di luar tahun buku — buat periode dulu`,
+        );
+      }
+      if (period.status === PeriodStatus.CLOSED) {
+        throw new ForbiddenException(
+          `Periode ${period.label} sudah ditutup — tidak bisa edit draft`,
+        );
+      }
+      await this.assertLinesValid(tx, input.lines);
+      const { td, tk } = this.sumLines(input.lines);
+
+      const tenantId = this.ctx.require().tenantId;
+      await tx.journalLine.deleteMany({ where: { journalId: id } });
+      return tx.journal.update({
+        where: { id },
+        data: {
+          cabangId: input.cabangId,
+          fiscalPeriodId: period.id,
+          tanggal,
+          deskripsi: input.deskripsi,
+          sumber: input.sumber,
+          sumberRef: input.sumberRef ?? null,
+          totalDebit: td.toFixed(2),
+          totalKredit: tk.toFixed(2),
+          lines: {
+            create: input.lines.map((l, i) => ({
+              tenantId,
+              accountId: l.accountId,
+              no: i + 1,
+              debit: l.debit,
+              kredit: l.kredit,
+              deskripsi: l.deskripsi ?? null,
+            })),
+          },
+        },
+        include: { lines: true },
+      });
+    });
+  }
+
+  // -----------------------------------------------------------
   // DELETE DRAFT (hanya status DRAFT)
   // -----------------------------------------------------------
 

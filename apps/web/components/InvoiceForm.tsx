@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 
 type Klasifikasi = 'BKP' | 'JKP' | 'NON_BKP' | 'BKP_STRATEGIS' | 'BEBAS_PPN';
 
@@ -41,6 +42,20 @@ interface Line {
   accountId: string;
 }
 
+export interface InvoiceDefaultValues {
+  tanggal: string;
+  partyId: string;
+  cabangId: string;
+  termin: 'TUNAI' | 'KREDIT';
+  tarifPpn: 11 | 12;
+  tarifPph23?: 0 | 2 | 15;
+  potongPph23?: boolean;
+  /** Untuk TUNAI: id akun kas/bank. */
+  kasBankId?: string;
+  deskripsi: string;
+  lines: Line[];
+}
+
 interface InvoiceFormProps {
   mode: 'sales' | 'purchase';
   items: Item[];
@@ -50,6 +65,9 @@ interface InvoiceFormProps {
   /** Akun kas/bank yg boleh dipakai untuk transaksi TUNAI. */
   kasBankAccounts: Account[];
   submit: (formData: FormData) => Promise<void>;
+  defaultValues?: InvoiceDefaultValues;
+  redirectTo?: string;
+  submitLabel?: string;
 }
 
 const KL_LABEL: Record<Klasifikasi, string> = {
@@ -63,25 +81,28 @@ const PPNABLE: Klasifikasi[] = ['BKP', 'JKP'];
 
 export function InvoiceForm({
   mode, items, parties, cabang, accounts, kasBankAccounts, submit,
+  defaultValues, redirectTo, submitLabel,
 }: InvoiceFormProps) {
   const today = new Date().toISOString().slice(0, 10);
-  const [tanggal, setTanggal] = useState(today);
-  const [partyId, setPartyId] = useState(parties[0]?.id ?? '');
-  const [cabangId, setCabangId] = useState(cabang[0]?.id ?? '');
-  const [termin, setTermin] = useState<'TUNAI' | 'KREDIT'>('KREDIT');
-  const [tarifPpn, setTarifPpn] = useState<11 | 12>(11);
-  const [tarifPph23, setTarifPph23] = useState<0 | 2 | 15>(2);
-  const [potongPph23, setPotongPph23] = useState(true);
-  const [kasBankId, setKasBankId] = useState(kasBankAccounts[0]?.id ?? '');
-  const [deskripsi, setDeskripsi] = useState('');
+  const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
+  const [partyId, setPartyId] = useState(defaultValues?.partyId ?? parties[0]?.id ?? '');
+  const [cabangId, setCabangId] = useState(defaultValues?.cabangId ?? cabang[0]?.id ?? '');
+  const [termin, setTermin] = useState<'TUNAI' | 'KREDIT'>(defaultValues?.termin ?? 'KREDIT');
+  const [tarifPpn, setTarifPpn] = useState<11 | 12>(defaultValues?.tarifPpn ?? 11);
+  const [tarifPph23, setTarifPph23] = useState<0 | 2 | 15>(defaultValues?.tarifPph23 ?? 2);
+  const [potongPph23, setPotongPph23] = useState(defaultValues?.potongPph23 ?? true);
+  const [kasBankId, setKasBankId] = useState(defaultValues?.kasBankId ?? kasBankAccounts[0]?.id ?? '');
+  const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const [lines, setLines] = useState<Line[]>([
-    { itemId: null, deskripsi: '', qty: '1', hargaSatuan: '0', satuan: 'Pcs',
-      diskonPersen: '0', klasifikasiPpn: 'BKP', isJasa: false, accountId: '' },
-  ]);
+  const [lines, setLines] = useState<Line[]>(
+    defaultValues?.lines ?? [
+      { itemId: null, deskripsi: '', qty: '1', hargaSatuan: '0', satuan: 'Pcs',
+        diskonPersen: '0', klasifikasiPpn: 'BKP', isJasa: false, accountId: '' },
+    ],
+  );
 
   const party = parties.find((p) => p.id === partyId);
   const accountAr = party?.akunPiutangId;
@@ -207,7 +228,7 @@ export function InvoiceForm({
     startTransition(async () => {
       try {
         await submit(fd);
-        router.push(mode === 'sales' ? '/transaksi/penjualan' : '/transaksi/pembelian');
+        router.push((redirectTo ?? (mode === 'sales' ? '/transaksi/penjualan' : '/transaksi/pembelian')) as Route);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }
@@ -418,7 +439,7 @@ export function InvoiceForm({
           {error && <div className="text-bata-700 text-xs mb-2 max-w-sm text-right">{error}</div>}
           <button type="submit" disabled={submitting}
             className="px-4 py-2.5 bg-sogan-500 hover:bg-sogan-600 disabled:bg-cream-400 text-cream-50 rounded-lg text-sm font-semibold">
-            {submitting ? 'Menyimpan…' : 'Simpan sebagai DRAFT'}
+            {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
           </button>
         </div>
       </section>

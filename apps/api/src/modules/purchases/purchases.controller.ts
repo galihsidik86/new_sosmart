@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -50,6 +51,16 @@ export class PurchasesController {
     body: CreatePurchaseInvoiceInput,
   ) {
     return this.purchases.createDraft(body);
+  }
+
+  @Patch(':id')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  update(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(createPurchaseInvoiceInputSchema))
+    body: CreatePurchaseInvoiceInput,
+  ) {
+    return this.purchases.updateDraft(id, body);
   }
 
   @Post(':id/post')

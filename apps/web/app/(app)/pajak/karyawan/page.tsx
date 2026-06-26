@@ -87,6 +87,7 @@ export default async function KaryawanPage() {
                   <th className="px-4 py-3 font-bold">PTKP</th>
                   <th className="px-4 py-3 font-bold">NPWP</th>
                   <th className="px-4 py-3 font-bold text-right">Gaji Pokok</th>
+                  <th className="px-4 py-3 font-bold text-right w-16"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-cream-200">
@@ -106,10 +107,15 @@ export default async function KaryawanPage() {
                       {k.npwp ? fmtNpwp(k.npwp) : <span className="text-bata-500">tanpa NPWP (+20%)</span>}
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono tabular-nums">{fmtRp(k.gajiPokok)}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <Link href={`/pajak/karyawan/${k.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
+                        Edit
+                      </Link>
+                    </td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-10 text-center text-tanah-500">Belum ada karyawan.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-10 text-center text-tanah-500">Belum ada karyawan.</td></tr>
                 )}
               </tbody>
             </table>

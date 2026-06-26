@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -169,6 +170,12 @@ export default async function JurnalDetailPage({
                   Post Jurnal
                 </button>
               </form>
+              <Link
+                href={`/pembukuan/jurnal/${j.id}/edit` as Route}
+                className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"
+              >
+                Edit Draft
+              </Link>
               <form action={deleteDraftAction}>
                 <input type="hidden" name="id" value={j.id} />
                 <button className="px-4 py-2 bg-cream-200 hover:bg-cream-300 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-400">

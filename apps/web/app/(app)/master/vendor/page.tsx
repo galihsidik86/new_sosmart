@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
@@ -68,6 +69,7 @@ export default async function VendorPage() {
                   <th className="px-4 py-3 font-bold">NPWP</th>
                   <th className="px-4 py-3 font-bold text-center">PKP</th>
                   <th className="px-4 py-3 font-bold text-right">Termin</th>
+                  <th className="px-4 py-3 font-bold text-right w-16"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-cream-200">
@@ -95,11 +97,16 @@ export default async function VendorPage() {
                     <td className="px-4 py-2.5 text-right text-tanah-700 tabular-nums">
                       {v.terminHari} hari
                     </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <Link href={`/master/vendor/${v.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
+                        Edit
+                      </Link>
+                    </td>
                   </tr>
                 ))}
                 {vendors.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-tanah-500">
+                    <td colSpan={6} className="px-4 py-10 text-center text-tanah-500">
                       Belum ada vendor.
                     </td>
                   </tr>

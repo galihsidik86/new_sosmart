@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 
 interface Item { id: string; kode: string; nama: string; satuan: string; isAktif: boolean }
 interface Cabang { id: string; kode: string; nama: string }
@@ -22,25 +23,39 @@ interface Line {
   keterangan: string;
 }
 
+export interface OpnameDefaultValues {
+  tanggal: string;
+  cabangId: string;
+  alasan: string;
+  lines: Line[];
+}
+
 interface OpnameFormProps {
   items: Item[];
   cabang: Cabang[];
   saldoMap: Record<string, SaldoRow[]>; // cabangId → saldoRows
   submit: (formData: FormData) => Promise<void>;
+  defaultValues?: OpnameDefaultValues;
+  redirectTo?: string;
+  submitLabel?: string;
 }
 
-export function OpnameForm({ items, cabang, saldoMap, submit }: OpnameFormProps) {
+export function OpnameForm({
+  items, cabang, saldoMap, submit, defaultValues, redirectTo, submitLabel,
+}: OpnameFormProps) {
   const today = new Date().toISOString().slice(0, 10);
-  const [tanggal, setTanggal] = useState(today);
-  const [cabangId, setCabangId] = useState(cabang[0]?.id ?? '');
-  const [alasan, setAlasan] = useState('Opname akhir bulan');
-  const [lines, setLines] = useState<Line[]>([]);
+  const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
+  const [cabangId, setCabangId] = useState(defaultValues?.cabangId ?? cabang[0]?.id ?? '');
+  const [alasan, setAlasan] = useState(defaultValues?.alasan ?? 'Opname akhir bulan');
+  const [lines, setLines] = useState<Line[]>(defaultValues?.lines ?? []);
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   // Pre-fill: setiap kali cabang berubah, populasi lines dari saldo cabang itu.
+  // Di mode edit (defaultValues ada), skip pre-fill — kita pakai defaultValues lines.
   useEffect(() => {
+    if (defaultValues) return;
     const saldo = saldoMap[cabangId] ?? [];
     const next: Line[] = saldo.map((s) => {
       const qty = Number(s.qty);
@@ -57,7 +72,7 @@ export function OpnameForm({ items, cabang, saldoMap, submit }: OpnameFormProps)
       };
     });
     setLines(next);
-  }, [cabangId, saldoMap]);
+  }, [cabangId, saldoMap, defaultValues]);
 
   const updLine = (i: number, p: Partial<Line>) =>
     setLines((prev) => prev.map((l, k) => (k === i ? { ...l, ...p } : l)));
@@ -114,7 +129,7 @@ export function OpnameForm({ items, cabang, saldoMap, submit }: OpnameFormProps)
     startTransition(async () => {
       try {
         await submit(fd);
-        router.push('/persediaan/penyesuaian');
+        router.push((redirectTo ?? '/persediaan/penyesuaian') as Route);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }
@@ -228,7 +243,7 @@ export function OpnameForm({ items, cabang, saldoMap, submit }: OpnameFormProps)
           {error && <span className="text-bata-700 text-xs">{error}</span>}
           <button type="submit" disabled={submitting}
             className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 disabled:bg-cream-400 text-cream-50 rounded-lg text-sm font-semibold">
-            {submitting ? 'Menyimpan…' : 'Simpan sebagai DRAFT'}
+            {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
           </button>
         </div>
       </div>

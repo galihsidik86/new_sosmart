@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 
 type Tipe = 'RECEIPT' | 'PAYMENT' | 'TRANSFER';
 
@@ -18,6 +19,20 @@ interface Line {
   deskripsi: string;
 }
 
+export interface CashBankDefaultValues {
+  tanggal: string;
+  tipe: Tipe;
+  cabangId: string;
+  akunKasBankId: string;
+  akunKasBankLawanId?: string;
+  total: string;
+  kontak?: string;
+  deskripsi?: string;
+  salesInvoiceId?: string;
+  purchaseInvoiceId?: string;
+  lines: Line[];
+}
+
 interface CashBankFormProps {
   cabang: Cabang[];
   accounts: Account[];
@@ -25,25 +40,29 @@ interface CashBankFormProps {
   openSales: InvoiceSummary[];
   openPurchases: InvoiceSummary[];
   submit: (formData: FormData) => Promise<void>;
+  defaultValues?: CashBankDefaultValues;
+  redirectTo?: string;
+  submitLabel?: string;
 }
 
 export function CashBankForm({
   cabang, accounts, kasBank, openSales, openPurchases, submit,
+  defaultValues, redirectTo, submitLabel,
 }: CashBankFormProps) {
   const today = new Date().toISOString().slice(0, 10);
-  const [tanggal, setTanggal] = useState(today);
-  const [tipe, setTipe] = useState<Tipe>('RECEIPT');
-  const [cabangId, setCabangId] = useState(cabang[0]?.id ?? '');
-  const [akunKasBankId, setAkunKasBankId] = useState(kasBank[0]?.id ?? '');
-  const [akunKasBankLawanId, setAkunKasBankLawanId] = useState(kasBank[1]?.id ?? '');
-  const [total, setTotal] = useState('0');
-  const [kontak, setKontak] = useState('');
-  const [deskripsi, setDeskripsi] = useState('');
-  const [salesInvoiceId, setSalesInvoiceId] = useState('');
-  const [purchaseInvoiceId, setPurchaseInvoiceId] = useState('');
-  const [lines, setLines] = useState<Line[]>([
-    { accountId: '', nilai: '0', deskripsi: '' },
-  ]);
+  const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
+  const [tipe, setTipe] = useState<Tipe>(defaultValues?.tipe ?? 'RECEIPT');
+  const [cabangId, setCabangId] = useState(defaultValues?.cabangId ?? cabang[0]?.id ?? '');
+  const [akunKasBankId, setAkunKasBankId] = useState(defaultValues?.akunKasBankId ?? kasBank[0]?.id ?? '');
+  const [akunKasBankLawanId, setAkunKasBankLawanId] = useState(defaultValues?.akunKasBankLawanId ?? kasBank[1]?.id ?? '');
+  const [total, setTotal] = useState(defaultValues?.total ?? '0');
+  const [kontak, setKontak] = useState(defaultValues?.kontak ?? '');
+  const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
+  const [salesInvoiceId, setSalesInvoiceId] = useState(defaultValues?.salesInvoiceId ?? '');
+  const [purchaseInvoiceId, setPurchaseInvoiceId] = useState(defaultValues?.purchaseInvoiceId ?? '');
+  const [lines, setLines] = useState<Line[]>(
+    defaultValues?.lines ?? [{ accountId: '', nilai: '0', deskripsi: '' }],
+  );
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -121,7 +140,7 @@ export function CashBankForm({
     startTransition(async () => {
       try {
         await submit(fd);
-        router.push('/transaksi/kas-bank');
+        router.push((redirectTo ?? '/transaksi/kas-bank') as Route);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }
@@ -292,7 +311,7 @@ export function CashBankForm({
           {error && <span className="text-bata-700 text-xs">{error}</span>}
           <button type="submit" disabled={submitting || !balanced}
             className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 disabled:bg-cream-400 text-cream-50 rounded-lg text-sm font-semibold">
-            {submitting ? 'Menyimpan…' : 'Simpan sebagai DRAFT'}
+            {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
           </button>
         </div>
       </div>

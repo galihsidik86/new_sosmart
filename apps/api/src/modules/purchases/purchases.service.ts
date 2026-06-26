@@ -165,6 +165,88 @@ export class PurchasesService {
     });
   }
 
+  async updateDraft(id: string, input: CreatePurchaseInvoiceInput) {
+    const tenantId = this.ctx.require().tenantId;
+    const tanggal = new Date(input.tanggal + 'T00:00:00Z');
+    return this.tenancy.run(async (tx) => {
+      const existing = await tx.purchaseInvoice.findUnique({ where: { id } });
+      if (!existing) throw new NotFoundException('Tagihan tidak ditemukan');
+      if (existing.status !== InvoiceStatus.DRAFT) {
+        throw new BadRequestException('Hanya draft yang bisa diedit');
+      }
+      const period = await tx.fiscalPeriod.findFirst({
+        where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
+      });
+      if (!period) throw new BadRequestException('Tanggal di luar tahun buku');
+      if (period.status === PeriodStatus.CLOSED) {
+        throw new ForbiddenException(`Periode ${period.label} sudah ditutup`);
+      }
+      const vendor = await tx.vendor.findUnique({
+        where: { id: input.vendorId },
+        select: { isPkp: true, terminHari: true, npwp: true },
+      });
+      if (!vendor) throw new BadRequestException('Vendor tidak ditemukan');
+      const jatuhTempo = input.jatuhTempo
+        ? new Date(input.jatuhTempo + 'T00:00:00Z')
+        : new Date(tanggal.getTime() + vendor.terminHari * 86_400_000);
+
+      const calc = this.computeTotals(input.lines, {
+        tarifPpn: input.tarifPpnPersen,
+        applyPpn: vendor.isPkp,
+        potongPph23: input.potongPph23,
+        tarifPph23: input.tarifPph23Persen,
+        vendorPunyaNpwp: !!vendor.npwp,
+      });
+      const totalNetto = calc.totalDpp.plus(calc.totalPpn).minus(calc.totalPph23);
+
+      await tx.purchaseInvoiceLine.deleteMany({ where: { invoiceId: id } });
+      return tx.purchaseInvoice.update({
+        where: { id },
+        data: {
+          cabangId: input.cabangId,
+          fiscalPeriodId: period.id,
+          vendorId: input.vendorId,
+          tanggal,
+          jatuhTempo,
+          termin: input.termin,
+          akunApId: input.akunApId,
+          nomorVendor: input.nomorVendor,
+          nsfpMasukan: input.nsfpMasukan,
+          deskripsi: input.deskripsi,
+          totalDpp: calc.totalDpp.toFixed(2),
+          totalPpn: calc.totalPpn.toFixed(2),
+          totalPph23: calc.totalPph23.toFixed(2),
+          totalDiskon: calc.totalDiskon.toFixed(2),
+          totalNetto: totalNetto.toFixed(2),
+          lines: {
+            create: input.lines.map((l, i) => {
+              const c = calc.perLine[i]!;
+              return {
+                tenantId,
+                no: i + 1,
+                itemId: l.itemId ?? null,
+                deskripsi: l.deskripsi,
+                qty: l.qty,
+                satuan: l.satuan,
+                hargaSatuan: l.hargaSatuan,
+                diskonPersen: l.diskonPersen,
+                klasifikasiPpn: l.klasifikasiPpn,
+                isJasa: l.isJasa,
+                bruto: c.bruto.toFixed(2),
+                diskonNilai: c.diskonNilai.toFixed(2),
+                dpp: c.dpp.toFixed(2),
+                ppn: c.ppn.toFixed(2),
+                pph23: c.pph23.toFixed(2),
+                akunDebitId: l.akunDebitId,
+              };
+            }),
+          },
+        },
+        include: { lines: true },
+      });
+    });
+  }
+
   async post(id: string) {
     const userId = this.ctx.require().userId;
     return this.tenancy.run(async (tx) => {

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -49,6 +50,16 @@ export class AdjustmentsController {
     body: CreateStokAdjustmentInput,
   ) {
     return this.adj.createDraft(body);
+  }
+
+  @Patch(':id')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  update(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(createStokAdjustmentInputSchema))
+    body: CreateStokAdjustmentInput,
+  ) {
+    return this.adj.updateDraft(id, body);
   }
 
   @Post(':id/post')

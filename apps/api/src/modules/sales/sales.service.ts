@@ -170,6 +170,85 @@ export class SalesService {
   }
 
   // ----------------------------------------------------
+  // UPDATE DRAFT (hanya status DRAFT)
+  // ----------------------------------------------------
+
+  async updateDraft(id: string, input: CreateSalesInvoiceInput) {
+    const tenantId = this.ctx.require().tenantId;
+    const tanggal = new Date(input.tanggal + 'T00:00:00Z');
+    return this.tenancy.run(async (tx) => {
+      const existing = await tx.salesInvoice.findUnique({ where: { id } });
+      if (!existing) throw new NotFoundException('Faktur tidak ditemukan');
+      if (existing.status !== InvoiceStatus.DRAFT) {
+        throw new BadRequestException('Hanya draft yang bisa diedit');
+      }
+      const period = await tx.fiscalPeriod.findFirst({
+        where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
+      });
+      if (!period) throw new BadRequestException('Tanggal di luar tahun buku');
+      if (period.status === PeriodStatus.CLOSED) {
+        throw new ForbiddenException(`Periode ${period.label} sudah ditutup`);
+      }
+      const customer = await tx.customer.findUnique({
+        where: { id: input.customerId },
+        select: { terminHari: true },
+      });
+      if (!customer) throw new BadRequestException('Pelanggan tidak ditemukan');
+      const jatuhTempo = input.jatuhTempo
+        ? new Date(input.jatuhTempo + 'T00:00:00Z')
+        : new Date(tanggal.getTime() + customer.terminHari * 86_400_000);
+
+      const calc = this.computeTotals(input.lines, input.tarifPpnPersen);
+
+      await tx.salesInvoiceLine.deleteMany({ where: { invoiceId: id } });
+      return tx.salesInvoice.update({
+        where: { id },
+        data: {
+          cabangId: input.cabangId,
+          fiscalPeriodId: period.id,
+          customerId: input.customerId,
+          tanggal,
+          jatuhTempo,
+          termin: input.termin,
+          akunArId: input.akunArId,
+          deskripsi: input.deskripsi,
+          kodeFakturPajak: input.kodeFakturPajak,
+          nsfp: input.nsfp,
+          totalDpp: calc.totalDpp.toFixed(2),
+          totalPpn: calc.totalPpn.toFixed(2),
+          totalPph23: '0',
+          totalDiskon: calc.totalDiskon.toFixed(2),
+          totalNetto: calc.totalDpp.plus(calc.totalPpn).toFixed(2),
+          lines: {
+            create: input.lines.map((l, i) => {
+              const c = calc.perLine[i]!;
+              return {
+                tenantId,
+                no: i + 1,
+                itemId: l.itemId ?? null,
+                deskripsi: l.deskripsi,
+                qty: l.qty,
+                satuan: l.satuan,
+                hargaSatuan: l.hargaSatuan,
+                diskonPersen: l.diskonPersen,
+                klasifikasiPpn: l.klasifikasiPpn,
+                isJasa: l.isJasa,
+                bruto: c.bruto.toFixed(2),
+                diskonNilai: c.diskonNilai.toFixed(2),
+                dpp: c.dpp.toFixed(2),
+                ppn: c.ppn.toFixed(2),
+                pph23: '0',
+                akunPendapatanId: l.akunPendapatanId,
+              };
+            }),
+          },
+        },
+        include: { lines: true },
+      });
+    });
+  }
+
+  // ----------------------------------------------------
   // POST: DRAFT → POSTED + auto-post jurnal
   // ----------------------------------------------------
 

@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -143,12 +144,20 @@ export default async function KasBankDetailPage({
 
         <div className="flex items-center gap-3">
           {e.status === 'DRAFT' && (
-            <form action={postAction}>
-              <input type="hidden" name="id" value={e.id} />
-              <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                Post Bukti
-              </button>
-            </form>
+            <>
+              <form action={postAction}>
+                <input type="hidden" name="id" value={e.id} />
+                <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
+                  Post Bukti
+                </button>
+              </form>
+              <Link
+                href={`/transaksi/kas-bank/${e.id}/edit` as Route}
+                className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"
+              >
+                Edit Draft
+              </Link>
+            </>
           )}
           {e.status === 'POSTED' && (
             <form action={cancelAction} className="flex gap-2">

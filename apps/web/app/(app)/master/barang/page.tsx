@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
@@ -98,6 +99,7 @@ export default async function MasterBarangPage({
                   <th className="px-4 py-3 font-bold">Klasifikasi PPN</th>
                   <th className="px-4 py-3 font-bold text-right">Harga Jual</th>
                   <th className="px-4 py-3 font-bold text-right">Stok Awal</th>
+                  <th className="px-4 py-3 font-bold text-right w-16"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-cream-200">
@@ -137,11 +139,16 @@ export default async function MasterBarangPage({
                         ? `${Number(it.stokAwal[0].qty).toLocaleString('id-ID')} · ${it.stokAwal[0].cabang.kode}`
                         : '—'}
                     </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <Link href={`/master/barang/${it.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
+                        Edit
+                      </Link>
+                    </td>
                   </tr>
                 ))}
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-tanah-500">
+                    <td colSpan={6} className="px-4 py-10 text-center text-tanah-500">
                       Belum ada barang.
                     </td>
                   </tr>
