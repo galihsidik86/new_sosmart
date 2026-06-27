@@ -18,6 +18,7 @@ import type { CreateAsetInput, DisposeAsetInput } from '@lentera/shared/schemas'
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { JournalsService } from '../journals/journals.service.js';
+import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 
 /**
  * Default masa manfaat (bulan) menurut Pasal 11 UU PPh:
@@ -39,6 +40,7 @@ export class AsetService {
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly journals: JournalsService,
+    private readonly glConfig: GlConfigService,
   ) {}
 
   list(filter: { status?: AsetStatus; cabangId?: string }) {
@@ -165,12 +167,9 @@ export class AsetService {
       const nilaiBuku = new Decimal(aset.nilaiBuku);
       const hargaJual = new Decimal(input.hargaJual);
 
-      // Lookup akun laba/rugi penjualan aset.
-      const akunLabaJualAset = await tx.account.findFirst({ where: { kode: '7-102' } });
-      const akunRugiJualAset = await tx.account.findFirst({ where: { kode: '8-103' } });
-      if (!akunLabaJualAset || !akunRugiJualAset) {
-        throw new BadRequestException('Akun 7-102 / 8-103 belum ada di COA');
-      }
+      // Lookup akun laba/rugi penjualan aset via GlConfig.
+      const akunLabaJualId = await this.glConfig.getAccountIdInTx(tx, 'DISPOSAL_LABA');
+      const akunRugiJualId = await this.glConfig.getAccountIdInTx(tx, 'DISPOSAL_RUGI');
 
       const lines: Array<{ accountId: string; debit: string; kredit: string; deskripsi?: string }> = [];
 
@@ -203,14 +202,14 @@ export class AsetService {
         });
         if (labaRugi.gt(0)) {
           lines.push({
-            accountId: akunLabaJualAset.id,
+            accountId: akunLabaJualId,
             debit: '0',
             kredit: labaRugi.toFixed(2),
             deskripsi: 'Laba penjualan aset',
           });
         } else if (labaRugi.lt(0)) {
           lines.push({
-            accountId: akunRugiJualAset.id,
+            accountId: akunRugiJualId,
             debit: labaRugi.abs().toFixed(2),
             kredit: '0',
             deskripsi: 'Rugi penjualan aset',
@@ -228,7 +227,7 @@ export class AsetService {
         }
         if (nilaiBuku.gt(0)) {
           lines.push({
-            accountId: akunRugiJualAset.id,
+            accountId: akunRugiJualId,
             debit: nilaiBuku.toFixed(2),
             kredit: '0',
             deskripsi: `Rugi ${input.statusBaru.toLowerCase()} aset`,

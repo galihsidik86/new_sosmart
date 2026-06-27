@@ -11,6 +11,9 @@ import { PrismaModule } from '../src/prisma/prisma.module.js';
 import { TenancyModule } from '../src/common/tenancy/tenancy.module.js';
 import { SequenceModule } from '../src/common/sequence/sequence.module.js';
 import { PeriodsModule } from '../src/modules/periods/periods.module.js';
+import { ExcelModule } from '../src/common/excel/excel.module.js';
+import { PdfModule } from '../src/common/pdf/pdf.module.js';
+import { GlConfigModule } from '../src/common/gl-config/gl-config.module.js';
 import { JournalsModule } from '../src/modules/journals/journals.module.js';
 import { InventoryModule } from '../src/modules/inventory/inventory.module.js';
 import { SalesModule } from '../src/modules/sales/sales.module.js';
@@ -50,6 +53,9 @@ export async function bootApp(extraModules: any[] = []): Promise<TestingModule> 
       PrismaModule,
       TenancyModule,
       SequenceModule,
+      ExcelModule,
+      PdfModule,
+      GlConfigModule,
       PeriodsModule,
       JournalsModule,
       ...extraModules,

@@ -18,6 +18,7 @@ import type { CreatePayrollRunInput } from '@lentera/shared/schemas';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
+import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { lookupTer } from './ter-table.js';
 
@@ -36,6 +37,7 @@ export class PayrollService {
     private readonly ctx: TenantContext,
     private readonly seq: SequenceService,
     private readonly journals: JournalsService,
+    private readonly glConfig: GlConfigService,
   ) {}
 
   list(opts: { cabangId?: string; status?: InvoiceStatus }) {
@@ -263,13 +265,10 @@ export class PayrollService {
 
       const nomor = run.nomor ?? (await this.seq.next(tx, 'PR', run.tanggal));
 
-      // Resolve akun: beban gaji 6-101, utang PPh 21 2-1022, utang BPJS 2-106.
-      const akunBebanGaji = await tx.account.findFirst({ where: { kode: '6-101' } });
-      const akunUtangPph21 = await tx.account.findFirst({ where: { kode: '2-1022' } });
-      const akunUtangBpjs = await tx.account.findFirst({ where: { kode: '2-106' } });
-      if (!akunBebanGaji || !akunUtangPph21 || !akunUtangBpjs) {
-        throw new BadRequestException('Akun 6-101 / 2-1022 / 2-106 belum ada di COA');
-      }
+      // Resolve akun via GlConfig (override per tenant, fallback ke kode default).
+      const akunBebanGajiId = await this.glConfig.getAccountIdInTx(tx, 'BEBAN_GAJI');
+      const akunUtangPph21Id = await this.glConfig.getAccountIdInTx(tx, 'UTANG_PPH21');
+      const akunUtangBpjsId = await this.glConfig.getAccountIdInTx(tx, 'UTANG_BPJS');
 
       const totalGaji = new Decimal(run.totalGajiPokok)
         .plus(new Decimal(run.totalTunjangan));
@@ -280,7 +279,7 @@ export class PayrollService {
       const lines: Array<{ accountId: string; debit: string; kredit: string; deskripsi?: string }> = [];
       // D Beban Gaji (total gaji + tunjangan = sebelum potongan)
       lines.push({
-        accountId: akunBebanGaji.id,
+        accountId: akunBebanGajiId,
         debit: totalGaji.toFixed(2),
         kredit: '0',
         deskripsi: `Beban gaji ${run.periode}`,
@@ -288,7 +287,7 @@ export class PayrollService {
       // K Utang PPh 21
       if (totalPph21.gt(0)) {
         lines.push({
-          accountId: akunUtangPph21.id,
+          accountId: akunUtangPph21Id,
           debit: '0',
           kredit: totalPph21.toFixed(2),
           deskripsi: 'PPh 21 dipotong karyawan',
@@ -297,7 +296,7 @@ export class PayrollService {
       // K Utang BPJS
       if (totalBpjs.gt(0)) {
         lines.push({
-          accountId: akunUtangBpjs.id,
+          accountId: akunUtangBpjsId,
           debit: '0',
           kredit: totalBpjs.toFixed(2),
           deskripsi: 'BPJS karyawan dipotong',

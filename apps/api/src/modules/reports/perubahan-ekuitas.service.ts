@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { AccountKind } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { aggregateAllAccounts, mutasiSigned, saldoAkhirSigned } from './helpers.js';
 
 export interface PerubahanEkuitasResponse {
@@ -34,7 +35,10 @@ export interface PerubahanEkuitasResponse {
  */
 @Injectable()
 export class PerubahanEkuitasService {
-  constructor(private readonly tenancy: TenancyService) {}
+  constructor(
+    private readonly tenancy: TenancyService,
+    private readonly glConfig: GlConfigService,
+  ) {}
 
   async build(opts: {
     periodId: string;
@@ -68,12 +72,14 @@ export class PerubahanEkuitasService {
         includeKinds: [AccountKind.EKUITAS],
       });
 
-      const findByKode = (kode: string) =>
-        [...ekResult.accounts.values()].find((a) => a.kode === kode);
+      // Resolve akun via GlConfig (override per tenant, fallback ke kode default).
+      const idModal = await this.glConfig.getAccountIdInTx(tx, 'MODAL_DISETOR');
+      const idLabaDitahan = await this.glConfig.getAccountIdInTx(tx, 'LABA_DITAHAN');
+      const idDividen = await this.glConfig.getAccountIdInTx(tx, 'DIVIDEN');
 
-      const modalAcc = findByKode('3-101');
-      const saldoLabaAcc = findByKode('3-102');
-      const dividenAcc = findByKode('3-104');
+      const modalAcc = ekResult.accounts.get(idModal);
+      const saldoLabaAcc = ekResult.accounts.get(idLabaDitahan);
+      const dividenAcc = ekResult.accounts.get(idDividen);
 
       const saldoAwalModal = modalAcc
         ? ekResult.signedSaldoAwalByAcc.get(modalAcc.id) ?? new Decimal(0)

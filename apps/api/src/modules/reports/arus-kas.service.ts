@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { AccountKind, JournalStatus } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { aggregateAllAccounts, mutasiSigned, saldoAkhirSigned } from './helpers.js';
 
 export interface ArusKasLine {
@@ -58,7 +59,10 @@ export interface ArusKasResponse {
  */
 @Injectable()
 export class ArusKasService {
-  constructor(private readonly tenancy: TenancyService) {}
+  constructor(
+    private readonly tenancy: TenancyService,
+    private readonly glConfig: GlConfigService,
+  ) {}
 
   async build(opts: {
     periodId: string;
@@ -92,11 +96,22 @@ export class ArusKasService {
         cabangId: opts.cabangId,
       });
 
+      // === Resolve akun configurable via GlConfig ===
+      const idPenyusutan = await this.glConfig.getAccountIdInTx(tx, 'BEBAN_PENYUSUTAN');
+      const idModal = await this.glConfig.getAccountIdInTx(tx, 'MODAL_DISETOR');
+      const idLabaDitahan = await this.glConfig.getAccountIdInTx(tx, 'LABA_DITAHAN');
+      const idDividen = await this.glConfig.getAccountIdInTx(tx, 'DIVIDEN');
+
       // === Helper: nilai mutasi akun signed (saldo normal positif) ===
       const mut = (kode: string) => {
         const acc = [...result.accounts.values()].find((a) => a.kode === kode);
         if (!acc) return new Decimal(0);
         return mutasiSigned(acc, result.mutasiByAcc.get(acc.id));
+      };
+      const mutById = (id: string) => {
+        const acc = result.accounts.get(id);
+        if (!acc) return new Decimal(0);
+        return mutasiSigned(acc, result.mutasiByAcc.get(id));
       };
       const sumMut = (kodePrefix: string) => {
         let s = new Decimal(0);
@@ -125,8 +140,8 @@ export class ArusKasService {
       }
       const labaBersih = pendapatan.minus(beban);
 
-      // === Penyusutan (non-kas) — mutasi periode akun 6-103 ===
-      const penyusutan = mut('6-103');
+      // === Penyusutan (non-kas) — mutasi periode akun BEBAN_PENYUSUTAN ===
+      const penyusutan = mutById(idPenyusutan);
 
       // === Δ Aset Lancar non-kas (positif = kenaikan = kurangi kas) ===
       // Note: kenaikan piutang/persediaan → kas turun, jadi tanda dibalik.
@@ -180,9 +195,9 @@ export class ArusKasService {
 
       // === Pendanaan ===
       const dUtangBank = mut('2-201');
-      const dModal = mut('3-101');
-      const dSaldoLaba = mut('3-102'); // biasanya dari closing entry — bisa diabaikan untuk YTD
-      const dDividen = mut('3-104').negated(); // saldo normal debit → mutasi positif = pembagian dividen (keluar kas)
+      const dModal = mutById(idModal);
+      const dSaldoLaba = mutById(idLabaDitahan); // biasanya dari closing entry — bisa diabaikan untuk YTD
+      const dDividen = mutById(idDividen).negated(); // saldo normal debit → mutasi positif = pembagian dividen (keluar kas)
 
       const pendanaan: ArusKasLine[] = [
         { label: 'Kenaikan / (Penurunan) Utang Bank', nilai: dUtangBank.toFixed(2) },

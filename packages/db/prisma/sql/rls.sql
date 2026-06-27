@@ -311,6 +311,14 @@ CREATE POLICY bukti_potong_isolation ON bukti_potong
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- GL CONFIG (akun default per-tenant)
+ALTER TABLE gl_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gl_config FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS gl_config_isolation ON gl_config;
+CREATE POLICY gl_config_isolation ON gl_config
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- ---------- AUDIT LOGS
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs FORCE ROW LEVEL SECURITY;

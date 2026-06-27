@@ -346,6 +346,7 @@ model Tenant {
   payrollRuns   PayrollRun[]
   buktiPotong   BuktiPotong[]
   auditLogs     AuditLog[]
+  glConfig      GlConfig[]
 
   @@map("tenants")
 }
@@ -456,11 +457,33 @@ model Account {
   asetAset      AsetTetap[] @relation("AsetAkunAset")
   asetAkumulasi AsetTetap[] @relation("AsetAkunAkumulasi")
   asetBeban     AsetTetap[] @relation("AsetAkunBeban")
+  glConfig      GlConfig[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
   @@index([tenantId, parentId])
   @@map("accounts")
+}
+
+/// Pemetaan akun default untuk auto-posting jurnal yang sebelumnya hardcoded
+/// (opname, disposal aset, payroll, laporan keuangan, dst).
+/// Key string enum-like di GlConfigKey (shared/enums).
+/// Service pakai pola: `glConfig.getAccountId('BEBAN_GAJI')`.
+model GlConfig {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  /// Key konstan (mis. 'BEBAN_GAJI', 'LABA_DITAHAN'). Lihat GlConfigKey.
+  key       String
+  accountId String   @map("account_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+  @@map("gl_config")
 }
 
 // ===============================================================

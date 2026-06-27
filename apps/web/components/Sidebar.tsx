@@ -37,6 +37,7 @@ const NAV: NavItem[] = [
   { group: 'Laporan', href: '/laporan/perubahan-ekuitas', label: 'Perubahan Ekuitas' },
   { group: 'Pengaturan', href: '/pengaturan/periode', label: 'Periode Buku' },
   { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang' },
+  { group: 'Pengaturan', href: '/pengaturan/akun-default', label: 'Akun Default' },
 ];
 
 interface SidebarProps {

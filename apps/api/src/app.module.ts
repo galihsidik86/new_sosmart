@@ -6,6 +6,7 @@ import { TenancyModule } from './common/tenancy/tenancy.module.js';
 import { SequenceModule } from './common/sequence/sequence.module.js';
 import { ExcelModule } from './common/excel/excel.module.js';
 import { PdfModule } from './common/pdf/pdf.module.js';
+import { GlConfigModule } from './common/gl-config/gl-config.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
 import { CabangModule } from './modules/cabang/cabang.module.js';
@@ -26,6 +27,7 @@ import { BuktiPotongModule } from './modules/bukti-potong/bukti-potong.module.js
 import { PayrollModule } from './modules/payroll/payroll.module.js';
 import { SptModule } from './modules/spt/spt.module.js';
 import { ReportsModule } from './modules/reports/reports.module.js';
+import { GlConfigControllerModule } from './modules/gl-config/gl-config-controller.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { HealthController } from './modules/health/health.controller.js';
 
@@ -37,6 +39,7 @@ import { HealthController } from './modules/health/health.controller.js';
     SequenceModule,
     ExcelModule,
     PdfModule,
+    GlConfigModule,
     AuthModule,
     TenantsModule,
     CabangModule,
@@ -57,6 +60,7 @@ import { HealthController } from './modules/health/health.controller.js';
     PayrollModule,
     SptModule,
     ReportsModule,
+    GlConfigControllerModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

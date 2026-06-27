@@ -16,6 +16,7 @@ import type { CreateStokAdjustmentInput } from '@lentera/shared/schemas';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
+import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
 
@@ -35,6 +36,7 @@ export class AdjustmentsService {
     private readonly seq: SequenceService,
     private readonly journals: JournalsService,
     private readonly inventory: InventoryService,
+    private readonly glConfig: GlConfigService,
   ) {}
 
   list(filter: { status?: InvoiceStatus; cabangId?: string }) {
@@ -238,12 +240,9 @@ export class AdjustmentsService {
 
       const nomor = adj.nomor ?? (await this.seq.next(tx, 'ADJ', adj.tanggal));
 
-      // Akun untuk jurnal (resolve sekali).
-      const akunBeban = await tx.account.findFirst({ where: { kode: '6-109' } });
-      const akunPendapatan = await tx.account.findFirst({ where: { kode: '7-103' } });
-      if (!akunBeban || !akunPendapatan) {
-        throw new BadRequestException('Akun 6-109 / 7-103 belum di-seed');
-      }
+      // Akun untuk jurnal (resolve via GlConfig dgn fallback ke kode default).
+      const akunBebanId = await this.glConfig.getAccountIdInTx(tx, 'OPNAME_MINUS');
+      const akunPendapatanId = await this.glConfig.getAccountIdInTx(tx, 'OPNAME_PLUS');
 
       let totalPlus = new Decimal(0);    // jumlah nilai delta positif (D persediaan, K pendapatan)
       let totalMinus = new Decimal(0);   // jumlah nilai delta negatif (D beban, K persediaan)
@@ -305,10 +304,10 @@ export class AdjustmentsService {
         if (n.gt(0)) jLines.push({ accountId: aid, debit: n.toFixed(2), kredit: '0', deskripsi: 'Tambah stok (opname+)' });
       }
       if (totalPlus.gt(0)) {
-        jLines.push({ accountId: akunPendapatan.id, debit: '0', kredit: totalPlus.toFixed(2), deskripsi: 'Pendapatan penyesuaian' });
+        jLines.push({ accountId: akunPendapatanId, debit: '0', kredit: totalPlus.toFixed(2), deskripsi: 'Pendapatan penyesuaian' });
       }
       if (totalMinus.gt(0)) {
-        jLines.push({ accountId: akunBeban.id, debit: totalMinus.toFixed(2), kredit: '0', deskripsi: 'Beban penyesuaian' });
+        jLines.push({ accountId: akunBebanId, debit: totalMinus.toFixed(2), kredit: '0', deskripsi: 'Beban penyesuaian' });
       }
       for (const [aid, n] of persediaanKredit) {
         if (n.gt(0)) jLines.push({ accountId: aid, debit: '0', kredit: n.toFixed(2), deskripsi: 'Kurangi stok (opname-)' });

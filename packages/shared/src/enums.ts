@@ -122,3 +122,49 @@ export const MetodePenyusutan = {
   SALDO_MENURUN: 'SALDO_MENURUN',
 } as const;
 export type MetodePenyusutan = (typeof MetodePenyusutan)[keyof typeof MetodePenyusutan];
+
+/**
+ * Key untuk tabel GlConfig (per-tenant override akun default).
+ * Setiap key punya default kode COA — service fallback ke kode ini kalau
+ * row GlConfig tidak ada. Lihat `GlConfigService.getAccountId` di apps/api.
+ */
+export const GlConfigKey = {
+  /** Beban Opname (default 6-109). */
+  OPNAME_MINUS: 'OPNAME_MINUS',
+  /** Pendapatan Opname (default 7-103). */
+  OPNAME_PLUS: 'OPNAME_PLUS',
+  /** Laba Penjualan Aset (default 7-102). */
+  DISPOSAL_LABA: 'DISPOSAL_LABA',
+  /** Rugi Penjualan Aset (default 8-103). */
+  DISPOSAL_RUGI: 'DISPOSAL_RUGI',
+  /** Beban Gaji & Tunjangan (default 6-101). */
+  BEBAN_GAJI: 'BEBAN_GAJI',
+  /** Utang PPh 21 Karyawan (default 2-1022). */
+  UTANG_PPH21: 'UTANG_PPH21',
+  /** Utang BPJS Karyawan (default 2-106). */
+  UTANG_BPJS: 'UTANG_BPJS',
+  /** Modal Disetor (default 3-101). */
+  MODAL_DISETOR: 'MODAL_DISETOR',
+  /** Saldo Laba / Laba Ditahan (default 3-102). */
+  LABA_DITAHAN: 'LABA_DITAHAN',
+  /** Dividen / Prive (default 3-104). */
+  DIVIDEN: 'DIVIDEN',
+  /** Beban Penyusutan (default 6-103) — untuk add-back arus kas. */
+  BEBAN_PENYUSUTAN: 'BEBAN_PENYUSUTAN',
+} as const;
+export type GlConfigKey = (typeof GlConfigKey)[keyof typeof GlConfigKey];
+
+/** Mapping default kode COA per key — dipakai sebagai fallback service. */
+export const GL_CONFIG_DEFAULTS: Record<GlConfigKey, string> = {
+  OPNAME_MINUS: '6-109',
+  OPNAME_PLUS: '7-103',
+  DISPOSAL_LABA: '7-102',
+  DISPOSAL_RUGI: '8-103',
+  BEBAN_GAJI: '6-101',
+  UTANG_PPH21: '2-1022',
+  UTANG_BPJS: '2-106',
+  MODAL_DISETOR: '3-101',
+  LABA_DITAHAN: '3-102',
+  DIVIDEN: '3-104',
+  BEBAN_PENYUSUTAN: '6-103',
+};
