@@ -11,6 +11,7 @@ import {
 } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 export interface RecordInboundParams {
   itemId: string;
@@ -58,7 +59,47 @@ export class InventoryService {
   constructor(
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportSaldoXlsx(opts: { cabangId?: string }): Promise<Buffer> {
+    const rows = await this.saldoMatrix(opts);
+    return this.excel.buildBuffer(
+      'Saldo Stok',
+      [
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabang?.kode ?? '' },
+        { header: 'Kode', key: 'kode', width: 14, value: (r) => r.item?.kode ?? '' },
+        { header: 'Nama', key: 'nama', width: 32, value: (r) => r.item?.nama ?? '' },
+        { header: 'Satuan', key: 'satuan', width: 10, value: (r) => r.item?.satuan ?? '' },
+        { header: 'Saldo Qty', key: 'qty', width: 14, format: 'number', value: (r) => r.qty },
+        { header: 'Saldo Nilai', key: 'nilai', width: 18, format: 'currency', value: (r) => r.nilai },
+        { header: 'Update Terakhir', key: 'last', width: 16, format: 'date', value: (r) => r.lastAt },
+      ],
+      rows,
+    );
+  }
+
+  async exportKartuStokXlsx(opts: {
+    itemId: string; cabangId?: string; startDate?: Date; endDate?: Date;
+  }): Promise<Buffer> {
+    const { item, rows } = await this.kartuStok(opts);
+    return this.excel.buildBuffer(
+      `Kartu Stok ${item.kode}`,
+      [
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabang.kode },
+        { header: 'Tipe', key: 'tipe', width: 14, value: (r) => r.tipe },
+        { header: 'Qty In', key: 'in', width: 12, format: 'number', value: (r) => r.qtyIn },
+        { header: 'Qty Out', key: 'out', width: 12, format: 'number', value: (r) => r.qtyOut },
+        { header: 'Harga Pokok', key: 'hp', width: 14, format: 'currency', value: (r) => r.hargaPokok },
+        { header: 'Nilai Movement', key: 'nilai', width: 16, format: 'currency', value: (r) => r.nilai },
+        { header: 'Saldo Qty', key: 'sQty', width: 14, format: 'number', value: (r) => r.saldoQty },
+        { header: 'Saldo Nilai', key: 'sNilai', width: 18, format: 'currency', value: (r) => r.saldoNilai },
+        { header: 'Keterangan', key: 'ket', width: 30, value: (r) => r.keterangan ?? '' },
+      ],
+      rows,
+    );
+  }
 
   // ---------------------------------------------------------------
   // LOCK & SALDO

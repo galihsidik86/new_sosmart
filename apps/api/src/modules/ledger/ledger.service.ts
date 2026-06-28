@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { JournalStatus, NormalBalance } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 export interface LedgerRow {
   tanggal: Date;
@@ -28,7 +29,28 @@ export interface LedgerResponse {
 
 @Injectable()
 export class LedgerService {
-  constructor(private readonly tenancy: TenancyService) {}
+  constructor(
+    private readonly tenancy: TenancyService,
+    private readonly excel: ExcelService,
+  ) {}
+
+  async exportBukuXlsx(opts: { accountId: string; periodId?: string; cabangId?: string }): Promise<Buffer> {
+    const data = await this.buku(opts);
+    return this.excel.buildBuffer(
+      `BB ${data.account.kode}`,
+      [
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Nomor', key: 'nomor', width: 16, value: (r) => r.nomor ?? '' },
+        { header: 'Deskripsi', key: 'desc', width: 32, value: (r) => r.deskripsi },
+        { header: 'Keterangan Baris', key: 'lineDesc', width: 28, value: (r) => r.lineDeskripsi ?? '' },
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabangKode },
+        { header: 'Debit', key: 'debit', width: 16, format: 'currency', value: (r) => r.debit },
+        { header: 'Kredit', key: 'kredit', width: 16, format: 'currency', value: (r) => r.kredit },
+        { header: 'Saldo', key: 'saldo', width: 18, format: 'currency', value: (r) => r.saldo },
+      ],
+      data.rows,
+    );
+  }
 
   async buku(opts: {
     accountId: string;

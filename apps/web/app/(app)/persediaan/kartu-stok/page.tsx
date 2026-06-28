@@ -67,13 +67,23 @@ export default async function KartuStokPage({
     <>
       <Topbar breadcrumb="Kartu Stok" tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-2">
-          Kartu Stok
-        </h1>
-        <p className="text-sm text-tanah-500 mb-6">
-          Mutasi stok dengan saldo berjalan per item per cabang.
-          Sumber telusur balik ke faktur penjualan/pembelian/opname.
-        </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-2">
+              Kartu Stok
+            </h1>
+            <p className="text-sm text-tanah-500">
+              Mutasi stok dengan saldo berjalan per item per cabang.
+              Sumber telusur balik ke faktur penjualan/pembelian/opname.
+            </p>
+          </div>
+          {itemId && (
+            <a href={`/proxy/inventory/kartu-stok/export.xlsx?itemId=${itemId}${sp.cabangId ? '&cabangId=' + sp.cabangId : ''}${sp.startDate ? '&startDate=' + sp.startDate : ''}${sp.endDate ? '&endDate=' + sp.endDate : ''}`}
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+              Export Excel
+            </a>
+          )}
+        </div>
 
         <form className="bg-white border border-cream-200 rounded-xl p-4 mb-6 flex items-end gap-3 shadow-sm">
           <div className="flex-1">

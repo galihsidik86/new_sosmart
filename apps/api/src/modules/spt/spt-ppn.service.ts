@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Decimal } from 'decimal.js';
 import { InvoiceStatus } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 export interface SptPpnLine {
   nomor: string | null;
@@ -49,7 +50,34 @@ export interface SptPpnResponse {
  */
 @Injectable()
 export class SptPpnService {
-  constructor(private readonly tenancy: TenancyService) {}
+  constructor(
+    private readonly tenancy: TenancyService,
+    private readonly excel: ExcelService,
+  ) {}
+
+  async exportXlsx(opts: { periodId: string }): Promise<Buffer> {
+    const data = await this.build(opts);
+    const allRows = [
+      ...data.ppnKeluaran.rows.map((r) => ({ ...r, sisi: 'KELUARAN' as const })),
+      ...data.ppnMasukan.rows.map((r) => ({ ...r, sisi: 'MASUKAN' as const })),
+    ];
+    return this.excel.buildBuffer(
+      `SPT PPN ${data.periode.label}`,
+      [
+        { header: 'Sisi', key: 'sisi', width: 12, value: (r) => r.sisi },
+        { header: 'Nomor', key: 'nomor', width: 18, value: (r) => r.nomor ?? '' },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Lawan', key: 'pihak', width: 28,
+          value: (r) => `${r.pihakNama}${r.pihakIsPkp ? ' (PKP)' : ''}` },
+        { header: 'NPWP', key: 'npwp', width: 20, value: (r) => r.pihakNpwp ?? '' },
+        { header: 'Kode FP', key: 'kfp', width: 10, value: (r) => r.kodeFakturPajak ?? '' },
+        { header: 'NSFP', key: 'nsfp', width: 18, value: (r) => r.nsfp ?? '' },
+        { header: 'DPP', key: 'dpp', width: 16, format: 'currency', value: (r) => r.dpp },
+        { header: 'PPN', key: 'ppn', width: 14, format: 'currency', value: (r) => r.ppn },
+      ],
+      allRows,
+    );
+  }
 
   async build(opts: { periodId: string }): Promise<SptPpnResponse> {
     return this.tenancy.run(async (tx) => {

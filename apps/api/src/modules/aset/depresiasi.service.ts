@@ -17,6 +17,7 @@ import {
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { JournalsService } from '../journals/journals.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 /**
  * Engine penyusutan bulanan. Konvensi:
@@ -35,7 +36,23 @@ export class DepresiasiService {
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly journals: JournalsService,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(): Promise<Buffer> {
+    const rows = await this.list();
+    return this.excel.buildBuffer(
+      'Penyusutan Bulanan',
+      [
+        { header: 'Periode', key: 'periode', width: 12, value: (r) => r.periode },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Status', key: 'status', width: 12, value: (r) => r.status },
+        { header: 'Total Aset', key: 'totalAset', width: 10, format: 'number', value: (r) => r._count.lines },
+        { header: 'Total Penyusutan', key: 'totalNilai', width: 18, format: 'currency', value: (r) => r.totalPenyusutan },
+      ],
+      rows,
+    );
+  }
 
   // -----------------------------------------------------------
   // CALC

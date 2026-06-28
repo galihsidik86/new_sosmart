@@ -19,6 +19,7 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { lookupTer } from './ter-table.js';
 
@@ -38,7 +39,29 @@ export class PayrollService {
     private readonly seq: SequenceService,
     private readonly journals: JournalsService,
     private readonly glConfig: GlConfigService,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(opts: { cabangId?: string; status?: InvoiceStatus }): Promise<Buffer> {
+    const rows = await this.list(opts);
+    return this.excel.buildBuffer(
+      'Payroll',
+      [
+        { header: 'Periode', key: 'periode', width: 12, value: (r) => r.periode },
+        { header: 'Nomor', key: 'nomor', width: 18, value: (r) => r.nomor ?? '— DRAFT —' },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Cabang', key: 'cabang', width: 12, value: (r) => r.cabang.kode },
+        { header: 'Status', key: 'status', width: 12, value: (r) => r.status },
+        { header: 'Karyawan', key: 'jml', width: 10, format: 'number', value: (r) => r._count.lines },
+        { header: 'Total Gaji Pokok', key: 'gaji', width: 16, format: 'currency', value: (r) => r.totalGajiPokok },
+        { header: 'Total Tunjangan', key: 'tnj', width: 16, format: 'currency', value: (r) => r.totalTunjangan },
+        { header: 'Total PPh 21', key: 'pph21', width: 14, format: 'currency', value: (r) => r.totalPph21 },
+        { header: 'Total BPJS', key: 'bpjs', width: 14, format: 'currency', value: (r) => r.totalIuranBpjs },
+        { header: 'Take Home', key: 'takehome', width: 16, format: 'currency', value: (r) => r.totalTakeHome },
+      ],
+      rows,
+    );
+  }
 
   list(opts: { cabangId?: string; status?: InvoiceStatus }) {
     const where: Prisma.PayrollRunWhereInput = {};

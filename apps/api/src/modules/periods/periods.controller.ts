@@ -4,9 +4,11 @@ import {
   Get,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   closePeriodInputSchema,
@@ -25,6 +27,11 @@ import { PeriodsService } from './periods.service.js';
 @UseInterceptors(TenancyInterceptor)
 export class PeriodsController {
   constructor(private readonly periods: PeriodsService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(@Res() reply: ReplyLike) {
+    sendXlsx(reply, 'periode-buku.xlsx', await this.periods.exportXlsx());
+  }
 
   @Get('years')
   listYears() {

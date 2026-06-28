@@ -6,9 +6,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
@@ -28,6 +30,16 @@ import type { CashBankType, InvoiceStatus } from '@lentera/db';
 @UseInterceptors(TenancyInterceptor)
 export class CashBankController {
   constructor(private readonly cb: CashBankService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(
+    @Res() reply: ReplyLike,
+    @Query('status') status?: InvoiceStatus,
+    @Query('tipe') tipe?: CashBankType,
+    @Query('periodId') periodId?: string,
+  ) {
+    sendXlsx(reply, 'kas-bank.xlsx', await this.cb.exportXlsx({ status, tipe, periodId }));
+  }
 
   @Get()
   list(

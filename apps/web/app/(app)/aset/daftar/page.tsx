@@ -71,10 +71,16 @@ export default async function AsetDaftarPage({
               <span className="font-semibold text-tanah-700">{fmtRp(totalNilai)}</span>
             </p>
           </div>
-          <Link href="/aset/baru"
-            className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-            + Aset Baru
-          </Link>
+          <div className="flex items-center gap-2">
+            <a href="/proxy/aset/export.xlsx"
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+              Export Excel
+            </a>
+            <Link href="/aset/baru"
+              className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
+              + Aset Baru
+            </Link>
+          </div>
         </div>
 
         <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-2 shadow-sm text-sm">

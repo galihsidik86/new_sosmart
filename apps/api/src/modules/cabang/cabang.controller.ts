@@ -3,9 +3,11 @@ import {
   Controller,
   Get,
   Post,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   createCabangInputSchema,
@@ -22,6 +24,11 @@ import { CabangService } from './cabang.service.js';
 @UseInterceptors(TenancyInterceptor)
 export class CabangController {
   constructor(private readonly cabang: CabangService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(@Res() reply: ReplyLike) {
+    sendXlsx(reply, 'cabang.xlsx', await this.cabang.exportXlsx());
+  }
 
   @Get()
   list() {

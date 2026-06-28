@@ -8,6 +8,7 @@ import type { CreateBuktiPotongManualInput } from '@lentera/shared/schemas';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 @Injectable()
 export class BuktiPotongService {
@@ -15,7 +16,29 @@ export class BuktiPotongService {
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly seq: SequenceService,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(opts: { jenisPph?: JenisPph; status?: BuktiPotongStatus; periodId?: string }): Promise<Buffer> {
+    const rows = await this.list(opts);
+    return this.excel.buildBuffer(
+      'Bukti Potong',
+      [
+        { header: 'Nomor', key: 'nomor', width: 18, value: (r) => r.nomor },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Jenis PPh', key: 'jenis', width: 12, value: (r) => r.jenisPph },
+        { header: 'Penerima', key: 'penerima', width: 28, value: (r) => r.pihakNama },
+        { header: 'NPWP/NIK', key: 'npwp', width: 20, value: (r) => r.pihakNpwp ?? r.pihakNik ?? '' },
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabang.kode },
+        { header: 'Periode', key: 'periode', width: 14, value: (r) => r.fiscalPeriod.label },
+        { header: 'DPP', key: 'dpp', width: 16, format: 'currency', value: (r) => r.dpp },
+        { header: 'Tarif %', key: 'tarif', width: 8, value: (r) => r.tarifPersen },
+        { header: 'PPh Dipotong', key: 'pph', width: 16, format: 'currency', value: (r) => r.pph },
+        { header: 'Status', key: 'status', width: 14, value: (r) => r.status },
+      ],
+      rows,
+    );
+  }
 
   list(opts: {
     jenisPph?: JenisPph;

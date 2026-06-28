@@ -5,9 +5,11 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
@@ -29,6 +31,15 @@ import type { AsetStatus } from '@lentera/db';
 @UseInterceptors(TenancyInterceptor)
 export class AsetController {
   constructor(private readonly aset: AsetService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(
+    @Res() reply: ReplyLike,
+    @Query('status') status?: AsetStatus,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    sendXlsx(reply, 'aset-tetap.xlsx', await this.aset.exportXlsx({ status, cabangId }));
+  }
 
   @Get()
   list(

@@ -7,13 +7,43 @@ import {
 import { Prisma, PeriodStatus } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 @Injectable()
 export class PeriodsService {
   constructor(
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(): Promise<Buffer> {
+    const years = await this.listYears();
+    const flat = years.flatMap((y) =>
+      y.periods.map((p) => ({
+        tahunBuku: y.kode,
+        no: p.no, label: p.label,
+        startDate: p.startDate, endDate: p.endDate,
+        status: p.status,
+        closedAt: p.closedAt,
+        catatanTutup: p.catatanTutup,
+      })),
+    );
+    return this.excel.buildBuffer(
+      'Periode Buku',
+      [
+        { header: 'Tahun Buku', key: 'tb', width: 12, value: (r) => r.tahunBuku },
+        { header: 'No', key: 'no', width: 6, format: 'number', value: (r) => r.no },
+        { header: 'Label', key: 'label', width: 16, value: (r) => r.label },
+        { header: 'Mulai', key: 'start', width: 12, format: 'date', value: (r) => r.startDate },
+        { header: 'Selesai', key: 'end', width: 12, format: 'date', value: (r) => r.endDate },
+        { header: 'Status', key: 'status', width: 12, value: (r) => r.status },
+        { header: 'Tanggal Tutup', key: 'closed', width: 12, format: 'date', value: (r) => r.closedAt ?? '' },
+        { header: 'Catatan Tutup', key: 'cat', width: 40, value: (r) => r.catatanTutup ?? '' },
+      ],
+      flat,
+    );
+  }
 
   listYears() {
     return this.tenancy.run((tx) =>

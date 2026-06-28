@@ -5,9 +5,11 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
@@ -26,6 +28,11 @@ import { DepresiasiService } from './depresiasi.service.js';
 @UseInterceptors(TenancyInterceptor)
 export class DepresiasiController {
   constructor(private readonly dep: DepresiasiService) {}
+
+  @Get('runs/export.xlsx')
+  async exportXlsx(@Res() reply: ReplyLike) {
+    sendXlsx(reply, 'penyusutan-bulanan.xlsx', await this.dep.exportXlsx());
+  }
 
   @Get('runs')
   list() {

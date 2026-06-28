@@ -17,6 +17,7 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 /**
  * Prefix nomor per tipe:
@@ -38,7 +39,29 @@ export class CashBankService {
     private readonly ctx: TenantContext,
     private readonly seq: SequenceService,
     private readonly journals: JournalsService,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(filter: { status?: InvoiceStatus; tipe?: CashBankType; periodId?: string }): Promise<Buffer> {
+    const rows = await this.list(filter);
+    return this.excel.buildBuffer(
+      'Kas-Bank',
+      [
+        { header: 'Nomor', key: 'nomor', width: 18, value: (r) => r.nomor ?? '— DRAFT —' },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Tipe', key: 'tipe', width: 10, value: (r) => r.tipe },
+        { header: 'Akun Kas/Bank', key: 'akun', width: 28,
+          value: (r) => `${r.akunKasBank.kode} ${r.akunKasBank.nama}` },
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabang.kode },
+        { header: 'Periode', key: 'periode', width: 14, value: (r) => r.fiscalPeriod.label },
+        { header: 'Kontak', key: 'kontak', width: 22, value: (r) => r.kontak ?? '' },
+        { header: 'Deskripsi', key: 'deskripsi', width: 40, value: (r) => r.deskripsi ?? '' },
+        { header: 'Status', key: 'status', width: 12, value: (r) => r.status },
+        { header: 'Total', key: 'total', width: 16, format: 'currency', value: (r) => r.total },
+      ],
+      rows,
+    );
+  }
 
   list(filter: { status?: InvoiceStatus; tipe?: CashBankType; periodId?: string }) {
     const where: Prisma.CashBankEntryWhereInput = {};

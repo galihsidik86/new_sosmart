@@ -7,9 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
@@ -29,6 +31,15 @@ import type { InvoiceStatus } from '@lentera/db';
 @UseInterceptors(TenancyInterceptor)
 export class AdjustmentsController {
   constructor(private readonly adj: AdjustmentsService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(
+    @Res() reply: ReplyLike,
+    @Query('status') status?: InvoiceStatus,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    sendXlsx(reply, 'penyesuaian-stok.xlsx', await this.adj.exportXlsx({ status, cabangId }));
+  }
 
   @Get()
   list(

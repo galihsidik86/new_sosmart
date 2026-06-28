@@ -62,14 +62,20 @@ export default async function PeriodePage() {
     <>
       <Topbar breadcrumb="Periode Buku" tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Periode Buku
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Tutup periode untuk mengunci jurnal sebelum tanggal cutoff.
-            Buka kembali hanya boleh untuk periode terakhir yang ditutup.
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              Periode Buku
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              Tutup periode untuk mengunci jurnal sebelum tanggal cutoff.
+              Buka kembali hanya boleh untuk periode terakhir yang ditutup.
+            </p>
+          </div>
+          <a href="/proxy/periods/export.xlsx"
+            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+            Export Excel
+          </a>
         </div>
 
         {years.map((y) => (

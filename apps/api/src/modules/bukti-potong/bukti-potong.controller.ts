@@ -5,9 +5,11 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
@@ -27,6 +29,16 @@ import type { BuktiPotongStatus, JenisPph } from '@lentera/db';
 @UseInterceptors(TenancyInterceptor)
 export class BuktiPotongController {
   constructor(private readonly bp: BuktiPotongService) {}
+
+  @Get('export.xlsx')
+  async exportXlsx(
+    @Res() reply: ReplyLike,
+    @Query('jenisPph') jenisPph?: JenisPph,
+    @Query('status') status?: BuktiPotongStatus,
+    @Query('periodId') periodId?: string,
+  ) {
+    sendXlsx(reply, 'bukti-potong.xlsx', await this.bp.exportXlsx({ jenisPph, status, periodId }));
+  }
 
   @Get()
   list(

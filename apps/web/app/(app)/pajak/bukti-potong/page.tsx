@@ -52,15 +52,21 @@ export default async function BuktiPotongPage({
     <>
       <Topbar breadcrumb="Bukti Potong" tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Bukti Potong (e-Bupot Unifikasi)
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            {rows.length} bukti · total PPh dipotong:{' '}
-            <span className="font-semibold text-tanah-700">{fmtRp(totalPph)}</span>
-            <span className="text-xs ml-2">·  Auto-generate dari Payroll (PPh 21) & Faktur Pembelian (PPh 23)</span>
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              Bukti Potong (e-Bupot Unifikasi)
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              {rows.length} bukti · total PPh dipotong:{' '}
+              <span className="font-semibold text-tanah-700">{fmtRp(totalPph)}</span>
+              <span className="text-xs ml-2">·  Auto-generate dari Payroll (PPh 21) & Faktur Pembelian (PPh 23)</span>
+            </p>
+          </div>
+          <a href={`/proxy/bukti-potong/export.xlsx${qs}`}
+            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+            Export Excel
+          </a>
         </div>
 
         <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-2 shadow-sm text-sm">

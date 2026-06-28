@@ -55,13 +55,21 @@ export default async function SptPphPage({
     <>
       <Topbar breadcrumb={`SPT Masa ${jenisPph.replace('_', ' ')}`} tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            SPT Masa PPh
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Rekap bukti potong PPh per masa pajak — format e-Bupot Unifikasi.
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              SPT Masa PPh
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              Rekap bukti potong PPh per masa pajak — format e-Bupot Unifikasi.
+            </p>
+          </div>
+          {periodId && (
+            <a href={`/proxy/spt/pph/export.xlsx?periodId=${periodId}&jenisPph=${jenisPph}`}
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+              Export Excel
+            </a>
+          )}
         </div>
 
         <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm">

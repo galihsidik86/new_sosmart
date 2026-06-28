@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { BuktiPotongStatus, JenisPph } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 export interface SptPphLine {
   nomor: string | null;
@@ -35,7 +36,28 @@ export interface SptPphResponse {
  */
 @Injectable()
 export class SptPphService {
-  constructor(private readonly tenancy: TenancyService) {}
+  constructor(
+    private readonly tenancy: TenancyService,
+    private readonly excel: ExcelService,
+  ) {}
+
+  async exportXlsx(opts: { periodId: string; jenisPph: JenisPph }): Promise<Buffer> {
+    const data = await this.build(opts);
+    return this.excel.buildBuffer(
+      `SPT ${data.jenisPph} ${data.periode.label}`,
+      [
+        { header: 'Nomor', key: 'nomor', width: 18, value: (r) => r.nomor ?? '' },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Pihak', key: 'pihak', width: 28, value: (r) => r.pihakNama },
+        { header: 'NPWP/NIK', key: 'npwp', width: 20, value: (r) => r.pihakNpwp ?? r.pihakNik ?? '' },
+        { header: 'DPP', key: 'dpp', width: 16, format: 'currency', value: (r) => r.dpp },
+        { header: 'Tarif %', key: 'tarif', width: 8, value: (r) => r.tarifPersen },
+        { header: 'PPh', key: 'pph', width: 16, format: 'currency', value: (r) => r.pph },
+        { header: 'Sumber', key: 'sumber', width: 20, value: (r) => r.sumberType ?? '' },
+      ],
+      data.rows,
+    );
+  }
 
   async build(opts: {
     periodId: string;

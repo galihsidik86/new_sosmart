@@ -85,6 +85,10 @@ export default async function DepresiasiPage({
               Hitung & posting otomatis per bulan. 1 run per tenant per periode. Cancel hanya boleh untuk periode terakhir.
             </p>
           </div>
+          <a href="/proxy/depresiasi/runs/export.xlsx"
+            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+            Export Excel
+          </a>
         </div>
 
         <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">

@@ -42,14 +42,20 @@ export default async function CabangPage() {
     <>
       <Topbar breadcrumb="Cabang" tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Cabang
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Setiap cabang fisik dengan kantor terpisah biasanya punya NPWP cabang sendiri
-            (kode 3-digit terakhir: 000 = pusat, 001+ = cabang).
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              Cabang
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              Setiap cabang fisik dengan kantor terpisah biasanya punya NPWP cabang sendiri
+              (kode 3-digit terakhir: 000 = pusat, 001+ = cabang).
+            </p>
+          </div>
+          <a href="/proxy/cabang/export.xlsx"
+            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+            Export Excel
+          </a>
         </div>
 
         <div className="grid grid-cols-3 gap-6">

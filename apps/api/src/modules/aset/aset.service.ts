@@ -19,6 +19,7 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 /**
  * Default masa manfaat (bulan) menurut Pasal 11 UU PPh:
@@ -41,7 +42,34 @@ export class AsetService {
     private readonly ctx: TenantContext,
     private readonly journals: JournalsService,
     private readonly glConfig: GlConfigService,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(filter: { status?: AsetStatus; cabangId?: string }): Promise<Buffer> {
+    const rows = await this.list(filter);
+    return this.excel.buildBuffer(
+      'Aset Tetap',
+      [
+        { header: 'Kode', key: 'kode', width: 14, value: (r) => r.kode },
+        { header: 'Nama', key: 'nama', width: 32, value: (r) => r.nama },
+        { header: 'Kelompok', key: 'kelompok', width: 18, value: (r) => r.kelompok },
+        { header: 'Metode Penyusutan', key: 'metode', width: 18, value: (r) => r.metode },
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabang?.kode ?? '' },
+        { header: 'Tanggal Perolehan', key: 'tglPerolehan', width: 14, format: 'date', value: (r) => r.tanggalPerolehan },
+        { header: 'Mulai Penyusutan', key: 'tglMulai', width: 14, format: 'date', value: (r) => r.mulaiPenyusutan },
+        { header: 'Masa Manfaat (bln)', key: 'masa', width: 14, format: 'number', value: (r) => r.masaManfaatBulan },
+        { header: 'Harga Perolehan', key: 'hp', width: 16, format: 'currency', value: (r) => r.hargaPerolehan },
+        { header: 'Nilai Residu', key: 'residu', width: 14, format: 'currency', value: (r) => r.nilaiResidu },
+        { header: 'Akumulasi', key: 'akum', width: 16, format: 'currency', value: (r) => r.akumulasiPenyusutan },
+        { header: 'Nilai Buku', key: 'nb', width: 16, format: 'currency', value: (r) => r.nilaiBuku },
+        { header: 'Akun Aset', key: 'akAset', width: 18, value: (r) => r.akunAset?.kode ?? '' },
+        { header: 'Akun Akumulasi', key: 'akAkum', width: 18, value: (r) => r.akunAkumulasi?.kode ?? '' },
+        { header: 'Akun Beban', key: 'akBeban', width: 18, value: (r) => r.akunBeban?.kode ?? '' },
+        { header: 'Status', key: 'status', width: 12, value: (r) => r.status },
+      ],
+      rows,
+    );
+  }
 
   list(filter: { status?: AsetStatus; cabangId?: string }) {
     const where: Prisma.AsetTetapWhereInput = {};

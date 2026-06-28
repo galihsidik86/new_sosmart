@@ -41,6 +41,10 @@ export default async function SaldoStokPage({
               Snapshot terkini per (item × cabang). Total nilai persediaan: <span className="font-semibold text-tanah-700">{fmtRp(totalNilai)}</span>
             </p>
           </div>
+          <a href={`/proxy/inventory/saldo/export.xlsx${qs}`}
+            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+            Export Excel
+          </a>
         </div>
 
         <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-2 shadow-sm text-sm">

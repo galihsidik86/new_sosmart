@@ -19,6 +19,7 @@ import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
+import { ExcelService } from '../../common/excel/excel.service.js';
 
 /**
  * Opname / penyesuaian stok.
@@ -37,7 +38,26 @@ export class AdjustmentsService {
     private readonly journals: JournalsService,
     private readonly inventory: InventoryService,
     private readonly glConfig: GlConfigService,
+    private readonly excel: ExcelService,
   ) {}
+
+  async exportXlsx(filter: { status?: InvoiceStatus; cabangId?: string }): Promise<Buffer> {
+    const rows = await this.list(filter);
+    return this.excel.buildBuffer(
+      'Penyesuaian Stok',
+      [
+        { header: 'Nomor', key: 'nomor', width: 18, value: (r) => r.nomor ?? '— DRAFT —' },
+        { header: 'Tanggal', key: 'tanggal', width: 12, format: 'date', value: (r) => r.tanggal },
+        { header: 'Cabang', key: 'cabang', width: 10, value: (r) => r.cabang.kode },
+        { header: 'Periode', key: 'periode', width: 14, value: (r) => r.fiscalPeriod.label },
+        { header: 'Alasan', key: 'alasan', width: 40, value: (r) => r.alasan },
+        { header: 'Status', key: 'status', width: 12, value: (r) => r.status },
+        { header: 'Total Delta Nilai', key: 'total', width: 18, format: 'currency', value: (r) => r.totalDeltaNilai },
+        { header: 'Baris', key: 'lines', width: 8, format: 'number', value: (r) => r._count.lines },
+      ],
+      rows,
+    );
+  }
 
   list(filter: { status?: InvoiceStatus; cabangId?: string }) {
     const where: Prisma.StokAdjustmentWhereInput = {};

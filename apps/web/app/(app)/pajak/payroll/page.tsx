@@ -95,14 +95,20 @@ export default async function PayrollListPage({
     <>
       <Topbar breadcrumb="Payroll" tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Payroll Bulanan
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            PPh 21 dihitung dengan TER (Tarif Efektif Rata-rata) bulanan PMK 168/2023.
-            Auto-jurnal saat post: D Beban Gaji · K Utang PPh 21 · K Utang BPJS · K Kas/Bank.
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              Payroll Bulanan
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              PPh 21 dihitung dengan TER (Tarif Efektif Rata-rata) bulanan PMK 168/2023.
+              Auto-jurnal saat post: D Beban Gaji · K Utang PPh 21 · K Utang BPJS · K Kas/Bank.
+            </p>
+          </div>
+          <a href="/proxy/payroll/runs/export.xlsx"
+            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
+            Export Excel
+          </a>
         </div>
 
         <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">

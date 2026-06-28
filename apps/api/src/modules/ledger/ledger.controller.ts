@@ -43,6 +43,16 @@ export class LedgerController {
     return this.ledger.buku({ accountId, periodId, cabangId });
   }
 
+  @Get('ledger.xlsx')
+  async bukuXlsx(
+    @Res() reply: ReplyLike,
+    @Query('accountId') accountId: string,
+    @Query('periodId') periodId?: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    sendXlsx(reply, 'buku-besar.xlsx', await this.ledger.exportBukuXlsx({ accountId, periodId, cabangId }));
+  }
+
   /** Neraca saldo per periode (semua akun postable). */
   @Get('trial-balance')
   trialBalance(
