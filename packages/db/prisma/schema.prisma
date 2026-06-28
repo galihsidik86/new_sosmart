@@ -752,6 +752,10 @@ model Journal {
   totalKredit     Decimal        @default(0) @map("total_kredit") @db.Decimal(20, 2)
   postedAt        DateTime?      @map("posted_at")
   postedById      String?        @map("posted_by_id") @db.Uuid
+  /// Step-up audit: kalau posting dieksekusi atas permintaan user lain
+  /// (mis. KASIR meminta approval AKUNTAN), simpan ID requester di sini.
+  /// postedById tetap menunjuk ke approver (yang JWT-nya dipakai).
+  postedRequestedById String?    @map("posted_requested_by_id") @db.Uuid
   createdById     String?        @map("created_by_id") @db.Uuid
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
@@ -847,6 +851,10 @@ model SalesInvoice {
 
   postedAt          DateTime?     @map("posted_at")
   postedById        String?       @map("posted_by_id") @db.Uuid
+  /// Step-up audit: ID user yang meminta posting saat dijalankan dengan
+  /// approval kredensial (mis. KASIR meminta AKUNTAN approve). Null untuk
+  /// posting langsung. postedById tetap = approver.
+  postedRequestedById String?     @map("posted_requested_by_id") @db.Uuid
   cancelledAt       DateTime?     @map("cancelled_at")
   cancelledById     String?       @map("cancelled_by_id") @db.Uuid
   createdById       String?       @map("created_by_id") @db.Uuid
@@ -939,6 +947,10 @@ model PurchaseInvoice {
 
   postedAt          DateTime?     @map("posted_at")
   postedById        String?       @map("posted_by_id") @db.Uuid
+  /// Step-up audit: ID user yang meminta posting saat dijalankan dengan
+  /// approval kredensial (mis. KASIR meminta AKUNTAN approve). Null untuk
+  /// posting langsung. postedById tetap = approver.
+  postedRequestedById String?     @map("posted_requested_by_id") @db.Uuid
   cancelledAt       DateTime?     @map("cancelled_at")
   cancelledById     String?       @map("cancelled_by_id") @db.Uuid
   createdById       String?       @map("created_by_id") @db.Uuid
@@ -1161,6 +1173,8 @@ model StokAdjustment {
   totalDeltaNilai Decimal        @default(0) @map("total_delta_nilai") @db.Decimal(20, 2)
   postedAt        DateTime?      @map("posted_at")
   postedById      String?        @map("posted_by_id") @db.Uuid
+  /// Step-up audit: requester ID kalau posting dengan approval kredensial.
+  postedRequestedById String?    @map("posted_requested_by_id") @db.Uuid
   cancelledAt     DateTime?      @map("cancelled_at")
   cancelledById   String?        @map("cancelled_by_id") @db.Uuid
   createdById     String?        @map("created_by_id") @db.Uuid
@@ -1384,6 +1398,10 @@ model PayrollRun {
   journalId         String?       @unique @map("journal_id") @db.Uuid
   postedAt          DateTime?     @map("posted_at")
   postedById        String?       @map("posted_by_id") @db.Uuid
+  /// Step-up audit: ID user yang meminta posting saat dijalankan dengan
+  /// approval kredensial (mis. KASIR meminta AKUNTAN approve). Null untuk
+  /// posting langsung. postedById tetap = approver.
+  postedRequestedById String?     @map("posted_requested_by_id") @db.Uuid
   cancelledAt       DateTime?     @map("cancelled_at")
   cancelledById     String?       @map("cancelled_by_id") @db.Uuid
   createdById       String?       @map("created_by_id") @db.Uuid

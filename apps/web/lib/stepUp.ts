@@ -13,6 +13,8 @@ interface StepUpOpts {
   apiPath: string;
   method?: 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
+  /** ID user yang sebenarnya meminta action (kasir). API tulis ke kolom postedRequestedById untuk audit. */
+  requestedByUserId?: string;
 }
 
 /**
@@ -48,6 +50,7 @@ export async function runWithApprover<T>(opts: StepUpOpts): Promise<
     'x-tenant-id': opts.tenantId,
   };
   if (opts.body !== undefined) headers['content-type'] = 'application/json';
+  if (opts.requestedByUserId) headers['x-requested-by-user-id'] = opts.requestedByUserId;
 
   const res = await fetch(`${API_URL}/api/v1${opts.apiPath}`, {
     method: opts.method ?? 'POST',

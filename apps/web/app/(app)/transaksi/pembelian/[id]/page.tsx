@@ -26,6 +26,8 @@ interface Detail {
   totalDpp: string; totalPpn: string; totalPph23: string;
   totalDiskon: string; totalNetto: string; totalDibayar: string;
   journalId: string | null;
+  postedBy: { id: string; email: string; nama: string } | null;
+  postedRequestedBy: { id: string; email: string; nama: string } | null;
   lines: Array<{
     no: number; deskripsi: string; qty: string; satuan: string;
     hargaSatuan: string; diskonPersen: string; klasifikasiPpn: string; isJasa: boolean;
@@ -46,6 +48,7 @@ async function postWithApproverAction(formData: FormData): Promise<{ error?: str
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) return { error: 'Session expired, silakan login ulang.' };
+  const session = await getSession();
   const id = String(formData.get('id'));
   const r = await runWithApprover({
     approverEmail: String(formData.get('approverEmail') ?? ''),
@@ -53,6 +56,7 @@ async function postWithApproverAction(formData: FormData): Promise<{ error?: str
     tenantId,
     requiredRoles: ['OWNER', 'ADMIN', 'AKUNTAN'],
     apiPath: `/purchase-invoices/${id}/post`,
+    requestedByUserId: session?.user.id,
   });
   if (!r.ok) return { error: r.error };
   revalidatePath(`/transaksi/pembelian/${id}`);
@@ -105,6 +109,14 @@ export default async function PembelianDetailPage({
                 Jurnal:{' '}
                 <Link href={`/pembukuan/jurnal/${inv.journalId}`}
                   className="text-sogan-500 font-mono hover:underline">lihat</Link>
+              </p>
+            )}
+            {inv.postedBy && (
+              <p className="text-xs text-tanah-500 mt-1">
+                Diposting oleh <span className="font-semibold text-tanah-700">{inv.postedBy.nama}</span> ({inv.postedBy.email})
+                {inv.postedRequestedBy && (
+                  <> · atas permintaan <span className="font-semibold text-tanah-700">{inv.postedRequestedBy.nama}</span> ({inv.postedRequestedBy.email})</>
+                )}
               </p>
             )}
           </div>

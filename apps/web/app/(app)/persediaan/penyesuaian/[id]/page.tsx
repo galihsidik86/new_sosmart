@@ -20,6 +20,8 @@ interface Detail {
   status: Status;
   totalDeltaNilai: string;
   journalId: string | null;
+  postedBy: { id: string; email: string; nama: string } | null;
+  postedRequestedBy: { id: string; email: string; nama: string } | null;
   cabang: { kode: string; nama: string };
   fiscalPeriod: { label: string };
   lines: Array<{
@@ -45,6 +47,7 @@ async function postWithApproverAction(formData: FormData): Promise<{ error?: str
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) return { error: 'Session expired, silakan login ulang.' };
+  const session = await getSession();
   const id = String(formData.get('id'));
   const r = await runWithApprover({
     approverEmail: String(formData.get('approverEmail') ?? ''),
@@ -52,6 +55,7 @@ async function postWithApproverAction(formData: FormData): Promise<{ error?: str
     tenantId,
     requiredRoles: ['OWNER', 'ADMIN', 'AKUNTAN'],
     apiPath: `/stok-adjustments/${id}/post`,
+    requestedByUserId: session?.user.id,
   });
   if (!r.ok) return { error: r.error };
   revalidatePath(`/persediaan/penyesuaian/${id}`);
@@ -102,6 +106,14 @@ export default async function PenyesuaianDetailPage({
                 Jurnal:{' '}
                 <Link href={`/pembukuan/jurnal/${adj.journalId}`}
                   className="text-sogan-500 font-mono hover:underline">lihat</Link>
+              </p>
+            )}
+            {adj.postedBy && (
+              <p className="text-xs text-tanah-500 mt-1">
+                Diposting oleh <span className="font-semibold text-tanah-700">{adj.postedBy.nama}</span> ({adj.postedBy.email})
+                {adj.postedRequestedBy && (
+                  <> · atas permintaan <span className="font-semibold text-tanah-700">{adj.postedRequestedBy.nama}</span> ({adj.postedRequestedBy.email})</>
+                )}
               </p>
             )}
           </div>

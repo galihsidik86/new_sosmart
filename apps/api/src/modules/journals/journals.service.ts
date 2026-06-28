@@ -15,6 +15,7 @@ import type {
   JournalLineInput,
   JournalSourceInput,
 } from '@lentera/shared/schemas';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
@@ -43,6 +44,7 @@ interface ListFilter {
 @Injectable()
 export class JournalsService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly seq: SequenceService,
@@ -110,7 +112,7 @@ export class JournalsService {
     );
   }
 
-  byId(id: string) {
+  async byId(id: string) {
     return this.tenancy.run(async (tx) => {
       const j = await tx.journal.findUnique({
         where: { id },
@@ -127,7 +129,19 @@ export class JournalsService {
       });
       if (!j) throw new NotFoundException('Jurnal tidak ditemukan');
       this.cabangScope.assertAccess(j.cabangId);
-      return j;
+      const uids = [j.postedById, j.postedRequestedById].filter((u): u is string => !!u);
+      const users = uids.length
+        ? await this.prisma.user.findMany({
+            where: { id: { in: uids } },
+            select: { id: true, email: true, nama: true },
+          })
+        : [];
+      const lookup = (uid: string | null) => users.find((u) => u.id === uid) ?? null;
+      return {
+        ...j,
+        postedBy: lookup(j.postedById),
+        postedRequestedBy: lookup(j.postedRequestedById),
+      };
     });
   }
 
@@ -197,8 +211,20 @@ export class JournalsService {
   // POST (DRAFT → POSTED)
   // -----------------------------------------------------------
 
-  async postInTx(tx: Prisma.TransactionClient, journalId: string) {
+  async postInTx(
+    tx: Prisma.TransactionClient,
+    journalId: string,
+    requestedById?: string | null,
+  ) {
     const userId = this.ctx.require().userId;
+    const tenantId = this.ctx.require().tenantId;
+    if (requestedById && requestedById !== userId) {
+      const m = await tx.membership.findUnique({
+        where: { userId_tenantId: { userId: requestedById, tenantId } },
+        select: { userId: true },
+      });
+      if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
+    }
     const j = await tx.journal.findUnique({
       where: { id: journalId },
       include: { lines: true },
@@ -227,12 +253,13 @@ export class JournalsService {
         nomor,
         postedAt: new Date(),
         postedById: userId,
+        postedRequestedById: requestedById && requestedById !== userId ? requestedById : null,
       },
     });
   }
 
-  async post(journalId: string) {
-    return this.tenancy.run((tx) => this.postInTx(tx, journalId));
+  async post(journalId: string, requestedById?: string | null) {
+    return this.tenancy.run((tx) => this.postInTx(tx, journalId, requestedById));
   }
 
   // -----------------------------------------------------------

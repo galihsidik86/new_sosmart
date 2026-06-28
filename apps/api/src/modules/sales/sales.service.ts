@@ -16,6 +16,7 @@ import type {
   CreateSalesInvoiceInput,
   SalesLineInput,
 } from '@lentera/shared/schemas';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
@@ -37,6 +38,7 @@ function isPpnable(k: KlasifikasiPpn): boolean {
 @Injectable()
 export class SalesService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly seq: SequenceService,
@@ -96,7 +98,7 @@ export class SalesService {
     );
   }
 
-  byId(id: string) {
+  async byId(id: string) {
     return this.tenancy.run(async (tx) => {
       const inv = await tx.salesInvoice.findUnique({
         where: { id },
@@ -116,7 +118,21 @@ export class SalesService {
       });
       if (!inv) throw new NotFoundException('Faktur tidak ditemukan');
       this.cabangScope.assertAccess(inv.cabangId);
-      return inv;
+      const userIds = [inv.postedById, inv.postedRequestedById].filter(
+        (u): u is string => !!u,
+      );
+      const users = userIds.length
+        ? await this.prisma.user.findMany({
+            where: { id: { in: userIds } },
+            select: { id: true, email: true, nama: true },
+          })
+        : [];
+      const byId = (uid: string | null) => users.find((u) => u.id === uid) ?? null;
+      return {
+        ...inv,
+        postedBy: byId(inv.postedById),
+        postedRequestedBy: byId(inv.postedRequestedById),
+      };
     });
   }
 
@@ -284,9 +300,19 @@ export class SalesService {
   // POST: DRAFT → POSTED + auto-post jurnal
   // ----------------------------------------------------
 
-  async post(id: string) {
+  async post(id: string, requestedById?: string | null) {
     const userId = this.ctx.require().userId;
+    const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
+      if (requestedById && requestedById !== userId) {
+        const membership = await tx.membership.findUnique({
+          where: { userId_tenantId: { userId: requestedById, tenantId } },
+          select: { userId: true },
+        });
+        if (!membership) {
+          throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
+        }
+      }
       const inv = await tx.salesInvoice.findUnique({
         where: { id },
         include: {
@@ -436,6 +462,7 @@ export class SalesService {
           hppJournalId,
           postedAt: new Date(),
           postedById: userId,
+          postedRequestedById: requestedById && requestedById !== userId ? requestedById : null,
         },
       });
     });

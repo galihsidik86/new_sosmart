@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -105,8 +106,11 @@ export class JournalsController {
 
   @Post(':id/post')
   @Roles('OWNER', 'ADMIN', 'AKUNTAN')
-  post(@Param('id') id: string) {
-    return this.journals.post(id);
+  post(
+    @Param('id') id: string,
+    @Headers('x-requested-by-user-id') requestedById?: string,
+  ) {
+    return this.journals.post(id, requestedById);
   }
 
   @Post(':id/reverse')

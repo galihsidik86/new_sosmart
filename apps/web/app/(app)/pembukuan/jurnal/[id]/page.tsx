@@ -30,6 +30,8 @@ interface JurnalDetail {
   totalDebit: string;
   totalKredit: string;
   postedAt: string | null;
+  postedBy: { id: string; email: string; nama: string } | null;
+  postedRequestedBy: { id: string; email: string; nama: string } | null;
   reversedFrom: { id: string; nomor: string | null } | null;
   reversals: Array<{ id: string; nomor: string | null; status: Status }>;
   cabang: { kode: string; nama: string };
@@ -50,6 +52,7 @@ async function postWithApproverAction(formData: FormData): Promise<{ error?: str
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) return { error: 'Session expired, silakan login ulang.' };
+  const session = await getSession();
   const id = String(formData.get('id'));
   const r = await runWithApprover({
     approverEmail: String(formData.get('approverEmail') ?? ''),
@@ -57,6 +60,7 @@ async function postWithApproverAction(formData: FormData): Promise<{ error?: str
     tenantId,
     requiredRoles: ['OWNER', 'ADMIN', 'AKUNTAN'],
     apiPath: `/journals/${id}/post`,
+    requestedByUserId: session?.user.id,
   });
   if (!r.ok) return { error: r.error };
   revalidatePath(`/pembukuan/jurnal/${id}`);
@@ -111,6 +115,14 @@ export default async function JurnalDetailPage({
               {j.deskripsi} · {fmtTanggal(j.tanggal)} · cabang {j.cabang.kode} ·
               periode {j.fiscalPeriod.label} ({j.fiscalPeriod.status})
             </p>
+            {j.postedBy && (
+              <p className="text-xs text-tanah-500 mt-1">
+                Diposting oleh <span className="font-semibold text-tanah-700">{j.postedBy.nama}</span> ({j.postedBy.email})
+                {j.postedRequestedBy && (
+                  <> · atas permintaan <span className="font-semibold text-tanah-700">{j.postedRequestedBy.nama}</span> ({j.postedRequestedBy.email})</>
+                )}
+              </p>
+            )}
             {j.reversedFrom && (
               <p className="text-xs text-tanah-500 mt-1">
                 Membalik:{' '}

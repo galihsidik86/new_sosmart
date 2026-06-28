@@ -16,6 +16,7 @@ import type {
   CreatePurchaseInvoiceInput,
   PurchaseLineInput,
 } from '@lentera/shared/schemas';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
@@ -31,6 +32,7 @@ const isPpnable = (k: KlasifikasiPpn) =>
 @Injectable()
 export class PurchasesService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly seq: SequenceService,
@@ -89,7 +91,7 @@ export class PurchasesService {
     );
   }
 
-  byId(id: string) {
+  async byId(id: string) {
     return this.tenancy.run(async (tx) => {
       const inv = await tx.purchaseInvoice.findUnique({
         where: { id },
@@ -109,7 +111,21 @@ export class PurchasesService {
       });
       if (!inv) throw new NotFoundException('Tagihan tidak ditemukan');
       this.cabangScope.assertAccess(inv.cabangId);
-      return inv;
+      const uids = [inv.postedById, inv.postedRequestedById].filter(
+        (u): u is string => !!u,
+      );
+      const users = uids.length
+        ? await this.prisma.user.findMany({
+            where: { id: { in: uids } },
+            select: { id: true, email: true, nama: true },
+          })
+        : [];
+      const lookup = (uid: string | null) => users.find((u) => u.id === uid) ?? null;
+      return {
+        ...inv,
+        postedBy: lookup(inv.postedById),
+        postedRequestedBy: lookup(inv.postedRequestedById),
+      };
     });
   }
 
@@ -281,9 +297,17 @@ export class PurchasesService {
     });
   }
 
-  async post(id: string) {
+  async post(id: string, requestedById?: string | null) {
     const userId = this.ctx.require().userId;
+    const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
+      if (requestedById && requestedById !== userId) {
+        const m = await tx.membership.findUnique({
+          where: { userId_tenantId: { userId: requestedById, tenantId } },
+          select: { userId: true },
+        });
+        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
+      }
       const inv = await tx.purchaseInvoice.findUnique({
         where: { id },
         include: { lines: true, vendor: { select: { nama: true, isPkp: true } } },
@@ -406,6 +430,7 @@ export class PurchasesService {
           journalId: journal.id,
           postedAt: new Date(),
           postedById: userId,
+          postedRequestedById: requestedById && requestedById !== userId ? requestedById : null,
         },
       });
     });
