@@ -5,6 +5,7 @@ import type { Route } from 'next';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { canPostAccounting } from '@/lib/roles';
 import { fmtPlain, fmtTanggal } from '@/lib/format';
 
 type Status = 'DRAFT' | 'POSTED' | 'REVERSED';
@@ -74,6 +75,7 @@ export default async function JurnalDetailPage({
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const j = await apiFetch<JurnalDetail>(`/journals/${id}`, { tenantId });
+  const mayPost = canPostAccounting(s.role);
 
   return (
     <>
@@ -172,12 +174,18 @@ export default async function JurnalDetailPage({
           </a>
           {j.status === 'DRAFT' && (
             <>
-              <form action={postAction}>
-                <input type="hidden" name="id" value={j.id} />
-                <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                  Post Jurnal
-                </button>
-              </form>
+              {mayPost ? (
+                <form action={postAction}>
+                  <input type="hidden" name="id" value={j.id} />
+                  <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
+                    Post Jurnal
+                  </button>
+                </form>
+              ) : (
+                <span className="px-3 py-2 bg-emas-100 text-emas-700 text-xs rounded-lg border border-emas-300">
+                  Posting jurnal perlu role Akuntan/Admin
+                </span>
+              )}
               <Link
                 href={`/pembukuan/jurnal/${j.id}/edit` as Route}
                 className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"
@@ -192,7 +200,7 @@ export default async function JurnalDetailPage({
               </form>
             </>
           )}
-          {j.status === 'POSTED' && (
+          {j.status === 'POSTED' && mayPost && (
             <form action={reverseAction} className="flex items-center gap-2">
               <input type="hidden" name="id" value={j.id} />
               <input

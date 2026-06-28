@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { canCancelPosted, canPostAccounting } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 
 type Status = 'AKTIF' | 'DIJUAL' | 'RUSAK' | 'PENSIUN';
@@ -81,6 +82,8 @@ export default async function AsetDetailPage({
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
   ]);
   const kasBank = accounts.filter((a) => a.kode === '1-101' || a.kode.startsWith('1-102'));
+  const mayDispose = canPostAccounting(s.role);
+  const mayUndispose = canCancelPosted(s.role);
 
   return (
     <>
@@ -168,7 +171,13 @@ export default async function AsetDetailPage({
         )}
 
         {/* Dispose / undispose */}
-        {aset.status === 'AKTIF' ? (
+        {aset.status === 'AKTIF' && !mayDispose ? (
+          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+            <span className="px-3 py-2 bg-emas-100 text-emas-700 text-xs rounded-lg border border-emas-300 inline-block">
+              Penghentian aset perlu role Akuntan/Admin
+            </span>
+          </div>
+        ) : aset.status === 'AKTIF' ? (
           <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
             <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Penghentian Aset</h2>
             <form action={disposeAction} className="grid grid-cols-2 gap-3 text-sm">
@@ -220,14 +229,16 @@ export default async function AsetDetailPage({
                 <> Jurnal: <Link href={`/pembukuan/jurnal/${aset.disposalJournalId}`} className="text-sogan-500 font-mono hover:underline">lihat</Link></>
               )}
             </div>
-            <form action={undisposeAction} className="flex gap-2">
-              <input type="hidden" name="id" value={aset.id} />
-              <input name="alasan" required minLength={5} placeholder="Alasan reverse dispose…"
-                className="px-3 py-2 bg-white border border-cream-300 rounded-md text-sm w-72" />
-              <button className="px-4 py-2 bg-cream-200 hover:bg-cream-300 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-400">
-                Reverse Dispose
-              </button>
-            </form>
+            {mayUndispose && (
+              <form action={undisposeAction} className="flex gap-2">
+                <input type="hidden" name="id" value={aset.id} />
+                <input name="alasan" required minLength={5} placeholder="Alasan reverse dispose…"
+                  className="px-3 py-2 bg-white border border-cream-300 rounded-md text-sm w-72" />
+                <button className="px-4 py-2 bg-cream-200 hover:bg-cream-300 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-400">
+                  Reverse Dispose
+                </button>
+              </form>
+            )}
           </div>
         )}
       </div>

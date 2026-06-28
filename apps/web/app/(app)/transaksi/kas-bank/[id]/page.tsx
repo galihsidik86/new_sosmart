@@ -5,6 +5,7 @@ import type { Route } from 'next';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { canPostAccounting, canPostCashBank } from '@/lib/roles';
 import { fmtPlain, fmtRp, fmtTanggal } from '@/lib/format';
 
 interface Detail {
@@ -52,6 +53,8 @@ export default async function KasBankDetailPage({
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const e = await apiFetch<Detail>(`/cash-bank/${id}`, { tenantId });
+  const mayPost = canPostCashBank(s.role);
+  const mayCancel = canPostAccounting(s.role);
 
   return (
     <>
@@ -145,12 +148,18 @@ export default async function KasBankDetailPage({
         <div className="flex items-center gap-3">
           {e.status === 'DRAFT' && (
             <>
-              <form action={postAction}>
-                <input type="hidden" name="id" value={e.id} />
-                <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                  Post Bukti
-                </button>
-              </form>
+              {mayPost ? (
+                <form action={postAction}>
+                  <input type="hidden" name="id" value={e.id} />
+                  <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
+                    Post Bukti
+                  </button>
+                </form>
+              ) : (
+                <span className="px-3 py-2 bg-emas-100 text-emas-700 text-xs rounded-lg border border-emas-300">
+                  Posting bukti kas/bank perlu role Kasir+
+                </span>
+              )}
               <Link
                 href={`/transaksi/kas-bank/${e.id}/edit` as Route}
                 className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"
@@ -159,7 +168,7 @@ export default async function KasBankDetailPage({
               </Link>
             </>
           )}
-          {e.status === 'POSTED' && (
+          {e.status === 'POSTED' && mayCancel && (
             <form action={cancelAction} className="flex gap-2">
               <input type="hidden" name="id" value={e.id} />
               <input name="alasan" required minLength={5} placeholder="Alasan pembatalan…"

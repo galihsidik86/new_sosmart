@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { canCancelPosted } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 
 type Status = 'DRAFT' | 'POSTED' | 'CANCELLED' | 'PARTIAL' | 'PAID';
@@ -48,6 +49,7 @@ export default async function DepresiasiDetailPage({
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const run = await apiFetch<Detail>(`/depresiasi/runs/${id}`, { tenantId });
+  const mayCancel = canCancelPosted(s.role);
 
   return (
     <>
@@ -118,7 +120,7 @@ export default async function DepresiasiDetailPage({
           </table>
         </div>
 
-        {run.status === 'POSTED' && (
+        {run.status === 'POSTED' && mayCancel && (
           <form action={cancelAction} className="bg-white rounded-xl border border-cream-200 shadow-sm p-5 flex items-center gap-3">
             <input type="hidden" name="id" value={run.id} />
             <span className="text-sm text-tanah-500">Cancel run akan reverse jurnal & rollback nilai buku semua aset.</span>
