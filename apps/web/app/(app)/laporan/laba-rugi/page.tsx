@@ -56,14 +56,22 @@ export default async function LabaRugiPage({
             </p>
           </div>
           {periodId && (
-            <a
-              href={`/proxy/reports/laba-rugi.pdf?periodId=${periodId}${ytd ? '&ytd=true' : ''}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
-            >
-              Preview PDF
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href={`/proxy/reports/laba-rugi.xlsx?periodId=${periodId}${ytd ? '&ytd=true' : ''}`}
+                className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+              >
+                Export Excel
+              </a>
+              <a
+                href={`/proxy/reports/laba-rugi.pdf?periodId=${periodId}${ytd ? '&ytd=true' : ''}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
+              >
+                Preview PDF
+              </a>
+            </div>
           )}
         </div>
 
