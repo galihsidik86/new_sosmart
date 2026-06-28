@@ -48,9 +48,11 @@ export default async function PerubahanEkuitasPage({
           {periodId && (
             <a
               href={`/proxy/reports/perubahan-ekuitas.pdf?periodId=${periodId}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
             >
-              Cetak PDF
+              Preview PDF
             </a>
           )}
         </div>
