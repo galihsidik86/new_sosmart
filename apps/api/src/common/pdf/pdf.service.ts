@@ -10,11 +10,22 @@ const require = createRequire(import.meta.url);
 const printerModule = require('pdfmake/js/printer.js');
 const PdfPrinter = (printerModule.default ?? printerModule) as PrinterCtor;
 
+interface UrlResolver {
+  /** Register a URL to be fetched (queue). */
+  resolve(url: string, headers?: Record<string, string>): unknown;
+  /** Returns a Promise that resolves when all queued URLs are fetched. */
+  resolved(): Promise<void>;
+}
+
 interface PrinterCtor {
-  new (fonts: Record<string, Record<string, string>>): {
-    createPdfKitDocument(def: TDocumentDefinitions): NodeJS.ReadableStream & {
-      end(): void;
-    };
+  new (
+    fonts: Record<string, Record<string, string>>,
+    virtualfs?: unknown,
+    urlResolver?: UrlResolver,
+    localAccessPolicy?: unknown,
+  ): {
+    /** Async sejak pdfmake 0.3.x — kembali Promise<PDFKit doc> (stream-like). */
+    createPdfKitDocument(def: TDocumentDefinitions): Promise<NodeJS.ReadableStream & { end(): void }>;
   };
 }
 
@@ -37,13 +48,21 @@ export class PdfService {
         bolditalics: 'Helvetica-BoldOblique',
       },
     };
-    this.printer = new PdfPrinter(fonts);
+    // pdfmake 0.3.x butuh `urlResolver` walaupun kita pakai PDFKit standard
+    // fonts (bukan URL fetch). Methods yang dipanggil: `resolve(url, headers)`
+    // (queue) + `resolved()` (await all queued). Noop OK karena Helvetica/built-
+    // in fonts tidak perlu di-fetch.
+    const noopUrlResolver: UrlResolver = {
+      resolve: () => undefined,
+      resolved: () => Promise.resolve(),
+    };
+    this.printer = new PdfPrinter(fonts, undefined, noopUrlResolver);
   }
 
   /** Build PDF buffer dari pdfmake document definition. */
-  buildBuffer(def: TDocumentDefinitions): Promise<Buffer> {
+  async buildBuffer(def: TDocumentDefinitions): Promise<Buffer> {
+    const doc = await this.printer.createPdfKitDocument(def);
     return new Promise((resolve, reject) => {
-      const doc = this.printer.createPdfKitDocument(def);
       const chunks: Buffer[] = [];
       doc.on('data', (c: Buffer) => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
