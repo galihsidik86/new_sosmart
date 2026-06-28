@@ -101,7 +101,14 @@ export default async function AkunDefaultPage() {
                     <div className="text-xs text-tanah-500 mt-0.5">{KEY_DESC[row.key]}</div>
                   </td>
                   <td className="px-4 py-3">
-                    <form action={updateConfigAction} className="flex items-center gap-2">
+                    <form
+                      action={updateConfigAction}
+                      className="flex items-center gap-2"
+                      // key berubah saat accountId berubah → React remount form +
+                      // select dengan defaultValue baru (uncontrolled defaultValue
+                      // tidak ke-update tanpa remount).
+                      key={`${row.key}:${row.accountId ?? 'none'}`}
+                    >
                       <input type="hidden" name="key" value={row.key} />
                       <select
                         name="accountId"
