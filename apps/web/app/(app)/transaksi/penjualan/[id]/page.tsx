@@ -3,9 +3,11 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Topbar } from '@/components/Topbar';
+import { StepUpButton } from '@/components/StepUpButton';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canCancelPosted, canPostAccounting } from '@/lib/roles';
+import { runWithApprover } from '@/lib/stepUp';
 import { fmtPlain, fmtRp, fmtTanggal, fmtNpwp } from '@/lib/format';
 
 type Status = 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
@@ -39,6 +41,21 @@ async function postAction(formData: FormData) {
   const tenantId = await getActiveTenantId(); if (!tenantId) redirect('/login');
   const id = String(formData.get('id'));
   await apiFetch(`/sales-invoices/${id}/post`, { method: 'POST', tenantId });
+  revalidatePath(`/transaksi/penjualan/${id}`);
+}
+async function postWithApproverAction(formData: FormData): Promise<{ error?: string } | void> {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) return { error: 'Session expired, silakan login ulang.' };
+  const id = String(formData.get('id'));
+  const r = await runWithApprover({
+    approverEmail: String(formData.get('approverEmail') ?? ''),
+    approverPassword: String(formData.get('approverPassword') ?? ''),
+    tenantId,
+    requiredRoles: ['OWNER', 'ADMIN', 'AKUNTAN'],
+    apiPath: `/sales-invoices/${id}/post`,
+  });
+  if (!r.ok) return { error: r.error };
   revalidatePath(`/transaksi/penjualan/${id}`);
 }
 async function cancelAction(formData: FormData) {
@@ -188,9 +205,13 @@ export default async function PenjualanDetailPage({
                   </button>
                 </form>
               ) : (
-                <span className="px-3 py-2 bg-emas-100 text-emas-700 text-xs rounded-lg border border-emas-300">
-                  Posting faktur perlu role Akuntan/Admin
-                </span>
+                <StepUpButton
+                  label="Post (perlu approval Akuntan)"
+                  title="Persetujuan Akuntan / Admin"
+                  description="Posting faktur akan terbit jurnal & nomor permanen. Masukkan kredensial akuntan/admin untuk melanjutkan."
+                  action={postWithApproverAction}
+                  hiddenFields={{ id: inv.id }}
+                />
               )}
               <Link
                 href={`/transaksi/penjualan/${inv.id}/edit` as Route}
