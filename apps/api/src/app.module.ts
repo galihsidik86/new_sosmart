@@ -7,6 +7,7 @@ import { SequenceModule } from './common/sequence/sequence.module.js';
 import { ExcelModule } from './common/excel/excel.module.js';
 import { PdfModule } from './common/pdf/pdf.module.js';
 import { GlConfigModule } from './common/gl-config/gl-config.module.js';
+import { CabangScopeModule } from './common/cabang-scope/cabang-scope.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { TenantsModule } from './modules/tenants/tenants.module.js';
 import { CabangModule } from './modules/cabang/cabang.module.js';
@@ -40,6 +41,7 @@ import { HealthController } from './modules/health/health.controller.js';
     ExcelModule,
     PdfModule,
     GlConfigModule,
+    CabangScopeModule,
     AuthModule,
     TenantsModule,
     CabangModule,

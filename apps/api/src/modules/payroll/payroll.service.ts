@@ -20,6 +20,7 @@ import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { lookupTer } from './ter-table.js';
 
@@ -40,6 +41,7 @@ export class PayrollService {
     private readonly journals: JournalsService,
     private readonly glConfig: GlConfigService,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportXlsx(opts: { cabangId?: string; status?: InvoiceStatus }): Promise<Buffer> {
@@ -98,6 +100,7 @@ export class PayrollService {
         },
       });
       if (!r) throw new NotFoundException('Run payroll tidak ditemukan');
+      this.cabangScope.assertAccess(r.cabangId);
       return r;
     });
   }
@@ -167,6 +170,7 @@ export class PayrollService {
   async createDraft(input: CreatePayrollRunInput) {
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
+    this.cabangScope.assertAccess(input.cabangId);
     if (!/^\d{4}-\d{2}$/.test(input.periode)) {
       throw new BadRequestException('Format periode YYYY-MM');
     }

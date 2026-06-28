@@ -3,6 +3,7 @@ import { Decimal } from 'decimal.js';
 import { AccountKind } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { aggregateAllAccounts, saldoAkhirSigned, mutasiSigned } from './helpers.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 export interface NeracaAccount {
   id: string;
@@ -47,7 +48,10 @@ export interface NeracaResponse {
  */
 @Injectable()
 export class NeracaService {
-  constructor(private readonly tenancy: TenancyService) {}
+  constructor(
+    private readonly tenancy: TenancyService,
+    private readonly cabangScope: CabangScopeService,
+  ) {}
 
   async build(opts: { periodId: string; cabangId?: string }): Promise<NeracaResponse> {
     return this.tenancy.run(async (tx) => {
@@ -64,11 +68,13 @@ export class NeracaService {
         select: { startDate: true },
       });
       if (!fy) throw new NotFoundException('Tahun buku tidak ditemukan');
+      if (opts.cabangId) this.cabangScope.assertAccess(opts.cabangId);
 
       // === 1. Saldo akhir ASET/LIABILITAS/EKUITAS s/d endDate ===
       const balResult = await aggregateAllAccounts(tx, {
         endDate: period.endDate,
         cabangId: opts.cabangId,
+        allowedCabangIds: this.cabangScope.cabangIdsForWhere(),
         includeKinds: [
           AccountKind.ASET,
           AccountKind.LIABILITAS,
@@ -126,6 +132,7 @@ export class NeracaService {
         startDate: fy.startDate,
         endDate: period.endDate,
         cabangId: opts.cabangId,
+        allowedCabangIds: this.cabangScope.cabangIdsForWhere(),
         includeKinds: [
           AccountKind.PENDAPATAN,
           AccountKind.BEBAN_POKOK,

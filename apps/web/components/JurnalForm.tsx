@@ -175,17 +175,23 @@ export function JurnalForm({
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
               Cabang
             </label>
-            <select
-              value={cabangId} onChange={(e) => setCabangId(e.target.value)}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-              required
-            >
-              {cabang.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.kode} — {c.nama}
-                </option>
-              ))}
-            </select>
+            {cabang.length <= 1 ? (
+              <div className="w-full px-2.5 py-2 bg-cream-100 border border-cream-300 rounded-md text-sm text-tanah-700">
+                {cabang[0] ? `${cabang[0].kode} — ${cabang[0].nama}` : '—'}
+              </div>
+            ) : (
+              <select
+                value={cabangId} onChange={(e) => setCabangId(e.target.value)}
+                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+                required
+              >
+                {cabang.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.kode} — {c.nama}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <div className="col-start-1 col-span-3">
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">

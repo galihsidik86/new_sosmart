@@ -20,6 +20,7 @@ import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 /**
  * Default masa manfaat (bulan) menurut Pasal 11 UU PPh:
@@ -43,6 +44,7 @@ export class AsetService {
     private readonly journals: JournalsService,
     private readonly glConfig: GlConfigService,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportXlsx(filter: { status?: AsetStatus; cabangId?: string }): Promise<Buffer> {
@@ -105,12 +107,14 @@ export class AsetService {
         },
       });
       if (!a) throw new NotFoundException('Aset tidak ditemukan');
+      this.cabangScope.assertAccess(a.cabangId);
       return a;
     });
   }
 
   async create(input: CreateAsetInput) {
     const tenantId = this.ctx.require().tenantId;
+    this.cabangScope.assertAccess(input.cabangId);
     const userId = this.ctx.require().userId;
     const masa = input.masaManfaatBulan ?? MASA_MANFAAT_DEFAULT[input.kelompok];
     const perolehan = new Date(input.tanggalPerolehan + 'T00:00:00Z');

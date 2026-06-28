@@ -18,6 +18,7 @@ import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 /**
  * Prefix nomor per tipe:
@@ -40,6 +41,7 @@ export class CashBankService {
     private readonly seq: SequenceService,
     private readonly journals: JournalsService,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportXlsx(filter: { status?: InvoiceStatus; tipe?: CashBankType; periodId?: string }): Promise<Buffer> {
@@ -68,6 +70,8 @@ export class CashBankService {
     if (filter.status) where.status = filter.status;
     if (filter.tipe) where.tipe = filter.tipe;
     if (filter.periodId) where.fiscalPeriodId = filter.periodId;
+    const scope = this.cabangScope.cabangIdsForWhere();
+    if (scope) where.cabangId = { in: scope };
     return this.tenancy.run((tx) =>
       tx.cashBankEntry.findMany({
         where,
@@ -96,11 +100,13 @@ export class CashBankService {
         },
       });
       if (!e) throw new NotFoundException('Bukti kas/bank tidak ditemukan');
+      this.cabangScope.assertAccess(e.cabangId);
       return e;
     });
   }
 
   async createDraft(input: CreateCashBankInput) {
+    this.cabangScope.assertAccess(input.cabangId);
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
     const tanggal = new Date(input.tanggal + 'T00:00:00Z');

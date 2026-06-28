@@ -14,6 +14,7 @@ import { PeriodsModule } from '../src/modules/periods/periods.module.js';
 import { ExcelModule } from '../src/common/excel/excel.module.js';
 import { PdfModule } from '../src/common/pdf/pdf.module.js';
 import { GlConfigModule } from '../src/common/gl-config/gl-config.module.js';
+import { CabangScopeModule } from '../src/common/cabang-scope/cabang-scope.module.js';
 import { JournalsModule } from '../src/modules/journals/journals.module.js';
 import { InventoryModule } from '../src/modules/inventory/inventory.module.js';
 import { SalesModule } from '../src/modules/sales/sales.module.js';
@@ -56,6 +57,7 @@ export async function bootApp(extraModules: any[] = []): Promise<TestingModule> 
       ExcelModule,
       PdfModule,
       GlConfigModule,
+      CabangScopeModule,
       PeriodsModule,
       JournalsModule,
       ...extraModules,

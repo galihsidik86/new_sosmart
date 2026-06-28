@@ -3,6 +3,7 @@ import { Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 import type { CreateCabangInput } from '@lentera/shared/schemas';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class CabangService {
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportXlsx(): Promise<Buffer> {
@@ -31,8 +33,10 @@ export class CabangService {
   }
 
   list() {
+    const scope = this.cabangScope.cabangIdsForWhere();
     return this.tenancy.run((tx) =>
       tx.cabang.findMany({
+        where: scope ? { id: { in: scope } } : {},
         orderBy: [{ isPusat: 'desc' }, { kode: 'asc' }],
       }),
     );

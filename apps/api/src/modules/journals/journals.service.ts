@@ -20,6 +20,7 @@ import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { PeriodsService } from '../periods/periods.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 interface ListFilter {
   periodId?: string;
@@ -47,6 +48,7 @@ export class JournalsService {
     private readonly seq: SequenceService,
     private readonly periods: PeriodsService,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportXlsx(f: ListFilter): Promise<Buffer> {
@@ -79,7 +81,13 @@ export class JournalsService {
   list(f: ListFilter) {
     const where: Prisma.JournalWhereInput = {};
     if (f.periodId) where.fiscalPeriodId = f.periodId;
-    if (f.cabangId) where.cabangId = f.cabangId;
+    if (f.cabangId) {
+      this.cabangScope.assertAccess(f.cabangId);
+      where.cabangId = f.cabangId;
+    } else {
+      const scope = this.cabangScope.cabangIdsForWhere();
+      if (scope) where.cabangId = { in: scope };
+    }
     if (f.status) where.status = f.status;
     if (f.sumber) where.sumber = f.sumber;
     if (f.search) {
@@ -118,6 +126,7 @@ export class JournalsService {
         },
       });
       if (!j) throw new NotFoundException('Jurnal tidak ditemukan');
+      this.cabangScope.assertAccess(j.cabangId);
       return j;
     });
   }
@@ -132,6 +141,7 @@ export class JournalsService {
   ) {
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
+    this.cabangScope.assertAccess(input.cabangId);
     const tanggal = new Date(input.tanggal + 'T00:00:00.000Z');
 
     const period = await tx.fiscalPeriod.findFirst({

@@ -20,6 +20,7 @@ import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 /**
  * Opname / penyesuaian stok.
@@ -39,6 +40,7 @@ export class AdjustmentsService {
     private readonly inventory: InventoryService,
     private readonly glConfig: GlConfigService,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportXlsx(filter: { status?: InvoiceStatus; cabangId?: string }): Promise<Buffer> {
@@ -62,7 +64,13 @@ export class AdjustmentsService {
   list(filter: { status?: InvoiceStatus; cabangId?: string }) {
     const where: Prisma.StokAdjustmentWhereInput = {};
     if (filter.status) where.status = filter.status;
-    if (filter.cabangId) where.cabangId = filter.cabangId;
+    if (filter.cabangId) {
+      this.cabangScope.assertAccess(filter.cabangId);
+      where.cabangId = filter.cabangId;
+    } else {
+      const scope = this.cabangScope.cabangIdsForWhere();
+      if (scope) where.cabangId = { in: scope };
+    }
     return this.tenancy.run((tx) =>
       tx.stokAdjustment.findMany({
         where,
@@ -91,6 +99,7 @@ export class AdjustmentsService {
         },
       });
       if (!a) throw new NotFoundException('Penyesuaian tidak ditemukan');
+      this.cabangScope.assertAccess(a.cabangId);
       return a;
     });
   }
@@ -98,6 +107,7 @@ export class AdjustmentsService {
   async createDraft(input: CreateStokAdjustmentInput) {
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
+    this.cabangScope.assertAccess(input.cabangId);
     const tanggal = new Date(input.tanggal + 'T00:00:00Z');
 
     return this.tenancy.run(async (tx) => {

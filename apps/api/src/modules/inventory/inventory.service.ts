@@ -12,6 +12,7 @@ import {
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 export interface RecordInboundParams {
   itemId: string;
@@ -60,6 +61,7 @@ export class InventoryService {
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportSaldoXlsx(opts: { cabangId?: string }): Promise<Buffer> {
@@ -372,6 +374,7 @@ export class InventoryService {
 
   /** Saldo terkini untuk semua item (× cabang). */
   saldoMatrix(opts: { cabangId?: string }) {
+    if (opts.cabangId) this.cabangScope.assertAccess(opts.cabangId);
     return this.tenancy.run(async (tx) => {
       // Untuk performa: ambil movement terakhir per (item, cabang) via window function.
       const where: string[] = [];
@@ -379,6 +382,13 @@ export class InventoryService {
       if (opts.cabangId) {
         where.push(`cabang_id = $${params.length + 1}::uuid`);
         params.push(opts.cabangId);
+      } else {
+        const scope = this.cabangScope.cabangIdsForWhere();
+        if (scope && scope.length > 0) {
+          const placeholders = scope.map((_, i) => `$${params.length + i + 1}::uuid`).join(',');
+          where.push(`cabang_id IN (${placeholders})`);
+          params.push(...scope);
+        }
       }
       const filter = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
@@ -436,7 +446,13 @@ export class InventoryService {
       if (!item) throw new NotFoundException('Item tidak ditemukan');
 
       const where: Prisma.StokMovementWhereInput = { itemId: opts.itemId };
-      if (opts.cabangId) where.cabangId = opts.cabangId;
+      if (opts.cabangId) {
+        this.cabangScope.assertAccess(opts.cabangId);
+        where.cabangId = opts.cabangId;
+      } else {
+        const scope = this.cabangScope.cabangIdsForWhere();
+        if (scope) where.cabangId = { in: scope };
+      }
       if (opts.startDate || opts.endDate) {
         where.occurredAt = {};
         if (opts.startDate) where.occurredAt.gte = opts.startDate;

@@ -3,6 +3,7 @@ import { Decimal } from 'decimal.js';
 import { AccountKind } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { aggregateAllAccounts, mutasiSigned } from './helpers.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 export interface LabaRugiAccount {
   id: string;
@@ -55,7 +56,10 @@ export interface LabaRugiResponse {
  */
 @Injectable()
 export class LabaRugiService {
-  constructor(private readonly tenancy: TenancyService) {}
+  constructor(
+    private readonly tenancy: TenancyService,
+    private readonly cabangScope: CabangScopeService,
+  ) {}
 
   async build(opts: {
     periodId: string;
@@ -83,10 +87,12 @@ export class LabaRugiService {
         if (fy) startDate = fy.startDate;
       }
 
+      if (opts.cabangId) this.cabangScope.assertAccess(opts.cabangId);
       const { accounts, mutasiByAcc } = await aggregateAllAccounts(tx, {
         startDate,
         endDate: period.endDate,
         cabangId: opts.cabangId,
+        allowedCabangIds: this.cabangScope.cabangIdsForWhere(),
         includeKinds: [
           AccountKind.PENDAPATAN,
           AccountKind.BEBAN_POKOK,

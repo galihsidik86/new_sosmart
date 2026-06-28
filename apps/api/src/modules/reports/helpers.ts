@@ -35,7 +35,11 @@ export async function aggregateAllAccounts(
   opts: {
     startDate?: Date;
     endDate: Date;
+    /** Single specific cabang. Kalau null/undefined dan `allowedCabangIds`
+     *  juga undefined → semua cabang dalam tenant. */
     cabangId?: string;
+    /** Restrict ke cabang yg di-allowlist (user multi-cabang restriction). */
+    allowedCabangIds?: string[] | null;
     includeKinds?: AccountKind[];
   },
 ): Promise<{
@@ -67,7 +71,11 @@ export async function aggregateAllAccounts(
     });
   }
 
-  const cabangFilter = opts.cabangId ? { cabangId: opts.cabangId } : {};
+  const cabangFilter: { cabangId?: string | { in: string[] } } = opts.cabangId
+    ? { cabangId: opts.cabangId }
+    : opts.allowedCabangIds
+      ? { cabangId: { in: opts.allowedCabangIds } }
+      : {};
 
   // Sebelum periode (untuk saldo awal periode laporan).
   let sebelumMap = new Map<string, { d: Decimal; k: Decimal }>();

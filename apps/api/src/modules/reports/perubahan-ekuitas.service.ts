@@ -3,6 +3,7 @@ import { Decimal } from 'decimal.js';
 import { AccountKind } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 import { aggregateAllAccounts, mutasiSigned, saldoAkhirSigned } from './helpers.js';
 
 export interface PerubahanEkuitasResponse {
@@ -38,6 +39,7 @@ export class PerubahanEkuitasService {
   constructor(
     private readonly tenancy: TenancyService,
     private readonly glConfig: GlConfigService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async build(opts: {
@@ -64,11 +66,14 @@ export class PerubahanEkuitasService {
         if (fy) startDate = fy.startDate;
       }
 
+      if (opts.cabangId) this.cabangScope.assertAccess(opts.cabangId);
+
       // Ekuitas
       const ekResult = await aggregateAllAccounts(tx, {
         startDate,
         endDate: period.endDate,
         cabangId: opts.cabangId,
+        allowedCabangIds: this.cabangScope.cabangIdsForWhere(),
         includeKinds: [AccountKind.EKUITAS],
       });
 
@@ -104,6 +109,7 @@ export class PerubahanEkuitasService {
         startDate,
         endDate: period.endDate,
         cabangId: opts.cabangId,
+        allowedCabangIds: this.cabangScope.cabangIdsForWhere(),
         includeKinds: [
           AccountKind.PENDAPATAN,
           AccountKind.BEBAN_POKOK,

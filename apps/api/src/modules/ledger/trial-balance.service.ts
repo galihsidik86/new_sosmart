@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { AccountKind, JournalStatus, NormalBalance } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 export interface TrialBalanceRow {
   accountId: string;
@@ -36,7 +37,10 @@ export interface TrialBalanceResponse {
 
 @Injectable()
 export class TrialBalanceService {
-  constructor(private readonly tenancy: TenancyService) {}
+  constructor(
+    private readonly tenancy: TenancyService,
+    private readonly cabangScope: CabangScopeService,
+  ) {}
 
   async build(opts: {
     periodId: string;
@@ -63,7 +67,14 @@ export class TrialBalanceService {
         },
       });
 
-      const cabangFilter = opts.cabangId ? { cabangId: opts.cabangId } : {};
+      let cabangFilter: { cabangId?: string | { in: string[] } } = {};
+      if (opts.cabangId) {
+        this.cabangScope.assertAccess(opts.cabangId);
+        cabangFilter = { cabangId: opts.cabangId };
+      } else {
+        const scope = this.cabangScope.cabangIdsForWhere();
+        if (scope) cabangFilter = { cabangId: { in: scope } };
+      }
 
       // Group sums by account (sebelum periode & dalam periode) — 2 query agregat.
       const sebelum = await tx.journalLine.groupBy({

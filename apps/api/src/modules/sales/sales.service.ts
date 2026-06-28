@@ -22,6 +22,7 @@ import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 /**
  * Skema PPN per item (sesuai PMK 131/2024):
@@ -42,6 +43,7 @@ export class SalesService {
     private readonly journals: JournalsService,
     private readonly inventory: InventoryService,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportXlsx(filter: { status?: InvoiceStatus; customerId?: string; periodId?: string }): Promise<Buffer> {
@@ -77,6 +79,8 @@ export class SalesService {
     if (filter.status) where.status = filter.status;
     if (filter.customerId) where.customerId = filter.customerId;
     if (filter.periodId) where.fiscalPeriodId = filter.periodId;
+    const scope = this.cabangScope.cabangIdsForWhere();
+    if (scope) where.cabangId = { in: scope };
     return this.tenancy.run((tx) =>
       tx.salesInvoice.findMany({
         where,
@@ -111,6 +115,7 @@ export class SalesService {
         },
       });
       if (!inv) throw new NotFoundException('Faktur tidak ditemukan');
+      this.cabangScope.assertAccess(inv.cabangId);
       return inv;
     });
   }
@@ -122,6 +127,7 @@ export class SalesService {
   async createDraft(input: CreateSalesInvoiceInput) {
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
+    this.cabangScope.assertAccess(input.cabangId);
     const tanggal = new Date(input.tanggal + 'T00:00:00Z');
 
     return this.tenancy.run(async (tx) => {

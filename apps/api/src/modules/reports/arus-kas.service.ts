@@ -3,6 +3,7 @@ import { Decimal } from 'decimal.js';
 import { AccountKind, JournalStatus } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 import { aggregateAllAccounts, mutasiSigned, saldoAkhirSigned } from './helpers.js';
 
 export interface ArusKasLine {
@@ -62,6 +63,7 @@ export class ArusKasService {
   constructor(
     private readonly tenancy: TenancyService,
     private readonly glConfig: GlConfigService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async build(opts: {
@@ -90,10 +92,12 @@ export class ArusKasService {
       }
 
       // === Ambil mutasi periode untuk semua akun ===
+      if (opts.cabangId) this.cabangScope.assertAccess(opts.cabangId);
       const result = await aggregateAllAccounts(tx, {
         startDate,
         endDate: period.endDate,
         cabangId: opts.cabangId,
+        allowedCabangIds: this.cabangScope.cabangIdsForWhere(),
       });
 
       // === Resolve akun configurable via GlConfig ===

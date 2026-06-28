@@ -3,6 +3,7 @@ import { Decimal } from 'decimal.js';
 import { JournalStatus, NormalBalance } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 export interface LedgerRow {
   tanggal: Date;
@@ -32,6 +33,7 @@ export class LedgerService {
   constructor(
     private readonly tenancy: TenancyService,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportBukuXlsx(opts: { accountId: string; periodId?: string; cabangId?: string }): Promise<Buffer> {
@@ -82,7 +84,16 @@ export class LedgerService {
           });
       if (!period) throw new NotFoundException('Periode tidak ditemukan / belum dibuat');
 
-      const cabangFilter = opts.cabangId ? { cabangId: opts.cabangId } : {};
+      // Filter cabang: user-supplied cabangId di-validasi, kalau tidak ada
+      // pakai user's allowed cabangs.
+      let cabangFilter: { cabangId?: string | { in: string[] } } = {};
+      if (opts.cabangId) {
+        this.cabangScope.assertAccess(opts.cabangId);
+        cabangFilter = { cabangId: opts.cabangId };
+      } else {
+        const scope = this.cabangScope.cabangIdsForWhere();
+        if (scope) cabangFilter = { cabangId: { in: scope } };
+      }
 
       // ---------- Saldo awal periode = saldoAwal akun + Σ posted lines sebelum period.startDate
       const sebelum = await tx.journalLine.aggregate({
