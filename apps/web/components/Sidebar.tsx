@@ -3,42 +3,51 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+type Role = 'OWNER' | 'ADMIN' | 'AKUNTAN' | 'KASIR' | 'AUDITOR';
+
 interface NavItem {
   href: string;
   label: string;
   group: string;
+  /** Kosong/undefined = semua role bisa lihat. */
+  roles?: Role[];
 }
+
+const FULL: Role[] = ['OWNER', 'ADMIN', 'AKUNTAN'];
+const ACCOUNTING: Role[] = ['OWNER', 'ADMIN', 'AKUNTAN', 'AUDITOR'];
+const TX_KASIR: Role[] = ['OWNER', 'ADMIN', 'AKUNTAN', 'KASIR'];
+const ADMIN_ONLY: Role[] = ['OWNER', 'ADMIN'];
 
 const NAV: NavItem[] = [
   { group: 'Ringkasan', href: '/dashboard', label: 'Dashboard' },
-  { group: 'Master Data', href: '/master/barang', label: 'Master Barang' },
-  { group: 'Master Data', href: '/master/vendor', label: 'Data Vendor' },
-  { group: 'Master Data', href: '/master/pelanggan', label: 'Data Pelanggan' },
-  { group: 'Pembukuan', href: '/pembukuan/coa', label: 'Bagan Akun' },
-  { group: 'Pembukuan', href: '/pembukuan/jurnal', label: 'Jurnal Umum' },
-  { group: 'Pembukuan', href: '/pembukuan/bukubesar', label: 'Buku Besar' },
-  { group: 'Transaksi', href: '/transaksi/penjualan', label: 'Penjualan' },
-  { group: 'Transaksi', href: '/transaksi/pembelian', label: 'Pembelian' },
-  { group: 'Transaksi', href: '/transaksi/kas-bank', label: 'Kas / Bank' },
-  { group: 'Persediaan', href: '/persediaan/saldo', label: 'Saldo Stok' },
-  { group: 'Persediaan', href: '/persediaan/kartu-stok', label: 'Kartu Stok' },
-  { group: 'Persediaan', href: '/persediaan/penyesuaian', label: 'Penyesuaian Stok' },
-  { group: 'Aset Tetap', href: '/aset/daftar', label: 'Daftar Aset' },
-  { group: 'Aset Tetap', href: '/aset/depresiasi', label: 'Penyusutan Bulanan' },
-  { group: 'Pajak', href: '/pajak/karyawan', label: 'Karyawan' },
-  { group: 'Pajak', href: '/pajak/payroll', label: 'Payroll PPh 21' },
-  { group: 'Pajak', href: '/pajak/bukti-potong', label: 'Bukti Potong' },
-  { group: 'Pajak', href: '/pajak/spt/ppn', label: 'SPT Masa PPN' },
-  { group: 'Pajak', href: '/pajak/spt/pph', label: 'SPT Masa PPh' },
-  { group: 'Laporan', href: '/laporan/neraca-saldo', label: 'Neraca Saldo' },
-  { group: 'Laporan', href: '/laporan/laba-rugi', label: 'Laba Rugi' },
-  { group: 'Laporan', href: '/laporan/neraca', label: 'Neraca' },
-  { group: 'Laporan', href: '/laporan/arus-kas', label: 'Arus Kas' },
-  { group: 'Laporan', href: '/laporan/perubahan-ekuitas', label: 'Perubahan Ekuitas' },
-  { group: 'Pengaturan', href: '/pengaturan/periode', label: 'Periode Buku' },
-  { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang' },
-  { group: 'Pengaturan', href: '/pengaturan/user', label: 'Pengguna' },
-  { group: 'Pengaturan', href: '/pengaturan/akun-default', label: 'Akun Default' },
+  { group: 'Master Data', href: '/master/barang', label: 'Master Barang', roles: FULL },
+  { group: 'Master Data', href: '/master/vendor', label: 'Data Vendor', roles: FULL },
+  { group: 'Master Data', href: '/master/pelanggan', label: 'Data Pelanggan', roles: TX_KASIR },
+  { group: 'Pembukuan', href: '/pembukuan/coa', label: 'Bagan Akun', roles: ACCOUNTING },
+  { group: 'Pembukuan', href: '/pembukuan/jurnal', label: 'Jurnal Umum', roles: ACCOUNTING },
+  { group: 'Pembukuan', href: '/pembukuan/bukubesar', label: 'Buku Besar', roles: ACCOUNTING },
+  { group: 'Transaksi', href: '/transaksi/penjualan', label: 'Penjualan', roles: TX_KASIR },
+  { group: 'Transaksi', href: '/transaksi/pembelian', label: 'Pembelian', roles: FULL },
+  { group: 'Transaksi', href: '/transaksi/kas-bank', label: 'Kas / Bank', roles: TX_KASIR },
+  { group: 'Persediaan', href: '/persediaan/saldo', label: 'Saldo Stok', roles: ACCOUNTING },
+  { group: 'Persediaan', href: '/persediaan/kartu-stok', label: 'Kartu Stok', roles: ACCOUNTING },
+  { group: 'Persediaan', href: '/persediaan/penyesuaian', label: 'Penyesuaian Stok', roles: FULL },
+  { group: 'Aset Tetap', href: '/aset/daftar', label: 'Daftar Aset', roles: ACCOUNTING },
+  { group: 'Aset Tetap', href: '/aset/depresiasi', label: 'Penyusutan Bulanan', roles: FULL },
+  { group: 'Pajak', href: '/pajak/karyawan', label: 'Karyawan', roles: FULL },
+  { group: 'Pajak', href: '/pajak/payroll', label: 'Payroll PPh 21', roles: FULL },
+  { group: 'Pajak', href: '/pajak/bukti-potong', label: 'Bukti Potong', roles: ACCOUNTING },
+  { group: 'Pajak', href: '/pajak/spt/ppn', label: 'SPT Masa PPN', roles: ACCOUNTING },
+  { group: 'Pajak', href: '/pajak/spt/pph', label: 'SPT Masa PPh', roles: ACCOUNTING },
+  { group: 'Laporan', href: '/laporan/neraca-saldo', label: 'Neraca Saldo', roles: ACCOUNTING },
+  { group: 'Laporan', href: '/laporan/laba-rugi', label: 'Laba Rugi', roles: ACCOUNTING },
+  { group: 'Laporan', href: '/laporan/neraca', label: 'Neraca', roles: ACCOUNTING },
+  { group: 'Laporan', href: '/laporan/arus-kas', label: 'Arus Kas', roles: ACCOUNTING },
+  { group: 'Laporan', href: '/laporan/perubahan-ekuitas', label: 'Perubahan Ekuitas', roles: ACCOUNTING },
+  { group: 'Pengaturan', href: '/pengaturan/periode', label: 'Periode Buku', roles: FULL },
+  { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang', roles: ADMIN_ONLY },
+  { group: 'Pengaturan', href: '/pengaturan/user', label: 'Pengguna', roles: ADMIN_ONLY },
+  { group: 'Pengaturan', href: '/pengaturan/akun-default', label: 'Akun Default', roles: FULL },
 ];
 
 interface SidebarProps {
@@ -49,7 +58,11 @@ interface SidebarProps {
 
 export function Sidebar({ user, tenantNama, role }: SidebarProps) {
   const pathname = usePathname();
-  const groups = Array.from(new Set(NAV.map((n) => n.group)));
+  const userRole = role as Role | undefined;
+  const visibleNav = NAV.filter(
+    (n) => !n.roles || (userRole !== undefined && n.roles.includes(userRole)),
+  );
+  const groups = Array.from(new Set(visibleNav.map((n) => n.group)));
   return (
     <aside className="w-60 flex-shrink-0 bg-white border-r border-cream-200 h-screen sticky top-0 flex flex-col py-5 px-3">
       <div className="flex items-center gap-3 px-2 pb-4 border-b border-cream-200 mb-2">
@@ -72,7 +85,7 @@ export function Sidebar({ user, tenantNama, role }: SidebarProps) {
             <div className="text-[10px] tracking-[0.12em] uppercase text-tanah-300 font-bold px-3 pt-3 pb-1.5">
               {g}
             </div>
-            {NAV.filter((n) => n.group === g).map((n) => {
+            {visibleNav.filter((n) => n.group === g).map((n) => {
               const active = pathname?.startsWith(n.href);
               return (
                 <Link
