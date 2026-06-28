@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { Topbar } from '@/components/Topbar';
+import { GlConfigRow } from '@/components/GlConfigRow';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 
@@ -101,31 +102,13 @@ export default async function AkunDefaultPage() {
                     <div className="text-xs text-tanah-500 mt-0.5">{KEY_DESC[row.key]}</div>
                   </td>
                   <td className="px-4 py-3">
-                    <form
+                    <GlConfigRow
+                      configKey={row.key}
+                      defaultKode={row.defaultKode}
+                      serverValue={row.accountId}
+                      options={postable}
                       action={updateConfigAction}
-                      className="flex items-center gap-2"
-                      // key berubah saat accountId berubah → React remount form +
-                      // select dengan defaultValue baru (uncontrolled defaultValue
-                      // tidak ke-update tanpa remount).
-                      key={`${row.key}:${row.accountId ?? 'none'}`}
-                    >
-                      <input type="hidden" name="key" value={row.key} />
-                      <select
-                        name="accountId"
-                        defaultValue={row.accountId ?? ''}
-                        className="flex-1 px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm"
-                      >
-                        <option value="">— pakai default ({row.defaultKode}) —</option>
-                        {postable.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.kode} — {a.nama}
-                          </option>
-                        ))}
-                      </select>
-                      <button className="px-3 py-1.5 bg-sogan-500 hover:bg-sogan-600 text-cream-50 rounded-md text-xs font-semibold">
-                        Simpan
-                      </button>
-                    </form>
+                    />
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-xs text-tanah-500">
                     {row.defaultKode}
