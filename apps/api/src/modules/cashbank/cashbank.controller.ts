@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -85,7 +86,8 @@ export class CashBankController {
   cancel(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(cancelInvoiceInputSchema)) body: CancelInvoiceInput,
+    @Headers('x-requested-by-user-id') requestedById?: string,
   ) {
-    return this.cb.cancel(id, body.alasan);
+    return this.cb.cancel(id, body.alasan, requestedById);
   }
 }

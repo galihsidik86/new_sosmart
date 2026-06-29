@@ -28,6 +28,9 @@ interface Detail {
   journalId: string | null;
   postedBy: { id: string; email: string; nama: string } | null;
   postedRequestedBy: { id: string; email: string; nama: string } | null;
+  cancelledAt: string | null;
+  cancelledBy: { id: string; email: string; nama: string } | null;
+  cancelledRequestedBy: { id: string; email: string; nama: string } | null;
   lines: Array<{
     no: number; deskripsi: string; qty: string; satuan: string;
     hargaSatuan: string; diskonPersen: string; klasifikasiPpn: string; isJasa: boolean;
@@ -116,6 +119,14 @@ export default async function PembelianDetailPage({
                 Diposting oleh <span className="font-semibold text-tanah-700">{inv.postedBy.nama}</span> ({inv.postedBy.email})
                 {inv.postedRequestedBy && (
                   <> · atas permintaan <span className="font-semibold text-tanah-700">{inv.postedRequestedBy.nama}</span> ({inv.postedRequestedBy.email})</>
+                )}
+              </p>
+            )}
+            {inv.cancelledBy && (
+              <p className="text-xs text-bata-700 mt-1">
+                Dibatalkan oleh <span className="font-semibold">{inv.cancelledBy.nama}</span> ({inv.cancelledBy.email})
+                {inv.cancelledRequestedBy && (
+                  <> · atas permintaan <span className="font-semibold">{inv.cancelledRequestedBy.nama}</span> ({inv.cancelledRequestedBy.email})</>
                 )}
               </p>
             )}

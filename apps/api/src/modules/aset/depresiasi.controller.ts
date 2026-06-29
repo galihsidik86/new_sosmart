@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Query,
@@ -67,7 +68,8 @@ export class DepresiasiController {
   cancel(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(cancelInvoiceInputSchema)) body: CancelInvoiceInput,
+    @Headers('x-requested-by-user-id') requestedById?: string,
   ) {
-    return this.dep.cancel(id, body.alasan);
+    return this.dep.cancel(id, body.alasan, requestedById);
   }
 }

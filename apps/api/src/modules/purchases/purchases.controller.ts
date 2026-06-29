@@ -114,8 +114,9 @@ export class PurchasesController {
   cancel(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(cancelInvoiceInputSchema)) body: CancelInvoiceInput,
+    @Headers('x-requested-by-user-id') requestedById?: string,
   ) {
-    return this.purchases.cancel(id, body.alasan);
+    return this.purchases.cancel(id, body.alasan, requestedById);
   }
 
   @Delete(':id')

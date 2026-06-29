@@ -111,9 +111,12 @@ export class PurchasesService {
       });
       if (!inv) throw new NotFoundException('Tagihan tidak ditemukan');
       this.cabangScope.assertAccess(inv.cabangId);
-      const uids = [inv.postedById, inv.postedRequestedById].filter(
-        (u): u is string => !!u,
-      );
+      const uids = [
+        inv.postedById,
+        inv.postedRequestedById,
+        inv.cancelledById,
+        inv.cancelledRequestedById,
+      ].filter((u): u is string => !!u);
       const users = uids.length
         ? await this.prisma.user.findMany({
             where: { id: { in: uids } },
@@ -125,6 +128,8 @@ export class PurchasesService {
         ...inv,
         postedBy: lookup(inv.postedById),
         postedRequestedBy: lookup(inv.postedRequestedById),
+        cancelledBy: lookup(inv.cancelledById),
+        cancelledRequestedBy: lookup(inv.cancelledRequestedById),
       };
     });
   }
@@ -436,9 +441,17 @@ export class PurchasesService {
     });
   }
 
-  async cancel(id: string, alasan: string) {
+  async cancel(id: string, alasan: string, requestedById?: string | null) {
     const userId = this.ctx.require().userId;
+    const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
+      if (requestedById && requestedById !== userId) {
+        const m = await tx.membership.findUnique({
+          where: { userId_tenantId: { userId: requestedById, tenantId } },
+          select: { userId: true },
+        });
+        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
+      }
       const inv = await tx.purchaseInvoice.findUnique({ where: { id } });
       if (!inv) throw new NotFoundException();
       if (inv.status === InvoiceStatus.CANCELLED) {
@@ -462,6 +475,7 @@ export class PurchasesService {
           status: InvoiceStatus.CANCELLED,
           cancelledAt: new Date(),
           cancelledById: userId,
+          cancelledRequestedById: requestedById && requestedById !== userId ? requestedById : null,
         },
       });
     });

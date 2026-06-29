@@ -102,7 +102,12 @@ export class AdjustmentsService {
       });
       if (!a) throw new NotFoundException('Penyesuaian tidak ditemukan');
       this.cabangScope.assertAccess(a.cabangId);
-      const uids = [a.postedById, a.postedRequestedById].filter((u): u is string => !!u);
+      const uids = [
+        a.postedById,
+        a.postedRequestedById,
+        a.cancelledById,
+        a.cancelledRequestedById,
+      ].filter((u): u is string => !!u);
       const users = uids.length
         ? await this.prisma.user.findMany({
             where: { id: { in: uids } },
@@ -114,6 +119,8 @@ export class AdjustmentsService {
         ...a,
         postedBy: lookup(a.postedById),
         postedRequestedBy: lookup(a.postedRequestedById),
+        cancelledBy: lookup(a.cancelledById),
+        cancelledRequestedBy: lookup(a.cancelledRequestedById),
       };
     });
   }
@@ -393,9 +400,17 @@ export class AdjustmentsService {
     });
   }
 
-  async cancel(id: string, alasan: string) {
+  async cancel(id: string, alasan: string, requestedById?: string | null) {
     const userId = this.ctx.require().userId;
+    const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
+      if (requestedById && requestedById !== userId) {
+        const m = await tx.membership.findUnique({
+          where: { userId_tenantId: { userId: requestedById, tenantId } },
+          select: { userId: true },
+        });
+        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
+      }
       const adj = await tx.stokAdjustment.findUnique({ where: { id } });
       if (!adj) throw new NotFoundException();
       if (adj.status === InvoiceStatus.CANCELLED) {
@@ -419,6 +434,7 @@ export class AdjustmentsService {
           status: InvoiceStatus.CANCELLED,
           cancelledAt: new Date(),
           cancelledById: userId,
+          cancelledRequestedById: requestedById && requestedById !== userId ? requestedById : null,
         },
       });
     });

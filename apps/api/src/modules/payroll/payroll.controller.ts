@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Post,
   Query,
@@ -81,8 +82,9 @@ export class PayrollController {
   cancel(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(cancelInvoiceInputSchema)) body: CancelInvoiceInput,
+    @Headers('x-requested-by-user-id') requestedById?: string,
   ) {
-    return this.payroll.cancel(id, body.alasan);
+    return this.payroll.cancel(id, body.alasan, requestedById);
   }
 
   @Delete('runs/:id')

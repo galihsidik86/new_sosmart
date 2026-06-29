@@ -318,9 +318,17 @@ export class DepresiasiService {
     });
   }
 
-  async cancel(id: string, alasan: string) {
+  async cancel(id: string, alasan: string, requestedById?: string | null) {
     const userId = this.ctx.require().userId;
+    const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
+      if (requestedById && requestedById !== userId) {
+        const m = await tx.membership.findUnique({
+          where: { userId_tenantId: { userId: requestedById, tenantId } },
+          select: { userId: true },
+        });
+        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
+      }
       const run = await tx.depresiasiRun.findUnique({
         where: { id },
         include: { lines: { include: { aset: { select: { lastDepresiasiPeriode: true } } } } },
@@ -375,6 +383,7 @@ export class DepresiasiService {
           status: InvoiceStatus.CANCELLED,
           cancelledAt: new Date(),
           cancelledById: userId,
+          cancelledRequestedById: requestedById && requestedById !== userId ? requestedById : null,
         },
       });
     });

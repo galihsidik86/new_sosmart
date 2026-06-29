@@ -22,6 +22,9 @@ interface Detail {
   journalId: string | null;
   postedBy: { id: string; email: string; nama: string } | null;
   postedRequestedBy: { id: string; email: string; nama: string } | null;
+  cancelledAt: string | null;
+  cancelledBy: { id: string; email: string; nama: string } | null;
+  cancelledRequestedBy: { id: string; email: string; nama: string } | null;
   cabang: { kode: string; nama: string };
   fiscalPeriod: { label: string };
   lines: Array<{
@@ -113,6 +116,14 @@ export default async function PenyesuaianDetailPage({
                 Diposting oleh <span className="font-semibold text-tanah-700">{adj.postedBy.nama}</span> ({adj.postedBy.email})
                 {adj.postedRequestedBy && (
                   <> · atas permintaan <span className="font-semibold text-tanah-700">{adj.postedRequestedBy.nama}</span> ({adj.postedRequestedBy.email})</>
+                )}
+              </p>
+            )}
+            {adj.cancelledBy && (
+              <p className="text-xs text-bata-700 mt-1">
+                Dibatalkan oleh <span className="font-semibold">{adj.cancelledBy.nama}</span> ({adj.cancelledBy.email})
+                {adj.cancelledRequestedBy && (
+                  <> · atas permintaan <span className="font-semibold">{adj.cancelledRequestedBy.nama}</span> ({adj.cancelledRequestedBy.email})</>
                 )}
               </p>
             )}
