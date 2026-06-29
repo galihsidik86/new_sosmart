@@ -10,6 +10,11 @@ interface StepUpButtonProps {
   action: (formData: FormData) => Promise<{ error?: string } | void>;
   /** Field hidden tambahan yang akan disertakan ke FormData saat submit. */
   hiddenFields?: Record<string, string>;
+  /** Kalau ada, render textarea alasan di atas email/password. Value masuk
+   * ke FormData dengan name 'alasan'. */
+  reason?: { label: string; placeholder?: string; minLength?: number };
+  /** Warna tombol — 'primary' (kuning sogan, default) atau 'danger' (bata merah). */
+  variant?: 'primary' | 'danger';
 }
 
 export function StepUpButton({
@@ -18,10 +23,21 @@ export function StepUpButton({
   description,
   action,
   hiddenFields,
+  reason,
+  variant = 'primary',
 }: StepUpButtonProps) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [error, setError] = useState('');
+
+  const triggerCls =
+    variant === 'danger'
+      ? 'px-4 py-2 bg-bata-100 hover:bg-bata-200 text-bata-700 font-semibold rounded-lg text-sm border border-bata-300'
+      : 'px-4 py-2 bg-emas-100 hover:bg-emas-200 text-emas-700 font-semibold rounded-lg text-sm border border-emas-300';
+  const submitCls =
+    variant === 'danger'
+      ? 'px-4 py-2 bg-bata-500 hover:bg-bata-700 text-cream-50 font-semibold rounded-lg text-sm disabled:opacity-60'
+      : 'px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm disabled:opacity-60';
 
   return (
     <>
@@ -31,7 +47,7 @@ export function StepUpButton({
           setError('');
           setOpen(true);
         }}
-        className="px-4 py-2 bg-emas-100 hover:bg-emas-200 text-emas-700 font-semibold rounded-lg text-sm border border-emas-300"
+        className={triggerCls}
       >
         {label}
       </button>
@@ -64,6 +80,21 @@ export function StepUpButton({
               }}
               className="space-y-3"
             >
+              {reason && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+                    {reason.label}
+                  </label>
+                  <textarea
+                    name="alasan"
+                    required
+                    minLength={reason.minLength ?? 5}
+                    placeholder={reason.placeholder ?? 'Alasan…'}
+                    rows={2}
+                    className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
                   Email Approver
@@ -107,7 +138,7 @@ export function StepUpButton({
                 <button
                   type="submit"
                   disabled={pending}
-                  className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm disabled:opacity-60"
+                  className={submitCls}
                 >
                   {pending ? 'Memproses…' : 'Setujui'}
                 </button>

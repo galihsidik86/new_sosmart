@@ -74,6 +74,26 @@ async function cancelAction(formData: FormData) {
   });
   revalidatePath(`/transaksi/pembelian/${id}`);
 }
+async function cancelWithApproverAction(formData: FormData): Promise<{ error?: string } | void> {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) return { error: 'Session expired, silakan login ulang.' };
+  const session = await getSession();
+  const id = String(formData.get('id'));
+  const alasan = String(formData.get('alasan') ?? '');
+  if (alasan.length < 5) return { error: 'Alasan pembatalan minimal 5 huruf.' };
+  const r = await runWithApprover({
+    approverEmail: String(formData.get('approverEmail') ?? ''),
+    approverPassword: String(formData.get('approverPassword') ?? ''),
+    tenantId,
+    requiredRoles: ['OWNER', 'ADMIN'],
+    apiPath: `/purchase-invoices/${id}/cancel`,
+    body: { alasan },
+    requestedByUserId: session?.user.id,
+  });
+  if (!r.ok) return { error: r.error };
+  revalidatePath(`/transaksi/pembelian/${id}`);
+}
 async function deleteAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId(); if (!tenantId) redirect('/login');
@@ -250,6 +270,17 @@ export default async function PembelianDetailPage({
                 </button>
               </form>
             </>
+          )}
+          {(inv.status === 'POSTED' || inv.status === 'PARTIAL') && !mayCancel && s.role === 'AKUNTAN' && (
+            <StepUpButton
+              label="Batalkan (perlu approval Admin)"
+              title="Persetujuan Owner / Admin"
+              description="Pembatalan akan reverse jurnal. Masukkan alasan dan kredensial owner/admin."
+              variant="danger"
+              action={cancelWithApproverAction}
+              hiddenFields={{ id: inv.id }}
+              reason={{ label: 'Alasan pembatalan', placeholder: 'minimal 5 huruf' }}
+            />
           )}
           {(inv.status === 'POSTED' || inv.status === 'PARTIAL') && mayCancel && (
             <form action={cancelAction} className="flex gap-2">
