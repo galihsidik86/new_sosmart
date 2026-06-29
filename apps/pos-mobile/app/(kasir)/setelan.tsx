@@ -29,6 +29,7 @@ import {
 } from '@/lib/printer';
 import type { PaperWidth } from '@/lib/escpos';
 import { testReceipt } from '@/lib/receipt';
+import { refreshAllMaster } from '@/lib/cache';
 import { colors, radii, spacing } from '@/lib/theme';
 
 interface BondedDevice {
@@ -49,6 +50,7 @@ export default function SetelanScreen() {
   const [scanning, setScanning] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [paper, setPaper] = useState<PaperWidth>('58mm');
+  const [syncing, setSyncing] = useState(false);
 
   const refreshSaved = useCallback(async () => {
     const sp = await getSavedPrinter();
@@ -130,6 +132,21 @@ export default function SetelanScreen() {
     await refreshSaved();
   };
 
+  const syncMaster = async () => {
+    setSyncing(true);
+    try {
+      const r = await refreshAllMaster();
+      Alert.alert(
+        'Sync data master',
+        `Items ${r.items} · Pelanggan ${r.customers} · Akun ${r.accounts}`,
+      );
+    } catch (e) {
+      Alert.alert('Gagal sync', String(e instanceof Error ? e.message : e));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <ScrollView style={{ flex: 1, padding: spacing.lg }}>
       <Section title="Akun">
@@ -145,6 +162,30 @@ export default function SetelanScreen() {
 
       <Section title="Server">
         <Row label="API" value={API_BASE_URL} />
+      </Section>
+
+      <Section title="Data Master">
+        <Text style={{ color: colors.tanah500, fontSize: 13, marginBottom: spacing.md }}>
+          Download katalog barang, pelanggan, dan akun kas/bank ke perangkat
+          supaya kasir tetap jalan saat offline.
+        </Text>
+        <Pressable
+          onPress={syncMaster}
+          disabled={syncing}
+          style={({ pressed }) => ({
+            padding: spacing.md,
+            borderRadius: radii.md,
+            backgroundColor: pressed ? colors.sogan600 : colors.sogan500,
+            alignItems: 'center',
+            opacity: syncing ? 0.7 : 1,
+          })}
+        >
+          {syncing ? (
+            <ActivityIndicator color={colors.cream50} />
+          ) : (
+            <Text style={{ color: colors.cream50, fontWeight: '700' }}>SYNC DATA MASTER</Text>
+          )}
+        </Pressable>
       </Section>
 
       <Section title="Printer Bluetooth">

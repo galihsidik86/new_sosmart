@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { apiFetch, ApiError } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { cachedItems } from '@/lib/cache';
 import { useCart, cartTotals, type Item } from '@/lib/cart';
 import { fmtRp } from '@/lib/format';
 import { colors, radii, spacing } from '@/lib/theme';
@@ -25,8 +26,9 @@ export default function KasirScreen() {
   const [search, setSearch] = useState('');
 
   const items = useQuery({
-    queryKey: ['items'],
-    queryFn: () => apiFetch<Item[]>('/items'),
+    queryKey: ['items-cache'],
+    queryFn: () => cachedItems(),
+    staleTime: 60_000,
   });
 
   const lines = useCart((s) => s.lines);

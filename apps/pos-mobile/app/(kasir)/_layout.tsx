@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, AppState } from 'react-native';
 import { getTokens, getTenant } from '@/lib/session';
+import { syncOnce } from '@/lib/queue';
 import { colors } from '@/lib/theme';
 
 export default function KasirLayout() {
@@ -21,8 +22,17 @@ export default function KasirLayout() {
         return;
       }
       setChecked(true);
+      // Best-effort: coba sync queue saat mount + tiap kali app kembali aktif.
+      void syncOnce();
     })();
   }, [router]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void syncOnce();
+    });
+    return () => sub.remove();
+  }, []);
 
   if (!checked) {
     return (
