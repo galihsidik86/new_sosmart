@@ -1,15 +1,50 @@
 /**
  * Klien API minimal untuk POS. Auto-refresh token saat 401, lempar
  * ApiError kalau gagal supaya UI bisa tampilkan pesan ramah.
+ *
+ * URL API dinamis — disimpan di SecureStore supaya user bisa ganti dari
+ * Setelan tanpa rebuild APK. Default fallback: env var, atau host
+ * Android emulator (10.0.2.2).
  */
 import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
 import { getTokens, setTokens, getTenant } from './session';
 
-const DEFAULT_URL = 'http://10.0.2.2:4000'; // Android emulator default → host
-const API_URL =
+const KEY_API_URL = 'lentera_pos_api_url';
+const DEFAULT_URL =
   (Constants.expoConfig?.extra as Record<string, string> | undefined)?.apiUrl ??
   process.env.EXPO_PUBLIC_API_URL ??
-  DEFAULT_URL;
+  'http://10.0.2.2:4000';
+
+let cachedUrl: string | null = null;
+
+/** Trim trailing slash + whitespace, jangan paksa http kalau user pakai https. */
+function normalize(u: string): string {
+  return u.trim().replace(/\/+$/, '');
+}
+
+export async function getApiUrl(): Promise<string> {
+  if (cachedUrl) return cachedUrl;
+  const saved = await SecureStore.getItemAsync(KEY_API_URL);
+  const url = saved ? normalize(saved) : DEFAULT_URL;
+  cachedUrl = url;
+  return url;
+}
+
+export async function setApiUrl(url: string): Promise<void> {
+  const v = normalize(url);
+  await SecureStore.setItemAsync(KEY_API_URL, v);
+  cachedUrl = v;
+}
+
+export async function resetApiUrl(): Promise<void> {
+  await SecureStore.deleteItemAsync(KEY_API_URL);
+  cachedUrl = DEFAULT_URL;
+}
+
+export function getApiUrlDefault(): string {
+  return DEFAULT_URL;
+}
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public body?: unknown) {
@@ -28,7 +63,8 @@ interface FetchOpts {
 
 async function tryRefresh(refreshToken: string): Promise<boolean> {
   try {
-    const res = await fetch(`${API_URL}/api/v1/auth/refresh`, {
+    const base = await getApiUrl();
+    const res = await fetch(`${base}/api/v1/auth/refresh`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -48,7 +84,8 @@ async function doFetch(path: string, access: string | null, opts: FetchOpts): Pr
   if (access) headers.authorization = `Bearer ${access}`;
   if (opts.tenantId) headers['x-tenant-id'] = opts.tenantId;
   if (opts.cabangId) headers['x-cabang-id'] = opts.cabangId;
-  return fetch(`${API_URL}/api/v1${path}`, {
+  const base = await getApiUrl();
+  return fetch(`${base}/api/v1${path}`, {
     method: opts.method ?? 'GET',
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
@@ -108,7 +145,8 @@ export interface LoginResponse {
 }
 
 export async function apiLogin(email: string, password: string): Promise<LoginResponse> {
-  const res = await fetch(`${API_URL}/api/v1/auth/login`, {
+  const base = await getApiUrl();
+  const res = await fetch(`${base}/api/v1/auth/login`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -119,5 +157,3 @@ export async function apiLogin(email: string, password: string): Promise<LoginRe
   }
   return (await res.json()) as LoginResponse;
 }
-
-export const API_BASE_URL = API_URL;

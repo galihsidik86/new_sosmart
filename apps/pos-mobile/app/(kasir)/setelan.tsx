@@ -5,6 +5,7 @@ import {
   Pressable,
   ScrollView,
   FlatList,
+  TextInput,
   ActivityIndicator,
   Alert,
   Platform,
@@ -17,7 +18,12 @@ import {
   type SessionUser,
   type SessionTenant,
 } from '@/lib/session';
-import { API_BASE_URL } from '@/lib/api';
+import {
+  getApiUrl,
+  setApiUrl,
+  resetApiUrl,
+  getApiUrlDefault,
+} from '@/lib/api';
 import {
   ensureBluetoothEnabled,
   listBondedDevices,
@@ -51,6 +57,8 @@ export default function SetelanScreen() {
   const [printing, setPrinting] = useState(false);
   const [paper, setPaper] = useState<PaperWidth>('58mm');
   const [syncing, setSyncing] = useState(false);
+  const [apiUrl, setApiUrlState] = useState('');
+  const [savingUrl, setSavingUrl] = useState(false);
 
   const refreshSaved = useCallback(async () => {
     const sp = await getSavedPrinter();
@@ -62,9 +70,31 @@ export default function SetelanScreen() {
     (async () => {
       setUser(await getUser());
       setTenant(await getTenant());
+      setApiUrlState(await getApiUrl());
       await refreshSaved();
     })();
   }, [refreshSaved]);
+
+  const saveApiUrl = async () => {
+    const trimmed = apiUrl.trim();
+    if (!trimmed.match(/^https?:\/\/[^\s]+/)) {
+      Alert.alert('URL tidak valid', 'Harus diawali http:// atau https://');
+      return;
+    }
+    setSavingUrl(true);
+    try {
+      await setApiUrl(trimmed);
+      setApiUrlState(await getApiUrl());
+      Alert.alert('Tersimpan', 'Server URL diubah. Coba sync data master untuk verifikasi.');
+    } finally {
+      setSavingUrl(false);
+    }
+  };
+
+  const restoreDefaultUrl = async () => {
+    await resetApiUrl();
+    setApiUrlState(await getApiUrl());
+  };
 
   const logout = async () => {
     await clearSession();
@@ -160,8 +190,63 @@ export default function SetelanScreen() {
         <Row label="Role" value={tenant?.role ?? '—'} />
       </Section>
 
-      <Section title="Server">
-        <Row label="API" value={API_BASE_URL} />
+      <Section title="Server API">
+        <Text style={{ color: colors.tanah500, fontSize: 12, marginBottom: spacing.xs }}>
+          URL backend Lentera. Default emulator: <Text style={{ fontFamily: 'monospace' }}>{getApiUrlDefault()}</Text>.
+          Untuk HP fisik di LAN yang sama, ubah ke IP laptop (mis. http://192.168.1.10:4000).
+        </Text>
+        <TextInput
+          value={apiUrl}
+          onChangeText={setApiUrlState}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          placeholder="http://192.168.1.10:4000"
+          style={{
+            padding: spacing.md,
+            backgroundColor: colors.cream50,
+            borderWidth: 1,
+            borderColor: colors.cream300,
+            borderRadius: radii.md,
+            fontSize: 14,
+            fontFamily: 'monospace',
+            color: colors.wedel900,
+            marginTop: spacing.xs,
+          }}
+        />
+        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
+          <Pressable
+            onPress={saveApiUrl}
+            disabled={savingUrl}
+            style={({ pressed }) => ({
+              flex: 2,
+              padding: spacing.md,
+              borderRadius: radii.md,
+              backgroundColor: pressed ? colors.sogan600 : colors.sogan500,
+              alignItems: 'center',
+              opacity: savingUrl ? 0.7 : 1,
+            })}
+          >
+            {savingUrl ? (
+              <ActivityIndicator color={colors.cream50} />
+            ) : (
+              <Text style={{ color: colors.cream50, fontWeight: '700' }}>SIMPAN URL</Text>
+            )}
+          </Pressable>
+          <Pressable
+            onPress={restoreDefaultUrl}
+            style={{
+              flex: 1,
+              padding: spacing.md,
+              borderRadius: radii.md,
+              borderWidth: 1,
+              borderColor: colors.cream300,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: colors.tanah700, fontWeight: '700' }}>RESET</Text>
+          </Pressable>
+        </View>
       </Section>
 
       <Section title="Data Master">
