@@ -8,7 +8,7 @@ export interface Item {
   kode: string;
   nama: string;
   satuan: string;
-  hargaJual: string;
+  hargaJualDefault: string;
   klasifikasiPpn: string;
   isJasa: boolean;
   isAktif: boolean;
@@ -54,7 +54,7 @@ export const useCart = create<CartState>((set) => ({
         kode: item.kode,
         nama: item.nama,
         satuan: item.satuan,
-        hargaSatuan: Number(item.hargaJual),
+        hargaSatuan: Number(item.hargaJualDefault),
         qty: 1,
         diskonPersen: 0,
         klasifikasiPpn: item.klasifikasiPpn,

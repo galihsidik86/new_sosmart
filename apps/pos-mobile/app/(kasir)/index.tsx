@@ -3,7 +3,7 @@
  * Kolom kiri = katalog (search + grid). Kolom kanan = keranjang + total + bayar.
  * MVP: orientasi portrait satu kolom dengan toggle tab.
  */
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ApiError } from '@/lib/api';
 import { cachedItems } from '@/lib/cache';
@@ -28,8 +28,16 @@ export default function KasirScreen() {
   const items = useQuery({
     queryKey: ['items-cache'],
     queryFn: () => cachedItems(),
-    staleTime: 60_000,
+    staleTime: 0,
   });
+
+  // Refetch katalog tiap tab Kasir di-focus (mis. abis sync di Setelan).
+  useFocusEffect(
+    useCallback(() => {
+      void items.refetch();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
 
   const lines = useCart((s) => s.lines);
   const cartCount = lines.reduce((n, l) => n + l.qty, 0);
@@ -180,7 +188,7 @@ function ItemCard({ item }: { item: Item }) {
         {item.nama}
       </Text>
       <Text style={{ fontSize: 15, fontWeight: '700', color: colors.sogan600, marginTop: 6 }}>
-        {fmtRp(item.hargaJual)}
+        {fmtRp(item.hargaJualDefault)}
       </Text>
       <Text style={{ fontSize: 11, color: colors.tanah500 }}>per {item.satuan}</Text>
     </Pressable>
