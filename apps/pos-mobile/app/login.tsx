@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { apiLogin, ApiError } from '@/lib/api';
+import { apiLogin, ApiError, getApiUrl, setApiUrl } from '@/lib/api';
 import { setTokens, setUser, setTenant } from '@/lib/session';
 import { colors, radii, spacing } from '@/lib/theme';
 
@@ -19,6 +20,25 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('lentera123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [serverUrl, setServerUrl] = useState('');
+  const [showServer, setShowServer] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setServerUrl(await getApiUrl());
+    })();
+  }, []);
+
+  const saveServer = async () => {
+    const trimmed = serverUrl.trim();
+    if (!trimmed.match(/^https?:\/\/[^\s]+/)) {
+      setError('URL server harus diawali http:// atau https://');
+      return;
+    }
+    await setApiUrl(trimmed);
+    setError('');
+    setShowServer(false);
+  };
 
   const onSubmit = async () => {
     if (loading) return;
@@ -177,6 +197,60 @@ export default function LoginScreen() {
             )}
           </Pressable>
         </View>
+
+        <Pressable
+          onPress={() => setShowServer((v) => !v)}
+          style={{ marginTop: spacing.lg, alignItems: 'center' }}
+          hitSlop={10}
+        >
+          <Text style={{ color: colors.tanah500, fontSize: 12 }}>
+            Server: <Text style={{ fontFamily: 'monospace', color: colors.sogan600 }}>{serverUrl || '...'}</Text>
+            <Text style={{ color: colors.sogan500, fontWeight: '700' }}> {showServer ? ' ⌃' : ' ⌄'}</Text>
+          </Text>
+        </Pressable>
+
+        {showServer && (
+          <View
+            style={{
+              marginTop: spacing.md,
+              backgroundColor: colors.white,
+              padding: spacing.lg,
+              borderRadius: radii.md,
+              borderWidth: 1,
+              borderColor: colors.cream200,
+            }}
+          >
+            <Text style={labelStyle}>URL Server API</Text>
+            <Text style={{ color: colors.tanah500, fontSize: 11, marginBottom: spacing.xs }}>
+              Untuk HP fisik di LAN, isi IP laptop (mis. http://192.168.1.10:4000).
+            </Text>
+            <TextInput
+              value={serverUrl}
+              onChangeText={setServerUrl}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              placeholder="http://192.168.1.10:4000"
+              style={{
+                ...inputStyle,
+                fontFamily: 'monospace',
+                fontSize: 13,
+              }}
+            />
+            <Pressable
+              onPress={saveServer}
+              style={({ pressed }) => ({
+                marginTop: spacing.md,
+                padding: spacing.md,
+                borderRadius: radii.md,
+                backgroundColor: pressed ? colors.sogan600 : colors.sogan500,
+                alignItems: 'center',
+              })}
+            >
+              <Text style={{ color: colors.cream50, fontWeight: '700' }}>SIMPAN URL</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
