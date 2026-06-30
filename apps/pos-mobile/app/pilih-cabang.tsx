@@ -34,13 +34,24 @@ export default function PilihCabangScreen() {
           router.replace('/login');
           return;
         }
-        // /tenants/me memberi memberships untuk user yang sedang login.
-        const data = await apiFetch<{ memberships: Membership[] }>('/tenants/me', {
-          tenantId: '',
-        });
-        setMemberships(data.memberships);
-        if (data.memberships.length === 1) {
-          await pickTenant(data.memberships[0]);
+        // /tenants/me balikin array membership untuk user yg login.
+        // Bentuk: [{ tenantId, tenant:{nama}, role, cabang:[…]|null }]
+        type Raw = {
+          tenantId: string;
+          tenant: { nama: string };
+          role: string;
+          cabang: Array<{ cabangId: string }> | null;
+        };
+        const data = await apiFetch<Raw[]>('/tenants/me', { tenantId: '' });
+        const ms: Membership[] = data.map((r) => ({
+          tenantId: r.tenantId,
+          tenantNama: r.tenant.nama,
+          role: r.role,
+          cabangIds: (r.cabang ?? []).map((c) => c.cabangId),
+        }));
+        setMemberships(ms);
+        if (ms.length === 1 && ms[0]) {
+          await pickTenant(ms[0]);
         }
       } catch (e) {
         setError(e instanceof ApiError ? e.message : 'Gagal load tenant');
