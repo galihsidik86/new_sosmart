@@ -81,10 +81,10 @@ export async function cachedAccounts(): Promise<Account[]> {
 }
 
 export async function refreshAllMaster(): Promise<{ items: number; customers: number; accounts: number }> {
-  const [items, customers, accounts] = await Promise.all([
-    refreshItems(),
-    refreshCustomers(),
-    refreshAccounts(),
-  ]);
+  // Sequential, bukan Promise.all — SQLite tolak concurrent transactions
+  // pada connection yang sama (expo-sqlite serialize per-connection).
+  const items = await refreshItems();
+  const customers = await refreshCustomers();
+  const accounts = await refreshAccounts();
   return { items, customers, accounts };
 }
