@@ -12,6 +12,7 @@ interface Account {
   normalBalance: 'DEBIT' | 'KREDIT';
 }
 interface Cabang { id: string; kode: string; nama: string }
+interface Project { id: string; kode: string; nama: string }
 
 async function submitJurnal(formData: FormData) {
   'use server';
@@ -28,9 +29,10 @@ async function submitJurnal(formData: FormData) {
 export default async function JurnalBaruPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [accounts, cabang] = await Promise.all([
+  const [accounts, cabang, projects] = await Promise.all([
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<Cabang[]>('/cabang', { tenantId }),
+    apiFetch<Project[]>('/projects', { tenantId }),
   ]);
   return (
     <>
@@ -39,7 +41,7 @@ export default async function JurnalBaruPage() {
         <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-6">
           Jurnal Baru
         </h1>
-        <JurnalForm accounts={accounts} cabang={cabang} submit={submitJurnal} />
+        <JurnalForm accounts={accounts} cabang={cabang} projects={projects} submit={submitJurnal} />
       </div>
     </>
   );

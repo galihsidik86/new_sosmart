@@ -12,23 +12,32 @@ interface Account {
   normalBalance: 'DEBIT' | 'KREDIT';
 }
 interface Cabang { id: string; kode: string; nama: string }
+interface Project { id: string; kode: string; nama: string }
 interface JurnalDetail {
   id: string;
   cabangId: string;
   tanggal: string;
   deskripsi: string;
   status: 'DRAFT' | 'POSTED' | 'REVERSED';
-  lines: Array<{ no: number; accountId: string; debit: string; kredit: string; deskripsi: string | null }>;
+  lines: Array<{
+    no: number;
+    accountId: string;
+    projectId: string | null;
+    debit: string;
+    kredit: string;
+    deskripsi: string | null;
+  }>;
 }
 
 export default async function JurnalEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [j, accounts, cabang] = await Promise.all([
+  const [j, accounts, cabang, projects] = await Promise.all([
     apiFetch<JurnalDetail>(`/journals/${id}`, { tenantId }),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<Cabang[]>('/cabang', { tenantId }),
+    apiFetch<Project[]>('/projects', { tenantId }),
   ]);
 
   if (j.status !== 'DRAFT') {
@@ -59,6 +68,7 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
         <JurnalForm
           accounts={accounts}
           cabang={cabang}
+          projects={projects}
           submit={submitEdit}
           redirectTo={`/pembukuan/jurnal/${id}`}
           submitLabel="Simpan perubahan"
@@ -70,6 +80,7 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
               .sort((a, b) => a.no - b.no)
               .map((l) => ({
                 accountId: l.accountId,
+                projectId: l.projectId ?? '',
                 debit: String(Number(l.debit)),
                 kredit: String(Number(l.kredit)),
                 deskripsi: l.deskripsi ?? '',

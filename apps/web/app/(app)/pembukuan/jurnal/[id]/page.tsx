@@ -18,6 +18,7 @@ interface Line {
   kredit: string;
   deskripsi: string | null;
   account: { kode: string; nama: string; normalBalance: 'DEBIT' | 'KREDIT' };
+  project: { id: string; kode: string; nama: string } | null;
 }
 interface JurnalDetail {
   id: string;
@@ -160,6 +161,7 @@ export default async function JurnalDetailPage({
               <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
                 <th className="px-3 py-2.5 font-bold w-8">#</th>
                 <th className="px-3 py-2.5 font-bold">Akun</th>
+                <th className="px-3 py-2.5 font-bold">Project</th>
                 <th className="px-3 py-2.5 font-bold">Keterangan</th>
                 <th className="px-3 py-2.5 font-bold text-right w-40">Debit</th>
                 <th className="px-3 py-2.5 font-bold text-right w-40">Kredit</th>
@@ -173,6 +175,18 @@ export default async function JurnalDetailPage({
                     <span className="text-tanah-700">{l.account.kode}</span>{' '}
                     <span className="text-tanah-500">— {l.account.nama}</span>
                   </td>
+                  <td className="px-3 py-2 text-xs">
+                    {l.project ? (
+                      <Link
+                        href={`/master/project/${l.project.id}` as Route}
+                        className="text-sogan-500 hover:underline"
+                      >
+                        {l.project.kode}
+                      </Link>
+                    ) : (
+                      <span className="text-tanah-300">—</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-tanah-500 text-xs">{l.deskripsi ?? '—'}</td>
                   <td className="px-3 py-2 text-right font-mono tabular-nums">
                     {Number(l.debit) > 0 ? fmtPlain(l.debit) : ''}
@@ -185,7 +199,7 @@ export default async function JurnalDetailPage({
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-cream-300 bg-cream-50 font-bold text-tanah-700">
-                <td colSpan={3} className="px-3 py-2.5 text-right">TOTAL</td>
+                <td colSpan={4} className="px-3 py-2.5 text-right">TOTAL</td>
                 <td className="px-3 py-2.5 text-right font-mono tabular-nums">{fmtPlain(j.totalDebit)}</td>
                 <td className="px-3 py-2.5 text-right font-mono tabular-nums">{fmtPlain(j.totalKredit)}</td>
               </tr>

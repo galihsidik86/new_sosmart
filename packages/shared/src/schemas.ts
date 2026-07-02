@@ -173,6 +173,7 @@ const lineMoneySchema = z
 
 export const journalLineInputSchema = z.object({
   accountId: z.string().uuid(),
+  projectId: z.string().uuid().nullable().optional(),
   debit: lineMoneySchema.default('0'),
   kredit: lineMoneySchema.default('0'),
   deskripsi: z.string().max(500).optional(),

@@ -121,7 +121,10 @@ export class JournalsService {
           fiscalPeriod: true,
           lines: {
             orderBy: { no: 'asc' },
-            include: { account: { select: { kode: true, nama: true, normalBalance: true } } },
+            include: {
+              account: { select: { kode: true, nama: true, normalBalance: true } },
+              project: { select: { id: true, kode: true, nama: true } },
+            },
           },
           reversedFrom: { select: { id: true, nomor: true } },
           reversals: { select: { id: true, nomor: true, status: true } },
@@ -192,6 +195,7 @@ export class JournalsService {
           create: input.lines.map((l, i) => ({
             tenantId,
             accountId: l.accountId,
+            projectId: l.projectId ?? null,
             no: i + 1,
             debit: l.debit,
             kredit: l.kredit,
@@ -320,6 +324,7 @@ export class JournalsService {
           create: orig.lines.map((l, i) => ({
             tenantId: orig.tenantId,
             accountId: l.accountId,
+            projectId: l.projectId,
             no: i + 1,
             debit: l.kredit,
             kredit: l.debit,
@@ -390,6 +395,7 @@ export class JournalsService {
             create: input.lines.map((l, i) => ({
               tenantId,
               accountId: l.accountId,
+              projectId: l.projectId ?? null,
               no: i + 1,
               debit: l.debit,
               kredit: l.kredit,

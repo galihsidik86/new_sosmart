@@ -12,9 +12,11 @@ interface Account {
   normalBalance: 'DEBIT' | 'KREDIT';
 }
 interface Cabang { id: string; kode: string; nama: string }
+interface Project { id: string; kode: string; nama: string }
 
 interface Line {
   accountId: string;
+  projectId: string; // '' = tanpa project
   debit: string;
   kredit: string;
   deskripsi: string;
@@ -30,6 +32,8 @@ interface DefaultValues {
 interface JurnalFormProps {
   accounts: Account[];
   cabang: Cabang[];
+  /** List project AKTIF untuk tenant. Kalau kosong, kolom project disembunyikan. */
+  projects?: Project[];
   /** Server action: terima FormData berisi JSON di field 'payload'. */
   submit: (formData: FormData) => Promise<void>;
   /** Kalau diisi, form jalan dalam mode edit (prefilled). */
@@ -71,7 +75,7 @@ const TEMPLATES: Array<{ label: string; desc: string; lines: Array<{ kode: strin
 ];
 
 export function JurnalForm({
-  accounts, cabang, submit, defaultValues, redirectTo, submitLabel,
+  accounts, cabang, projects, submit, defaultValues, redirectTo, submitLabel,
 }: JurnalFormProps) {
   const today = new Date().toISOString().slice(0, 10);
   const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
@@ -79,10 +83,11 @@ export function JurnalForm({
   const [cabangId, setCabangId] = useState(defaultValues?.cabangId ?? cabang[0]?.id ?? '');
   const [lines, setLines] = useState<Line[]>(
     defaultValues?.lines ?? [
-      { accountId: '', debit: '0', kredit: '0', deskripsi: '' },
-      { accountId: '', debit: '0', kredit: '0', deskripsi: '' },
+      { accountId: '', projectId: '', debit: '0', kredit: '0', deskripsi: '' },
+      { accountId: '', projectId: '', debit: '0', kredit: '0', deskripsi: '' },
     ],
   );
+  const showProjects = !!projects && projects.length > 0;
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -102,7 +107,7 @@ export function JurnalForm({
     setLines((prev) => prev.map((l, k) => (k === i ? { ...l, ...patch } : l)));
 
   const addLine = () =>
-    setLines((p) => [...p, { accountId: '', debit: '0', kredit: '0', deskripsi: '' }]);
+    setLines((p) => [...p, { accountId: '', projectId: '', debit: '0', kredit: '0', deskripsi: '' }]);
 
   const removeLine = (i: number) =>
     setLines((p) => (p.length <= 2 ? p : p.filter((_, k) => k !== i)));
@@ -114,6 +119,7 @@ export function JurnalForm({
         const acc = postable.find((a) => a.kode === l.kode);
         return {
           accountId: acc?.id ?? '',
+          projectId: '',
           debit: l.d ? String(l.d) : '0',
           kredit: l.k ? String(l.k) : '0',
           deskripsi: l.ket,
@@ -140,6 +146,7 @@ export function JurnalForm({
       sumber: 'MANUAL' as const,
       lines: lines.map((l) => ({
         accountId: l.accountId,
+        projectId: l.projectId || null,
         debit: String(Number(l.debit || 0)),
         kredit: String(Number(l.kredit || 0)),
         deskripsi: l.deskripsi || undefined,
@@ -224,6 +231,7 @@ export function JurnalForm({
             <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
               <th className="px-3 py-2.5 font-bold w-8">#</th>
               <th className="px-3 py-2.5 font-bold">Akun</th>
+              {showProjects && <th className="px-3 py-2.5 font-bold w-36">Project</th>}
               <th className="px-3 py-2.5 font-bold">Keterangan baris</th>
               <th className="px-3 py-2.5 font-bold text-right w-40">Debit</th>
               <th className="px-3 py-2.5 font-bold text-right w-40">Kredit</th>
@@ -249,6 +257,22 @@ export function JurnalForm({
                     ))}
                   </select>
                 </td>
+                {showProjects && (
+                  <td className="px-3 py-1.5">
+                    <select
+                      value={l.projectId}
+                      onChange={(e) => updateLine(i, { projectId: e.target.value })}
+                      className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm"
+                    >
+                      <option value="">— tanpa project —</option>
+                      {projects!.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.kode} · {p.nama}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                )}
                 <td className="px-3 py-1.5">
                   <input
                     type="text" value={l.deskripsi}
@@ -286,7 +310,7 @@ export function JurnalForm({
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-cream-300 bg-cream-50">
-              <td colSpan={3} className="px-3 py-2.5">
+              <td colSpan={showProjects ? 4 : 3} className="px-3 py-2.5">
                 <button
                   type="button" onClick={addLine}
                   className="text-xs px-2.5 py-1.5 bg-white border border-cream-300 rounded-md text-tanah-700 hover:bg-cream-100"
