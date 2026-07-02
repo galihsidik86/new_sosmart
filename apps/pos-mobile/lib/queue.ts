@@ -96,6 +96,32 @@ function rowToPending(r: {
   };
 }
 
+/**
+ * Hapus row dari antrian lokal. Kalau row sudah punya server_id
+ * (draft sudah ada di server), coba DELETE di server juga —
+ * best-effort, abaikan kalau 404 (sudah dihapus lain). Tolak untuk
+ * status 'synced' supaya transaksi POSTED tidak hilang jejak dari POS.
+ */
+export async function deleteSale(id: string): Promise<void> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ server_id: string | null; status: string }>(
+    `SELECT server_id, status FROM pending_sales WHERE id = ?`,
+    [id],
+  );
+  if (!row) return;
+  if (row.status === 'synced') {
+    throw new Error('Transaksi sudah tersync — batalkan lewat admin web.');
+  }
+  if (row.server_id) {
+    try {
+      await apiFetch(`/sales-invoices/${row.server_id}`, { method: 'DELETE' });
+    } catch {
+      /* server-side sudah tidak ada atau offline — abaikan */
+    }
+  }
+  await db.runAsync(`DELETE FROM pending_sales WHERE id = ?`, [id]);
+}
+
 export async function pendingCount(): Promise<number> {
   const db = await getDb();
   const r = await db.getFirstAsync<{ c: number }>(

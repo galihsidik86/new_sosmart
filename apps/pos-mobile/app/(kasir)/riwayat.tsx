@@ -15,7 +15,13 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { listAllSales, syncOnce, pendingCount, type PendingRow } from '@/lib/queue';
+import {
+  listAllSales,
+  syncOnce,
+  pendingCount,
+  deleteSale,
+  type PendingRow,
+} from '@/lib/queue';
 import { fmtRp } from '@/lib/format';
 import { colors, radii, spacing } from '@/lib/theme';
 
@@ -54,6 +60,29 @@ export default function RiwayatScreen() {
     } finally {
       setSyncing(false);
     }
+  };
+
+  const confirmDelete = (row: PendingRow) => {
+    Alert.alert(
+      'Hapus transaksi?',
+      `${row.serverNomor ?? row.id.slice(0, 8)} akan dihapus dari perangkat` +
+        (row.serverId ? ' + draft server ikut dibersihkan.' : '.'),
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteSale(row.id);
+              await load();
+            } catch (e) {
+              Alert.alert('Gagal hapus', String(e instanceof Error ? e.message : e));
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -113,13 +142,15 @@ export default function RiwayatScreen() {
             </Text>
           </View>
         )}
-        renderItem={({ item }) => <SaleRow row={item} />}
+        renderItem={({ item }) => (
+          <SaleRow row={item} onDelete={() => confirmDelete(item)} />
+        )}
       />
     </View>
   );
 }
 
-function SaleRow({ row }: { row: PendingRow }) {
+function SaleRow({ row, onDelete }: { row: PendingRow; onDelete: () => void }) {
   const total = row.payload.body.lines.reduce(
     (n, l) => n + Number(l.qty) * Number(l.hargaSatuan),
     0,
@@ -140,11 +171,18 @@ function SaleRow({ row }: { row: PendingRow }) {
         backgroundColor: colors.white,
       }}
     >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={{ fontWeight: '700', color: colors.wedel900 }}>
           {row.serverNomor ?? row.id.slice(0, 8)}
         </Text>
-        <Text style={{ fontSize: 12, color: colors.tanah500 }}>{time}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <Text style={{ fontSize: 12, color: colors.tanah500 }}>{time}</Text>
+          {row.status !== 'synced' && (
+            <Pressable onPress={onDelete} hitSlop={8}>
+              <Text style={{ color: colors.bata500, fontSize: 18, fontWeight: '700' }}>×</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
       <Text style={{ color: colors.tanah500, fontSize: 12, marginTop: 2 }}>
         {row.payload.receiptSnapshot.customerNama} · {row.payload.body.lines.length} item
