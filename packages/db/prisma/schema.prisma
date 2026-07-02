@@ -251,6 +251,17 @@ enum MetodePenyusutan {
 }
 
 /// Jenis mutasi stok di kartu stok.
+enum ProjectStatus {
+  AKTIF
+  SELESAI
+  DIBATALKAN
+}
+
+enum ProjectMemberRole {
+  MANAGER // approve override budget, kelola member
+  MEMBER  // input transaksi ber-project ini
+}
+
 enum StokMovementType {
   STOK_AWAL       // saldo awal saat onboarding
   PEMBELIAN       // dari faktur pembelian (inbound)
@@ -279,6 +290,7 @@ model User {
 
   memberships   Membership[]
   refreshTokens RefreshToken[]
+  projectMembers ProjectMember[]
 
   @@map("users")
 }
@@ -347,6 +359,8 @@ model Tenant {
   buktiPotong   BuktiPotong[]
   auditLogs     AuditLog[]
   glConfig      GlConfig[]
+  projects      Project[]
+  budgets       Budget[]
 
   @@map("tenants")
 }
@@ -458,6 +472,7 @@ model Account {
   asetAkumulasi AsetTetap[] @relation("AsetAkunAkumulasi")
   asetBeban     AsetTetap[] @relation("AsetAkunBeban")
   glConfig      GlConfig[]
+  budgets       Budget[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
@@ -781,6 +796,9 @@ model JournalLine {
   tenantId    String   @map("tenant_id") @db.Uuid
   journalId   String   @map("journal_id") @db.Uuid
   accountId   String   @map("account_id") @db.Uuid
+  /// Attach transaksi ke project untuk budgeting + laporan per project.
+  /// Nullable — baris tanpa project dianggap "overhead / general".
+  projectId   String?  @map("project_id") @db.Uuid
   /// Urutan baris di voucher (1, 2, 3, ...).
   no          Int
   debit       Decimal  @default(0) @db.Decimal(20, 2)
@@ -789,9 +807,11 @@ model JournalLine {
 
   journal Journal @relation(fields: [journalId], references: [id], onDelete: Cascade)
   account Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([journalId])
   @@index([tenantId, accountId])
+  @@index([projectId, accountId])
   @@map("journal_lines")
 }
 
@@ -1535,4 +1555,78 @@ model AuditLog {
   @@index([tenantId, createdAt])
   @@index([entity, entityId])
   @@map("audit_logs")
+}
+
+/// Project = wadah budgeting + reporting per-project.
+/// Transaksi (journal_lines) opsional attach ke project via projectId.
+model Project {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String        @map("tenant_id") @db.Uuid
+  /// Kode unik per tenant, mis. PRJ-001, RENO-KANTOR, dll.
+  kode           String
+  nama           String
+  deskripsi      String?
+  tanggalMulai   DateTime      @map("tanggal_mulai") @db.Date
+  tanggalSelesai DateTime?     @map("tanggal_selesai") @db.Date
+  status         ProjectStatus @default(AKTIF)
+  /// Budget total tingkat project (opsional). Detail per akun × bulan ada di Budget.
+  budgetTotal    Decimal?      @map("budget_total") @db.Decimal(20, 2)
+  catatan        String?
+
+  createdById    String?       @map("created_by_id") @db.Uuid
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members      ProjectMember[]
+  budgets      Budget[]
+  journalLines JournalLine[]
+
+  @@unique([tenantId, kode])
+  @@index([tenantId, status])
+  @@map("projects")
+}
+
+/// Membership user pada project — kontrol siapa boleh input/approve.
+model ProjectMember {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId  String            @map("project_id") @db.Uuid
+  userId     String            @map("user_id") @db.Uuid
+  role       ProjectMemberRole @default(MEMBER)
+  createdAt  DateTime          @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+/// Budget per (Project, Akun, Periode bulanan YYYY-MM).
+/// Enforcement di posting service: sebelum POST, cek sum posted amount
+/// untuk (projectId, accountId, periode) + amount txn ≤ budget.amount.
+model Budget {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  accountId   String   @map("account_id") @db.Uuid
+  /// Format "YYYY-MM"
+  periode     String
+  amount      Decimal  @db.Decimal(20, 2)
+  /// true = tolak posting kalau over; false = izinkan tapi ada peringatan.
+  hardBlock   Boolean  @default(true) @map("hard_block")
+  catatan     String?
+
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@unique([projectId, accountId, periode])
+  @@index([tenantId, periode])
+  @@map("budgets")
 }

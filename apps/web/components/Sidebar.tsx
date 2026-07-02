@@ -23,6 +23,7 @@ const NAV: NavItem[] = [
   { group: 'Master Data', href: '/master/barang', label: 'Master Barang', roles: FULL },
   { group: 'Master Data', href: '/master/vendor', label: 'Data Vendor', roles: FULL },
   { group: 'Master Data', href: '/master/pelanggan', label: 'Data Pelanggan', roles: TX_KASIR },
+  { group: 'Master Data', href: '/master/project', label: 'Project', roles: FULL },
   { group: 'Pembukuan', href: '/pembukuan/coa', label: 'Bagan Akun', roles: ACCOUNTING },
   { group: 'Pembukuan', href: '/pembukuan/jurnal', label: 'Jurnal Umum', roles: ACCOUNTING },
   { group: 'Pembukuan', href: '/pembukuan/bukubesar', label: 'Buku Besar', roles: ACCOUNTING },

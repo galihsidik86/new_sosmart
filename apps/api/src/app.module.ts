@@ -30,6 +30,7 @@ import { SptModule } from './modules/spt/spt.module.js';
 import { ReportsModule } from './modules/reports/reports.module.js';
 import { GlConfigControllerModule } from './modules/gl-config/gl-config-controller.module.js';
 import { UsersModule } from './modules/users/users.module.js';
+import { ProjectsModule } from './modules/projects/projects.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { HealthController } from './modules/health/health.controller.js';
 
@@ -65,6 +66,7 @@ import { HealthController } from './modules/health/health.controller.js';
     ReportsModule,
     GlConfigControllerModule,
     UsersModule,
+    ProjectsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

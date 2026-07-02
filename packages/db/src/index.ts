@@ -37,6 +37,8 @@ export {
   BuktiPotongStatus,
   JenisPph,
   AuditAction,
+  ProjectStatus,
+  ProjectMemberRole,
 } from '@prisma/client';
 
 // Model types (interface) — type-only
@@ -76,4 +78,7 @@ export type {
   PayrollLine,
   BuktiPotong,
   AuditLog,
+  Project,
+  ProjectMember,
+  Budget,
 } from '@prisma/client';
