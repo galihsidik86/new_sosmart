@@ -285,6 +285,54 @@ async function seedTaxRates(tenantId: string, coa: Map<string, string>) {
 }
 
 // ===============================================================
+// Master tarif PPh 23 — referensi jenis jasa (UU PPh Pasal 23 + PMK 141/2015)
+// ===============================================================
+async function seedPph23Tarif(tenantId: string) {
+  const rows = [
+    // 15% — pasif income (UU PPh Pasal 23 ayat 1a)
+    { kode: 'DIVIDEN',              nama: 'Dividen (WP Badan, kepemilikan <25%)',                tarif: '15', keterangan: 'Pasal 23(1)a UU PPh' },
+    { kode: 'BUNGA',                nama: 'Bunga & imbalan sehubungan jaminan utang',           tarif: '15', keterangan: 'Kecuali obligasi via bursa & deposito bank' },
+    { kode: 'ROYALTI',              nama: 'Royalti',                                             tarif: '15', keterangan: 'Pasal 23(1)a UU PPh' },
+    { kode: 'HADIAH-PENGHARGAAN',   nama: 'Hadiah, penghargaan, bonus',                          tarif: '15', keterangan: 'Selain yang dipotong PPh 21' },
+
+    // 2% — jasa (UU PPh Pasal 23 ayat 1c + PMK 141/2015)
+    { kode: 'SEWA-HARTA',           nama: 'Sewa & penggunaan harta (selain tanah/bangunan)',    tarif: '2',  keterangan: 'Sewa tanah/bangunan → PPh 4(2)' },
+    { kode: 'JASA-TEKNIK',          nama: 'Jasa teknik',                                         tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-MANAJEMEN',       nama: 'Jasa manajemen',                                      tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-KONSULTAN',       nama: 'Jasa konsultan',                                      tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-KONSTRUKSI',      nama: 'Jasa konstruksi',                                     tarif: '2',  keterangan: 'PMK 141/2015 (bukan sektor jasa konstruksi bersertifikat)' },
+    { kode: 'JASA-AKUNTAN',         nama: 'Jasa akuntansi, pembukuan, audit',                   tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-HUKUM',           nama: 'Jasa hukum',                                          tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-ARSITEK',         nama: 'Jasa arsitektur & perancang',                         tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-PERANTARA',       nama: 'Jasa perantara & keagenan',                           tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-INSTALASI',       nama: 'Jasa instalasi/pemasangan mesin/listrik/AC/TV kabel', tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-PERAWATAN',       nama: 'Jasa perawatan/perbaikan/pemeliharaan',              tarif: '2',  keterangan: 'PMK 141/2015 — mesin, gedung, kendaraan' },
+    { kode: 'JASA-MAKLON',          nama: 'Jasa maklon (jasa pekerja)',                          tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-CLEANING',        nama: 'Jasa kebersihan (cleaning service)',                  tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-KATERING',        nama: 'Jasa katering / tata boga',                           tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-EVENT',           nama: 'Jasa penyelenggara kegiatan / event organizer',       tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-SOFTWARE',        nama: 'Jasa sehubungan software komputer',                   tarif: '2',  keterangan: 'PMK 141/2015 — kecuali penjualan lisensi (royalti = 15%)' },
+    { kode: 'JASA-TENAGA-KERJA',    nama: 'Jasa penyediaan tenaga kerja',                        tarif: '2',  keterangan: 'PMK 141/2015 — outsourcing' },
+    { kode: 'JASA-LOGISTIK',        nama: 'Jasa freight forwarding / logistik',                  tarif: '2',  keterangan: 'PMK 141/2015' },
+    { kode: 'JASA-KEAMANAN',        nama: 'Jasa penyelidikan & keamanan',                        tarif: '2',  keterangan: 'PMK 141/2015' },
+  ];
+
+  for (const r of rows) {
+    await prisma.pph23Tarif.upsert({
+      where: { tenantId_kode: { tenantId, kode: r.kode } },
+      create: {
+        tenantId,
+        kode: r.kode,
+        nama: r.nama,
+        tarif: r.tarif,
+        keterangan: r.keterangan,
+      },
+      update: { nama: r.nama, tarif: r.tarif, keterangan: r.keterangan },
+    });
+  }
+}
+
+// ===============================================================
 // Master Barang — selaras dengan mBarang di Akuntansi.dc.html
 // ===============================================================
 
@@ -794,6 +842,8 @@ async function main() {
   console.log(`  ✓ COA: ${coaMap.size} akun`);
   await seedTaxRates(tenant.id, coaMap);
   console.log(`  ✓ Tarif pajak`);
+  await seedPph23Tarif(tenant.id);
+  console.log(`  ✓ Tarif PPh 23 (jenis jasa PMK 141/2015)`);
 
   // ---------- Master barang + stok awal di Cabang Pusat
   const nItem = await seedItems(tenant.id, coaMap);

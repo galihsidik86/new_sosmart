@@ -16,7 +16,9 @@ interface Item {
   hargaJualDefault: string;
   klasifikasiPpn: Klasifikasi;
   isJasa: boolean;
+  pph23TarifId: string | null;
 }
+interface Pph23Tarif { id: string; kode: string; nama: string; tarif: string }
 
 const KLASIFIKASI_LABEL: Record<Klasifikasi, string> = {
   BKP: 'BKP (Kena PPN)',
@@ -31,6 +33,8 @@ async function updateItem(formData: FormData) {
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
   const id = String(formData.get('id'));
+  const isJasa = formData.get('isJasa') === 'on';
+  const pph23TarifId = String(formData.get('pph23TarifId') ?? '');
   await apiFetch(`/items/${id}`, {
     method: 'PATCH',
     tenantId,
@@ -41,7 +45,8 @@ async function updateItem(formData: FormData) {
       satuan: formData.get('satuan') || 'Pcs',
       hargaJualDefault: String(formData.get('hargaJualDefault') ?? '0'),
       klasifikasiPpn: formData.get('klasifikasiPpn') ?? 'BKP',
-      isJasa: formData.get('isJasa') === 'on',
+      isJasa,
+      pph23TarifId: isJasa && pph23TarifId ? pph23TarifId : null,
     }),
   });
   revalidatePath('/master/barang');
@@ -52,7 +57,10 @@ export default async function EditBarangPage({ params }: { params: Promise<{ id:
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const { id } = await params;
-  const item = await apiFetch<Item>(`/items/${id}`, { tenantId });
+  const [item, tarifList] = await Promise.all([
+    apiFetch<Item>(`/items/${id}`, { tenantId }),
+    apiFetch<Pph23Tarif[]>('/pph23-tarif', { tenantId }).catch(() => [] as Pph23Tarif[]),
+  ]);
 
   return (
     <>
@@ -88,6 +96,20 @@ export default async function EditBarangPage({ params }: { params: Promise<{ id:
             <input type="checkbox" name="isJasa" defaultChecked={item.isJasa} />
             Adalah jasa (kena PPh 23)
           </label>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+              Tarif PPh 23 <span className="text-tanah-400 normal-case font-normal">(hanya jika jasa)</span>
+            </label>
+            <select name="pph23TarifId" defaultValue={item.pph23TarifId ?? ''}
+              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <option value="">— tidak preset —</option>
+              {tarifList.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {Number(t.tarif)}% · {t.nama}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex gap-2 pt-2">
             <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
               Simpan perubahan

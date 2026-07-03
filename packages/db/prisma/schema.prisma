@@ -361,6 +361,7 @@ model Tenant {
   glConfig      GlConfig[]
   projects      Project[]
   budgets       Budget[]
+  pph23Tarif    Pph23Tarif[]
 
   @@map("tenants")
 }
@@ -529,6 +530,32 @@ model TaxRate {
   @@map("tax_rates")
 }
 
+/// Database referensi tarif PPh 23 per jenis jasa (UU PPh Pasal 23 + PMK
+/// 141/2015). Dipakai untuk auto-fill tarifPph23Persen saat item jasa
+/// dibeli. Nilai standar: 2% (jasa umum), 15% (royalti/dividen/bunga/hadiah).
+model Pph23Tarif {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  /// Kode singkat, mis. "JASA-TEKNIK", "ROYALTI", "JASA-KONSTRUKSI"
+  kode          String
+  /// Nama jenis jasa/penghasilan (dari Lampiran PMK 141/2015).
+  nama          String
+  /// Tarif dalam persen (2 atau 15 standar; boleh custom).
+  tarif         Decimal  @db.Decimal(5, 2)
+  /// Catatan/keterangan tambahan (mis. "dengan NPWP" atau spec dari PMK).
+  keterangan    String?
+  isAktif       Boolean  @default(true) @map("is_aktif")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items         Item[]
+
+  @@unique([tenantId, kode])
+  @@index([tenantId])
+  @@map("pph23_tarif")
+}
+
 // ===============================================================
 // MASTER: Item (Barang & Jasa)
 // ===============================================================
@@ -556,6 +583,9 @@ model Item {
   akunHppId         String?        @map("akun_hpp_id") @db.Uuid
   /// Akun beban kalau item dibeli sebagai jasa/bukan resale (mis. jasa konsultan).
   akunBebanId       String?        @map("akun_beban_id") @db.Uuid
+  /// Tarif PPh 23 preset — hanya relevan kalau isJasa=true. Auto-fill ke
+  /// purchase line saat item ini dipilih.
+  pph23TarifId      String?        @map("pph23_tarif_id") @db.Uuid
   isAktif           Boolean        @default(true) @map("is_aktif")
   catatan           String?
   createdAt         DateTime       @default(now()) @map("created_at")
@@ -566,6 +596,7 @@ model Item {
   akunPersediaan Account?       @relation("ItemPersediaan", fields: [akunPersediaanId], references: [id], onDelete: SetNull)
   akunHpp        Account?       @relation("ItemHpp", fields: [akunHppId], references: [id], onDelete: SetNull)
   akunBeban      Account?       @relation("ItemBeban", fields: [akunBebanId], references: [id], onDelete: SetNull)
+  pph23Tarif     Pph23Tarif?    @relation(fields: [pph23TarifId], references: [id], onDelete: SetNull)
   stokAwal       ItemStokAwal[]
   salesLines     SalesInvoiceLine[]
   purchaseLines  PurchaseInvoiceLine[]

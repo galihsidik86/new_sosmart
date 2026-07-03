@@ -12,6 +12,7 @@ interface Item {
   akunPendapatanId: string | null;
   akunPersediaanId: string | null;
   akunBebanId: string | null;
+  pph23Tarif: { kode: string; nama: string; tarif: string } | null;
 }
 interface Vendor {
   id: string; kode: string; nama: string; isPkp: boolean;

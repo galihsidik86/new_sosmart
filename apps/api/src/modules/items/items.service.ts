@@ -36,6 +36,7 @@ export class ItemsService {
           akunPendapatan: { select: { id: true, kode: true, nama: true } },
           akunPersediaan: { select: { id: true, kode: true, nama: true } },
           akunHpp: { select: { id: true, kode: true, nama: true } },
+          pph23Tarif: { select: { id: true, kode: true, nama: true, tarif: true } },
           stokAwal: {
             include: { cabang: { select: { id: true, kode: true, nama: true } } },
           },
@@ -52,6 +53,7 @@ export class ItemsService {
           akunPendapatan: true,
           akunPersediaan: true,
           akunHpp: true,
+          pph23Tarif: true,
           stokAwal: { include: { cabang: true } },
         },
       });
@@ -78,6 +80,7 @@ export class ItemsService {
             akunPendapatanId: input.akunPendapatanId ?? null,
             akunPersediaanId: input.isJasa ? null : input.akunPersediaanId ?? null,
             akunHppId: input.isJasa ? null : input.akunHppId ?? null,
+            pph23TarifId: input.isJasa ? (input.pph23TarifId ?? null) : null,
             catatan: input.catatan,
           },
         }),
@@ -103,6 +106,11 @@ export class ItemsService {
             ? null
             : patch.akunPersediaanId ?? undefined,
           akunHppId: patch.isJasa ? null : patch.akunHppId ?? undefined,
+          pph23TarifId: patch.isJasa === false
+            ? null
+            : patch.pph23TarifId === undefined
+              ? undefined
+              : patch.pph23TarifId,
         },
       }),
     );

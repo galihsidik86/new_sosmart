@@ -327,6 +327,14 @@ CREATE POLICY audit_logs_isolation ON audit_logs
   USING (tenant_id IS NULL OR tenant_id = app_current_tenant())
   WITH CHECK (tenant_id IS NULL OR tenant_id = app_current_tenant());
 
+-- ---------- PPh 23 Tarif (referensi jenis jasa per PMK 141/2015)
+ALTER TABLE pph23_tarif ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pph23_tarif FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS pph23_tarif_isolation ON pph23_tarif;
+CREATE POLICY pph23_tarif_isolation ON pph23_tarif
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- ---------- PROJECTS / PROJECT MEMBERS / BUDGETS (Fase A → D-F)
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects FORCE ROW LEVEL SECURITY;

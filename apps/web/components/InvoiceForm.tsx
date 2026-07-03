@@ -17,6 +17,8 @@ interface Item {
   akunPendapatanId: string | null;
   akunPersediaanId: string | null;
   akunBebanId: string | null;
+  /// Tarif PPh 23 preset (kalau item ini jasa dan sudah di-set).
+  pph23Tarif?: { kode: string; nama: string; tarif: string } | null;
 }
 interface Account {
   id: string; kode: string; nama: string; isPostable: boolean;
@@ -138,6 +140,14 @@ export function InvoiceForm({
       isJasa: it.isJasa,
       accountId: defaultAccount ?? '',
     });
+    // Purchase: kalau item ini jasa dengan preset PPh 23, auto-fill header tarif.
+    if (mode === 'purchase' && it.isJasa && it.pph23Tarif) {
+      const preset = Number(it.pph23Tarif.tarif);
+      if (preset === 0 || preset === 2 || preset === 15) {
+        setTarifPph23(preset as 0 | 2 | 15);
+        setPotongPph23(true);
+      }
+    }
   };
 
   const addLine = () =>

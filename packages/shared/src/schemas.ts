@@ -75,6 +75,8 @@ export const createItemInputSchema = z.object({
   akunPendapatanId: z.string().uuid().optional().nullable(),
   akunPersediaanId: z.string().uuid().optional().nullable(),
   akunHppId: z.string().uuid().optional().nullable(),
+  /// Tarif PPh 23 preset — dipakai kalau isJasa=true.
+  pph23TarifId: z.string().uuid().optional().nullable(),
   catatan: z.string().max(500).optional(),
 });
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;

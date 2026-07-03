@@ -30,8 +30,10 @@ interface ItemRow {
     | 'BEBAS_PPN';
   isJasa: boolean;
   isAktif: boolean;
+  pph23Tarif: { kode: string; nama: string; tarif: string } | null;
   stokAwal: Array<{ qty: string; cabang: { kode: string } }>;
 }
+interface Pph23Tarif { id: string; kode: string; nama: string; tarif: string }
 
 const KLASIFIKASI_LABEL: Record<ItemRow['klasifikasiPpn'], string> = {
   BKP: 'BKP (Kena PPN)',
@@ -45,6 +47,8 @@ async function createItem(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) throw new Error('Tenant tidak aktif');
+  const isJasa = formData.get('isJasa') === 'on';
+  const pph23TarifId = String(formData.get('pph23TarifId') ?? '');
   await apiFetch('/items', {
     method: 'POST',
     tenantId,
@@ -55,7 +59,8 @@ async function createItem(formData: FormData) {
       satuan: formData.get('satuan') || 'Pcs',
       hargaJualDefault: String(formData.get('hargaJualDefault') ?? '0'),
       klasifikasiPpn: formData.get('klasifikasiPpn') ?? 'BKP',
-      isJasa: formData.get('isJasa') === 'on',
+      isJasa,
+      pph23TarifId: isJasa && pph23TarifId ? pph23TarifId : null,
     }),
   });
   revalidatePath('/master/barang');
@@ -71,7 +76,10 @@ export default async function MasterBarangPage({
   const sp = await searchParams;
 
   const qs = sp.search ? `?search=${encodeURIComponent(sp.search)}` : '';
-  const items = await apiFetch<ItemRow[]>(`/items${qs}`, { tenantId });
+  const [items, tarifList] = await Promise.all([
+    apiFetch<ItemRow[]>(`/items${qs}`, { tenantId }),
+    apiFetch<Pph23Tarif[]>('/pph23-tarif', { tenantId }).catch(() => [] as Pph23Tarif[]),
+  ]);
 
   return (
     <>
@@ -149,6 +157,14 @@ export default async function MasterBarangPage({
                           Jasa
                         </span>
                       )}
+                      {it.pph23Tarif && (
+                        <span
+                          className="ml-1 text-[10px] font-mono text-bata-700 bg-bata-50 border border-bata-200 rounded px-1.5 py-0.5"
+                          title={it.pph23Tarif.nama}
+                        >
+                          PPh23 {Number(it.pph23Tarif.tarif)}%
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-tanah-700 tabular-nums">
                       {fmtRp(it.hargaJualDefault)}
@@ -206,6 +222,20 @@ export default async function MasterBarangPage({
                 <input type="checkbox" name="isJasa" />
                 Adalah jasa (kena PPh 23)
               </label>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+                  Tarif PPh 23 <span className="text-tanah-400 normal-case font-normal">(hanya jika jasa)</span>
+                </label>
+                <select name="pph23TarifId" defaultValue=""
+                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+                  <option value="">— tidak preset —</option>
+                  {tarifList.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {Number(t.tarif)}% · {t.nama}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <button className="w-full py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
                 Simpan
               </button>
