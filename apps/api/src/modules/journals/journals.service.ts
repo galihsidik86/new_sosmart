@@ -22,6 +22,7 @@ import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { PeriodsService } from '../periods/periods.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
+import { validateRequestedBy } from '../../common/tenancy/step-up.js';
 import { BudgetGuardService } from '../projects/budget-guard.service.js';
 
 interface ListFilter {
@@ -226,13 +227,9 @@ export class JournalsService {
   ) {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
-    if (requestedById && requestedById !== userId) {
-      const m = await tx.membership.findUnique({
-        where: { userId_tenantId: { userId: requestedById, tenantId } },
-        select: { userId: true },
-      });
-      if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
-    }
+    const validRequester = await validateRequestedBy(
+      tx, userId, tenantId, requestedById ?? null,
+    );
     const j = await tx.journal.findUnique({
       where: { id: journalId },
       include: { lines: true },
@@ -267,7 +264,7 @@ export class JournalsService {
         nomor,
         postedAt: new Date(),
         postedById: userId,
-        postedRequestedById: requestedById && requestedById !== userId ? requestedById : null,
+        postedRequestedById: validRequester,
         budgetOverridden: !!opts?.overrideBudget,
         budgetOverrideAlasan: opts?.overrideBudget ? (opts?.alasan ?? null) : null,
       },

@@ -17,6 +17,7 @@ import {
 import type { CreatePayrollRunInput } from '@lentera/shared/schemas';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { validateRequestedBy } from '../../common/tenancy/step-up.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
@@ -390,13 +391,9 @@ export class PayrollService {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
-      if (requestedById && requestedById !== userId) {
-        const m = await tx.membership.findUnique({
-          where: { userId_tenantId: { userId: requestedById, tenantId } },
-          select: { userId: true },
-        });
-        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
-      }
+      const validRequester = await validateRequestedBy(
+        tx, userId, tenantId, requestedById ?? null,
+      );
       const run = await tx.payrollRun.findUnique({ where: { id } });
       if (!run) throw new NotFoundException();
       if (run.status !== InvoiceStatus.POSTED) {
@@ -421,7 +418,7 @@ export class PayrollService {
           status: InvoiceStatus.CANCELLED,
           cancelledAt: new Date(),
           cancelledById: userId,
-          cancelledRequestedById: requestedById && requestedById !== userId ? requestedById : null,
+          cancelledRequestedById: validRequester,
         },
       });
     });

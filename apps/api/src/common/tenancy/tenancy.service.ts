@@ -7,7 +7,18 @@ import { TenantContext } from './tenant-context.js';
  * TenancyService — eksekusi query Prisma di transaksi dengan GUC
  * `app.tenant_id` + `app.user_id` ter-set. Wajib dipanggil dari handler
  * yang sudah dijaga TenantGuard + TenancyInterceptor.
+ *
+ * Implementasi pakai `set_config($name, $value, is_local=true)` — Postgres
+ * built-in yang menerima value sebagai parameter, jadi tidak ada risiko
+ * SQL injection walau UUID sudah divalidasi TenantGuard.
  */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function assertUuid(v: string, label: string): void {
+  if (!UUID_RE.test(v)) {
+    throw new Error(`TenancyService: ${label} bukan UUID valid`);
+  }
+}
+
 @Injectable()
 export class TenancyService {
   constructor(
@@ -21,14 +32,12 @@ export class TenancyService {
     opts?: { isolationLevel?: Prisma.TransactionIsolationLevel },
   ): Promise<T> {
     const ctx = this.ctx.require();
+    assertUuid(ctx.tenantId, 'tenantId');
+    assertUuid(ctx.userId, 'userId');
     return this.prisma.$transaction(
       async (tx) => {
-        await tx.$executeRawUnsafe(
-          `SET LOCAL app.tenant_id = '${ctx.tenantId}'`,
-        );
-        await tx.$executeRawUnsafe(
-          `SET LOCAL app.user_id = '${ctx.userId}'`,
-        );
+        await tx.$executeRaw`SELECT set_config('app.tenant_id', ${ctx.tenantId}, true)`;
+        await tx.$executeRaw`SELECT set_config('app.user_id', ${ctx.userId}, true)`;
         return fn(tx);
       },
       opts,
@@ -45,8 +54,9 @@ export class TenancyService {
     userId: string,
     fn: (tx: Prisma.TransactionClient) => Promise<T>,
   ): Promise<T> {
+    assertUuid(userId, 'userId');
     return this.prisma.$transaction(async (tx) => {
-      await tx.$executeRawUnsafe(`SET LOCAL app.user_id = '${userId}'`);
+      await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
       return fn(tx);
     });
   }
@@ -57,9 +67,11 @@ export class TenancyService {
     userId: string,
     fn: (tx: Prisma.TransactionClient) => Promise<T>,
   ): Promise<T> {
+    assertUuid(tenantId, 'tenantId');
+    assertUuid(userId, 'userId');
     return this.prisma.$transaction(async (tx) => {
-      await tx.$executeRawUnsafe(`SET LOCAL app.tenant_id = '${tenantId}'`);
-      await tx.$executeRawUnsafe(`SET LOCAL app.user_id = '${userId}'`);
+      await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
+      await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
       return fn(tx);
     });
   }

@@ -40,12 +40,16 @@ export class ReportsController {
     @Query('cabangId') cabangId?: string,
     @Query('ytd') ytd?: string,
     @Query('projectId') projectId?: string,
+    @Query('vertikal') vertikal?: string,
+    @Query('compareToPeriodId') compareToPeriodId?: string,
   ) {
     return this.lr.build({
       periodId,
       cabangId,
       ytd: ytd === 'true',
       projectId: normalizeProjectFilter(projectId),
+      vertikal: vertikal === 'true',
+      compareToPeriodId: compareToPeriodId || undefined,
     });
   }
 
@@ -53,8 +57,15 @@ export class ReportsController {
   neraca(
     @Query('periodId') periodId: string,
     @Query('cabangId') cabangId?: string,
+    @Query('vertikal') vertikal?: string,
+    @Query('compareToPeriodId') compareToPeriodId?: string,
   ) {
-    return this.nrc.build({ periodId, cabangId });
+    return this.nrc.build({
+      periodId,
+      cabangId,
+      vertikal: vertikal === 'true',
+      compareToPeriodId: compareToPeriodId || undefined,
+    });
   }
 
   @Get('arus-kas')

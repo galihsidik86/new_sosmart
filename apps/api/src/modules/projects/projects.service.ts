@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, ProjectMemberRole, ProjectStatus } from '@lentera/db';
-import { PrismaService } from '../../prisma/prisma.service.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 
@@ -41,16 +40,21 @@ export interface UpdateProjectInput {
 @Injectable()
 export class ProjectsService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
   ) {}
 
-  /** Kalau caller MANAGER project atau OWNER/ADMIN tenant, boleh manage. */
-  private async assertCanManage(projectId: string): Promise<void> {
+  /**
+   * Kalau caller MANAGER project atau OWNER/ADMIN tenant, boleh manage.
+   * Pakai `tx` supaya query hormat RLS + konsisten dgn transaksi pemanggil.
+   */
+  private async assertCanManage(
+    tx: Prisma.TransactionClient,
+    projectId: string,
+  ): Promise<void> {
     const { userId, role } = this.ctx.require();
     if (role === 'OWNER' || role === 'ADMIN') return;
-    const pm = await this.prisma.projectMember.findUnique({
+    const pm = await tx.projectMember.findUnique({
       where: { projectId_userId: { projectId, userId } },
       select: { role: true },
     });
@@ -151,8 +155,8 @@ export class ProjectsService {
 
   async update(id: string, input: UpdateProjectInput) {
     await this.byId(id); // memastikan access + existence
-    await this.assertCanManage(id);
     return this.tenancy.run(async (tx) => {
+      await this.assertCanManage(tx, id);
       const data: Prisma.ProjectUpdateInput = {};
       if (input.nama !== undefined) data.nama = input.nama.trim();
       if (input.deskripsi !== undefined) data.deskripsi = input.deskripsi;
@@ -172,8 +176,8 @@ export class ProjectsService {
 
   async addMember(projectId: string, userId: string, role: ProjectMemberRole) {
     await this.byId(projectId);
-    await this.assertCanManage(projectId);
     return this.tenancy.run(async (tx) => {
+      await this.assertCanManage(tx, projectId);
       // Validate user berada di membership tenant
       const tenantId = this.ctx.require().tenantId;
       const membership = await tx.membership.findUnique({
@@ -197,8 +201,8 @@ export class ProjectsService {
 
   async removeMember(projectId: string, userId: string) {
     await this.byId(projectId);
-    await this.assertCanManage(projectId);
     return this.tenancy.run(async (tx) => {
+      await this.assertCanManage(tx, projectId);
       await tx.projectMember.deleteMany({
         where: { projectId, userId },
       });
@@ -208,8 +212,8 @@ export class ProjectsService {
 
   async setMemberRole(projectId: string, userId: string, role: ProjectMemberRole) {
     await this.byId(projectId);
-    await this.assertCanManage(projectId);
     return this.tenancy.run(async (tx) => {
+      await this.assertCanManage(tx, projectId);
       const pm = await tx.projectMember.findUnique({
         where: { projectId_userId: { projectId, userId } },
       });
@@ -232,13 +236,13 @@ export class ProjectsService {
     catatan?: string;
   }) {
     await this.byId(input.projectId);
-    await this.assertCanManage(input.projectId);
     if (!/^\d{4}-\d{2}$/.test(input.periode)) {
       throw new BadRequestException('Periode harus format YYYY-MM');
     }
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
     return this.tenancy.run(async (tx) => {
+      await this.assertCanManage(tx, input.projectId);
       // Validasi akun ada di tenant + postable
       const acc = await tx.account.findUnique({ where: { id: input.accountId } });
       if (!acc || acc.tenantId !== tenantId) {
@@ -277,10 +281,16 @@ export class ProjectsService {
   }
 
   async removeBudget(budgetId: string) {
+    const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
       const b = await tx.budget.findUnique({ where: { id: budgetId } });
       if (!b) throw new NotFoundException('Budget tidak ditemukan');
-      await this.assertCanManage(b.projectId);
+      // Defense-in-depth: kalau RLS lolos (mis. app_current_tenant() null),
+      // tolak tegas kalau tenant tidak cocok.
+      if (b.tenantId !== tenantId) {
+        throw new NotFoundException('Budget tidak ditemukan');
+      }
+      await this.assertCanManage(tx, b.projectId);
       await tx.budget.delete({ where: { id: budgetId } });
       return { removed: true };
     });

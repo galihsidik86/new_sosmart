@@ -72,7 +72,7 @@ export class ReportsPdfService {
           layout: 'lightHorizontalLines',
         },
 
-        { columns: [{ text: 'LABA KOTOR', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaKotor), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 8] },
+        { columns: [{ text: 'LABA KOTOR', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaKotor.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 8] },
 
         { text: 'Beban Operasi', bold: true, margin: [0, 6, 0, 2] },
         {
@@ -86,7 +86,7 @@ export class ReportsPdfService {
           layout: 'lightHorizontalLines',
         },
 
-        { columns: [{ text: 'LABA USAHA', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaUsaha), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 8] },
+        { columns: [{ text: 'LABA USAHA', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaUsaha.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 8] },
 
         ...(data.pendapatanLain.rows.length || data.bebanLain.rows.length ? [
           { text: 'Pendapatan & Beban Lain-lain', bold: true, margin: [0, 6, 0, 2] as [number, number, number, number] },
@@ -102,9 +102,9 @@ export class ReportsPdfService {
           },
         ] : []),
 
-        { columns: [{ text: 'LABA SEBELUM PAJAK', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaSebelumPajak), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 4] },
-        { columns: [{ text: 'Beban PPh', fontSize: 10 }, { text: this.pdf.formatRp(data.bebanPajak), alignment: 'right', fontSize: 10 }], margin: [0, 0, 0, 4] },
-        { columns: [{ text: 'LABA BERSIH', bold: true, fontSize: 12 }, { text: this.pdf.formatRp(data.labaBersih), alignment: 'right', bold: true, fontSize: 12 }], margin: [0, 4, 0, 0] },
+        { columns: [{ text: 'LABA SEBELUM PAJAK', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaSebelumPajak.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 4] },
+        { columns: [{ text: 'Beban PPh', fontSize: 10 }, { text: this.pdf.formatRp(data.bebanPajak.nilai), alignment: 'right', fontSize: 10 }], margin: [0, 0, 0, 4] },
+        { columns: [{ text: 'LABA BERSIH', bold: true, fontSize: 12 }, { text: this.pdf.formatRp(data.labaBersih.nilai), alignment: 'right', bold: true, fontSize: 12 }], margin: [0, 4, 0, 0] },
       ],
       footer: () => this.footer(),
       defaultStyle: { font: 'Roboto' },
@@ -138,7 +138,7 @@ export class ReportsPdfService {
           [{ text: 'Total Aset Tetap', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.asetTetap.total), alignment: 'right', bold: true }],
         ] }, layout: 'lightHorizontalLines' },
 
-        { columns: [{ text: 'TOTAL ASET', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.totalAset), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 14] },
+        { columns: [{ text: 'TOTAL ASET', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.totalAset.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 14] },
 
         { text: 'LIABILITAS & EKUITAS', bold: true, fontSize: 12, margin: [0, 0, 0, 4] },
         { text: 'Liabilitas Jangka Pendek', bold: true, margin: [0, 0, 0, 2] },
@@ -156,11 +156,11 @@ export class ReportsPdfService {
         { text: 'Ekuitas', bold: true, margin: [0, 8, 0, 2] },
         { table: { widths: [60, '*', 80], body: [
           ...acctRows(data.ekuitas.rows),
-          [{ text: 'Laba Berjalan Tahun Buku', bold: false, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.labaBerjalan), alignment: 'right' }],
+          [{ text: 'Laba Berjalan Tahun Buku', bold: false, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.labaBerjalan.nilai), alignment: 'right' }],
           [{ text: 'Total Ekuitas', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.ekuitas.total), alignment: 'right', bold: true }],
         ] }, layout: 'lightHorizontalLines' },
 
-        { columns: [{ text: 'TOTAL LIABILITAS + EKUITAS', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.totalLiabilitasEkuitas), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 0] },
+        { columns: [{ text: 'TOTAL LIABILITAS + EKUITAS', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.totalLiabilitasEkuitas.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 0] },
 
         { text: data.balanced ? '✓ Neraca seimbang.' : `⚠ Selisih: ${this.pdf.formatRp(data.selisih)}`, italics: true, color: data.balanced ? '#666' : '#a40', fontSize: 9, margin: [0, 8, 0, 0] },
       ],

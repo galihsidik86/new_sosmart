@@ -21,6 +21,7 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { validateRequestedBy } from '../../common/tenancy/step-up.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
@@ -315,13 +316,9 @@ export class PurchasesService {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
-      if (requestedById && requestedById !== userId) {
-        const m = await tx.membership.findUnique({
-          where: { userId_tenantId: { userId: requestedById, tenantId } },
-          select: { userId: true },
-        });
-        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
-      }
+      const validRequester = await validateRequestedBy(
+        tx, userId, tenantId, requestedById ?? null,
+      );
       const inv = await tx.purchaseInvoice.findUnique({
         where: { id },
         include: { lines: true, vendor: { select: { nama: true, isPkp: true } } },
@@ -460,7 +457,7 @@ export class PurchasesService {
           journalId: journal.id,
           postedAt: new Date(),
           postedById: userId,
-          postedRequestedById: requestedById && requestedById !== userId ? requestedById : null,
+          postedRequestedById: validRequester,
         },
       });
     });
@@ -470,13 +467,9 @@ export class PurchasesService {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
-      if (requestedById && requestedById !== userId) {
-        const m = await tx.membership.findUnique({
-          where: { userId_tenantId: { userId: requestedById, tenantId } },
-          select: { userId: true },
-        });
-        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
-      }
+      const validRequester = await validateRequestedBy(
+        tx, userId, tenantId, requestedById ?? null,
+      );
       const inv = await tx.purchaseInvoice.findUnique({ where: { id } });
       if (!inv) throw new NotFoundException();
       if (inv.status === InvoiceStatus.CANCELLED) {
@@ -500,7 +493,7 @@ export class PurchasesService {
           status: InvoiceStatus.CANCELLED,
           cancelledAt: new Date(),
           cancelledById: userId,
-          cancelledRequestedById: requestedById && requestedById !== userId ? requestedById : null,
+          cancelledRequestedById: validRequester,
         },
       });
     });

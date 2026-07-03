@@ -161,11 +161,10 @@ export class ArusKasService {
       // === Δ Liabilitas Jangka Pendek ===
       const dUtangUsaha = mut('2-101');
       const dUtangPajak = sumMut('2-102'); // semua 2-102x
-      const dBpjs = sumMut('2-10') // 2-106, 2-107
-        .minus(mut('2-101'))
-        .minus(sumMut('2-102'))
-        .minus(mut('2-110'))
-        .minus(mut('2-111'));
+      // BPJS: 2-106 (karyawan) + 2-107 (kesehatan). Ambil langsung supaya
+      // tidak rapuh kalau seed COA berubah (dulu pakai subtract-chain dari
+      // sumMut('2-10') yang keliru match 2-110/2-111 juga).
+      const dBpjs = sumMut('2-106').plus(sumMut('2-107'));
       const dBebanYMHD = mut('2-110');
 
       // Operasi

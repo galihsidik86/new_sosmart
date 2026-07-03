@@ -176,6 +176,19 @@ export function saldoAkhirSigned(
 }
 
 /**
+ * Klasifikasi neraca (lancar/tetap, jangka pendek/panjang) berbasis kode COA.
+ * Konvensi seed: 1-1xx = lancar, 1-2xx = tetap; 2-1xx = pendek, 2-2xx = panjang.
+ * Kalau tenant kustom COA-nya di luar konvensi ini, laporan Neraca akan salah
+ * kelompok — pertimbangkan tambah field `klasifikasiNeraca` di Account (roadmap).
+ */
+export function klasifikasiAset(kode: string): 'LANCAR' | 'TETAP' {
+  return kode.startsWith('1-2') ? 'TETAP' : 'LANCAR';
+}
+export function klasifikasiLiabilitas(kode: string): 'PENDEK' | 'PANJANG' {
+  return kode.startsWith('2-2') ? 'PANJANG' : 'PENDEK';
+}
+
+/**
  * Sum mutasi periode untuk akun (signed = saldo normal positif).
  */
 export function mutasiSigned(

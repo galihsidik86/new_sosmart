@@ -16,6 +16,7 @@ import type { CreateStokAdjustmentInput } from '@lentera/shared/schemas';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { validateRequestedBy } from '../../common/tenancy/step-up.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { JournalsService } from '../journals/journals.service.js';
@@ -273,13 +274,9 @@ export class AdjustmentsService {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
-      if (requestedById && requestedById !== userId) {
-        const m = await tx.membership.findUnique({
-          where: { userId_tenantId: { userId: requestedById, tenantId } },
-          select: { userId: true },
-        });
-        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
-      }
+      const validRequester = await validateRequestedBy(
+        tx, userId, tenantId, requestedById ?? null,
+      );
       const adj = await tx.stokAdjustment.findUnique({
         where: { id },
         include: {
@@ -394,7 +391,7 @@ export class AdjustmentsService {
           journalId,
           postedAt: new Date(),
           postedById: userId,
-          postedRequestedById: requestedById && requestedById !== userId ? requestedById : null,
+          postedRequestedById: validRequester,
         },
       });
     });
@@ -404,13 +401,9 @@ export class AdjustmentsService {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
-      if (requestedById && requestedById !== userId) {
-        const m = await tx.membership.findUnique({
-          where: { userId_tenantId: { userId: requestedById, tenantId } },
-          select: { userId: true },
-        });
-        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
-      }
+      const validRequester = await validateRequestedBy(
+        tx, userId, tenantId, requestedById ?? null,
+      );
       const adj = await tx.stokAdjustment.findUnique({ where: { id } });
       if (!adj) throw new NotFoundException();
       if (adj.status === InvoiceStatus.CANCELLED) {
@@ -434,7 +427,7 @@ export class AdjustmentsService {
           status: InvoiceStatus.CANCELLED,
           cancelledAt: new Date(),
           cancelledById: userId,
-          cancelledRequestedById: requestedById && requestedById !== userId ? requestedById : null,
+          cancelledRequestedById: validRequester,
         },
       });
     });

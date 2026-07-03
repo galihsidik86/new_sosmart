@@ -1,31 +1,63 @@
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
-import { fmtRp, fmtTanggal } from '@/lib/format';
+import { fmtRp, fmtTanggal, fmtPlain } from '@/lib/format';
 
 interface PeriodYear {
   id: string; kode: string;
   periods: Array<{ id: string; label: string; status: string }>;
 }
 interface Project { id: string; kode: string; nama: string }
-interface Row { id: string; kode: string; nama: string; nilai: string }
+interface Row {
+  id: string; kode: string; nama: string; nilai: string;
+  persenBase?: string;
+  previous?: string;
+  deltaAbs?: string;
+  deltaPersen?: string;
+}
+interface Section {
+  rows: Row[];
+  total: string;
+  persenBase?: string;
+  previous?: string;
+  deltaAbs?: string;
+  deltaPersen?: string;
+}
+interface Sub {
+  nilai: string;
+  persenBase?: string;
+  previous?: string;
+  deltaAbs?: string;
+  deltaPersen?: string;
+}
 interface LR {
   periode: { id: string; label: string; startDate: string; endDate: string };
-  pendapatan: { rows: Row[]; total: string };
-  bebanPokok: { rows: Row[]; total: string };
-  labaKotor: string;
-  bebanOperasi: { rows: Row[]; total: string };
-  labaUsaha: string;
-  pendapatanLain: { rows: Row[]; total: string };
-  bebanLain: { rows: Row[]; total: string };
-  labaSebelumPajak: string;
-  bebanPajak: string;
-  labaBersih: string;
+  periodeCompare?: { id: string; label: string; startDate: string; endDate: string };
+  pendapatan: Section;
+  bebanPokok: Section;
+  labaKotor: Sub;
+  bebanOperasi: Section;
+  labaUsaha: Sub;
+  pendapatanLain: Section;
+  bebanLain: Section;
+  labaSebelumPajak: Sub;
+  bebanPajak: Sub;
+  labaBersih: Sub;
+  vertikal: boolean;
+  horizontal: boolean;
 }
 
 export default async function LabaRugiPage({
   searchParams,
-}: { searchParams: Promise<{ periodId?: string; ytd?: string; projectId?: string }> }) {
+}: {
+  searchParams: Promise<{
+    periodId?: string;
+    ytd?: string;
+    projectId?: string;
+    vertikal?: string;
+    compareToPeriodId?: string;
+  }>;
+}) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
@@ -38,27 +70,36 @@ export default async function LabaRugiPage({
     sp.periodId ?? years[0]?.periods.find((p) => p.status === 'OPEN')?.id ?? years[0]?.periods[0]?.id;
   const ytd = sp.ytd === 'true';
   const projectId = sp.projectId ?? '';
+  const vertikal = sp.vertikal === 'true';
+  const compareToPeriodId = sp.compareToPeriodId ?? '';
   const projectQs = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
+  const analysisQs =
+    (vertikal ? '&vertikal=true' : '') +
+    (compareToPeriodId ? `&compareToPeriodId=${encodeURIComponent(compareToPeriodId)}` : '');
 
   let lr: LR | null = null;
   if (periodId) {
     lr = await apiFetch<LR>(
-      `/reports/laba-rugi?periodId=${periodId}${ytd ? '&ytd=true' : ''}${projectQs}`,
+      `/reports/laba-rugi?periodId=${periodId}${ytd ? '&ytd=true' : ''}${projectQs}${analysisQs}`,
       { tenantId },
     );
   }
 
+  const showCompare = !!lr?.horizontal;
+  const showVertikal = !!lr?.vertikal;
+  const cols = 3 + (showVertikal ? 1 : 0) + (showCompare ? 3 : 0);
+
   return (
     <>
       <Topbar breadcrumb="Laba Rugi" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-4xl mx-auto w-full">
+      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="font-display text-3xl font-semibold text-wedel-900">
               Laporan Laba Rugi
             </h1>
             <p className="text-sm text-tanah-500 mt-1">
-              Format SAK ETAP — pendapatan, HPP, beban operasi, beban lain, laba bersih.
+              Format SAK ETAP · vertikal = % dari Total Pendapatan · horizontal = bandingkan periode.
             </p>
           </div>
           {periodId && (
@@ -102,8 +143,20 @@ export default async function LabaRugiPage({
           )}
           <label className="flex items-center gap-1.5 text-sm">
             <input type="checkbox" name="ytd" value="true" defaultChecked={ytd} />
-            YTD (Year-to-Date)
+            YTD
           </label>
+          <label className="flex items-center gap-1.5 text-sm">
+            <input type="checkbox" name="vertikal" value="true" defaultChecked={vertikal} />
+            Vertikal (%)
+          </label>
+          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Bandingkan:</span>
+          <select name="compareToPeriodId" defaultValue={compareToPeriodId}
+            className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+            <option value="">— tidak —</option>
+            {years[0]?.periods
+              .filter((p) => p.id !== periodId)
+              .map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
           <button className="ml-auto px-3 py-1.5 bg-cream-200 border border-cream-400 rounded-md text-xs font-semibold text-tanah-700">
             Tampilkan
           </button>
@@ -116,45 +169,66 @@ export default async function LabaRugiPage({
               <div className="text-sm text-tanah-500">Laporan Laba Rugi</div>
               <div className="text-xs text-tanah-500">
                 {ytd ? 'Periode' : 'Bulan'} {fmtTanggal(lr.periode.startDate)} s/d {fmtTanggal(lr.periode.endDate)}
+                {lr.periodeCompare && (
+                  <> · vs {lr.periodeCompare.label} ({fmtTanggal(lr.periodeCompare.startDate)}–{fmtTanggal(lr.periodeCompare.endDate)})</>
+                )}
               </div>
             </div>
             <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-cream-50 text-[10px] uppercase tracking-wider text-tanah-500">
+                  <th className="px-4 py-1.5 text-left" colSpan={2}>Akun</th>
+                  <th className="px-4 py-1.5 text-right w-32">Nilai</th>
+                  {showVertikal && <th className="px-2 py-1.5 text-right w-16">%</th>}
+                  {showCompare && <>
+                    <th className="px-4 py-1.5 text-right w-32">Sebelumnya</th>
+                    <th className="px-3 py-1.5 text-right w-28">Δ</th>
+                    <th className="px-2 py-1.5 text-right w-16">Δ %</th>
+                  </>}
+                </tr>
+              </thead>
               <tbody className="divide-y divide-cream-200">
-                <Section title="Pendapatan Operasional" rows={lr.pendapatan.rows} />
-                <Total label="Total Pendapatan" value={lr.pendapatan.total} />
+                <SectionRow title="Pendapatan Operasional" rows={lr.pendapatan.rows} cols={cols} showVertikal={showVertikal} showCompare={showCompare} />
+                <TotalRow label="Total Pendapatan" sect={lr.pendapatan} showVertikal={showVertikal} showCompare={showCompare} />
 
-                <Section title="Beban Pokok Penjualan" rows={lr.bebanPokok.rows} negative />
-                <Total label="Total Beban Pokok" value={`(${lr.bebanPokok.total})`} />
+                <SectionRow title="Beban Pokok Penjualan" rows={lr.bebanPokok.rows} negative cols={cols} showVertikal={showVertikal} showCompare={showCompare} />
+                <TotalRow label="Total Beban Pokok" sect={lr.bebanPokok} negative showVertikal={showVertikal} showCompare={showCompare} />
 
-                <SubTotal label="LABA KOTOR" value={lr.labaKotor} />
+                <SubRow label="LABA KOTOR" sub={lr.labaKotor} showVertikal={showVertikal} showCompare={showCompare} />
 
-                <Section title="Beban Operasional" rows={lr.bebanOperasi.rows} negative />
-                <Total label="Total Beban Operasi" value={`(${lr.bebanOperasi.total})`} />
+                <SectionRow title="Beban Operasional" rows={lr.bebanOperasi.rows} negative cols={cols} showVertikal={showVertikal} showCompare={showCompare} />
+                <TotalRow label="Total Beban Operasi" sect={lr.bebanOperasi} negative showVertikal={showVertikal} showCompare={showCompare} />
 
-                <SubTotal label="LABA USAHA" value={lr.labaUsaha} />
+                <SubRow label="LABA USAHA" sub={lr.labaUsaha} showVertikal={showVertikal} showCompare={showCompare} />
 
                 {lr.pendapatanLain.rows.length > 0 && (
                   <>
-                    <Section title="Pendapatan Lain-lain" rows={lr.pendapatanLain.rows} />
-                    <Total label="Total Pendapatan Lain" value={lr.pendapatanLain.total} />
+                    <SectionRow title="Pendapatan Lain-lain" rows={lr.pendapatanLain.rows} cols={cols} showVertikal={showVertikal} showCompare={showCompare} />
+                    <TotalRow label="Total Pendapatan Lain" sect={lr.pendapatanLain} showVertikal={showVertikal} showCompare={showCompare} />
                   </>
                 )}
                 {lr.bebanLain.rows.length > 0 && (
                   <>
-                    <Section title="Beban Lain-lain" rows={lr.bebanLain.rows} negative />
-                    <Total label="Total Beban Lain" value={`(${lr.bebanLain.total})`} />
+                    <SectionRow title="Beban Lain-lain" rows={lr.bebanLain.rows} negative cols={cols} showVertikal={showVertikal} showCompare={showCompare} />
+                    <TotalRow label="Total Beban Lain" sect={lr.bebanLain} negative showVertikal={showVertikal} showCompare={showCompare} />
                   </>
                 )}
 
-                <SubTotal label="LABA SEBELUM PAJAK" value={lr.labaSebelumPajak} />
+                <SubRow label="LABA SEBELUM PAJAK" sub={lr.labaSebelumPajak} showVertikal={showVertikal} showCompare={showCompare} />
 
-                {Number(lr.bebanPajak) > 0 && (
-                  <Total label="(Beban PPh Badan)" value={`(${lr.bebanPajak})`} />
+                {Number(lr.bebanPajak.nilai) > 0 && (
+                  <TotalRow label="(Beban PPh Badan)" sect={{ rows: [], total: lr.bebanPajak.nilai, persenBase: lr.bebanPajak.persenBase, previous: lr.bebanPajak.previous, deltaAbs: lr.bebanPajak.deltaAbs, deltaPersen: lr.bebanPajak.deltaPersen }} negative showVertikal={showVertikal} showCompare={showCompare} />
                 )}
 
                 <tr className="bg-wedel-900 text-cream-50">
                   <td colSpan={2} className="px-4 py-3 font-bold text-base">LABA BERSIH</td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-base tabular-nums">{fmtRp(lr.labaBersih)}</td>
+                  <td className="px-4 py-3 text-right font-mono font-bold text-base tabular-nums">{fmtRp(lr.labaBersih.nilai)}</td>
+                  {showVertikal && <td className="px-2 py-3 text-right font-mono text-sm">{lr.labaBersih.persenBase}%</td>}
+                  {showCompare && <>
+                    <td className="px-4 py-3 text-right font-mono text-sm">{fmtRp(lr.labaBersih.previous ?? '0')}</td>
+                    <td className="px-3 py-3 text-right font-mono text-sm">{fmtDelta(lr.labaBersih.deltaAbs)}</td>
+                    <td className="px-2 py-3 text-right font-mono text-sm">{lr.labaBersih.deltaPersen}%</td>
+                  </>}
                 </tr>
               </tbody>
             </table>
@@ -165,12 +239,25 @@ export default async function LabaRugiPage({
   );
 }
 
-function Section({ title, rows, negative }: { title: string; rows: Row[]; negative?: boolean }) {
+function fmtDelta(v?: string): string {
+  if (!v) return '';
+  const n = Number(v);
+  return (n > 0 ? '+' : '') + fmtPlain(v);
+}
+
+function SectionRow({
+  title, rows, negative, cols, showVertikal, showCompare,
+}: {
+  title: string; rows: Row[]; negative?: boolean; cols: number;
+  showVertikal: boolean; showCompare: boolean;
+}) {
   return (
     <>
-      <tr className="bg-cream-50"><td colSpan={3} className="px-4 py-2 text-[11px] uppercase tracking-wider font-bold text-tanah-700">{title}</td></tr>
+      <tr className="bg-cream-50">
+        <td colSpan={cols} className="px-4 py-2 text-[11px] uppercase tracking-wider font-bold text-tanah-700">{title}</td>
+      </tr>
       {rows.length === 0 ? (
-        <tr><td colSpan={3} className="px-4 py-1.5 text-tanah-400 text-xs italic pl-8">— tidak ada —</td></tr>
+        <tr><td colSpan={cols} className="px-4 py-1.5 text-tanah-400 text-xs italic pl-8">— tidak ada —</td></tr>
       ) : rows.map((r) => (
         <tr key={r.id}>
           <td className="px-4 py-1 font-mono text-xs text-tanah-500 pl-8 w-20">{r.kode}</td>
@@ -178,26 +265,57 @@ function Section({ title, rows, negative }: { title: string; rows: Row[]; negati
           <td className={`px-4 py-1 text-right font-mono tabular-nums text-sm ${negative ? 'text-bata-700' : ''}`}>
             {negative ? `(${fmtRp(r.nilai).replace('Rp ', '')})` : fmtRp(r.nilai)}
           </td>
+          {showVertikal && <td className="px-2 py-1 text-right font-mono text-xs text-tanah-500">{r.persenBase}%</td>}
+          {showCompare && <>
+            <td className="px-4 py-1 text-right font-mono tabular-nums text-xs text-tanah-500">{fmtRp(r.previous ?? '0')}</td>
+            <td className={`px-3 py-1 text-right font-mono text-xs ${Number(r.deltaAbs) < 0 ? 'text-bata-700' : Number(r.deltaAbs) > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>{fmtDelta(r.deltaAbs)}</td>
+            <td className="px-2 py-1 text-right font-mono text-xs text-tanah-500">{r.deltaPersen}%</td>
+          </>}
         </tr>
       ))}
     </>
   );
 }
 
-function Total({ label, value }: { label: string; value: string }) {
+function TotalRow({
+  label, sect, negative, showVertikal, showCompare,
+}: {
+  label: string; sect: Section; negative?: boolean;
+  showVertikal: boolean; showCompare: boolean;
+}) {
+  const displayTotal = negative ? `(${sect.total})` : sect.total;
   return (
     <tr className="bg-cream-100">
       <td colSpan={2} className="px-4 py-1.5 text-sm font-semibold text-tanah-700">{label}</td>
-      <td className="px-4 py-1.5 text-right font-mono tabular-nums text-sm font-semibold">{value.startsWith('(') ? value : fmtRp(value)}</td>
+      <td className="px-4 py-1.5 text-right font-mono tabular-nums text-sm font-semibold">
+        {displayTotal.startsWith('(') ? displayTotal : fmtRp(displayTotal)}
+      </td>
+      {showVertikal && <td className="px-2 py-1.5 text-right font-mono text-xs text-tanah-500">{sect.persenBase}%</td>}
+      {showCompare && <>
+        <td className="px-4 py-1.5 text-right font-mono tabular-nums text-xs text-tanah-500">{fmtRp(sect.previous ?? '0')}</td>
+        <td className={`px-3 py-1.5 text-right font-mono text-xs ${Number(sect.deltaAbs) < 0 ? 'text-bata-700' : Number(sect.deltaAbs) > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>{fmtDelta(sect.deltaAbs)}</td>
+        <td className="px-2 py-1.5 text-right font-mono text-xs text-tanah-500">{sect.deltaPersen}%</td>
+      </>}
     </tr>
   );
 }
 
-function SubTotal({ label, value }: { label: string; value: string }) {
+function SubRow({
+  label, sub, showVertikal, showCompare,
+}: {
+  label: string; sub: Sub;
+  showVertikal: boolean; showCompare: boolean;
+}) {
   return (
     <tr className="bg-cream-200 border-y-2 border-cream-400">
       <td colSpan={2} className="px-4 py-2 font-display text-base font-semibold text-wedel-900">{label}</td>
-      <td className="px-4 py-2 text-right font-display font-semibold text-base text-wedel-900 tabular-nums">{fmtRp(value)}</td>
+      <td className="px-4 py-2 text-right font-display font-semibold text-base text-wedel-900 tabular-nums">{fmtRp(sub.nilai)}</td>
+      {showVertikal && <td className="px-2 py-2 text-right font-mono text-sm text-wedel-900">{sub.persenBase}%</td>}
+      {showCompare && <>
+        <td className="px-4 py-2 text-right font-mono tabular-nums text-sm text-tanah-500">{fmtRp(sub.previous ?? '0')}</td>
+        <td className={`px-3 py-2 text-right font-mono text-sm ${Number(sub.deltaAbs) < 0 ? 'text-bata-700' : Number(sub.deltaAbs) > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>{fmtDelta(sub.deltaAbs)}</td>
+        <td className="px-2 py-2 text-right font-mono text-sm text-tanah-500">{sub.deltaPersen}%</td>
+      </>}
     </tr>
   );
 }

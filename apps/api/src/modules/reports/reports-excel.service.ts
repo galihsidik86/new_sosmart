@@ -75,23 +75,23 @@ export class ReportsExcelService {
 
     section('PENDAPATAN', data.pendapatan.rows, data.pendapatan.total, 'Total Pendapatan');
     section('BEBAN POKOK PENJUALAN', data.bebanPokok.rows, data.bebanPokok.total, 'Total HPP');
-    subtotal('LABA KOTOR', data.labaKotor);
+    subtotal('LABA KOTOR', data.labaKotor.nilai);
     section('BEBAN OPERASI', data.bebanOperasi.rows, data.bebanOperasi.total, 'Total Beban Operasi');
-    subtotal('LABA USAHA', data.labaUsaha);
+    subtotal('LABA USAHA', data.labaUsaha.nilai);
     if (data.pendapatanLain.rows.length) {
       section('PENDAPATAN LAIN', data.pendapatanLain.rows, data.pendapatanLain.total, 'Total Pendapatan Lain');
     }
     if (data.bebanLain.rows.length) {
       section('BEBAN LAIN', data.bebanLain.rows, data.bebanLain.total, 'Total Beban Lain');
     }
-    subtotal('LABA SEBELUM PAJAK', data.labaSebelumPajak);
-    if (Number(data.bebanPajak) > 0) {
+    subtotal('LABA SEBELUM PAJAK', data.labaSebelumPajak.nilai);
+    if (Number(data.bebanPajak.nilai) > 0) {
       ws.getCell(`B${r}`).value = 'Beban PPh';
-      ws.getCell(`D${r}`).value = Number(data.bebanPajak);
+      ws.getCell(`D${r}`).value = Number(data.bebanPajak.nilai);
       ws.getCell(`D${r}`).numFmt = '#,##0.00';
       r += 2;
     }
-    subtotal('LABA BERSIH', data.labaBersih);
+    subtotal('LABA BERSIH', data.labaBersih.nilai);
     return this.toBuffer(wb);
   }
 
@@ -129,7 +129,7 @@ export class ReportsExcelService {
     section('ASET TETAP', data.asetTetap.rows, data.asetTetap.total, 'Total Aset Tetap');
     ws.getCell(`B${r}`).value = 'TOTAL ASET';
     ws.getCell(`B${r}`).font = { bold: true, size: 12 };
-    ws.getCell(`D${r}`).value = Number(data.totalAset);
+    ws.getCell(`D${r}`).value = Number(data.totalAset.nilai);
     ws.getCell(`D${r}`).numFmt = '#,##0.00';
     ws.getCell(`D${r}`).font = { bold: true, size: 12 };
     r += 3;
@@ -137,12 +137,12 @@ export class ReportsExcelService {
     section('LIABILITAS JANGKA PANJANG', data.liabilitasJangkaPanjang.rows, data.liabilitasJangkaPanjang.total, 'Total Liab Jangka Panjang');
     section('EKUITAS', data.ekuitas.rows, data.ekuitas.total, 'Total Ekuitas');
     ws.getCell(`B${r}`).value = 'Laba berjalan periode';
-    ws.getCell(`D${r}`).value = Number(data.labaBerjalan);
+    ws.getCell(`D${r}`).value = Number(data.labaBerjalan.nilai);
     ws.getCell(`D${r}`).numFmt = '#,##0.00';
     r += 2;
     ws.getCell(`B${r}`).value = 'TOTAL LIABILITAS + EKUITAS';
     ws.getCell(`B${r}`).font = { bold: true, size: 12 };
-    ws.getCell(`D${r}`).value = Number(data.totalLiabilitasEkuitas);
+    ws.getCell(`D${r}`).value = Number(data.totalLiabilitasEkuitas.nilai);
     ws.getCell(`D${r}`).numFmt = '#,##0.00';
     ws.getCell(`D${r}`).font = { bold: true, size: 12 };
     r += 2;

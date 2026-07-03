@@ -19,6 +19,7 @@ import type {
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { validateRequestedBy } from '../../common/tenancy/step-up.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
@@ -171,7 +172,17 @@ export class SalesService {
         ? new Date(input.jatuhTempo + 'T00:00:00Z')
         : new Date(tanggal.getTime() + customer.terminHari * 86_400_000);
 
-      const calc = this.computeTotals(input.lines, input.tarifPpnPersen);
+      // PMK 131/2024: Faktur pajak (dan PPN keluaran) hanya diterbitkan
+      // untuk customer PKP. Untuk non-PKP: klasifikasi kena PPN (BKP/JKP)
+      // di-coerce ke NON_BKP supaya PPN tidak dihitung.
+      const lines = customer.isPkp
+        ? input.lines
+        : input.lines.map((l) =>
+            isPpnable(l.klasifikasiPpn)
+              ? { ...l, klasifikasiPpn: KlasifikasiPpn.NON_BKP }
+              : l,
+          );
+      const calc = this.computeTotals(lines, input.tarifPpnPersen);
 
       const inv = await tx.salesInvoice.create({
         data: {
@@ -195,7 +206,7 @@ export class SalesService {
           totalNetto: calc.totalDpp.plus(calc.totalPpn).toFixed(2),
           createdById: userId,
           lines: {
-            create: input.lines.map((l, i) => {
+            create: lines.map((l, i) => {
               const c = calc.perLine[i]!;
               return {
                 tenantId,
@@ -247,14 +258,22 @@ export class SalesService {
       }
       const customer = await tx.customer.findUnique({
         where: { id: input.customerId },
-        select: { terminHari: true },
+        select: { terminHari: true, isPkp: true },
       });
       if (!customer) throw new BadRequestException('Pelanggan tidak ditemukan');
       const jatuhTempo = input.jatuhTempo
         ? new Date(input.jatuhTempo + 'T00:00:00Z')
         : new Date(tanggal.getTime() + customer.terminHari * 86_400_000);
 
-      const calc = this.computeTotals(input.lines, input.tarifPpnPersen);
+      // PMK 131/2024: non-PKP → coerce BKP/JKP ke NON_BKP (tidak terbit FP).
+      const lines = customer.isPkp
+        ? input.lines
+        : input.lines.map((l) =>
+            isPpnable(l.klasifikasiPpn)
+              ? { ...l, klasifikasiPpn: KlasifikasiPpn.NON_BKP }
+              : l,
+          );
+      const calc = this.computeTotals(lines, input.tarifPpnPersen);
 
       await tx.salesInvoiceLine.deleteMany({ where: { invoiceId: id } });
       return tx.salesInvoice.update({
@@ -277,7 +296,7 @@ export class SalesService {
           totalDiskon: calc.totalDiskon.toFixed(2),
           totalNetto: calc.totalDpp.plus(calc.totalPpn).toFixed(2),
           lines: {
-            create: input.lines.map((l, i) => {
+            create: lines.map((l, i) => {
               const c = calc.perLine[i]!;
               return {
                 tenantId,
@@ -318,15 +337,9 @@ export class SalesService {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
-      if (requestedById && requestedById !== userId) {
-        const membership = await tx.membership.findUnique({
-          where: { userId_tenantId: { userId: requestedById, tenantId } },
-          select: { userId: true },
-        });
-        if (!membership) {
-          throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
-        }
-      }
+      const validRequester = await validateRequestedBy(
+        tx, userId, tenantId, requestedById ?? null,
+      );
       const inv = await tx.salesInvoice.findUnique({
         where: { id },
         include: {
@@ -525,7 +538,7 @@ export class SalesService {
           hppJournalId,
           postedAt: new Date(),
           postedById: userId,
-          postedRequestedById: requestedById && requestedById !== userId ? requestedById : null,
+          postedRequestedById: validRequester,
         },
       });
     });
@@ -539,13 +552,9 @@ export class SalesService {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
-      if (requestedById && requestedById !== userId) {
-        const m = await tx.membership.findUnique({
-          where: { userId_tenantId: { userId: requestedById, tenantId } },
-          select: { userId: true },
-        });
-        if (!m) throw new BadRequestException('Requester (X-Requested-By) bukan anggota tenant');
-      }
+      const validRequester = await validateRequestedBy(
+        tx, userId, tenantId, requestedById ?? null,
+      );
       const inv = await tx.salesInvoice.findUnique({
         where: { id },
         include: { customer: { select: { nama: true } } },
@@ -585,7 +594,7 @@ export class SalesService {
           status: InvoiceStatus.CANCELLED,
           cancelledAt: new Date(),
           cancelledById: userId,
-          cancelledRequestedById: requestedById && requestedById !== userId ? requestedById : null,
+          cancelledRequestedById: validRequester,
         },
       });
     });

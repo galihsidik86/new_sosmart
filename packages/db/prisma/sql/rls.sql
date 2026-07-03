@@ -327,6 +327,41 @@ CREATE POLICY audit_logs_isolation ON audit_logs
   USING (tenant_id IS NULL OR tenant_id = app_current_tenant())
   WITH CHECK (tenant_id IS NULL OR tenant_id = app_current_tenant());
 
+-- ---------- PROJECTS / PROJECT MEMBERS / BUDGETS (Fase A → D-F)
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS projects_isolation ON projects;
+CREATE POLICY projects_isolation ON projects
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
+-- project_members tidak punya tenant_id sendiri; isolasi via join ke projects.
+ALTER TABLE project_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_members FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS project_members_isolation ON project_members;
+CREATE POLICY project_members_isolation ON project_members
+  USING (
+    EXISTS (
+      SELECT 1 FROM projects p
+      WHERE p.id = project_members.project_id
+        AND p.tenant_id = app_current_tenant()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM projects p
+      WHERE p.id = project_members.project_id
+        AND p.tenant_id = app_current_tenant()
+    )
+  );
+
+ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budgets FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS budgets_isolation ON budgets;
+CREATE POLICY budgets_isolation ON budgets
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity

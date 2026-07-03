@@ -111,6 +111,14 @@ export default async function PayrollListPage({
           </a>
         </div>
 
+        <div className="mb-6 rounded-xl border border-emas-300 bg-emas-100 px-4 py-3 text-sm text-emas-700">
+          <strong>Peringatan:</strong> Tabel TER (Tarif Efektif Rata-rata) yang dipakai saat ini
+          adalah <em>placeholder/demo</em> — angka brackets bukan reproduksi tabel resmi PMK
+          168/2023. <strong>Sebelum go-live</strong>, ganti isi{' '}
+          <code className="font-mono text-xs">apps/api/src/modules/payroll/ter-table.ts</code>{' '}
+          dengan bracket resmi DJP.
+        </div>
+
         <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">
           <div className="px-5 py-3 bg-cream-50 border-b border-cream-200 flex items-center justify-between">
             <div className="font-display text-xl font-semibold text-wedel-900">
