@@ -15,9 +15,11 @@ interface InvoiceSummary {
 
 interface Line {
   accountId: string;
+  projectId: string;
   nilai: string;
   deskripsi: string;
 }
+interface Project { id: string; kode: string; nama: string }
 
 export interface CashBankDefaultValues {
   tanggal: string;
@@ -39,6 +41,7 @@ interface CashBankFormProps {
   kasBank: Account[];
   openSales: InvoiceSummary[];
   openPurchases: InvoiceSummary[];
+  projects?: Project[];
   submit: (formData: FormData) => Promise<void>;
   defaultValues?: CashBankDefaultValues;
   redirectTo?: string;
@@ -46,9 +49,10 @@ interface CashBankFormProps {
 }
 
 export function CashBankForm({
-  cabang, accounts, kasBank, openSales, openPurchases, submit,
+  cabang, accounts, kasBank, openSales, openPurchases, projects, submit,
   defaultValues, redirectTo, submitLabel,
 }: CashBankFormProps) {
+  const showProjects = !!projects && projects.length > 0;
   const today = new Date().toISOString().slice(0, 10);
   const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
   const [tipe, setTipe] = useState<Tipe>(defaultValues?.tipe ?? 'RECEIPT');
@@ -61,7 +65,7 @@ export function CashBankForm({
   const [salesInvoiceId, setSalesInvoiceId] = useState(defaultValues?.salesInvoiceId ?? '');
   const [purchaseInvoiceId, setPurchaseInvoiceId] = useState(defaultValues?.purchaseInvoiceId ?? '');
   const [lines, setLines] = useState<Line[]>(
-    defaultValues?.lines ?? [{ accountId: '', nilai: '0', deskripsi: '' }],
+    defaultValues?.lines ?? [{ accountId: '', projectId: '', nilai: '0', deskripsi: '' }],
   );
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +74,7 @@ export function CashBankForm({
   const updLine = (i: number, p: Partial<Line>) =>
     setLines((prev) => prev.map((l, k) => (k === i ? { ...l, ...p } : l)));
   const addLine = () =>
-    setLines((p) => [...p, { accountId: '', nilai: '0', deskripsi: '' }]);
+    setLines((p) => [...p, { accountId: '', projectId: '', nilai: '0', deskripsi: '' }]);
   const removeLine = (i: number) =>
     setLines((p) => (p.length <= 1 ? p : p.filter((_, k) => k !== i)));
 
@@ -92,7 +96,7 @@ export function CashBankForm({
     setPurchaseInvoiceId('');
     // Akun piutang biasanya 1-103, tapi user harus pilih akun lawan.
     const ar = accounts.find((a) => a.kode === '1-103');
-    setLines([{ accountId: ar?.id ?? '', nilai: String(sisa), deskripsi: `Pelunasan ${inv.nomor}` }]);
+    setLines([{ accountId: ar?.id ?? '', projectId: '', nilai: String(sisa), deskripsi: `Pelunasan ${inv.nomor}` }]);
   };
   const applyPelunasanUtang = (inv: InvoiceSummary) => {
     setTipe('PAYMENT');
@@ -103,7 +107,7 @@ export function CashBankForm({
     setPurchaseInvoiceId(inv.id);
     setSalesInvoiceId('');
     const ap = accounts.find((a) => a.kode === '2-101');
-    setLines([{ accountId: ap?.id ?? '', nilai: String(sisa), deskripsi: `Bayar utang ${inv.nomor}` }]);
+    setLines([{ accountId: ap?.id ?? '', projectId: '', nilai: String(sisa), deskripsi: `Bayar utang ${inv.nomor}` }]);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -127,6 +131,7 @@ export function CashBankForm({
       deskripsi: deskripsi || undefined,
       lines: tipe === 'TRANSFER' ? [] : lines.map((l) => ({
         accountId: l.accountId,
+        projectId: l.projectId || null,
         nilai: l.nilai,
         deskripsi: l.deskripsi || undefined,
       })),
@@ -251,6 +256,7 @@ export function CashBankForm({
               <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
                 <th className="px-3 py-2 font-bold w-8">#</th>
                 <th className="px-3 py-2 font-bold">Akun Lawan</th>
+                {showProjects && <th className="px-3 py-2 font-bold w-36">Project</th>}
                 <th className="px-3 py-2 font-bold">Keterangan</th>
                 <th className="px-3 py-2 font-bold text-right w-44">Nilai</th>
                 <th className="w-6" />
@@ -270,6 +276,17 @@ export function CashBankForm({
                       ))}
                     </select>
                   </td>
+                  {showProjects && (
+                    <td className="px-3 py-1.5">
+                      <select value={l.projectId} onChange={(e) => updLine(i, { projectId: e.target.value })}
+                        className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded text-sm">
+                        <option value="">—</option>
+                        {projects!.map((p) => (
+                          <option key={p.id} value={p.id}>{p.kode}</option>
+                        ))}
+                      </select>
+                    </td>
+                  )}
                   <td className="px-3 py-1.5">
                     <input type="text" value={l.deskripsi} onChange={(e) => updLine(i, { deskripsi: e.target.value })}
                       className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded text-sm" />
@@ -289,7 +306,7 @@ export function CashBankForm({
             </tbody>
             <tfoot className="bg-cream-50 font-bold text-tanah-700">
               <tr>
-                <td colSpan={3} className="px-3 py-2">
+                <td colSpan={showProjects ? 4 : 3} className="px-3 py-2">
                   <button type="button" onClick={addLine}
                     className="text-xs px-2.5 py-1.5 bg-white border border-cream-300 rounded-md text-tanah-700 hover:bg-cream-100">
                     + Tambah baris

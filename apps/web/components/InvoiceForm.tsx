@@ -40,7 +40,11 @@ interface Line {
   isJasa: boolean;
   /** Akun pendapatan (sales) atau akun debit beban/persediaan (purchase). */
   accountId: string;
+  /** Attach ke project — '' = tanpa project. */
+  projectId: string;
 }
+
+interface Project { id: string; kode: string; nama: string }
 
 export interface InvoiceDefaultValues {
   tanggal: string;
@@ -64,6 +68,8 @@ interface InvoiceFormProps {
   accounts: Account[];
   /** Akun kas/bank yg boleh dipakai untuk transaksi TUNAI. */
   kasBankAccounts: Account[];
+  /** List project AKTIF. Kalau kosong / undefined, kolom project disembunyikan. */
+  projects?: Project[];
   submit: (formData: FormData) => Promise<void>;
   defaultValues?: InvoiceDefaultValues;
   redirectTo?: string;
@@ -80,9 +86,10 @@ const KL_LABEL: Record<Klasifikasi, string> = {
 const PPNABLE: Klasifikasi[] = ['BKP', 'JKP'];
 
 export function InvoiceForm({
-  mode, items, parties, cabang, accounts, kasBankAccounts, submit,
+  mode, items, parties, cabang, accounts, kasBankAccounts, projects, submit,
   defaultValues, redirectTo, submitLabel,
 }: InvoiceFormProps) {
+  const showProjects = !!projects && projects.length > 0;
   const today = new Date().toISOString().slice(0, 10);
   const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
   const [partyId, setPartyId] = useState(defaultValues?.partyId ?? parties[0]?.id ?? '');
@@ -100,7 +107,7 @@ export function InvoiceForm({
   const [lines, setLines] = useState<Line[]>(
     defaultValues?.lines ?? [
       { itemId: null, deskripsi: '', qty: '1', hargaSatuan: '0', satuan: 'Pcs',
-        diskonPersen: '0', klasifikasiPpn: 'BKP', isJasa: false, accountId: '' },
+        diskonPersen: '0', klasifikasiPpn: 'BKP', isJasa: false, accountId: '', projectId: '' },
     ],
   );
 
@@ -135,7 +142,7 @@ export function InvoiceForm({
     setLines((p) => [
       ...p,
       { itemId: null, deskripsi: '', qty: '1', hargaSatuan: '0', satuan: 'Pcs',
-        diskonPersen: '0', klasifikasiPpn: 'BKP', isJasa: false, accountId: '' },
+        diskonPersen: '0', klasifikasiPpn: 'BKP', isJasa: false, accountId: '', projectId: '' },
     ]);
 
   const removeLine = (i: number) =>
@@ -205,6 +212,7 @@ export function InvoiceForm({
         hargaSatuan: l.hargaSatuan, diskonPersen: l.diskonPersen,
         klasifikasiPpn: l.klasifikasiPpn, isJasa: l.isJasa,
         akunPendapatanId: l.accountId,
+        projectId: l.projectId || null,
       })),
     } : {
       cabangId,
@@ -221,6 +229,7 @@ export function InvoiceForm({
         hargaSatuan: l.hargaSatuan, diskonPersen: l.diskonPersen,
         klasifikasiPpn: l.klasifikasiPpn, isJasa: l.isJasa,
         akunDebitId: l.accountId,
+        projectId: l.projectId || null,
       })),
     };
     const fd = new FormData();
@@ -338,6 +347,7 @@ export function InvoiceForm({
               <th className="px-2 py-2 font-bold w-16 text-right">Disk%</th>
               <th className="px-2 py-2 font-bold w-32">Klasifikasi</th>
               <th className="px-2 py-2 font-bold w-44">Akun {mode === 'sales' ? 'Pendapatan' : 'Debit'}</th>
+              {showProjects && <th className="px-2 py-2 font-bold w-32">Project</th>}
               <th className="px-2 py-2 font-bold w-28 text-right">DPP</th>
               <th className="w-6" />
             </tr>
@@ -402,6 +412,17 @@ export function InvoiceForm({
                       ))}
                     </select>
                   </td>
+                  {showProjects && (
+                    <td className="px-2 py-1">
+                      <select value={l.projectId} onChange={(e) => updLine(i, { projectId: e.target.value })}
+                        className="w-full px-1.5 py-1 bg-cream-50 border border-cream-300 rounded text-xs">
+                        <option value="">—</option>
+                        {projects!.map((p) => (
+                          <option key={p.id} value={p.id}>{p.kode}</option>
+                        ))}
+                      </select>
+                    </td>
+                  )}
                   <td className="px-2 py-1 text-right font-mono tabular-nums text-xs">
                     {dpp.toLocaleString('id-ID')}
                   </td>

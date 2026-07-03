@@ -923,13 +923,17 @@ model SalesInvoiceLine {
 
   /// Akun pendapatan (default dari item.akunPendapatanId).
   akunPendapatanId String @map("akun_pendapatan_id") @db.Uuid
+  /// Attach ke project (opsional) — untuk laporan + budget per project.
+  projectId       String? @map("project_id") @db.Uuid
 
   invoice SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   item    Item?        @relation(fields: [itemId], references: [id], onDelete: SetNull)
   akunPendapatan Account @relation("SalesLineAccount", fields: [akunPendapatanId], references: [id], onDelete: Restrict)
+  project Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([invoiceId])
   @@index([tenantId])
+  @@index([projectId])
   @@map("sales_invoice_lines")
 }
 
@@ -1017,13 +1021,17 @@ model PurchaseInvoiceLine {
 
   /// Akun debit: persediaan (barang) atau beban (jasa).
   akunDebitId   String   @map("akun_debit_id") @db.Uuid
+  /// Attach ke project (opsional) — untuk laporan + budget per project.
+  projectId     String?  @map("project_id") @db.Uuid
 
   invoice PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   item    Item?           @relation(fields: [itemId], references: [id], onDelete: SetNull)
   akunDebit Account @relation("PurchaseLineAccount", fields: [akunDebitId], references: [id], onDelete: Restrict)
+  project Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([invoiceId])
   @@index([tenantId])
+  @@index([projectId])
   @@map("purchase_invoice_lines")
 }
 
@@ -1089,14 +1097,18 @@ model CashBankEntryLine {
   no          Int
   /// Akun lawan (mis. piutang, utang, pendapatan lain, beban).
   accountId   String   @map("account_id") @db.Uuid
+  /// Attach ke project (opsional) — untuk laporan + budget per project.
+  projectId   String?  @map("project_id") @db.Uuid
   nilai       Decimal  @db.Decimal(20, 2)
   deskripsi   String?
 
   entry   CashBankEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
   account Account       @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  project Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([entryId])
   @@index([tenantId])
+  @@index([projectId])
   @@map("cash_bank_entry_lines")
 }
 
@@ -1577,10 +1589,13 @@ model Project {
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
-  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  members      ProjectMember[]
-  budgets      Budget[]
-  journalLines JournalLine[]
+  tenant             Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members            ProjectMember[]
+  budgets            Budget[]
+  journalLines       JournalLine[]
+  salesInvoiceLines  SalesInvoiceLine[]
+  purchaseInvoiceLines PurchaseInvoiceLine[]
+  cashBankEntryLines CashBankEntryLine[]
 
   @@unique([tenantId, kode])
   @@index([tenantId, status])

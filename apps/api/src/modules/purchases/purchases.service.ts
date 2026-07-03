@@ -105,6 +105,7 @@ export class PurchasesService {
             include: {
               item: { select: { kode: true, nama: true } },
               akunDebit: { select: { kode: true, nama: true } },
+              project: { select: { id: true, kode: true, nama: true } },
             },
           },
         },
@@ -210,6 +211,7 @@ export class PurchasesService {
                 ppn: c.ppn.toFixed(2),
                 pph23: c.pph23.toFixed(2),
                 akunDebitId: l.akunDebitId,
+                projectId: l.projectId ?? null,
               };
             }),
           },
@@ -293,6 +295,7 @@ export class PurchasesService {
                 ppn: c.ppn.toFixed(2),
                 pph23: c.pph23.toFixed(2),
                 akunDebitId: l.akunDebitId,
+                projectId: l.projectId ?? null,
               };
             }),
           },
@@ -328,18 +331,34 @@ export class PurchasesService {
       // Bangun journal lines:
       // DEBIT:  Persediaan/Beban per line (sebesar DPP), PPN Masukan (kalau ada)
       // KREDIT: Utang Usaha / Kas-Bank (totalNetto), Utang PPh 23 (kalau ada)
-      const lines: Array<{ accountId: string; debit: string; kredit: string; deskripsi?: string }> = [];
+      const lines: Array<{
+        accountId: string;
+        projectId?: string | null;
+        debit: string;
+        kredit: string;
+        deskripsi?: string;
+      }> = [];
 
-      // Debit per akun line
-      const debitByAccount = new Map<string, Decimal>();
+      // Debit per (akun, project) supaya baris jurnal terpisah per project
+      // untuk enforcement budget + laporan per project.
+      const debitMap = new Map<
+        string,
+        { accountId: string; projectId: string | null; nilai: Decimal }
+      >();
       for (const l of inv.lines) {
-        const cur = debitByAccount.get(l.akunDebitId) ?? new Decimal(0);
-        debitByAccount.set(l.akunDebitId, cur.plus(new Decimal(l.dpp)));
+        const k = `${l.akunDebitId}|${l.projectId ?? ''}`;
+        const cur = debitMap.get(k);
+        debitMap.set(k, {
+          accountId: l.akunDebitId,
+          projectId: l.projectId,
+          nilai: (cur?.nilai ?? new Decimal(0)).plus(new Decimal(l.dpp)),
+        });
       }
-      for (const [accountId, nilai] of debitByAccount) {
+      for (const { accountId, projectId, nilai } of debitMap.values()) {
         if (nilai.gt(0)) {
           lines.push({
             accountId,
+            projectId,
             debit: nilai.toFixed(2),
             kredit: '0',
             deskripsi: 'Tagihan pembelian',

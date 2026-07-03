@@ -112,6 +112,7 @@ export class SalesService {
             include: {
               item: { select: { kode: true, nama: true } },
               akunPendapatan: { select: { kode: true, nama: true } },
+              project: { select: { id: true, kode: true, nama: true } },
             },
           },
         },
@@ -212,6 +213,7 @@ export class SalesService {
                 ppn: c.ppn.toFixed(2),
                 pph23: '0',
                 akunPendapatanId: l.akunPendapatanId,
+                projectId: l.projectId ?? null,
               };
             }),
           },
@@ -292,6 +294,7 @@ export class SalesService {
                 ppn: c.ppn.toFixed(2),
                 pph23: '0',
                 akunPendapatanId: l.akunPendapatanId,
+                projectId: l.projectId ?? null,
               };
             }),
           },
@@ -341,7 +344,11 @@ export class SalesService {
       const totalNetto = new Decimal(inv.totalNetto);
 
       const lines: Array<{
-        accountId: string; debit: string; kredit: string; deskripsi?: string;
+        accountId: string;
+        projectId?: string | null;
+        debit: string;
+        kredit: string;
+        deskripsi?: string;
       }> = [];
       lines.push({
         accountId: inv.akunArId,
@@ -350,20 +357,29 @@ export class SalesService {
         deskripsi: `Faktur ${nomor} — ${inv.customer.nama}`,
       });
 
-      // Group pendapatan per akun
-      const pendapatanByAccount = new Map<string, Decimal>();
+      // Group pendapatan per (akun, project) supaya baris jurnal terpisah
+      // per project untuk enforcement budget + laporan per project.
+      const pendapatanKey = (accountId: string, projectId: string | null) =>
+        `${accountId}|${projectId ?? ''}`;
+      const pendapatanMap = new Map<
+        string,
+        { accountId: string; projectId: string | null; nilai: Decimal }
+      >();
       for (const l of inv.lines) {
-        const cur = pendapatanByAccount.get(l.akunPendapatanId) ?? new Decimal(0);
-        // Pendapatan diakui sebesar DPP (bukan bruto, karena diskon mengurangi pendapatan).
-        pendapatanByAccount.set(
-          l.akunPendapatanId,
-          cur.plus(new Decimal(l.dpp)),
-        );
+        const k = pendapatanKey(l.akunPendapatanId, l.projectId);
+        const cur = pendapatanMap.get(k);
+        // Pendapatan diakui sebesar DPP (diskon mengurangi pendapatan).
+        pendapatanMap.set(k, {
+          accountId: l.akunPendapatanId,
+          projectId: l.projectId,
+          nilai: (cur?.nilai ?? new Decimal(0)).plus(new Decimal(l.dpp)),
+        });
       }
-      for (const [accountId, nilai] of pendapatanByAccount) {
+      for (const { accountId, projectId, nilai } of pendapatanMap.values()) {
         if (nilai.gt(0)) {
           lines.push({
             accountId,
+            projectId,
             debit: '0',
             kredit: nilai.toFixed(2),
             deskripsi: 'Pendapatan dari faktur',
@@ -417,8 +433,16 @@ export class SalesService {
         },
       });
       if (itemLines.length > 0) {
-        const hppPerAkun = new Map<string, Decimal>();      // akunHpp → sum
-        const persediaanPerAkun = new Map<string, Decimal>(); // akunPersediaan → sum
+        // Group per (akun, project) supaya HPP jurnal juga terpisah per project.
+        const hppMap = new Map<
+          string,
+          { accountId: string; projectId: string | null; nilai: Decimal }
+        >();
+        const persediaanMap = new Map<
+          string,
+          { accountId: string; projectId: string | null; nilai: Decimal }
+        >();
+        const k = (aid: string, pid: string | null) => `${aid}|${pid ?? ''}`;
         for (const l of itemLines) {
           if (!l.item || !l.item.akunHppId || !l.item.akunPersediaanId) continue;
           const res = await this.inventory.recordOutbound(tx, {
@@ -431,18 +455,46 @@ export class SalesService {
             sumberId: l.id,
             keterangan: `Penjualan ${nomor}`,
           });
-          hppPerAkun.set(l.item.akunHppId,
-            (hppPerAkun.get(l.item.akunHppId) ?? new Decimal(0)).plus(res.hpp));
-          persediaanPerAkun.set(l.item.akunPersediaanId,
-            (persediaanPerAkun.get(l.item.akunPersediaanId) ?? new Decimal(0)).plus(res.hpp));
+          const kH = k(l.item.akunHppId, l.projectId);
+          const kP = k(l.item.akunPersediaanId, l.projectId);
+          const curH = hppMap.get(kH);
+          hppMap.set(kH, {
+            accountId: l.item.akunHppId,
+            projectId: l.projectId,
+            nilai: (curH?.nilai ?? new Decimal(0)).plus(res.hpp),
+          });
+          const curP = persediaanMap.get(kP);
+          persediaanMap.set(kP, {
+            accountId: l.item.akunPersediaanId,
+            projectId: l.projectId,
+            nilai: (curP?.nilai ?? new Decimal(0)).plus(res.hpp),
+          });
         }
         // Jurnal HPP terpisah: D HPP, K Persediaan.
-        const hppLines: Array<{ accountId: string; debit: string; kredit: string; deskripsi?: string }> = [];
-        for (const [aid, n] of hppPerAkun) {
-          if (n.gt(0)) hppLines.push({ accountId: aid, debit: n.toFixed(2), kredit: '0', deskripsi: 'HPP penjualan' });
+        const hppLines: Array<{
+          accountId: string;
+          projectId?: string | null;
+          debit: string;
+          kredit: string;
+          deskripsi?: string;
+        }> = [];
+        for (const v of hppMap.values()) {
+          if (v.nilai.gt(0)) hppLines.push({
+            accountId: v.accountId,
+            projectId: v.projectId,
+            debit: v.nilai.toFixed(2),
+            kredit: '0',
+            deskripsi: 'HPP penjualan',
+          });
         }
-        for (const [aid, n] of persediaanPerAkun) {
-          if (n.gt(0)) hppLines.push({ accountId: aid, debit: '0', kredit: n.toFixed(2), deskripsi: 'Kurangi persediaan' });
+        for (const v of persediaanMap.values()) {
+          if (v.nilai.gt(0)) hppLines.push({
+            accountId: v.accountId,
+            projectId: v.projectId,
+            debit: '0',
+            kredit: v.nilai.toFixed(2),
+            deskripsi: 'Kurangi persediaan',
+          });
         }
         if (hppLines.length >= 2) {
           const hppJournal = await this.journals.createDraftInTx(tx, {

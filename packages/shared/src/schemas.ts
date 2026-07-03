@@ -269,6 +269,7 @@ export const salesLineInputSchema = z.object({
   klasifikasiPpn: z.nativeEnum(KlasifikasiPpn).default(KlasifikasiPpn.BKP),
   isJasa: z.boolean().default(false),
   akunPendapatanId: z.string().uuid(),
+  projectId: z.string().uuid().nullable().optional(),
 });
 export type SalesLineInput = z.infer<typeof salesLineInputSchema>;
 
@@ -300,6 +301,7 @@ export const purchaseLineInputSchema = z.object({
   isJasa: z.boolean().default(false),
   /// Akun debit: persediaan (barang resale) atau beban (jasa/non-resale).
   akunDebitId: z.string().uuid(),
+  projectId: z.string().uuid().nullable().optional(),
 });
 export type PurchaseLineInput = z.infer<typeof purchaseLineInputSchema>;
 
@@ -330,6 +332,7 @@ export const cashBankLineInputSchema = z.object({
   accountId: z.string().uuid(),
   nilai: lineMoney,
   deskripsi: z.string().max(500).optional(),
+  projectId: z.string().uuid().nullable().optional(),
 });
 export type CashBankLineInput = z.infer<typeof cashBankLineInputSchema>;
 

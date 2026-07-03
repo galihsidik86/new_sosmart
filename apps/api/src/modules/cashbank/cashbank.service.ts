@@ -95,7 +95,10 @@ export class CashBankService {
           cabang: true,
           lines: {
             orderBy: { no: 'asc' },
-            include: { account: { select: { kode: true, nama: true } } },
+            include: {
+              account: { select: { kode: true, nama: true } },
+              project: { select: { id: true, kode: true, nama: true } },
+            },
           },
         },
       });
@@ -157,6 +160,7 @@ export class CashBankService {
               tenantId,
               no: i + 1,
               accountId: l.accountId,
+              projectId: l.projectId ?? null,
               nilai: l.nilai,
               deskripsi: l.deskripsi,
             })),
@@ -213,6 +217,7 @@ export class CashBankService {
               tenantId,
               no: i + 1,
               accountId: l.accountId,
+              projectId: l.projectId ?? null,
               nilai: l.nilai,
               deskripsi: l.deskripsi,
             })),
@@ -246,7 +251,11 @@ export class CashBankService {
       const total = new Decimal(e.total);
 
       const lines: Array<{
-        accountId: string; debit: string; kredit: string; deskripsi?: string;
+        accountId: string;
+        projectId?: string | null;
+        debit: string;
+        kredit: string;
+        deskripsi?: string;
       }> = [];
 
       if (e.tipe === CashBankType.RECEIPT) {
@@ -260,6 +269,7 @@ export class CashBankService {
         for (const l of e.lines) {
           lines.push({
             accountId: l.accountId,
+            projectId: l.projectId,
             debit: '0',
             kredit: new Decimal(l.nilai).toFixed(2),
             deskripsi: l.deskripsi ?? undefined,
@@ -270,6 +280,7 @@ export class CashBankService {
         for (const l of e.lines) {
           lines.push({
             accountId: l.accountId,
+            projectId: l.projectId,
             debit: new Decimal(l.nilai).toFixed(2),
             kredit: '0',
             deskripsi: l.deskripsi ?? undefined,

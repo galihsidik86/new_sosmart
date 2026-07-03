@@ -19,6 +19,7 @@ interface Vendor {
 }
 interface Cabang { id: string; kode: string; nama: string }
 interface Account { id: string; kode: string; nama: string; isPostable: boolean; kind: string }
+interface Project { id: string; kode: string; nama: string }
 
 interface Detail {
   id: string; tanggal: string; cabangId: string; vendorId: string;
@@ -29,6 +30,7 @@ interface Detail {
     hargaSatuan: string; diskonPersen: string; isJasa: boolean;
     klasifikasiPpn: 'BKP' | 'JKP' | 'NON_BKP' | 'BKP_STRATEGIS' | 'BEBAS_PPN';
     akunDebitId: string;
+    projectId: string | null;
   }>;
 }
 
@@ -36,12 +38,13 @@ export default async function PembelianEditPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [inv, items, vendors, cabang, accounts] = await Promise.all([
+  const [inv, items, vendors, cabang, accounts, projects] = await Promise.all([
     apiFetch<Detail>(`/purchase-invoices/${id}`, { tenantId }),
     apiFetch<Item[]>('/items', { tenantId }),
     apiFetch<Vendor[]>('/vendors', { tenantId }),
     apiFetch<Cabang[]>('/cabang', { tenantId }),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
+    apiFetch<Project[]>('/projects', { tenantId }),
   ]);
 
   if (inv.status !== 'DRAFT') redirect(`/transaksi/pembelian/${id}`);
@@ -74,6 +77,7 @@ export default async function PembelianEditPage({ params }: { params: Promise<{ 
           cabang={cabang}
           accounts={accounts}
           kasBankAccounts={kasBank}
+          projects={projects}
           submit={submitEdit}
           redirectTo={`/transaksi/pembelian/${id}`}
           submitLabel="Simpan perubahan"
@@ -99,6 +103,7 @@ export default async function PembelianEditPage({ params }: { params: Promise<{ 
                 klasifikasiPpn: l.klasifikasiPpn,
                 isJasa: l.isJasa,
                 accountId: l.akunDebitId,
+                projectId: l.projectId ?? '',
               })),
           }}
         />

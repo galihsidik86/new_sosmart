@@ -25,6 +25,7 @@ interface Detail {
   lines: Array<{
     no: number; nilai: string; deskripsi: string | null;
     account: { kode: string; nama: string };
+    project: { id: string; kode: string; nama: string } | null;
   }>;
 }
 
@@ -124,6 +125,7 @@ export default async function KasBankDetailPage({
                 <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
                   <th className="px-3 py-2 font-bold w-8">#</th>
                   <th className="px-3 py-2 font-bold">Akun</th>
+                  <th className="px-3 py-2 font-bold">Project</th>
                   <th className="px-3 py-2 font-bold">Keterangan</th>
                   <th className="px-3 py-2 font-bold text-right">Nilai</th>
                 </tr>
@@ -135,6 +137,16 @@ export default async function KasBankDetailPage({
                     <td className="px-3 py-1.5 font-mono">
                       <span className="text-tanah-700">{l.account.kode}</span>{' '}
                       <span className="text-tanah-500">{l.account.nama}</span>
+                    </td>
+                    <td className="px-3 py-1.5 text-xs">
+                      {l.project ? (
+                        <Link
+                          href={`/master/project/${l.project.id}` as Route}
+                          className="text-sogan-500 hover:underline font-mono"
+                        >{l.project.kode}</Link>
+                      ) : (
+                        <span className="text-tanah-300">—</span>
+                      )}
                     </td>
                     <td className="px-3 py-1.5 text-tanah-500 text-xs">{l.deskripsi ?? '—'}</td>
                     <td className="px-3 py-1.5 text-right font-mono tabular-nums">{fmtPlain(l.nilai)}</td>

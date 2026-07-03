@@ -37,6 +37,7 @@ interface Detail {
     dpp: string; ppn: string; pph23: string;
     item: { kode: string; nama: string } | null;
     akunDebit: { kode: string; nama: string };
+    project: { id: string; kode: string; nama: string } | null;
   }>;
 }
 
@@ -193,6 +194,12 @@ export default async function PembelianDetailPage({
                     <div className="text-tanah-700">{l.deskripsi}</div>
                     <div className="text-xs text-tanah-500 font-mono">
                       {l.item?.kode ?? 'manual'} · {l.akunDebit.kode}
+                      {l.project && (
+                        <> · <Link
+                          href={`/master/project/${l.project.id}` as Route}
+                          className="text-sogan-500 hover:underline"
+                        >{l.project.kode}</Link></>
+                      )}
                     </div>
                   </td>
                   <td className="px-3 py-1.5 text-right font-mono tabular-nums text-xs">

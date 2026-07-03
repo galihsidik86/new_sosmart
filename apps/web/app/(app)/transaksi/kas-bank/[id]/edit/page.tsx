@@ -16,6 +16,7 @@ interface PurchaseRow {
   totalNetto: string; totalDibayar: string;
   vendor: { nama: string };
 }
+interface Project { id: string; kode: string; nama: string }
 
 interface Detail {
   id: string;
@@ -31,7 +32,7 @@ interface Detail {
   purchaseInvoiceId: string | null;
   status: 'DRAFT' | 'POSTED' | 'CANCELLED';
   lines: Array<{
-    no: number; accountId: string; nilai: string; deskripsi: string | null;
+    no: number; accountId: string; projectId: string | null; nilai: string; deskripsi: string | null;
   }>;
 }
 
@@ -39,7 +40,7 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [e, accounts, cabang, salesPosted, salesPartial, purchasePosted, purchasePartial] = await Promise.all([
+  const [e, accounts, cabang, salesPosted, salesPartial, purchasePosted, purchasePartial, projects] = await Promise.all([
     apiFetch<Detail>(`/cash-bank/${id}`, { tenantId }),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<Cabang[]>('/cabang', { tenantId }),
@@ -47,6 +48,7 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
     apiFetch<SalesRow[]>('/sales-invoices?status=PARTIAL', { tenantId }),
     apiFetch<PurchaseRow[]>('/purchase-invoices?status=POSTED', { tenantId }),
     apiFetch<PurchaseRow[]>('/purchase-invoices?status=PARTIAL', { tenantId }),
+    apiFetch<Project[]>('/projects', { tenantId }),
   ]);
 
   if (e.status !== 'DRAFT') redirect(`/transaksi/kas-bank/${id}`);
@@ -85,6 +87,7 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
         <CashBankForm
           accounts={accounts} kasBank={kasBank} cabang={cabang}
           openSales={openSales} openPurchases={openPurchases}
+          projects={projects}
           submit={submitEdit}
           redirectTo={`/transaksi/kas-bank/${id}`}
           submitLabel="Simpan perubahan"
@@ -103,6 +106,7 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
               .sort((a, b) => a.no - b.no)
               .map((l) => ({
                 accountId: l.accountId,
+                projectId: l.projectId ?? '',
                 nilai: l.nilai,
                 deskripsi: l.deskripsi ?? '',
               })),

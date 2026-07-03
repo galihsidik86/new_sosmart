@@ -16,6 +16,7 @@ interface PurchaseRow {
   totalNetto: string; totalDibayar: string;
   vendor: { nama: string };
 }
+interface Project { id: string; kode: string; nama: string }
 
 async function submitCashBank(formData: FormData) {
   'use server';
@@ -31,13 +32,14 @@ async function submitCashBank(formData: FormData) {
 export default async function KasBankBaruPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [accounts, cabang, salesPosted, salesPartial, purchasePosted, purchasePartial] = await Promise.all([
+  const [accounts, cabang, salesPosted, salesPartial, purchasePosted, purchasePartial, projects] = await Promise.all([
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<Cabang[]>('/cabang', { tenantId }),
     apiFetch<SalesRow[]>('/sales-invoices?status=POSTED', { tenantId }),
     apiFetch<SalesRow[]>('/sales-invoices?status=PARTIAL', { tenantId }),
     apiFetch<PurchaseRow[]>('/purchase-invoices?status=POSTED', { tenantId }),
     apiFetch<PurchaseRow[]>('/purchase-invoices?status=PARTIAL', { tenantId }),
+    apiFetch<Project[]>('/projects', { tenantId }),
   ]);
   const kasBank = accounts.filter(
     (a) => a.isPostable && (a.kode === '1-101' || a.kode.startsWith('1-102')),
@@ -63,6 +65,7 @@ export default async function KasBankBaruPage() {
         <CashBankForm
           accounts={accounts} kasBank={kasBank} cabang={cabang}
           openSales={openSales} openPurchases={openPurchases}
+          projects={projects}
           submit={submitCashBank}
         />
       </div>

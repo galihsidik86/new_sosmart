@@ -18,6 +18,7 @@ interface Customer {
 }
 interface Cabang { id: string; kode: string; nama: string }
 interface Account { id: string; kode: string; nama: string; isPostable: boolean; kind: string }
+interface Project { id: string; kode: string; nama: string }
 
 async function submitInvoice(formData: FormData) {
   'use server';
@@ -33,11 +34,12 @@ async function submitInvoice(formData: FormData) {
 export default async function PenjualanBaruPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [items, customers, cabang, accounts] = await Promise.all([
+  const [items, customers, cabang, accounts, projects] = await Promise.all([
     apiFetch<Item[]>('/items', { tenantId }),
     apiFetch<Customer[]>('/customers', { tenantId }),
     apiFetch<Cabang[]>('/cabang', { tenantId }),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
+    apiFetch<Project[]>('/projects', { tenantId }),
   ]);
   // Akun kas/bank: kode 1-101 atau 1-102x
   const kasBank = accounts.filter(
@@ -57,6 +59,7 @@ export default async function PenjualanBaruPage() {
           cabang={cabang}
           accounts={accounts}
           kasBankAccounts={kasBank}
+          projects={projects}
           submit={submitInvoice}
         />
       </div>
