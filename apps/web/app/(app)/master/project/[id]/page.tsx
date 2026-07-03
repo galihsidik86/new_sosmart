@@ -136,13 +136,21 @@ export default async function ProjectDetailPage({
     <>
       <Topbar breadcrumb={`Project › ${p.kode}`} tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <div className="mb-6">
-          <Link href="/master/project" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
-          <div className="flex items-baseline gap-3 mt-2">
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">{p.nama}</h1>
-            <span className="font-mono text-tanah-500">{p.kode}</span>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <Link href="/master/project" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
+            <div className="flex items-baseline gap-3 mt-2">
+              <h1 className="font-display text-3xl font-semibold text-wedel-900">{p.nama}</h1>
+              <span className="font-mono text-tanah-500">{p.kode}</span>
+            </div>
+            {p.deskripsi && <p className="text-sm text-tanah-500 mt-1">{p.deskripsi}</p>}
           </div>
-          {p.deskripsi && <p className="text-sm text-tanah-500 mt-1">{p.deskripsi}</p>}
+          <Link
+            href={`/laporan/budget-actual?projectId=${p.id}` as Route}
+            className="px-3 py-2 bg-sogan-100 hover:bg-sogan-200 border border-sogan-300 rounded-lg text-sm font-semibold text-sogan-700"
+          >
+            Lihat Realisasi Anggaran →
+          </Link>
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
@@ -257,7 +265,13 @@ export default async function ProjectDetailPage({
                         {b.hardBlock ? 'HARD' : 'SOFT'}
                       </span>
                     </td>
-                    <td className="py-2 text-right">
+                    <td className="py-2 text-right space-x-3">
+                      <Link
+                        href={`/laporan/budget-actual?projectId=${p.id}&periode=${b.periode}` as Route}
+                        className="text-xs text-sogan-500 font-semibold hover:underline"
+                      >
+                        realisasi
+                      </Link>
                       <form action={removeBudgetAction} className="inline">
                         <input type="hidden" name="budgetId" value={b.id} />
                         <input type="hidden" name="projectId" value={p.id} />

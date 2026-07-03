@@ -151,6 +151,7 @@ export class CashBankService {
           total: total.toFixed(2),
           kontak: input.kontak,
           deskripsi: input.deskripsi,
+          linkBukti: input.linkBukti ?? null,
           salesInvoiceId: input.salesInvoiceId,
           purchaseInvoiceId: input.purchaseInvoiceId,
           status: InvoiceStatus.DRAFT,
@@ -210,6 +211,7 @@ export class CashBankService {
           total: total.toFixed(2),
           kontak: input.kontak,
           deskripsi: input.deskripsi,
+          linkBukti: input.linkBukti ?? null,
           salesInvoiceId: input.salesInvoiceId,
           purchaseInvoiceId: input.purchaseInvoiceId,
           lines: {
@@ -228,7 +230,10 @@ export class CashBankService {
     });
   }
 
-  async post(id: string) {
+  async post(
+    id: string,
+    opts?: { overrideBudget?: boolean; alasan?: string },
+  ) {
     const userId = this.ctx.require().userId;
     return this.tenancy.run(async (tx) => {
       const e = await tx.cashBankEntry.findUnique({
@@ -319,7 +324,7 @@ export class CashBankService {
         sumberRef: e.id,
         lines,
       });
-      await this.journals.postInTx(tx, journal.id);
+      await this.journals.postInTx(tx, journal.id, null, opts);
 
       // Update invoice status kalau ini pelunasan
       if (e.salesInvoiceId) {

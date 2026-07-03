@@ -8,6 +8,7 @@ interface PeriodYear {
   id: string; kode: string;
   periods: Array<{ id: string; label: string; status: string }>;
 }
+interface Project { id: string; kode: string; nama: string }
 interface LedgerRow {
   tanggal: string;
   nomor: string | null;
@@ -31,26 +32,33 @@ interface LedgerResp {
 export default async function BukuBesarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ accountId?: string; periodId?: string }>;
+  searchParams: Promise<{ accountId?: string; periodId?: string; projectId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
 
-  const [accounts, years] = await Promise.all([
+  const [accounts, years, projects] = await Promise.all([
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<PeriodYear[]>('/periods/years', { tenantId }),
+    apiFetch<Project[]>('/projects', { tenantId }).catch(() => [] as Project[]),
   ]);
   const postable = accounts.filter((a) => a.isPostable);
   const accountId = sp.accountId ?? postable[0]?.id;
   const periodId =
     sp.periodId ?? years[0]?.periods.find((p) => p.status === 'OPEN')?.id;
+  const projectId = sp.projectId ?? '';
 
   let data: LedgerResp | null = null;
   if (accountId && periodId) {
     const qs = new URLSearchParams({ accountId, periodId });
+    if (projectId) qs.set('projectId', projectId);
     data = await apiFetch<LedgerResp>(`/ledger?${qs}`, { tenantId });
   }
+  const xlsxQs = new URLSearchParams();
+  if (accountId) xlsxQs.set('accountId', accountId);
+  if (periodId) xlsxQs.set('periodId', periodId);
+  if (projectId) xlsxQs.set('projectId', projectId);
 
   return (
     <>
@@ -66,7 +74,7 @@ export default async function BukuBesarPage({
             </p>
           </div>
           {accountId && periodId && (
-            <a href={`/proxy/ledger.xlsx?accountId=${accountId}&periodId=${periodId}`}
+            <a href={`/proxy/ledger.xlsx?${xlsxQs}`}
               className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
               Export Excel
             </a>
@@ -104,6 +112,23 @@ export default async function BukuBesarPage({
               ))}
             </select>
           </div>
+          {projects.length > 0 && (
+            <div className="flex-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+                Project
+              </label>
+              <select
+                name="projectId" defaultValue={projectId}
+                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+              >
+                <option value="">— semua —</option>
+                <option value="none">— tanpa project —</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <button className="px-3 py-2 bg-cream-200 border border-cream-400 rounded-md text-sm font-semibold text-tanah-700">
             Tampilkan
           </button>

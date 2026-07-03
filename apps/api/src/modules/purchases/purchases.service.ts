@@ -184,6 +184,7 @@ export class PurchasesService {
           nomorVendor: input.nomorVendor,
           nsfpMasukan: input.nsfpMasukan,
           deskripsi: input.deskripsi,
+          linkBukti: input.linkBukti ?? null,
           status: InvoiceStatus.DRAFT,
           totalDpp: calc.totalDpp.toFixed(2),
           totalPpn: calc.totalPpn.toFixed(2),
@@ -270,6 +271,7 @@ export class PurchasesService {
           nomorVendor: input.nomorVendor,
           nsfpMasukan: input.nsfpMasukan,
           deskripsi: input.deskripsi,
+          linkBukti: input.linkBukti ?? null,
           totalDpp: calc.totalDpp.toFixed(2),
           totalPpn: calc.totalPpn.toFixed(2),
           totalPph23: calc.totalPph23.toFixed(2),
@@ -305,7 +307,11 @@ export class PurchasesService {
     });
   }
 
-  async post(id: string, requestedById?: string | null) {
+  async post(
+    id: string,
+    requestedById?: string | null,
+    opts?: { overrideBudget?: boolean; alasan?: string },
+  ) {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
@@ -419,7 +425,7 @@ export class PurchasesService {
         sumberRef: inv.id,
         lines,
       });
-      await this.journals.postInTx(tx, journal.id);
+      await this.journals.postInTx(tx, journal.id, null, opts);
 
       // ---- Record stok inbound per item barang ----
       const itemLines = await tx.purchaseInvoiceLine.findMany({

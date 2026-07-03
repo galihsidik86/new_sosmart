@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Topbar } from '@/components/Topbar';
+import { LinkBukti } from '@/components/LinkBukti';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
@@ -14,6 +15,7 @@ interface JurnalRow {
   nomor: string | null;
   tanggal: string;
   deskripsi: string;
+  linkBukti: string | null;
   status: Status;
   sumber: Sumber;
   totalDebit: string;
@@ -124,6 +126,7 @@ export default async function JurnalPage({
                 <th className="px-4 py-3 font-bold">Sumber</th>
                 <th className="px-4 py-3 font-bold">Cabang</th>
                 <th className="px-4 py-3 font-bold text-right">Total</th>
+                <th className="px-4 py-3 font-bold text-center">Bukti</th>
                 <th className="px-4 py-3 font-bold text-center">Status</th>
               </tr>
             </thead>
@@ -155,13 +158,16 @@ export default async function JurnalPage({
                     {fmtRp(j.totalDebit)}
                   </td>
                   <td className="px-4 py-2.5 text-center">
+                    <LinkBukti url={j.linkBukti} />
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
                     <StatusBadge status={j.status} />
                   </td>
                 </tr>
               ))}
               {jurnals.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-tanah-500">
+                  <td colSpan={7} className="px-4 py-10 text-center text-tanah-500">
                     Belum ada jurnal di periode ini.
                   </td>
                 </tr>

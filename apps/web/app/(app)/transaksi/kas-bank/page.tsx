@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Topbar } from '@/components/Topbar';
+import { LinkBukti } from '@/components/LinkBukti';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
@@ -15,6 +16,7 @@ interface Row {
   status: Status;
   kontak: string | null;
   deskripsi: string | null;
+  linkBukti: string | null;
   total: string;
   akunKasBank: { kode: string; nama: string };
   cabang: { kode: string };
@@ -81,6 +83,7 @@ export default async function KasBankPage({
                 <th className="px-4 py-3 font-bold">Akun Kas/Bank</th>
                 <th className="px-4 py-3 font-bold">Kontak / Deskripsi</th>
                 <th className="px-4 py-3 font-bold text-right">Nilai</th>
+                <th className="px-4 py-3 font-bold text-center">Bukti</th>
                 <th className="px-4 py-3 font-bold text-center">Status</th>
               </tr>
             </thead>
@@ -108,6 +111,9 @@ export default async function KasBankPage({
                   </td>
                   <td className="px-4 py-2.5 text-right font-mono tabular-nums">{fmtRp(r.total)}</td>
                   <td className="px-4 py-2.5 text-center">
+                    <LinkBukti url={r.linkBukti} />
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
                       r.status === 'POSTED' ? 'bg-padi-100 text-padi-700' :
                       r.status === 'DRAFT' ? 'bg-emas-100 text-emas-700' : 'bg-cream-200 text-tanah-500'
@@ -118,7 +124,7 @@ export default async function KasBankPage({
                 </tr>
               ))}
               {rows.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-tanah-500">Belum ada transaksi.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-tanah-500">Belum ada transaksi.</td></tr>
               )}
             </tbody>
           </table>

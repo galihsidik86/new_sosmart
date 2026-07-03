@@ -26,6 +26,7 @@ interface DefaultValues {
   tanggal: string;          // 'YYYY-MM-DD'
   cabangId: string;
   deskripsi: string;
+  linkBukti?: string;
   lines: Line[];
 }
 
@@ -80,6 +81,7 @@ export function JurnalForm({
   const today = new Date().toISOString().slice(0, 10);
   const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
   const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
+  const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
   const [cabangId, setCabangId] = useState(defaultValues?.cabangId ?? cabang[0]?.id ?? '');
   const [lines, setLines] = useState<Line[]>(
     defaultValues?.lines ?? [
@@ -143,6 +145,7 @@ export function JurnalForm({
       cabangId,
       tanggal,
       deskripsi,
+      linkBukti: linkBukti.trim() || null,
       sumber: 'MANUAL' as const,
       lines: lines.map((l) => ({
         accountId: l.accountId,
@@ -209,6 +212,16 @@ export function JurnalForm({
               placeholder="Penjualan tunai barang dagang"
               className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
               required
+            />
+          </div>
+          <div className="col-span-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+              Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span>
+            </label>
+            <input
+              type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)}
+              placeholder="https://drive.google.com/…"
+              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono"
             />
           </div>
         </div>

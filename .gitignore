@@ -26,3 +26,8 @@ yarn-debug.log*
 pnpm-debug.log*
 
 packages/db/prisma/migrations/dev.db*
+
+# Playwright
+test-results/
+playwright-report/
+.playwright/

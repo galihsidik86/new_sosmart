@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Topbar } from '@/components/Topbar';
+import { LinkBukti } from '@/components/LinkBukti';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
@@ -16,6 +17,7 @@ interface Row {
   termin: 'TUNAI' | 'KREDIT';
   totalNetto: string;
   totalDibayar: string;
+  linkBukti: string | null;
   vendor: { kode: string; nama: string; isPkp: boolean };
   cabang: { kode: string };
 }
@@ -76,6 +78,7 @@ export default async function PembelianPage({
                 <th className="px-4 py-3 font-bold">Jatuh Tempo</th>
                 <th className="px-4 py-3 font-bold text-right">Yg Dibayar</th>
                 <th className="px-4 py-3 font-bold text-right">Sisa</th>
+                <th className="px-4 py-3 font-bold text-center">Bukti</th>
                 <th className="px-4 py-3 font-bold text-center">Status</th>
               </tr>
             </thead>
@@ -104,13 +107,16 @@ export default async function PembelianPage({
                       {sisa > 0 ? fmtRp(sisa) : '✓'}
                     </td>
                     <td className="px-4 py-2.5 text-center">
+                      <LinkBukti url={r.linkBukti} />
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
                       <StatusBadge status={r.status} />
                     </td>
                   </tr>
                 );
               })}
               {rows.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-tanah-500">Belum ada tagihan.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-tanah-500">Belum ada tagihan.</td></tr>
               )}
             </tbody>
           </table>

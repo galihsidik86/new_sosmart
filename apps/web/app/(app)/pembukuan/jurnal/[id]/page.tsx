@@ -3,7 +3,9 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Topbar } from '@/components/Topbar';
-import { StepUpButton } from '@/components/StepUpButton';
+import { PostButton } from '@/components/PostButton';
+import { LinkBukti } from '@/components/LinkBukti';
+import { parseBudgetViolations, type PostResult } from '@/lib/budgetGuard';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting } from '@/lib/roles';
@@ -25,6 +27,7 @@ interface JurnalDetail {
   nomor: string | null;
   tanggal: string;
   deskripsi: string;
+  linkBukti: string | null;
   sumber: string;
   sumberRef: string | null;
   status: Status;
@@ -40,31 +43,54 @@ interface JurnalDetail {
   lines: Line[];
 }
 
-async function postAction(formData: FormData) {
+async function postJurnalAction(id: string): Promise<PostResult> {
   'use server';
   const tenantId = await getActiveTenantId();
-  if (!tenantId) redirect('/login');
-  const id = String(formData.get('id'));
-  await apiFetch(`/journals/${id}/post`, { method: 'POST', tenantId });
-  revalidatePath(`/pembukuan/jurnal/${id}`);
+  if (!tenantId) return { ok: false, error: 'Session expired, silakan login ulang.' };
+  try {
+    await apiFetch(`/journals/${id}/post`, { method: 'POST', tenantId });
+    revalidatePath(`/pembukuan/jurnal/${id}`);
+    return { ok: true };
+  } catch (e) {
+    const v = parseBudgetViolations(e);
+    if (v) return { ok: false, budgetViolations: v };
+    return { ok: false, error: e instanceof Error ? e.message : 'Gagal post jurnal' };
+  }
 }
 
-async function postWithApproverAction(formData: FormData): Promise<{ error?: string } | void> {
+async function overridePostAction(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string } | void> {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) return { error: 'Session expired, silakan login ulang.' };
   const session = await getSession();
-  const id = String(formData.get('id'));
+  const overrideBudget = String(formData.get('overrideBudget') ?? 'false') === 'true';
+  const alasan = String(formData.get('alasan') ?? '');
+  if (overrideBudget && alasan.trim().length < 5) {
+    return { error: 'Alasan override wajib minimal 5 huruf' };
+  }
   const r = await runWithApprover({
     approverEmail: String(formData.get('approverEmail') ?? ''),
     approverPassword: String(formData.get('approverPassword') ?? ''),
     tenantId,
-    requiredRoles: ['OWNER', 'ADMIN', 'AKUNTAN'],
+    requiredRoles: overrideBudget ? ['OWNER', 'ADMIN'] : ['OWNER', 'ADMIN', 'AKUNTAN'],
     apiPath: `/journals/${id}/post`,
+    body: overrideBudget ? { overrideBudget: true, alasan } : undefined,
     requestedByUserId: session?.user.id,
   });
   if (!r.ok) return { error: r.error };
   revalidatePath(`/pembukuan/jurnal/${id}`);
+}
+
+async function deleteDraftAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  const id = String(formData.get('id'));
+  await apiFetch(`/journals/${id}`, { method: 'DELETE', tenantId });
+  redirect('/pembukuan/jurnal');
 }
 
 async function reverseAction(formData: FormData) {
@@ -78,15 +104,6 @@ async function reverseAction(formData: FormData) {
     body: JSON.stringify({ alasan }),
   });
   revalidatePath(`/pembukuan/jurnal/${id}`);
-}
-
-async function deleteDraftAction(formData: FormData) {
-  'use server';
-  const tenantId = await getActiveTenantId();
-  if (!tenantId) redirect('/login');
-  const id = String(formData.get('id'));
-  await apiFetch(`/journals/${id}`, { method: 'DELETE', tenantId });
-  redirect('/pembukuan/jurnal');
 }
 
 export default async function JurnalDetailPage({
@@ -116,6 +133,12 @@ export default async function JurnalDetailPage({
               {j.deskripsi} · {fmtTanggal(j.tanggal)} · cabang {j.cabang.kode} ·
               periode {j.fiscalPeriod.label} ({j.fiscalPeriod.status})
             </p>
+            {j.linkBukti && (
+              <p className="text-xs mt-1">
+                <span className="text-tanah-500 mr-1">Bukti:</span>
+                <LinkBukti url={j.linkBukti} variant="full" />
+              </p>
+            )}
             {j.postedBy && (
               <p className="text-xs text-tanah-500 mt-1">
                 Diposting oleh <span className="font-semibold text-tanah-700">{j.postedBy.nama}</span> ({j.postedBy.email})
@@ -218,22 +241,12 @@ export default async function JurnalDetailPage({
           </a>
           {j.status === 'DRAFT' && (
             <>
-              {mayPost ? (
-                <form action={postAction}>
-                  <input type="hidden" name="id" value={j.id} />
-                  <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                    Post Jurnal
-                  </button>
-                </form>
-              ) : (
-                <StepUpButton
-                  label="Post (perlu approval Akuntan)"
-                  title="Persetujuan Akuntan / Admin"
-                  description="Posting jurnal akan mengalokasi nomor permanen dan tidak bisa diedit lagi. Masukkan kredensial akuntan/admin untuk melanjutkan."
-                  action={postWithApproverAction}
-                  hiddenFields={{ id: j.id }}
-                />
-              )}
+              <PostButton
+                label={mayPost ? 'Post Jurnal' : 'Post (perlu approval Akuntan)'}
+                requiresStepUpFirst={!mayPost}
+                postAction={postJurnalAction.bind(null, j.id)}
+                overrideAction={overridePostAction.bind(null, j.id)}
+              />
               <Link
                 href={`/pembukuan/jurnal/${j.id}/edit` as Route}
                 className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"

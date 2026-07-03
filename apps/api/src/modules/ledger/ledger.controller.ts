@@ -11,6 +11,7 @@ import { TenantGuard } from '../../common/guards/tenant.guard.js';
 import { TenancyInterceptor } from '../../common/interceptors/tenancy.interceptor.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
+import { normalizeProjectFilter } from '../../common/http/query.js';
 import { LedgerService } from './ledger.service.js';
 import { TrialBalanceService } from './trial-balance.service.js';
 import { ReportsExcelService } from '../reports/reports-excel.service.js';
@@ -39,8 +40,14 @@ export class LedgerController {
     @Query('accountId') accountId: string,
     @Query('periodId') periodId?: string,
     @Query('cabangId') cabangId?: string,
+    @Query('projectId') projectId?: string,
   ) {
-    return this.ledger.buku({ accountId, periodId, cabangId });
+    return this.ledger.buku({
+      accountId,
+      periodId,
+      cabangId,
+      projectId: normalizeProjectFilter(projectId),
+    });
   }
 
   @Get('ledger.xlsx')
@@ -49,8 +56,18 @@ export class LedgerController {
     @Query('accountId') accountId: string,
     @Query('periodId') periodId?: string,
     @Query('cabangId') cabangId?: string,
+    @Query('projectId') projectId?: string,
   ) {
-    sendXlsx(reply, 'buku-besar.xlsx', await this.ledger.exportBukuXlsx({ accountId, periodId, cabangId }));
+    sendXlsx(
+      reply,
+      'buku-besar.xlsx',
+      await this.ledger.exportBukuXlsx({
+        accountId,
+        periodId,
+        cabangId,
+        projectId: normalizeProjectFilter(projectId),
+      }),
+    );
   }
 
   /** Neraca saldo per periode (semua akun postable). */
@@ -59,11 +76,13 @@ export class LedgerController {
     @Query('periodId') periodId: string,
     @Query('cabangId') cabangId?: string,
     @Query('hideZero') hideZero?: string,
+    @Query('projectId') projectId?: string,
   ) {
     return this.tb.build({
       periodId,
       cabangId,
       hideZero: hideZero === 'true',
+      projectId: normalizeProjectFilter(projectId),
     });
   }
 
@@ -73,9 +92,15 @@ export class LedgerController {
     @Query('periodId') periodId: string,
     @Query('cabangId') cabangId?: string,
     @Query('hideZero') hideZero?: string,
+    @Query('projectId') projectId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.tb.build({ periodId, cabangId, hideZero: hideZero === 'true' }),
+      this.tb.build({
+        periodId,
+        cabangId,
+        hideZero: hideZero === 'true',
+        projectId: normalizeProjectFilter(projectId),
+      }),
       this.tenantNama(),
     ]);
     sendXlsx(reply, 'neraca-saldo.xlsx', await this.xlsx.buildTrialBalance(data, nama));

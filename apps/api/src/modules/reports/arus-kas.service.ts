@@ -71,6 +71,8 @@ export class ArusKasService {
     cabangId?: string;
     /// YTD = dari awal tahun buku s/d endDate periode (default true).
     ytd?: boolean;
+    /// Filter per project. null → hanya tanpa project. undefined = semua.
+    projectId?: string | null;
   }): Promise<ArusKasResponse> {
     return this.tenancy.run(async (tx) => {
       const period = await tx.fiscalPeriod.findUnique({
@@ -98,6 +100,7 @@ export class ArusKasService {
         endDate: period.endDate,
         cabangId: opts.cabangId,
         allowedCabangIds: this.cabangScope.cabangIdsForWhere(),
+        projectId: opts.projectId,
       });
 
       // === Resolve akun configurable via GlConfig ===

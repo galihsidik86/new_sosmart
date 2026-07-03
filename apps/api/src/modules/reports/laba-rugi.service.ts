@@ -66,6 +66,8 @@ export class LabaRugiService {
     cabangId?: string;
     /// Optional: mode YTD (year-to-date). Default false = hanya periode tsb.
     ytd?: boolean;
+    /// Filter per project. null → hanya tanpa project (overhead). undefined = semua.
+    projectId?: string | null;
   }): Promise<LabaRugiResponse> {
     return this.tenancy.run(async (tx) => {
       const period = await tx.fiscalPeriod.findUnique({
@@ -93,6 +95,7 @@ export class LabaRugiService {
         endDate: period.endDate,
         cabangId: opts.cabangId,
         allowedCabangIds: this.cabangScope.cabangIdsForWhere(),
+        projectId: opts.projectId,
         includeKinds: [
           AccountKind.PENDAPATAN,
           AccountKind.BEBAN_POKOK,

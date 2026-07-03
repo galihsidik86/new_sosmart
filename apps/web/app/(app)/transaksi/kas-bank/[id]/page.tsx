@@ -3,6 +3,10 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Topbar } from '@/components/Topbar';
+import { PostButton } from '@/components/PostButton';
+import { LinkBukti } from '@/components/LinkBukti';
+import { parseBudgetViolations, type PostResult } from '@/lib/budgetGuard';
+import { runWithApprover } from '@/lib/stepUp';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting, canPostCashBank } from '@/lib/roles';
@@ -19,6 +23,7 @@ interface Detail {
   total: string;
   kontak: string | null;
   deskripsi: string | null;
+  linkBukti: string | null;
   salesInvoiceId: string | null;
   purchaseInvoiceId: string | null;
   journalId: string | null;
@@ -29,11 +34,46 @@ interface Detail {
   }>;
 }
 
-async function postAction(formData: FormData) {
+async function postCashBankAction(id: string): Promise<PostResult> {
   'use server';
-  const tenantId = await getActiveTenantId(); if (!tenantId) redirect('/login');
-  const id = String(formData.get('id'));
-  await apiFetch(`/cash-bank/${id}/post`, { method: 'POST', tenantId });
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) return { ok: false, error: 'Session expired, silakan login ulang.' };
+  try {
+    await apiFetch(`/cash-bank/${id}/post`, { method: 'POST', tenantId });
+    revalidatePath(`/transaksi/kas-bank/${id}`);
+    return { ok: true };
+  } catch (e) {
+    const v = parseBudgetViolations(e);
+    if (v) return { ok: false, budgetViolations: v };
+    return { ok: false, error: e instanceof Error ? e.message : 'Gagal post bukti' };
+  }
+}
+
+async function overrideCashBankPostAction(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string } | void> {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) return { error: 'Session expired, silakan login ulang.' };
+  const session = await getSession();
+  const overrideBudget = String(formData.get('overrideBudget') ?? 'false') === 'true';
+  const alasan = String(formData.get('alasan') ?? '');
+  if (overrideBudget && alasan.trim().length < 5) {
+    return { error: 'Alasan override wajib minimal 5 huruf' };
+  }
+  // Untuk kas/bank tidak ada step-up "post biasa" (KASIR sudah boleh post),
+  // jadi overrideAction hanya dipakai untuk override budget.
+  const r = await runWithApprover({
+    approverEmail: String(formData.get('approverEmail') ?? ''),
+    approverPassword: String(formData.get('approverPassword') ?? ''),
+    tenantId,
+    requiredRoles: ['OWNER', 'ADMIN'],
+    apiPath: `/cash-bank/${id}/post`,
+    body: { overrideBudget: true, alasan },
+    requestedByUserId: session?.user.id,
+  });
+  if (!r.ok) return { error: r.error };
   revalidatePath(`/transaksi/kas-bank/${id}`);
 }
 async function cancelAction(formData: FormData) {
@@ -85,6 +125,12 @@ export default async function KasBankDetailPage({
                 >
                   faktur terkait
                 </Link>
+              </p>
+            )}
+            {e.linkBukti && (
+              <p className="text-xs mt-1">
+                <span className="text-tanah-500 mr-1">Bukti:</span>
+                <LinkBukti url={e.linkBukti} variant="full" />
               </p>
             )}
           </div>
@@ -161,12 +207,11 @@ export default async function KasBankDetailPage({
           {e.status === 'DRAFT' && (
             <>
               {mayPost ? (
-                <form action={postAction}>
-                  <input type="hidden" name="id" value={e.id} />
-                  <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                    Post Bukti
-                  </button>
-                </form>
+                <PostButton
+                  label="Post Bukti"
+                  postAction={postCashBankAction.bind(null, e.id)}
+                  overrideAction={overrideCashBankPostAction.bind(null, e.id)}
+                />
               ) : (
                 <span className="px-3 py-2 bg-emas-100 text-emas-700 text-xs rounded-lg border border-emas-300">
                   Posting bukti kas/bank perlu role Kasir+

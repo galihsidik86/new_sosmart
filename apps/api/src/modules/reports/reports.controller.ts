@@ -3,10 +3,12 @@ import { TenantGuard } from '../../common/guards/tenant.guard.js';
 import { TenancyInterceptor } from '../../common/interceptors/tenancy.interceptor.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { type ReplyLike, sendPdf, sendXlsx } from '../../common/http/reply.js';
+import { normalizeProjectFilter } from '../../common/http/query.js';
 import { LabaRugiService } from './laba-rugi.service.js';
 import { NeracaService } from './neraca.service.js';
 import { ArusKasService } from './arus-kas.service.js';
 import { PerubahanEkuitasService } from './perubahan-ekuitas.service.js';
+import { BudgetActualService } from './budget-actual.service.js';
 import { ReportsPdfService } from './reports-pdf.service.js';
 import { ReportsExcelService } from './reports-excel.service.js';
 
@@ -19,6 +21,7 @@ export class ReportsController {
     private readonly nrc: NeracaService,
     private readonly ak: ArusKasService,
     private readonly pe: PerubahanEkuitasService,
+    private readonly ba: BudgetActualService,
     private readonly pdf: ReportsPdfService,
     private readonly xlsx: ReportsExcelService,
     private readonly tenancy: TenancyService,
@@ -36,8 +39,14 @@ export class ReportsController {
     @Query('periodId') periodId: string,
     @Query('cabangId') cabangId?: string,
     @Query('ytd') ytd?: string,
+    @Query('projectId') projectId?: string,
   ) {
-    return this.lr.build({ periodId, cabangId, ytd: ytd === 'true' });
+    return this.lr.build({
+      periodId,
+      cabangId,
+      ytd: ytd === 'true',
+      projectId: normalizeProjectFilter(projectId),
+    });
   }
 
   @Get('neraca')
@@ -53,8 +62,14 @@ export class ReportsController {
     @Query('periodId') periodId: string,
     @Query('cabangId') cabangId?: string,
     @Query('ytd') ytd?: string,
+    @Query('projectId') projectId?: string,
   ) {
-    return this.ak.build({ periodId, cabangId, ytd: ytd !== 'false' });
+    return this.ak.build({
+      periodId,
+      cabangId,
+      ytd: ytd !== 'false',
+      projectId: normalizeProjectFilter(projectId),
+    });
   }
 
   @Get('perubahan-ekuitas')
@@ -66,6 +81,30 @@ export class ReportsController {
     return this.pe.build({ periodId, cabangId, ytd: ytd !== 'false' });
   }
 
+  @Get('budget-actual')
+  budgetActual(
+    @Query('periode') periode: string,
+    @Query('projectId') projectId?: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    return this.ba.build({ periode, projectId, cabangId });
+  }
+
+  @Get('budget-actual.xlsx')
+  async budgetActualXlsx(
+    @Res() reply: ReplyLike,
+    @Query('periode') periode: string,
+    @Query('projectId') projectId?: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.ba.build({ periode, projectId, cabangId }),
+      this.tenantNama(),
+    ]);
+    sendXlsx(reply, `budget-actual-${periode}.xlsx`,
+      await this.xlsx.buildBudgetActual(data, nama));
+  }
+
   // --------------- PDF exports ---------------
 
   @Get('laba-rugi.pdf')
@@ -74,9 +113,15 @@ export class ReportsController {
     @Query('periodId') periodId: string,
     @Query('cabangId') cabangId?: string,
     @Query('ytd') ytd?: string,
+    @Query('projectId') projectId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.lr.build({ periodId, cabangId, ytd: ytd === 'true' }),
+      this.lr.build({
+        periodId,
+        cabangId,
+        ytd: ytd === 'true',
+        projectId: normalizeProjectFilter(projectId),
+      }),
       this.tenantNama(),
     ]);
     sendPdf(reply, 'laba-rugi.pdf', await this.pdf.buildLabaRugi(data, nama));
@@ -101,9 +146,15 @@ export class ReportsController {
     @Query('periodId') periodId: string,
     @Query('cabangId') cabangId?: string,
     @Query('ytd') ytd?: string,
+    @Query('projectId') projectId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.ak.build({ periodId, cabangId, ytd: ytd !== 'false' }),
+      this.ak.build({
+        periodId,
+        cabangId,
+        ytd: ytd !== 'false',
+        projectId: normalizeProjectFilter(projectId),
+      }),
       this.tenantNama(),
     ]);
     sendPdf(reply, 'arus-kas.pdf', await this.pdf.buildArusKas(data, nama));
@@ -131,9 +182,15 @@ export class ReportsController {
     @Query('periodId') periodId: string,
     @Query('cabangId') cabangId?: string,
     @Query('ytd') ytd?: string,
+    @Query('projectId') projectId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.lr.build({ periodId, cabangId, ytd: ytd === 'true' }),
+      this.lr.build({
+        periodId,
+        cabangId,
+        ytd: ytd === 'true',
+        projectId: normalizeProjectFilter(projectId),
+      }),
       this.tenantNama(),
     ]);
     sendXlsx(reply, 'laba-rugi.xlsx', await this.xlsx.buildLabaRugi(data, nama));
@@ -158,9 +215,15 @@ export class ReportsController {
     @Query('periodId') periodId: string,
     @Query('cabangId') cabangId?: string,
     @Query('ytd') ytd?: string,
+    @Query('projectId') projectId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.ak.build({ periodId, cabangId, ytd: ytd !== 'false' }),
+      this.ak.build({
+        periodId,
+        cabangId,
+        ytd: ytd !== 'false',
+        projectId: normalizeProjectFilter(projectId),
+      }),
       this.tenantNama(),
     ]);
     sendXlsx(reply, 'arus-kas.xlsx', await this.xlsx.buildArusKas(data, nama));

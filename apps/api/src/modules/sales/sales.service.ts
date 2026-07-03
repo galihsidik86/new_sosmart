@@ -184,6 +184,7 @@ export class SalesService {
           termin: input.termin,
           akunArId: input.akunArId,
           deskripsi: input.deskripsi,
+          linkBukti: input.linkBukti ?? null,
           kodeFakturPajak: input.kodeFakturPajak,
           nsfp: input.nsfp,
           status: InvoiceStatus.DRAFT,
@@ -267,6 +268,7 @@ export class SalesService {
           termin: input.termin,
           akunArId: input.akunArId,
           deskripsi: input.deskripsi,
+          linkBukti: input.linkBukti ?? null,
           kodeFakturPajak: input.kodeFakturPajak,
           nsfp: input.nsfp,
           totalDpp: calc.totalDpp.toFixed(2),
@@ -308,7 +310,11 @@ export class SalesService {
   // POST: DRAFT → POSTED + auto-post jurnal
   // ----------------------------------------------------
 
-  async post(id: string, requestedById?: string | null) {
+  async post(
+    id: string,
+    requestedById?: string | null,
+    opts?: { overrideBudget?: boolean; alasan?: string },
+  ) {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy.run(async (tx) => {
@@ -416,7 +422,7 @@ export class SalesService {
         sumberRef: inv.id,
         lines,
       });
-      await this.journals.postInTx(tx, journal.id);
+      await this.journals.postInTx(tx, journal.id, null, opts);
 
       // ---- Record stok outbound + auto-jurnal HPP untuk item barang ----
       let hppJournalId: string | null = null;
@@ -505,7 +511,7 @@ export class SalesService {
             sumberRef: inv.id,
             lines: hppLines,
           });
-          await this.journals.postInTx(tx, hppJournal.id);
+          await this.journals.postInTx(tx, hppJournal.id, null, opts);
           hppJournalId = hppJournal.id;
         }
       }

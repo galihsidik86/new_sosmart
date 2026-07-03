@@ -36,6 +36,7 @@ interface PeriodYear {
   id: string; kode: string;
   periods: Array<{ id: string; label: string; status: string }>;
 }
+interface Project { id: string; kode: string; nama: string }
 
 const KIND_ORDER: Kind[] = [
   'ASET', 'LIABILITAS', 'EKUITAS',
@@ -56,22 +57,31 @@ const KIND_LABEL: Record<Kind, string> = {
 export default async function NeracaSaldoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periodId?: string; hideZero?: string }>;
+  searchParams: Promise<{ periodId?: string; hideZero?: string; projectId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
 
-  const years = await apiFetch<PeriodYear[]>('/periods/years', { tenantId });
+  const [years, projects] = await Promise.all([
+    apiFetch<PeriodYear[]>('/periods/years', { tenantId }),
+    apiFetch<Project[]>('/projects', { tenantId }).catch(() => [] as Project[]),
+  ]);
   const periodId =
     sp.periodId ?? years[0]?.periods.find((p) => p.status === 'OPEN')?.id;
+  const projectId = sp.projectId ?? '';
 
   let tb: TBResp | null = null;
   if (periodId) {
     const qs = new URLSearchParams({ periodId });
     if (sp.hideZero === 'true') qs.set('hideZero', 'true');
+    if (projectId) qs.set('projectId', projectId);
     tb = await apiFetch<TBResp>(`/trial-balance?${qs}`, { tenantId });
   }
+  const xlsxQs = new URLSearchParams();
+  if (periodId) xlsxQs.set('periodId', periodId);
+  if (sp.hideZero === 'true') xlsxQs.set('hideZero', 'true');
+  if (projectId) xlsxQs.set('projectId', projectId);
 
   return (
     <>
@@ -89,7 +99,7 @@ export default async function NeracaSaldoPage({
           </div>
           {periodId && (
             <a
-              href={`/proxy/trial-balance.xlsx?periodId=${periodId}`}
+              href={`/proxy/trial-balance.xlsx?${xlsxQs}`}
               className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
             >
               Export Excel
@@ -113,6 +123,23 @@ export default async function NeracaSaldoPage({
               ))}
             </select>
           </div>
+          {projects.length > 0 && (
+            <div className="flex-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+                Project
+              </label>
+              <select
+                name="projectId" defaultValue={projectId}
+                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+              >
+                <option value="">— semua —</option>
+                <option value="none">— tanpa project (overhead) —</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <label className="flex items-center gap-2 text-sm text-tanah-700">
             <input
               type="checkbox" name="hideZero" value="true"

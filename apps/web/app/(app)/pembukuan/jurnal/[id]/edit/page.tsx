@@ -18,6 +18,7 @@ interface JurnalDetail {
   cabangId: string;
   tanggal: string;
   deskripsi: string;
+  linkBukti: string | null;
   status: 'DRAFT' | 'POSTED' | 'REVERSED';
   lines: Array<{
     no: number;
@@ -76,6 +77,7 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
             tanggal: j.tanggal.slice(0, 10),
             cabangId: j.cabangId,
             deskripsi: j.deskripsi,
+            linkBukti: j.linkBukti ?? '',
             lines: j.lines
               .sort((a, b) => a.no - b.no)
               .map((l) => ({

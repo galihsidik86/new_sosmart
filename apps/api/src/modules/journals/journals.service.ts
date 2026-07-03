@@ -22,6 +22,7 @@ import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { PeriodsService } from '../periods/periods.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
+import { BudgetGuardService } from '../projects/budget-guard.service.js';
 
 interface ListFilter {
   periodId?: string;
@@ -51,6 +52,7 @@ export class JournalsService {
     private readonly periods: PeriodsService,
     private readonly excel: ExcelService,
     private readonly cabangScope: CabangScopeService,
+    private readonly budgetGuard: BudgetGuardService,
   ) {}
 
   async exportXlsx(f: ListFilter): Promise<Buffer> {
@@ -185,6 +187,7 @@ export class JournalsService {
         fiscalPeriodId: period.id,
         tanggal,
         deskripsi: input.deskripsi,
+        linkBukti: input.linkBukti ?? null,
         sumber: input.sumber,
         sumberRef: input.sumberRef ?? null,
         status: JournalStatus.DRAFT,
@@ -219,6 +222,7 @@ export class JournalsService {
     tx: Prisma.TransactionClient,
     journalId: string,
     requestedById?: string | null,
+    opts?: { overrideBudget?: boolean; alasan?: string },
   ) {
     const userId = this.ctx.require().userId;
     const tenantId = this.ctx.require().tenantId;
@@ -248,6 +252,12 @@ export class JournalsService {
       throw new BadRequestException('Minimal 2 baris');
     }
 
+    await this.budgetGuard.check(tx, j, j.lines, {
+      override: opts?.overrideBudget,
+      alasan: opts?.alasan,
+      excludeJournalId: j.id,
+    });
+
     const nomor = j.nomor ?? (await this.seq.next(tx, 'JU', j.tanggal));
 
     return tx.journal.update({
@@ -258,12 +268,18 @@ export class JournalsService {
         postedAt: new Date(),
         postedById: userId,
         postedRequestedById: requestedById && requestedById !== userId ? requestedById : null,
+        budgetOverridden: !!opts?.overrideBudget,
+        budgetOverrideAlasan: opts?.overrideBudget ? (opts?.alasan ?? null) : null,
       },
     });
   }
 
-  async post(journalId: string, requestedById?: string | null) {
-    return this.tenancy.run((tx) => this.postInTx(tx, journalId, requestedById));
+  async post(
+    journalId: string,
+    requestedById?: string | null,
+    opts?: { overrideBudget?: boolean; alasan?: string },
+  ) {
+    return this.tenancy.run((tx) => this.postInTx(tx, journalId, requestedById, opts));
   }
 
   // -----------------------------------------------------------
@@ -387,6 +403,7 @@ export class JournalsService {
           fiscalPeriodId: period.id,
           tanggal,
           deskripsi: input.deskripsi,
+          linkBukti: input.linkBukti ?? null,
           sumber: input.sumber,
           sumberRef: input.sumberRef ?? null,
           totalDebit: td.toFixed(2),

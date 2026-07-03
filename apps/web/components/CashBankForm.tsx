@@ -30,6 +30,7 @@ export interface CashBankDefaultValues {
   total: string;
   kontak?: string;
   deskripsi?: string;
+  linkBukti?: string;
   salesInvoiceId?: string;
   purchaseInvoiceId?: string;
   lines: Line[];
@@ -62,6 +63,7 @@ export function CashBankForm({
   const [total, setTotal] = useState(defaultValues?.total ?? '0');
   const [kontak, setKontak] = useState(defaultValues?.kontak ?? '');
   const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
+  const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
   const [salesInvoiceId, setSalesInvoiceId] = useState(defaultValues?.salesInvoiceId ?? '');
   const [purchaseInvoiceId, setPurchaseInvoiceId] = useState(defaultValues?.purchaseInvoiceId ?? '');
   const [lines, setLines] = useState<Line[]>(
@@ -129,6 +131,7 @@ export function CashBankForm({
       total: String(totalNum),
       kontak: kontak || undefined,
       deskripsi: deskripsi || undefined,
+      linkBukti: linkBukti.trim() || null,
       lines: tipe === 'TRANSFER' ? [] : lines.map((l) => ({
         accountId: l.accountId,
         projectId: l.projectId || null,
@@ -223,6 +226,14 @@ export function CashBankForm({
             <input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)}
               placeholder="(opsional)"
               className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
+          </div>
+          <div className="col-span-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+              Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan slip/foto struk)</span>
+            </label>
+            <input type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)}
+              placeholder="https://drive.google.com/…"
+              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono" />
           </div>
         </div>
 

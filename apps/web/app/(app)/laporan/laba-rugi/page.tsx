@@ -7,6 +7,7 @@ interface PeriodYear {
   id: string; kode: string;
   periods: Array<{ id: string; label: string; status: string }>;
 }
+interface Project { id: string; kode: string; nama: string }
 interface Row { id: string; kode: string; nama: string; nilai: string }
 interface LR {
   periode: { id: string; label: string; startDate: string; endDate: string };
@@ -24,20 +25,25 @@ interface LR {
 
 export default async function LabaRugiPage({
   searchParams,
-}: { searchParams: Promise<{ periodId?: string; ytd?: string }> }) {
+}: { searchParams: Promise<{ periodId?: string; ytd?: string; projectId?: string }> }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
 
-  const years = await apiFetch<PeriodYear[]>('/periods/years', { tenantId });
+  const [years, projects] = await Promise.all([
+    apiFetch<PeriodYear[]>('/periods/years', { tenantId }),
+    apiFetch<Project[]>('/projects', { tenantId }).catch(() => [] as Project[]),
+  ]);
   const periodId =
     sp.periodId ?? years[0]?.periods.find((p) => p.status === 'OPEN')?.id ?? years[0]?.periods[0]?.id;
   const ytd = sp.ytd === 'true';
+  const projectId = sp.projectId ?? '';
+  const projectQs = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
 
   let lr: LR | null = null;
   if (periodId) {
     lr = await apiFetch<LR>(
-      `/reports/laba-rugi?periodId=${periodId}${ytd ? '&ytd=true' : ''}`,
+      `/reports/laba-rugi?periodId=${periodId}${ytd ? '&ytd=true' : ''}${projectQs}`,
       { tenantId },
     );
   }
@@ -58,13 +64,13 @@ export default async function LabaRugiPage({
           {periodId && (
             <div className="flex items-center gap-2">
               <a
-                href={`/proxy/reports/laba-rugi.xlsx?periodId=${periodId}${ytd ? '&ytd=true' : ''}`}
+                href={`/proxy/reports/laba-rugi.xlsx?periodId=${periodId}${ytd ? '&ytd=true' : ''}${projectQs}`}
                 className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
               >
                 Export Excel
               </a>
               <a
-                href={`/proxy/reports/laba-rugi.pdf?periodId=${periodId}${ytd ? '&ytd=true' : ''}`}
+                href={`/proxy/reports/laba-rugi.pdf?periodId=${periodId}${ytd ? '&ytd=true' : ''}${projectQs}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
@@ -75,12 +81,25 @@ export default async function LabaRugiPage({
           )}
         </div>
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm">
+        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm flex-wrap">
           <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Periode:</span>
           <select name="periodId" defaultValue={periodId}
             className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
             {years[0]?.periods.map((p) => <option key={p.id} value={p.id}>{p.label} ({p.status})</option>)}
           </select>
+          {projects.length > 0 && (
+            <>
+              <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Project:</span>
+              <select name="projectId" defaultValue={projectId}
+                className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+                <option value="">— semua —</option>
+                <option value="none">— tanpa project (overhead) —</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </select>
+            </>
+          )}
           <label className="flex items-center gap-1.5 text-sm">
             <input type="checkbox" name="ytd" value="true" defaultChecked={ytd} />
             YTD (Year-to-Date)

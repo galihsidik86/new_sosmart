@@ -46,6 +46,8 @@ export class TrialBalanceService {
     periodId: string;
     cabangId?: string;
     hideZero?: boolean;
+    /// Filter per project. null = hanya tanpa project. undefined = semua.
+    projectId?: string | null;
   }): Promise<TrialBalanceResponse> {
     return this.tenancy.run(async (tx) => {
       const period = await tx.fiscalPeriod.findUnique({
@@ -76,10 +78,19 @@ export class TrialBalanceService {
         if (scope) cabangFilter = { cabangId: { in: scope } };
       }
 
+      const projectLineFilter: { projectId?: string | null } =
+        opts.projectId === undefined
+          ? {}
+          : opts.projectId === null
+            ? { projectId: null }
+            : { projectId: opts.projectId };
+      const includeAccountSaldoAwal = opts.projectId === undefined;
+
       // Group sums by account (sebelum periode & dalam periode) — 2 query agregat.
       const sebelum = await tx.journalLine.groupBy({
         by: ['accountId'],
         where: {
+          ...projectLineFilter,
           journal: {
             status: JournalStatus.POSTED,
             tanggal: { lt: period.startDate },
@@ -101,6 +112,7 @@ export class TrialBalanceService {
       const dalam = await tx.journalLine.groupBy({
         by: ['accountId'],
         where: {
+          ...projectLineFilter,
           journal: {
             status: JournalStatus.POSTED,
             tanggal: { gte: period.startDate, lte: period.endDate },
@@ -131,7 +143,8 @@ export class TrialBalanceService {
       const rows: TrialBalanceRow[] = [];
 
       for (const a of accounts) {
-        const sa = new Decimal(a.saldoAwal); // sudah dalam saldo normal (positif)
+        // Kalau filter per project, saldo awal akun (tenant-level) tidak dihitung.
+        const sa = includeAccountSaldoAwal ? new Decimal(a.saldoAwal) : new Decimal(0);
         const s = sebelumMap.get(a.id);
         const dl = dalamMap.get(a.id);
 

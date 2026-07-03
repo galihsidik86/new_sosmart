@@ -105,8 +105,12 @@ export class SalesController {
   post(
     @Param('id') id: string,
     @Headers('x-requested-by-user-id') requestedById?: string,
+    @Body() body?: { overrideBudget?: boolean; alasan?: string },
   ) {
-    return this.sales.post(id, requestedById);
+    return this.sales.post(id, requestedById, {
+      overrideBudget: !!body?.overrideBudget,
+      alasan: body?.alasan,
+    });
   }
 
   @Post(':id/cancel')

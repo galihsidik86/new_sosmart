@@ -28,6 +28,7 @@ interface Detail {
   total: string;
   kontak: string | null;
   deskripsi: string | null;
+  linkBukti: string | null;
   salesInvoiceId: string | null;
   purchaseInvoiceId: string | null;
   status: 'DRAFT' | 'POSTED' | 'CANCELLED';
@@ -100,6 +101,7 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
             total: e.total,
             kontak: e.kontak ?? '',
             deskripsi: e.deskripsi ?? '',
+            linkBukti: e.linkBukti ?? '',
             salesInvoiceId: e.salesInvoiceId ?? '',
             purchaseInvoiceId: e.purchaseInvoiceId ?? '',
             lines: e.lines

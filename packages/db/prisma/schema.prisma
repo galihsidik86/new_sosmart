@@ -754,6 +754,8 @@ model Journal {
   nomor           String?
   tanggal         DateTime       @db.Date
   deskripsi       String
+  /// URL bukti transaksi eksternal (scan/foto/gdrive/dropbox/dll). Optional.
+  linkBukti       String?        @map("link_bukti")
   sumber          JournalSource  @default(MANUAL)
   /// Pointer balik ke dokumen sumber (mis. invoice id) untuk telusur.
   sumberRef       String?        @map("sumber_ref")
@@ -771,6 +773,10 @@ model Journal {
   /// (mis. KASIR meminta approval AKUNTAN), simpan ID requester di sini.
   /// postedById tetap menunjuk ke approver (yang JWT-nya dipakai).
   postedRequestedById String?    @map("posted_requested_by_id") @db.Uuid
+  /// Audit override budget: kalau posting menembus limit Budget dan approver
+  /// (OWNER/ADMIN/MANAGER) mengizinkan, flag ini true + alasan disimpan.
+  budgetOverridden      Boolean  @default(false) @map("budget_overridden")
+  budgetOverrideAlasan  String?  @map("budget_override_alasan")
   createdById     String?        @map("created_by_id") @db.Uuid
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
@@ -851,6 +857,8 @@ model SalesInvoice {
   akunArId          String        @map("akun_ar_id") @db.Uuid
   status            InvoiceStatus @default(DRAFT)
   deskripsi         String?
+  /// URL bukti transaksi eksternal (scan invoice/PO/DO/foto tanda-tangan/dll).
+  linkBukti         String?       @map("link_bukti")
   /// Faktur pajak data (untuk customer PKP)
   kodeFakturPajak   KodeFakturPajak? @map("kode_faktur_pajak")
   nsfp              String?       // 16 digit nomor seri faktur pajak (Coretax)
@@ -958,6 +966,8 @@ model PurchaseInvoice {
   akunApId          String        @map("akun_ap_id") @db.Uuid
   status            InvoiceStatus @default(DRAFT)
   deskripsi         String?
+  /// URL bukti tagihan eksternal (scan faktur vendor/PO/DO/dll).
+  linkBukti         String?       @map("link_bukti")
   /// Faktur pajak masukan dari vendor (untuk vendor PKP).
   nsfpMasukan       String?       @map("nsfp_masukan")
 
@@ -1057,6 +1067,8 @@ model CashBankEntry {
   /// Pihak transaksi (label saja). Untuk pelunasan AR/AP, link via salesInvoiceId/purchaseInvoiceId.
   kontak          String?
   deskripsi       String?
+  /// URL bukti transaksi eksternal (scan slip bank/BKM/BKK, foto struk, dll).
+  linkBukti       String?      @map("link_bukti")
   status          InvoiceStatus @default(DRAFT)
   /// Link optional untuk pelunasan AR/AP.
   salesInvoiceId    String?    @map("sales_invoice_id") @db.Uuid

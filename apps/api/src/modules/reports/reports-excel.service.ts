@@ -5,6 +5,7 @@ import type { NeracaResponse } from './neraca.service.js';
 import type { ArusKasResponse } from './arus-kas.service.js';
 import type { PerubahanEkuitasResponse } from './perubahan-ekuitas.service.js';
 import type { TrialBalanceResponse } from '../ledger/trial-balance.service.js';
+import type { BudgetActualResponse } from './budget-actual.service.js';
 
 /**
  * Render Excel untuk 5 laporan keuangan. Format bebas (bukan ExcelService
@@ -309,6 +310,86 @@ export class ReportsExcelService {
       cell.numFmt = '#,##0.00';
       cell.font = { bold: true };
     });
+    return this.toBuffer(wb);
+  }
+
+  // -------- 6. Budget vs Actual --------
+  async buildBudgetActual(data: BudgetActualResponse, tenantNama: string): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Budget vs Actual');
+    ws.columns = [
+      { key: 'project', width: 24 },
+      { key: 'akun', width: 32 },
+      { key: 'budget', width: 16 },
+      { key: 'actual', width: 16 },
+      { key: 'variance', width: 16 },
+      { key: 'util', width: 12 },
+      { key: 'status', width: 12 },
+    ];
+    ws.mergeCells('A1:G1');
+    ws.getCell('A1').value = tenantNama;
+    ws.getCell('A1').alignment = { horizontal: 'center' };
+    ws.getCell('A1').font = { bold: true, size: 12 };
+    ws.mergeCells('A2:G2');
+    ws.getCell('A2').value = 'Budget vs Actual';
+    ws.getCell('A2').alignment = { horizontal: 'center' };
+    ws.getCell('A2').font = { bold: true, size: 14 };
+    ws.mergeCells('A3:G3');
+    ws.getCell('A3').value = `Periode: ${data.periode}`;
+    ws.getCell('A3').alignment = { horizontal: 'center' };
+    ws.getCell('A3').font = { color: { argb: 'FF666666' } };
+
+    const headers = ['Project', 'Akun', 'Budget', 'Actual', 'Variance', 'Utilisasi %', 'Status'];
+    headers.forEach((h, i) => {
+      const cell = ws.getCell(5, i + 1);
+      cell.value = h;
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFE7D8' } };
+      cell.alignment = { horizontal: 'center' };
+    });
+
+    let r = 6;
+    for (const g of data.projects) {
+      ws.getCell(`A${r}`).value = `${g.project.kode} — ${g.project.nama}`;
+      ws.getCell(`A${r}`).font = { bold: true };
+      ws.mergeCells(`A${r}:G${r}`);
+      r++;
+      for (const row of g.rows) {
+        ws.getCell(`A${r}`).value = '';
+        ws.getCell(`B${r}`).value = `${row.account.kode} — ${row.account.nama}`;
+        ws.getCell(`C${r}`).value = Number(row.budget);
+        ws.getCell(`D${r}`).value = Number(row.actual);
+        ws.getCell(`E${r}`).value = Number(row.variance);
+        ws.getCell(`F${r}`).value = Number(row.utilisasiPersen);
+        ws.getCell(`G${r}`).value = row.status;
+        ['C', 'D', 'E'].forEach((c) => { ws.getCell(`${c}${r}`).numFmt = '#,##0.00'; });
+        ws.getCell(`F${r}`).numFmt = '0.00"%"';
+        r++;
+      }
+      // Sub-total group
+      ws.getCell(`B${r}`).value = 'Sub-total';
+      ws.getCell(`B${r}`).font = { bold: true };
+      ws.getCell(`C${r}`).value = Number(g.totalBudget);
+      ws.getCell(`D${r}`).value = Number(g.totalActual);
+      ws.getCell(`E${r}`).value = Number(g.totalVariance);
+      ['C', 'D', 'E'].forEach((c) => {
+        ws.getCell(`${c}${r}`).numFmt = '#,##0.00';
+        ws.getCell(`${c}${r}`).font = { bold: true };
+      });
+      r += 2;
+    }
+
+    // Grand total
+    ws.getCell(`B${r}`).value = 'GRAND TOTAL';
+    ws.getCell(`B${r}`).font = { bold: true, size: 12 };
+    ws.getCell(`C${r}`).value = Number(data.grandTotal.budget);
+    ws.getCell(`D${r}`).value = Number(data.grandTotal.actual);
+    ws.getCell(`E${r}`).value = Number(data.grandTotal.variance);
+    ['C', 'D', 'E'].forEach((c) => {
+      ws.getCell(`${c}${r}`).numFmt = '#,##0.00';
+      ws.getCell(`${c}${r}`).font = { bold: true, size: 12 };
+    });
+
     return this.toBuffer(wb);
   }
 }

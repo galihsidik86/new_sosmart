@@ -4,6 +4,9 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { Topbar } from '@/components/Topbar';
 import { StepUpButton } from '@/components/StepUpButton';
+import { PostButton } from '@/components/PostButton';
+import { LinkBukti } from '@/components/LinkBukti';
+import { parseBudgetViolations, type PostResult } from '@/lib/budgetGuard';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canCancelPosted, canPostAccounting } from '@/lib/roles';
@@ -19,6 +22,7 @@ interface Detail {
   termin: 'TUNAI' | 'KREDIT';
   status: Status;
   deskripsi: string | null;
+  linkBukti: string | null;
   vendor: { kode: string; nama: string; npwp: string | null; isPkp: boolean };
   cabang: { kode: string; nama: string };
   fiscalPeriod: { label: string };
@@ -41,25 +45,41 @@ interface Detail {
   }>;
 }
 
-async function postAction(formData: FormData) {
+async function postPurchaseAction(id: string): Promise<PostResult> {
   'use server';
-  const tenantId = await getActiveTenantId(); if (!tenantId) redirect('/login');
-  const id = String(formData.get('id'));
-  await apiFetch(`/purchase-invoices/${id}/post`, { method: 'POST', tenantId });
-  revalidatePath(`/transaksi/pembelian/${id}`);
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) return { ok: false, error: 'Session expired, silakan login ulang.' };
+  try {
+    await apiFetch(`/purchase-invoices/${id}/post`, { method: 'POST', tenantId });
+    revalidatePath(`/transaksi/pembelian/${id}`);
+    return { ok: true };
+  } catch (e) {
+    const v = parseBudgetViolations(e);
+    if (v) return { ok: false, budgetViolations: v };
+    return { ok: false, error: e instanceof Error ? e.message : 'Gagal post tagihan' };
+  }
 }
-async function postWithApproverAction(formData: FormData): Promise<{ error?: string } | void> {
+
+async function overridePurchasePostAction(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string } | void> {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) return { error: 'Session expired, silakan login ulang.' };
   const session = await getSession();
-  const id = String(formData.get('id'));
+  const overrideBudget = String(formData.get('overrideBudget') ?? 'false') === 'true';
+  const alasan = String(formData.get('alasan') ?? '');
+  if (overrideBudget && alasan.trim().length < 5) {
+    return { error: 'Alasan override wajib minimal 5 huruf' };
+  }
   const r = await runWithApprover({
     approverEmail: String(formData.get('approverEmail') ?? ''),
     approverPassword: String(formData.get('approverPassword') ?? ''),
     tenantId,
-    requiredRoles: ['OWNER', 'ADMIN', 'AKUNTAN'],
+    requiredRoles: overrideBudget ? ['OWNER', 'ADMIN'] : ['OWNER', 'ADMIN', 'AKUNTAN'],
     apiPath: `/purchase-invoices/${id}/post`,
+    body: overrideBudget ? { overrideBudget: true, alasan } : undefined,
     requestedByUserId: session?.user.id,
   });
   if (!r.ok) return { error: r.error };
@@ -133,6 +153,12 @@ export default async function PembelianDetailPage({
                 Jurnal:{' '}
                 <Link href={`/pembukuan/jurnal/${inv.journalId}`}
                   className="text-sogan-500 font-mono hover:underline">lihat</Link>
+              </p>
+            )}
+            {inv.linkBukti && (
+              <p className="text-xs mt-1">
+                <span className="text-tanah-500 mr-1">Bukti:</span>
+                <LinkBukti url={inv.linkBukti} variant="full" />
               </p>
             )}
             {inv.postedBy && (
@@ -248,22 +274,12 @@ export default async function PembelianDetailPage({
           </a>
           {inv.status === 'DRAFT' && (
             <>
-              {mayPost ? (
-                <form action={postAction}>
-                  <input type="hidden" name="id" value={inv.id} />
-                  <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                    Post Tagihan
-                  </button>
-                </form>
-              ) : (
-                <StepUpButton
-                  label="Post (perlu approval Akuntan)"
-                  title="Persetujuan Akuntan / Admin"
-                  description="Posting tagihan akan terbit jurnal & nomor permanen. Masukkan kredensial akuntan/admin untuk melanjutkan."
-                  action={postWithApproverAction}
-                  hiddenFields={{ id: inv.id }}
-                />
-              )}
+              <PostButton
+                label={mayPost ? 'Post Tagihan' : 'Post (perlu approval Akuntan)'}
+                requiresStepUpFirst={!mayPost}
+                postAction={postPurchaseAction.bind(null, inv.id)}
+                overrideAction={overridePurchasePostAction.bind(null, inv.id)}
+              />
               <Link
                 href={`/transaksi/pembelian/${inv.id}/edit` as Route}
                 className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"

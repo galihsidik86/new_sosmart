@@ -57,6 +57,7 @@ export interface InvoiceDefaultValues {
   /** Untuk TUNAI: id akun kas/bank. */
   kasBankId?: string;
   deskripsi: string;
+  linkBukti?: string;
   lines: Line[];
 }
 
@@ -100,6 +101,7 @@ export function InvoiceForm({
   const [potongPph23, setPotongPph23] = useState(defaultValues?.potongPph23 ?? true);
   const [kasBankId, setKasBankId] = useState(defaultValues?.kasBankId ?? kasBankAccounts[0]?.id ?? '');
   const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
+  const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -199,6 +201,7 @@ export function InvoiceForm({
       if (Number(l.qty) <= 0) { setError('Qty harus > 0.'); return; }
     }
 
+    const linkBuktiTrim = linkBukti.trim() || null;
     const payload = mode === 'sales' ? {
       cabangId,
       customerId: partyId,
@@ -206,6 +209,7 @@ export function InvoiceForm({
       termin,
       akunArId: akunArOrAp,
       deskripsi: deskripsi || undefined,
+      linkBukti: linkBuktiTrim,
       tarifPpnPersen: tarifPpn,
       lines: lines.map((l) => ({
         itemId: l.itemId, deskripsi: l.deskripsi, qty: l.qty, satuan: l.satuan,
@@ -221,6 +225,7 @@ export function InvoiceForm({
       termin,
       akunApId: akunArOrAp,
       deskripsi: deskripsi || undefined,
+      linkBukti: linkBuktiTrim,
       tarifPpnPersen: tarifPpn,
       tarifPph23Persen: tarifPph23,
       potongPph23,
@@ -330,6 +335,14 @@ export function InvoiceForm({
             <input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)}
               placeholder="(opsional)"
               className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
+          </div>
+          <div className="col-span-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+              Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span>
+            </label>
+            <input type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)}
+              placeholder="https://drive.google.com/…"
+              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono" />
           </div>
         </div>
       </section>

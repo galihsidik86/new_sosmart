@@ -24,6 +24,7 @@ interface Project { id: string; kode: string; nama: string }
 interface Detail {
   id: string; tanggal: string; cabangId: string; vendorId: string;
   termin: 'TUNAI' | 'KREDIT'; akunApId: string; deskripsi: string | null;
+  linkBukti: string | null;
   status: 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
   lines: Array<{
     no: number; itemId: string | null; deskripsi: string; qty: string; satuan: string;
@@ -90,6 +91,7 @@ export default async function PembelianEditPage({ params }: { params: Promise<{ 
             tarifPph23: 2,
             potongPph23: true,
             deskripsi: inv.deskripsi ?? '',
+            linkBukti: inv.linkBukti ?? '',
             kasBankId: inv.termin === 'TUNAI' ? inv.akunApId : undefined,
             lines: inv.lines
               .sort((a, b) => a.no - b.no)

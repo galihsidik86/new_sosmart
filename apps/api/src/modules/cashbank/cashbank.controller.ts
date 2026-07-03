@@ -77,8 +77,14 @@ export class CashBankController {
 
   @Post(':id/post')
   @Roles('OWNER', 'ADMIN', 'AKUNTAN', 'KASIR')
-  post(@Param('id') id: string) {
-    return this.cb.post(id);
+  post(
+    @Param('id') id: string,
+    @Body() body?: { overrideBudget?: boolean; alasan?: string },
+  ) {
+    return this.cb.post(id, {
+      overrideBudget: !!body?.overrideBudget,
+      alasan: body?.alasan,
+    });
   }
 
   @Post(':id/cancel')

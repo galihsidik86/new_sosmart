@@ -36,7 +36,12 @@ export class LedgerService {
     private readonly cabangScope: CabangScopeService,
   ) {}
 
-  async exportBukuXlsx(opts: { accountId: string; periodId?: string; cabangId?: string }): Promise<Buffer> {
+  async exportBukuXlsx(opts: {
+    accountId: string;
+    periodId?: string;
+    cabangId?: string;
+    projectId?: string | null;
+  }): Promise<Buffer> {
     const data = await this.buku(opts);
     return this.excel.buildBuffer(
       `BB ${data.account.kode}`,
@@ -58,6 +63,8 @@ export class LedgerService {
     accountId: string;
     periodId?: string;
     cabangId?: string;
+    /// Filter per project. null = hanya tanpa project. undefined = semua.
+    projectId?: string | null;
   }): Promise<LedgerResponse> {
     return this.tenancy.run(async (tx) => {
       const account = await tx.account.findUnique({
@@ -95,10 +102,20 @@ export class LedgerService {
         if (scope) cabangFilter = { cabangId: { in: scope } };
       }
 
+      const projectLineFilter: { projectId?: string | null } =
+        opts.projectId === undefined
+          ? {}
+          : opts.projectId === null
+            ? { projectId: null }
+            : { projectId: opts.projectId };
+      // Kalau filter per project, jangan sertakan saldoAwal tenant-level.
+      const includeAccountSaldoAwal = opts.projectId === undefined;
+
       // ---------- Saldo awal periode = saldoAwal akun + Σ posted lines sebelum period.startDate
       const sebelum = await tx.journalLine.aggregate({
         where: {
           accountId: account.id,
+          ...projectLineFilter,
           journal: {
             status: JournalStatus.POSTED,
             tanggal: { lt: period.startDate },
@@ -109,7 +126,7 @@ export class LedgerService {
       });
       const signedAwal = applySign(
         account.normalBalance,
-        new Decimal(account.saldoAwal),
+        includeAccountSaldoAwal ? new Decimal(account.saldoAwal) : new Decimal(0),
       ).plus(
         applySign(
           account.normalBalance,
@@ -128,6 +145,7 @@ export class LedgerService {
       const lines = await tx.journalLine.findMany({
         where: {
           accountId: account.id,
+          ...projectLineFilter,
           journal: {
             status: JournalStatus.POSTED,
             tanggal: { gte: period.startDate, lte: period.endDate },

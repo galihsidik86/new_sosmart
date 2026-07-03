@@ -187,6 +187,7 @@ export const createJournalInputSchema = z.object({
   cabangId: z.string().uuid(),
   tanggal: isoDateSchema,
   deskripsi: z.string().min(1).max(500),
+  linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
   sumber: journalSourceSchema.default('MANUAL'),
   sumberRef: z.string().optional(),
   lines: z.array(journalLineInputSchema).min(2, 'Minimal 2 baris jurnal'),
@@ -282,6 +283,7 @@ export const createSalesInvoiceInputSchema = z.object({
   /// Untuk TUNAI: akun kas/bank. Untuk KREDIT: akun piutang (default dari customer).
   akunArId: z.string().uuid(),
   deskripsi: z.string().max(500).optional(),
+  linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
   kodeFakturPajak: kodeFakturPajakSchema.optional(),
   nsfp: z.string().regex(/^\d{16}$/, 'NSFP harus 16 digit').optional(),
   /// Tarif PPN efektif (11 utk PMK 131/2024 normal, 12 utk BKP mewah).
@@ -315,6 +317,7 @@ export const createPurchaseInvoiceInputSchema = z.object({
   nomorVendor: z.string().max(50).optional(),
   nsfpMasukan: z.string().regex(/^\d{16}$/).optional(),
   deskripsi: z.string().max(500).optional(),
+  linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
   tarifPpnPersen: z.coerce.number().refine((n) => [11, 12].includes(n)).default(11),
   /// Tarif PPh 23 (2% jasa, 15% royalti/dividen/bunga).
   tarifPph23Persen: z.coerce.number().refine((n) => [0, 2, 15].includes(n)).default(2),
@@ -346,6 +349,7 @@ export const createCashBankInputSchema = z.object({
   total: lineMoney,
   kontak: z.string().max(200).optional(),
   deskripsi: z.string().max(500).optional(),
+  linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
   /// Lines wajib untuk RECEIPT/PAYMENT; kosong untuk TRANSFER.
   lines: z.array(cashBankLineInputSchema).default([]),
   /// Optional: link pelunasan ke faktur.

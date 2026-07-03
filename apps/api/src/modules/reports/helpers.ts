@@ -41,6 +41,11 @@ export async function aggregateAllAccounts(
     /** Restrict ke cabang yg di-allowlist (user multi-cabang restriction). */
     allowedCabangIds?: string[] | null;
     includeKinds?: AccountKind[];
+    /**
+     * Filter lines by projectId. 'null' berarti baris tanpa project (general/
+     * overhead). undefined = semua project + tanpa project (default).
+     */
+    projectId?: string | null;
   },
 ): Promise<{
   signedSaldoAwalByAcc: Map<string, Decimal>;   // signed (saldo normal positif) di startDate-1
@@ -76,6 +81,14 @@ export async function aggregateAllAccounts(
     : opts.allowedCabangIds
       ? { cabangId: { in: opts.allowedCabangIds } }
       : {};
+  // Filter per project: undefined → tanpa filter; string → project tertentu;
+  // null → hanya baris tanpa project.
+  const projectLineFilter: Prisma.JournalLineWhereInput =
+    opts.projectId === undefined
+      ? {}
+      : opts.projectId === null
+        ? { projectId: null }
+        : { projectId: opts.projectId };
 
   // Sebelum periode (untuk saldo awal periode laporan).
   let sebelumMap = new Map<string, { d: Decimal; k: Decimal }>();
@@ -83,6 +96,7 @@ export async function aggregateAllAccounts(
     const sebelum = await tx.journalLine.groupBy({
       by: ['accountId'],
       where: {
+        ...projectLineFilter,
         journal: {
           status: JournalStatus.POSTED,
           tanggal: { lt: opts.startDate },
@@ -112,7 +126,7 @@ export async function aggregateAllAccounts(
   };
   const dalam = await tx.journalLine.groupBy({
     by: ['accountId'],
-    where: { journal: dalamWhere },
+    where: { ...projectLineFilter, journal: dalamWhere },
     _sum: { debit: true, kredit: true },
   });
   const dalamMap = new Map(
@@ -125,7 +139,10 @@ export async function aggregateAllAccounts(
     ]),
   );
 
-  // Compute signed saldo awal periode (= saldoAwalAkun + mutasi sebelum, signed by normalBalance)
+  // Compute signed saldo awal periode (= saldoAwalAkun + mutasi sebelum, signed by normalBalance).
+  // Note: kalau filter per project, saldoAwalAkun (opening balance akun) TIDAK
+  // dimasukkan — itu saldo tenant-wide, bukan project-level.
+  const includeAccountSaldoAwal = opts.projectId === undefined;
   const signedSaldoAwal = new Map<string, Decimal>();
   for (const acc of accMap.values()) {
     const sb = sebelumMap.get(acc.id);
@@ -133,7 +150,10 @@ export async function aggregateAllAccounts(
       acc.normalBalance === NormalBalance.DEBIT
         ? (sb?.d ?? new Decimal(0)).minus(sb?.k ?? new Decimal(0))
         : (sb?.k ?? new Decimal(0)).minus(sb?.d ?? new Decimal(0));
-    signedSaldoAwal.set(acc.id, acc.saldoAwalAkun.plus(mutSigned));
+    signedSaldoAwal.set(
+      acc.id,
+      (includeAccountSaldoAwal ? acc.saldoAwalAkun : new Decimal(0)).plus(mutSigned),
+    );
   }
 
   return { signedSaldoAwalByAcc: signedSaldoAwal, mutasiByAcc: dalamMap, accounts: accMap };

@@ -109,8 +109,12 @@ export class JournalsController {
   post(
     @Param('id') id: string,
     @Headers('x-requested-by-user-id') requestedById?: string,
+    @Body() body?: { overrideBudget?: boolean; alasan?: string },
   ) {
-    return this.journals.post(id, requestedById);
+    return this.journals.post(id, requestedById, {
+      overrideBudget: !!body?.overrideBudget,
+      alasan: body?.alasan,
+    });
   }
 
   @Post(':id/reverse')
