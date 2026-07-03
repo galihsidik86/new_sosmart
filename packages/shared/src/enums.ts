@@ -108,11 +108,17 @@ export const BuktiPotongStatus = {
 } as const;
 export type BuktiPotongStatus = (typeof BuktiPotongStatus)[keyof typeof BuktiPotongStatus];
 
-/** Mapping PTKP status → kategori TER. */
+/**
+ * Mapping PTKP status → kategori TER PMK 168/2023 (Lampiran).
+ *   A: TK/0, TK/1, K/0   (PTKP 54jt – 58,5jt)
+ *   B: TK/2, TK/3, K/1, K/2  (PTKP 63jt – 67,5jt)
+ *   C: K/3               (PTKP 72jt)
+ * HB_* (legacy) → C (default konservatif; PMK tidak mengatur eksplisit).
+ */
 export const PTKP_TO_KATEGORI: Record<PtkpStatus, PtkpKategori> = {
-  TK_0: 'A',
-  TK_1: 'B', K_0: 'B', TK_2: 'B',
-  TK_3: 'C', K_1: 'C', K_2: 'C', K_3: 'C',
+  TK_0: 'A', TK_1: 'A', K_0: 'A',
+  TK_2: 'B', TK_3: 'B', K_1: 'B', K_2: 'B',
+  K_3: 'C',
   HB_0: 'C', HB_1: 'C', HB_2: 'C', HB_3: 'C',
 };
 

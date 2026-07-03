@@ -111,12 +111,12 @@ export default async function PayrollListPage({
           </a>
         </div>
 
-        <div className="mb-6 rounded-xl border border-emas-300 bg-emas-100 px-4 py-3 text-sm text-emas-700">
-          <strong>Peringatan:</strong> Tabel TER (Tarif Efektif Rata-rata) yang dipakai saat ini
-          adalah <em>placeholder/demo</em> — angka brackets bukan reproduksi tabel resmi PMK
-          168/2023. <strong>Sebelum go-live</strong>, ganti isi{' '}
-          <code className="font-mono text-xs">apps/api/src/modules/payroll/ter-table.ts</code>{' '}
-          dengan bracket resmi DJP.
+        <div className="mb-6 rounded-xl border border-padi-300 bg-padi-50 px-4 py-3 text-xs text-tanah-700">
+          Tabel TER (Tarif Efektif Rata-rata) telah di-populate sesuai PMK 168/2023
+          (44 bracket kategori A, 40 kategori B, 41 kategori C). Bracket di atas
+          Rp 1 miliar/bulan (rate 30–34%) untuk kategori B &amp; C direkonstruksi dari
+          pattern progresif — <strong>verifikasi ulang</strong> Lampiran PDF resmi PMK
+          168/2023 kalau ada karyawan berpenghasilan &gt; Rp 700 juta/bulan.
         </div>
 
         <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">

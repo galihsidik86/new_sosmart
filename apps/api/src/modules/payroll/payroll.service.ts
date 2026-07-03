@@ -25,11 +25,22 @@ import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.servi
 import { JournalsService } from '../journals/journals.service.js';
 import { lookupTer } from './ter-table.js';
 
-/** Mapping PTKP status → kategori TER PMK 168/2023. */
+/**
+ * Mapping PTKP status → kategori TER PMK 168/2023.
+ *
+ * Sesuai Lampiran PMK 168/2023:
+ *   Kategori A (PTKP 54jt – 58,5jt): TK/0, TK/1, K/0
+ *   Kategori B (PTKP 63jt – 67,5jt): TK/2, TK/3, K/1, K/2
+ *   Kategori C (PTKP 72jt):          K/3
+ *
+ * HB (Hidup Bersama — legacy) tidak diatur eksplisit di PMK; dipetakan ke C
+ * (kategori tertinggi) sebagai default konservatif — hasil pemotongan lebih
+ * besar tapi tidak melanggar aturan.
+ */
 const PTKP_TO_KATEGORI: Record<PtkpStatus, PtkpKategori> = {
-  TK_0: PtkpKategori.A,
-  TK_1: PtkpKategori.B, K_0: PtkpKategori.B, TK_2: PtkpKategori.B,
-  TK_3: PtkpKategori.C, K_1: PtkpKategori.C, K_2: PtkpKategori.C, K_3: PtkpKategori.C,
+  TK_0: PtkpKategori.A, TK_1: PtkpKategori.A, K_0: PtkpKategori.A,
+  TK_2: PtkpKategori.B, TK_3: PtkpKategori.B, K_1: PtkpKategori.B, K_2: PtkpKategori.B,
+  K_3: PtkpKategori.C,
   HB_0: PtkpKategori.C, HB_1: PtkpKategori.C, HB_2: PtkpKategori.C, HB_3: PtkpKategori.C,
 };
 
