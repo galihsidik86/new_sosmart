@@ -280,6 +280,118 @@ export class ReportsController {
     return this.ap.statement({ vendorId, asOf, cabangId: cabangId || undefined });
   }
 
+  // --------------- AR / AP Aging PDF ---------------
+
+  @Get('ar-aging.pdf')
+  async arAgingPdf(
+    @Res() reply: ReplyLike,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.ar.build({ asOf, cabangId: cabangId || undefined }),
+      this.tenantNama(),
+    ]);
+    sendPdf(reply, `aging-piutang-${asOf}.pdf`, await this.pdf.buildArAging(data, nama));
+  }
+
+  @Get('ar-statement.pdf')
+  async arStatementPdf(
+    @Res() reply: ReplyLike,
+    @Query('customerId') customerId: string,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.ar.statement({ customerId, asOf, cabangId: cabangId || undefined }),
+      this.tenantNama(),
+    ]);
+    sendPdf(reply, `statement-piutang-${data.customer.kode}-${asOf}.pdf`, await this.pdf.buildArStatement(data, nama));
+  }
+
+  @Get('ap-aging.pdf')
+  async apAgingPdf(
+    @Res() reply: ReplyLike,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.ap.build({ asOf, cabangId: cabangId || undefined }),
+      this.tenantNama(),
+    ]);
+    sendPdf(reply, `aging-utang-${asOf}.pdf`, await this.pdf.buildApAging(data, nama));
+  }
+
+  @Get('ap-statement.pdf')
+  async apStatementPdf(
+    @Res() reply: ReplyLike,
+    @Query('vendorId') vendorId: string,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.ap.statement({ vendorId, asOf, cabangId: cabangId || undefined }),
+      this.tenantNama(),
+    ]);
+    sendPdf(reply, `statement-utang-${data.vendor.kode}-${asOf}.pdf`, await this.pdf.buildApStatement(data, nama));
+  }
+
+  // --------------- AR / AP Aging Excel ---------------
+
+  @Get('ar-aging.xlsx')
+  async arAgingXlsx(
+    @Res() reply: ReplyLike,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.ar.build({ asOf, cabangId: cabangId || undefined }),
+      this.tenantNama(),
+    ]);
+    sendXlsx(reply, `aging-piutang-${asOf}.xlsx`, await this.xlsx.buildArAging(data, nama));
+  }
+
+  @Get('ar-statement.xlsx')
+  async arStatementXlsx(
+    @Res() reply: ReplyLike,
+    @Query('customerId') customerId: string,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.ar.statement({ customerId, asOf, cabangId: cabangId || undefined }),
+      this.tenantNama(),
+    ]);
+    sendXlsx(reply, `statement-piutang-${data.customer.kode}-${asOf}.xlsx`, await this.xlsx.buildArStatement(data, nama));
+  }
+
+  @Get('ap-aging.xlsx')
+  async apAgingXlsx(
+    @Res() reply: ReplyLike,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.ap.build({ asOf, cabangId: cabangId || undefined }),
+      this.tenantNama(),
+    ]);
+    sendXlsx(reply, `aging-utang-${asOf}.xlsx`, await this.xlsx.buildApAging(data, nama));
+  }
+
+  @Get('ap-statement.xlsx')
+  async apStatementXlsx(
+    @Res() reply: ReplyLike,
+    @Query('vendorId') vendorId: string,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.ap.statement({ vendorId, asOf, cabangId: cabangId || undefined }),
+      this.tenantNama(),
+    ]);
+    sendXlsx(reply, `statement-utang-${data.vendor.kode}-${asOf}.xlsx`, await this.xlsx.buildApStatement(data, nama));
+  }
+
   @Get('perubahan-ekuitas.xlsx')
   async perubahanEkuitasXlsx(
     @Res() reply: ReplyLike,

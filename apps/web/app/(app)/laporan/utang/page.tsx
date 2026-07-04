@@ -64,13 +64,31 @@ export default async function UtangPage({
     <>
       <Topbar breadcrumb="Laporan / Utang" tenantNama={s.tenantNama!} />
       <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Aging Utang Usaha
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Saldo utang per vendor · umur dari jatuh tempo · pembayaran ≤ tanggal patokan · sudah dikurangi PPh 23 dipotong.
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-wedel-900">
+              Aging Utang Usaha
+            </h1>
+            <p className="text-sm text-tanah-500 mt-1">
+              Saldo utang per vendor · umur dari jatuh tempo · pembayaran ≤ tanggal patokan · sudah dikurangi PPh 23 dipotong.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/proxy/reports/ap-aging.xlsx?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+            >
+              Export Excel
+            </a>
+            <a
+              href={`/proxy/reports/ap-aging.pdf?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
+            >
+              Preview PDF
+            </a>
+          </div>
         </div>
 
         <form method="GET" className="mb-4 flex items-end gap-3 bg-white p-4 rounded-xl border border-cream-200">

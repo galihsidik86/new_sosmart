@@ -73,6 +73,22 @@ export default async function PiutangPage({
               Saldo piutang per pelanggan · umur dihitung dari jatuh tempo · pembayaran ≤ tanggal patokan.
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/proxy/reports/ar-aging.xlsx?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
+            >
+              Export Excel
+            </a>
+            <a
+              href={`/proxy/reports/ar-aging.pdf?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
+            >
+              Preview PDF
+            </a>
+          </div>
         </div>
 
         <form

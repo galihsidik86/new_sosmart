@@ -80,12 +80,30 @@ export default async function PiutangStatementPage({
               Kode {st.customer.kode} · patokan {fmtTanggal(asOf)}
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold">
-              Total Saldo
+          <div className="flex items-start gap-4">
+            <div className="flex flex-col gap-2">
+              <a
+                href={`/proxy/reports/ar-statement.xlsx?customerId=${customerId}&asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+                className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700 text-center"
+              >
+                Export Excel
+              </a>
+              <a
+                href={`/proxy/reports/ar-statement.pdf?customerId=${customerId}&asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700 text-center"
+              >
+                Preview PDF
+              </a>
             </div>
-            <div className="text-2xl font-mono tabular-nums font-bold text-wedel-900">
-              {fmtRp(st.totalSaldo)}
+            <div className="text-right">
+              <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold">
+                Total Saldo
+              </div>
+              <div className="text-2xl font-mono tabular-nums font-bold text-wedel-900">
+                {fmtRp(st.totalSaldo)}
+              </div>
             </div>
           </div>
         </div>

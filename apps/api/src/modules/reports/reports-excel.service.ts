@@ -6,6 +6,8 @@ import type { ArusKasResponse } from './arus-kas.service.js';
 import type { PerubahanEkuitasResponse } from './perubahan-ekuitas.service.js';
 import type { TrialBalanceResponse } from '../ledger/trial-balance.service.js';
 import type { BudgetActualResponse } from './budget-actual.service.js';
+import type { ArAgingResponse, ArStatementResponse } from './ar-aging.service.js';
+import type { ApAgingResponse, ApStatementResponse } from './ap-aging.service.js';
 
 /**
  * Render Excel untuk 5 laporan keuangan. Format bebas (bukan ExcelService
@@ -390,6 +392,202 @@ export class ReportsExcelService {
       ws.getCell(`${c}${r}`).font = { bold: true, size: 12 };
     });
 
+    return this.toBuffer(wb);
+  }
+
+  // -------- Fase G: Aging Piutang / Utang --------
+
+  private agingHeader(ws: ExcelJS.Worksheet, tenantNama: string, judul: string, asOf: string) {
+    ws.mergeCells('A1:H1');
+    ws.getCell('A1').value = tenantNama;
+    ws.getCell('A1').alignment = { horizontal: 'center' };
+    ws.getCell('A1').font = { bold: true, size: 12 };
+    ws.mergeCells('A2:H2');
+    ws.getCell('A2').value = judul;
+    ws.getCell('A2').alignment = { horizontal: 'center' };
+    ws.getCell('A2').font = { bold: true, size: 14 };
+    ws.mergeCells('A3:H3');
+    ws.getCell('A3').value = `Per tanggal: ${asOf}`;
+    ws.getCell('A3').alignment = { horizontal: 'center' };
+    ws.getCell('A3').font = { color: { argb: 'FF666666' } };
+  }
+
+  private agingSummarySheet(
+    ws: ExcelJS.Worksheet,
+    partyLabel: string,
+    rows: Array<{
+      kode: string; nama: string; jumlahFaktur: number;
+      buckets: { belumJatuh: string; b1_30: string; b31_60: string; b61_90: string; above90: string };
+      saldo: string;
+    }>,
+    total: { belumJatuh: string; b1_30: string; b31_60: string; b61_90: string; above90: string; saldo: string },
+  ) {
+    ws.columns = [
+      { key: 'kode', width: 14 },
+      { key: 'nama', width: 34 },
+      { key: 'fak', width: 8 },
+      { key: 'belumJatuh', width: 16 },
+      { key: 'b1_30', width: 16 },
+      { key: 'b31_60', width: 16 },
+      { key: 'b61_90', width: 16 },
+      { key: 'above90', width: 16 },
+      { key: 'saldo', width: 18 },
+    ];
+    // Header row (baris 5)
+    const headers = ['Kode', partyLabel, 'Faktur', 'Belum JT', '1-30 hari', '31-60 hari', '61-90 hari', '> 90 hari', 'Saldo'];
+    headers.forEach((h, i) => {
+      const cell = ws.getRow(5).getCell(i + 1);
+      cell.value = h;
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F1E8' } };
+    });
+
+    let r = 6;
+    for (const row of rows) {
+      ws.getCell(`A${r}`).value = row.kode;
+      ws.getCell(`B${r}`).value = row.nama;
+      ws.getCell(`C${r}`).value = row.jumlahFaktur;
+      ws.getCell(`D${r}`).value = Number(row.buckets.belumJatuh);
+      ws.getCell(`E${r}`).value = Number(row.buckets.b1_30);
+      ws.getCell(`F${r}`).value = Number(row.buckets.b31_60);
+      ws.getCell(`G${r}`).value = Number(row.buckets.b61_90);
+      ws.getCell(`H${r}`).value = Number(row.buckets.above90);
+      ws.getCell(`I${r}`).value = Number(row.saldo);
+      ['D', 'E', 'F', 'G', 'H', 'I'].forEach((c) => {
+        ws.getCell(`${c}${r}`).numFmt = '#,##0.00';
+      });
+      ws.getCell(`I${r}`).font = { bold: true };
+      r++;
+    }
+    // Total
+    ws.getCell(`A${r}`).value = 'TOTAL';
+    ws.getCell(`A${r}`).font = { bold: true };
+    ws.getCell(`D${r}`).value = Number(total.belumJatuh);
+    ws.getCell(`E${r}`).value = Number(total.b1_30);
+    ws.getCell(`F${r}`).value = Number(total.b31_60);
+    ws.getCell(`G${r}`).value = Number(total.b61_90);
+    ws.getCell(`H${r}`).value = Number(total.above90);
+    ws.getCell(`I${r}`).value = Number(total.saldo);
+    ['D', 'E', 'F', 'G', 'H', 'I'].forEach((c) => {
+      ws.getCell(`${c}${r}`).numFmt = '#,##0.00';
+      ws.getCell(`${c}${r}`).font = { bold: true };
+      ws.getCell(`${c}${r}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F1E8' } };
+    });
+    ws.getCell(`A${r}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F1E8' } };
+    ws.getCell(`B${r}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F1E8' } };
+    ws.getCell(`C${r}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F1E8' } };
+  }
+
+  async buildArAging(data: ArAgingResponse, tenantNama: string): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Aging Piutang');
+    this.agingHeader(ws, tenantNama, 'Aging Piutang Usaha', data.asOf);
+    this.agingSummarySheet(ws, 'Pelanggan', data.rows, { ...data.totalBuckets, saldo: data.totalSaldo });
+    return this.toBuffer(wb);
+  }
+
+  async buildApAging(data: ApAgingResponse, tenantNama: string): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Aging Utang');
+    this.agingHeader(ws, tenantNama, 'Aging Utang Usaha', data.asOf);
+    this.agingSummarySheet(ws, 'Vendor', data.rows, { ...data.totalBuckets, saldo: data.totalSaldo });
+    return this.toBuffer(wb);
+  }
+
+  private statementSheet(
+    ws: ExcelJS.Worksheet,
+    invoices: Array<{
+      nomor: string | null; tanggal: string; jatuhTempo: string;
+      totalNetto: string; dibayar: string; sisa: string;
+      daysOverdue: number; bucket: string;
+      payments: Array<{ nomor: string | null; tanggal: string; total: string }>;
+    }>,
+    totalSaldo: string,
+    buckets: { belumJatuh: string; b1_30: string; b31_60: string; b61_90: string; above90: string },
+  ) {
+    ws.columns = [
+      { key: 'nomor', width: 20 },
+      { key: 'tanggal', width: 14 },
+      { key: 'jt', width: 14 },
+      { key: 'umur', width: 10 },
+      { key: 'netto', width: 16 },
+      { key: 'dibayar', width: 16 },
+      { key: 'sisa', width: 16 },
+      { key: 'bucket', width: 18 },
+    ];
+
+    // Kartu bucket di baris 5
+    ws.getCell('A5').value = 'Belum JT';
+    ws.getCell('B5').value = '1-30';
+    ws.getCell('C5').value = '31-60';
+    ws.getCell('D5').value = '61-90';
+    ws.getCell('E5').value = '> 90';
+    ws.getCell('F5').value = 'TOTAL SALDO';
+    ['A5', 'B5', 'C5', 'D5', 'E5', 'F5'].forEach((c) => {
+      ws.getCell(c).font = { bold: true };
+      ws.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F1E8' } };
+    });
+    ws.getCell('A6').value = Number(buckets.belumJatuh);
+    ws.getCell('B6').value = Number(buckets.b1_30);
+    ws.getCell('C6').value = Number(buckets.b31_60);
+    ws.getCell('D6').value = Number(buckets.b61_90);
+    ws.getCell('E6').value = Number(buckets.above90);
+    ws.getCell('F6').value = Number(totalSaldo);
+    ['A6', 'B6', 'C6', 'D6', 'E6', 'F6'].forEach((c) => {
+      ws.getCell(c).numFmt = '#,##0.00';
+    });
+    ws.getCell('F6').font = { bold: true };
+
+    // Header tabel di baris 8
+    const headers = ['Nomor', 'Tanggal', 'Jatuh Tempo', 'Umur (hr)', 'Netto', 'Dibayar', 'Sisa', 'Bucket'];
+    headers.forEach((h, i) => {
+      const cell = ws.getRow(8).getCell(i + 1);
+      cell.value = h;
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F1E8' } };
+    });
+
+    let r = 9;
+    for (const inv of invoices) {
+      ws.getCell(`A${r}`).value = inv.nomor ?? '';
+      ws.getCell(`B${r}`).value = inv.tanggal;
+      ws.getCell(`C${r}`).value = inv.jatuhTempo;
+      ws.getCell(`D${r}`).value = inv.daysOverdue;
+      ws.getCell(`E${r}`).value = Number(inv.totalNetto);
+      ws.getCell(`F${r}`).value = Number(inv.dibayar);
+      ws.getCell(`G${r}`).value = Number(inv.sisa);
+      ws.getCell(`H${r}`).value = inv.bucket;
+      ['E', 'F', 'G'].forEach((c) => {
+        ws.getCell(`${c}${r}`).numFmt = '#,##0.00';
+      });
+      ws.getCell(`G${r}`).font = { bold: true };
+      r++;
+      for (const p of inv.payments) {
+        ws.getCell(`A${r}`).value = `  ↳ ${p.nomor ?? ''}`;
+        ws.getCell(`A${r}`).font = { italic: true, color: { argb: 'FF666666' } };
+        ws.getCell(`B${r}`).value = p.tanggal;
+        ws.getCell(`C${r}`).value = 'pelunasan';
+        ws.getCell(`F${r}`).value = -Number(p.total);
+        ws.getCell(`F${r}`).numFmt = '#,##0.00';
+        ws.getCell(`F${r}`).font = { italic: true, color: { argb: 'FF666666' } };
+        r++;
+      }
+    }
+  }
+
+  async buildArStatement(data: ArStatementResponse, tenantNama: string): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Statement Piutang');
+    this.agingHeader(ws, tenantNama, `Statement Piutang — ${data.customer.kode} ${data.customer.nama}`, data.asOf);
+    this.statementSheet(ws, data.invoices, data.totalSaldo, data.totalBuckets);
+    return this.toBuffer(wb);
+  }
+
+  async buildApStatement(data: ApStatementResponse, tenantNama: string): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Statement Utang');
+    this.agingHeader(ws, tenantNama, `Statement Utang — ${data.vendor.kode} ${data.vendor.nama}`, data.asOf);
+    this.statementSheet(ws, data.invoices, data.totalSaldo, data.totalBuckets);
     return this.toBuffer(wb);
   }
 }

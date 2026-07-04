@@ -5,6 +5,8 @@ import type { LabaRugiResponse, LabaRugiAccount } from './laba-rugi.service.js';
 import type { NeracaResponse } from './neraca.service.js';
 import type { ArusKasResponse } from './arus-kas.service.js';
 import type { PerubahanEkuitasResponse } from './perubahan-ekuitas.service.js';
+import type { ArAgingResponse, ArStatementResponse } from './ar-aging.service.js';
+import type { ApAgingResponse, ApStatementResponse } from './ap-aging.service.js';
 
 /**
  * Render PDF untuk 4 laporan keuangan SAK ETAP.
@@ -226,6 +228,213 @@ export class ReportsPdfService {
           [{ text: '' }, { text: '' }],
           [{ text: 'TOTAL EKUITAS', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.saldoAkhir.total), alignment: 'right', bold: true, fontSize: 11 }],
         ] }, layout: 'lightHorizontalLines' },
+      ],
+      footer: () => this.footer(),
+      defaultStyle: { font: 'Roboto' },
+    };
+    return this.pdf.buildBuffer(def);
+  }
+
+  // -------- Fase G: Aging Piutang / Utang --------
+
+  private agingHeader(judul: string, asOf: string, tenantNama: string): Content {
+    return {
+      stack: [
+        { text: tenantNama, fontSize: 12, bold: true, alignment: 'center' },
+        { text: judul, fontSize: 16, bold: true, alignment: 'center', margin: [0, 4, 0, 2] },
+        { text: `Per tanggal: ${asOf}`, fontSize: 10, alignment: 'center', color: '#666' },
+        { canvas: [{ type: 'line', x1: 0, y1: 8, x2: 750, y2: 8, lineWidth: 0.5, lineColor: '#999' }] },
+      ],
+      margin: [0, 0, 0, 12],
+    };
+  }
+
+  private agingSummaryTable(
+    rows: Array<{ kode: string; nama: string; jumlahFaktur: number; buckets: { belumJatuh: string; b1_30: string; b31_60: string; b61_90: string; above90: string }; saldo: string }>,
+    total: { belumJatuh: string; b1_30: string; b31_60: string; b61_90: string; above90: string; saldo: string },
+    partyLabel: string,
+  ): Content {
+    const head: TableCell[] = [
+      { text: partyLabel, bold: true, fontSize: 9, fillColor: '#F5F1E8' },
+      { text: 'Fak', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: 'Belum JT', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: '1-30 hr', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: '31-60 hr', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: '61-90 hr', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: '> 90 hr', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: 'Saldo', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+    ];
+    const body: TableCell[][] = [head];
+    for (const r of rows) {
+      body.push([
+        { text: `${r.kode} — ${r.nama}`, fontSize: 8 },
+        { text: String(r.jumlahFaktur), fontSize: 8, alignment: 'right' },
+        { text: this.pdf.formatRp(r.buckets.belumJatuh), fontSize: 8, alignment: 'right' },
+        { text: this.pdf.formatRp(r.buckets.b1_30), fontSize: 8, alignment: 'right' },
+        { text: this.pdf.formatRp(r.buckets.b31_60), fontSize: 8, alignment: 'right' },
+        { text: this.pdf.formatRp(r.buckets.b61_90), fontSize: 8, alignment: 'right' },
+        { text: this.pdf.formatRp(r.buckets.above90), fontSize: 8, alignment: 'right' },
+        { text: this.pdf.formatRp(r.saldo), fontSize: 8, alignment: 'right', bold: true },
+      ]);
+    }
+    body.push([
+      { text: 'TOTAL', bold: true, fontSize: 9, fillColor: '#F5F1E8' },
+      { text: '', fillColor: '#F5F1E8' },
+      { text: this.pdf.formatRp(total.belumJatuh), bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: this.pdf.formatRp(total.b1_30), bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: this.pdf.formatRp(total.b31_60), bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: this.pdf.formatRp(total.b61_90), bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: this.pdf.formatRp(total.above90), bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: this.pdf.formatRp(total.saldo), bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+    ]);
+    return {
+      table: {
+        widths: ['*', 25, 65, 65, 65, 65, 65, 75],
+        headerRows: 1,
+        body,
+      },
+      layout: 'lightHorizontalLines',
+    };
+  }
+
+  buildArAging(data: ArAgingResponse, tenantNama: string): Promise<Buffer> {
+    const def: TDocumentDefinitions = {
+      pageMargins: [30, 40, 30, 40],
+      pageSize: 'A4',
+      pageOrientation: 'landscape',
+      content: [
+        this.agingHeader('Aging Piutang Usaha', data.asOf, tenantNama),
+        this.agingSummaryTable(
+          data.rows,
+          { ...data.totalBuckets, saldo: data.totalSaldo },
+          'Pelanggan',
+        ),
+      ],
+      footer: () => this.footer(),
+      defaultStyle: { font: 'Roboto' },
+    };
+    return this.pdf.buildBuffer(def);
+  }
+
+  buildApAging(data: ApAgingResponse, tenantNama: string): Promise<Buffer> {
+    const rowsMapped = data.rows.map((r) => ({
+      kode: r.kode,
+      nama: r.nama,
+      jumlahFaktur: r.jumlahFaktur,
+      buckets: r.buckets,
+      saldo: r.saldo,
+    }));
+    const def: TDocumentDefinitions = {
+      pageMargins: [30, 40, 30, 40],
+      pageSize: 'A4',
+      pageOrientation: 'landscape',
+      content: [
+        this.agingHeader('Aging Utang Usaha', data.asOf, tenantNama),
+        this.agingSummaryTable(
+          rowsMapped,
+          { ...data.totalBuckets, saldo: data.totalSaldo },
+          'Vendor',
+        ),
+      ],
+      footer: () => this.footer(),
+      defaultStyle: { font: 'Roboto' },
+    };
+    return this.pdf.buildBuffer(def);
+  }
+
+  private statementTable(
+    invoices: Array<{
+      nomor: string | null; tanggal: string; jatuhTempo: string;
+      totalNetto: string; dibayar: string; sisa: string;
+      daysOverdue: number; bucket: string;
+      payments: Array<{ nomor: string | null; tanggal: string; total: string }>;
+    }>,
+  ): Content {
+    const head: TableCell[] = [
+      { text: 'Nomor', bold: true, fontSize: 9, fillColor: '#F5F1E8' },
+      { text: 'Tanggal', bold: true, fontSize: 9, fillColor: '#F5F1E8' },
+      { text: 'Jatuh Tempo', bold: true, fontSize: 9, fillColor: '#F5F1E8' },
+      { text: 'Umur', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: 'Netto', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: 'Dibayar', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+      { text: 'Sisa', bold: true, fontSize: 9, alignment: 'right', fillColor: '#F5F1E8' },
+    ];
+    const body: TableCell[][] = [head];
+    for (const inv of invoices) {
+      body.push([
+        { text: inv.nomor ?? '—', fontSize: 8 },
+        { text: inv.tanggal, fontSize: 8 },
+        { text: inv.jatuhTempo, fontSize: 8 },
+        {
+          text: inv.daysOverdue > 0 ? `+${inv.daysOverdue}` : String(inv.daysOverdue),
+          fontSize: 8, alignment: 'right',
+          color: inv.daysOverdue > 0 ? '#a40' : '#666',
+        },
+        { text: this.pdf.formatRp(inv.totalNetto), fontSize: 8, alignment: 'right' },
+        { text: this.pdf.formatRp(inv.dibayar), fontSize: 8, alignment: 'right', color: '#666' },
+        { text: this.pdf.formatRp(inv.sisa), fontSize: 8, alignment: 'right', bold: true },
+      ]);
+      for (const p of inv.payments) {
+        body.push([
+          { text: `  ↳ ${p.nomor ?? '—'}`, fontSize: 8, color: '#666', italics: true },
+          { text: p.tanggal, fontSize: 8, color: '#666', italics: true },
+          { text: 'pelunasan', fontSize: 8, color: '#999', italics: true, colSpan: 3 },
+          {}, {},
+          { text: `(${this.pdf.formatRp(p.total)})`, fontSize: 8, color: '#666', italics: true, alignment: 'right' },
+          {},
+        ]);
+      }
+    }
+    return {
+      table: { widths: [90, 60, 60, 40, 80, 80, 80], headerRows: 1, body },
+      layout: 'lightHorizontalLines',
+    };
+  }
+
+  private statementBuckets(
+    buckets: { belumJatuh: string; b1_30: string; b31_60: string; b61_90: string; above90: string },
+    totalSaldo: string,
+  ): Content {
+    return {
+      columns: [
+        { text: `Belum JT: ${this.pdf.formatRp(buckets.belumJatuh)}`, fontSize: 9 },
+        { text: `1-30: ${this.pdf.formatRp(buckets.b1_30)}`, fontSize: 9 },
+        { text: `31-60: ${this.pdf.formatRp(buckets.b31_60)}`, fontSize: 9 },
+        { text: `61-90: ${this.pdf.formatRp(buckets.b61_90)}`, fontSize: 9 },
+        { text: `>90: ${this.pdf.formatRp(buckets.above90)}`, fontSize: 9 },
+        { text: `Saldo: ${this.pdf.formatRp(totalSaldo)}`, fontSize: 10, bold: true, alignment: 'right' },
+      ],
+      margin: [0, 6, 0, 10],
+    };
+  }
+
+  buildArStatement(data: ArStatementResponse, tenantNama: string): Promise<Buffer> {
+    const def: TDocumentDefinitions = {
+      pageMargins: [40, 40, 40, 40],
+      content: [
+        this.agingHeader(
+          `Statement Piutang — ${data.customer.kode} ${data.customer.nama}`,
+          data.asOf, tenantNama,
+        ),
+        this.statementBuckets(data.totalBuckets, data.totalSaldo),
+        this.statementTable(data.invoices),
+      ],
+      footer: () => this.footer(),
+      defaultStyle: { font: 'Roboto' },
+    };
+    return this.pdf.buildBuffer(def);
+  }
+
+  buildApStatement(data: ApStatementResponse, tenantNama: string): Promise<Buffer> {
+    const def: TDocumentDefinitions = {
+      pageMargins: [40, 40, 40, 40],
+      content: [
+        this.agingHeader(
+          `Statement Utang — ${data.vendor.kode} ${data.vendor.nama}`,
+          data.asOf, tenantNama,
+        ),
+        this.statementBuckets(data.totalBuckets, data.totalSaldo),
+        this.statementTable(data.invoices),
       ],
       footer: () => this.footer(),
       defaultStyle: { font: 'Roboto' },
