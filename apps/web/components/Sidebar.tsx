@@ -46,6 +46,8 @@ const NAV: NavItem[] = [
   { group: 'Laporan', href: '/laporan/neraca', label: 'Neraca', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/arus-kas', label: 'Arus Kas', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/perubahan-ekuitas', label: 'Perubahan Ekuitas', roles: ACCOUNTING },
+  { group: 'Laporan', href: '/laporan/piutang', label: 'Aging Piutang', roles: ACCOUNTING },
+  { group: 'Laporan', href: '/laporan/utang', label: 'Aging Utang', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/budget-actual', label: 'Budget vs Actual', roles: FULL },
   { group: 'Pengaturan', href: '/pengaturan/periode', label: 'Periode Buku', roles: FULL },
   { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang', roles: ADMIN_ONLY },

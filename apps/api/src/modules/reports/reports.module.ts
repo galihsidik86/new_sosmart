@@ -7,6 +7,8 @@ import { PerubahanEkuitasService } from './perubahan-ekuitas.service.js';
 import { BudgetActualService } from './budget-actual.service.js';
 import { ReportsPdfService } from './reports-pdf.service.js';
 import { ReportsExcelService } from './reports-excel.service.js';
+import { ArAgingService } from './ar-aging.service.js';
+import { ApAgingService } from './ap-aging.service.js';
 
 @Module({
   controllers: [ReportsController],
@@ -18,6 +20,8 @@ import { ReportsExcelService } from './reports-excel.service.js';
     BudgetActualService,
     ReportsPdfService,
     ReportsExcelService,
+    ArAgingService,
+    ApAgingService,
   ],
   exports: [
     LabaRugiService,
@@ -26,6 +30,8 @@ import { ReportsExcelService } from './reports-excel.service.js';
     PerubahanEkuitasService,
     BudgetActualService,
     ReportsExcelService,
+    ArAgingService,
+    ApAgingService,
   ],
 })
 export class ReportsModule {}

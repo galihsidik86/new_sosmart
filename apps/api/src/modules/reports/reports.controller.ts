@@ -11,6 +11,8 @@ import { PerubahanEkuitasService } from './perubahan-ekuitas.service.js';
 import { BudgetActualService } from './budget-actual.service.js';
 import { ReportsPdfService } from './reports-pdf.service.js';
 import { ReportsExcelService } from './reports-excel.service.js';
+import { ArAgingService } from './ar-aging.service.js';
+import { ApAgingService } from './ap-aging.service.js';
 
 @Controller('reports')
 @UseGuards(TenantGuard)
@@ -22,6 +24,8 @@ export class ReportsController {
     private readonly ak: ArusKasService,
     private readonly pe: PerubahanEkuitasService,
     private readonly ba: BudgetActualService,
+    private readonly ar: ArAgingService,
+    private readonly ap: ApAgingService,
     private readonly pdf: ReportsPdfService,
     private readonly xlsx: ReportsExcelService,
     private readonly tenancy: TenancyService,
@@ -238,6 +242,42 @@ export class ReportsController {
       this.tenantNama(),
     ]);
     sendXlsx(reply, 'arus-kas.xlsx', await this.xlsx.buildArusKas(data, nama));
+  }
+
+  // --------------- AR / AP Aging (Fase G) ---------------
+
+  @Get('ar-aging')
+  arAging(
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    return this.ar.build({ asOf, cabangId: cabangId || undefined });
+  }
+
+  @Get('ar-statement')
+  arStatement(
+    @Query('customerId') customerId: string,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    return this.ar.statement({ customerId, asOf, cabangId: cabangId || undefined });
+  }
+
+  @Get('ap-aging')
+  apAging(
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    return this.ap.build({ asOf, cabangId: cabangId || undefined });
+  }
+
+  @Get('ap-statement')
+  apStatement(
+    @Query('vendorId') vendorId: string,
+    @Query('asOf') asOf: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    return this.ap.statement({ vendorId, asOf, cabangId: cabangId || undefined });
   }
 
   @Get('perubahan-ekuitas.xlsx')
