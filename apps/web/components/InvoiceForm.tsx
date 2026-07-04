@@ -56,6 +56,8 @@ export interface InvoiceDefaultValues {
   tarifPpn: 11 | 12;
   tarifPph23?: 0 | 2 | 15;
   potongPph23?: boolean;
+  /** Kalau true, hargaSatuan input sudah include PPN (mode POS/harga tag). */
+  hargaTermasukPajak?: boolean;
   /** Untuk TUNAI: id akun kas/bank. */
   kasBankId?: string;
   deskripsi: string;
@@ -101,6 +103,7 @@ export function InvoiceForm({
   const [tarifPpn, setTarifPpn] = useState<11 | 12>(defaultValues?.tarifPpn ?? 11);
   const [tarifPph23, setTarifPph23] = useState<0 | 2 | 15>(defaultValues?.tarifPph23 ?? 2);
   const [potongPph23, setPotongPph23] = useState(defaultValues?.potongPph23 ?? true);
+  const [hargaTermasukPajak, setHargaTermasukPajak] = useState(defaultValues?.hargaTermasukPajak ?? false);
   const [kasBankId, setKasBankId] = useState(defaultValues?.kasBankId ?? kasBankAccounts[0]?.id ?? '');
   const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
   const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
@@ -160,20 +163,27 @@ export function InvoiceForm({
   const removeLine = (i: number) =>
     setLines((p) => (p.length <= 1 ? p : p.filter((_, k) => k !== i)));
 
-  // Compute totals
+  // Compute totals. Mirror backend `computeTotals` — kalau `hargaTermasukPajak`,
+  // gross ← qty × harga; DPP di-reverse-calc dari gross (gross / (1 + tarifEff)).
+  const tarifEff = tarifPpn === 11 ? 0.11 : tarifPpn / 100;
   const totals = useMemo(() => {
     let totDpp = 0, totPpn = 0, totPph23 = 0;
     const partyPkp = mode === 'purchase' ? party?.isPkp ?? false : true;
     for (const l of lines) {
       const qty = Number(l.qty || 0);
       const harga = Number(l.hargaSatuan || 0);
-      const bruto = qty * harga;
-      const diskon = bruto * (Number(l.diskonPersen || 0) / 100);
-      const dpp = bruto - diskon;
-      let ppn = 0;
-      if (PPNABLE.includes(l.klasifikasiPpn) && (mode === 'sales' || partyPkp)) {
-        if (tarifPpn === 11) ppn = dpp * (11 / 12) * 0.12;
-        else ppn = dpp * (tarifPpn / 100);
+      const gross = qty * harga;
+      const diskon = gross * (Number(l.diskonPersen || 0) / 100);
+      const grossAfterDisc = gross - diskon;
+      const kena = PPNABLE.includes(l.klasifikasiPpn) && (mode === 'sales' || partyPkp);
+      let dpp: number;
+      let ppn: number;
+      if (hargaTermasukPajak && kena) {
+        dpp = grossAfterDisc / (1 + tarifEff);
+        ppn = grossAfterDisc - dpp;
+      } else {
+        dpp = grossAfterDisc;
+        ppn = kena ? dpp * tarifEff : 0;
       }
       let pph = 0;
       if (mode === 'purchase' && potongPph23 && l.isJasa && tarifPph23 > 0) {
@@ -188,7 +198,7 @@ export function InvoiceForm({
       ? totDpp + totPpn
       : totDpp + totPpn - totPph23;
     return { totDpp, totPpn, totPph23, totNetto };
-  }, [lines, tarifPpn, tarifPph23, potongPph23, party, mode]);
+  }, [lines, tarifEff, tarifPph23, potongPph23, party, mode, hargaTermasukPajak]);
 
   // Akun AR/AP yang dipakai
   const akunArOrAp = termin === 'TUNAI'
@@ -221,6 +231,7 @@ export function InvoiceForm({
       deskripsi: deskripsi || undefined,
       linkBukti: linkBuktiTrim,
       tarifPpnPersen: tarifPpn,
+      hargaTermasukPajak,
       lines: lines.map((l) => ({
         itemId: l.itemId, deskripsi: l.deskripsi, qty: l.qty, satuan: l.satuan,
         hargaSatuan: l.hargaSatuan, diskonPersen: l.diskonPersen,
@@ -239,6 +250,7 @@ export function InvoiceForm({
       tarifPpnPersen: tarifPpn,
       tarifPph23Persen: tarifPph23,
       potongPph23,
+      hargaTermasukPajak,
       lines: lines.map((l) => ({
         itemId: l.itemId, deskripsi: l.deskripsi, qty: l.qty, satuan: l.satuan,
         hargaSatuan: l.hargaSatuan, diskonPersen: l.diskonPersen,
@@ -323,6 +335,16 @@ export function InvoiceForm({
               <option value={12}>12% (BKP mewah, DPP penuh)</option>
             </select>
           </div>
+          <label className="flex items-end gap-2 text-sm text-tanah-700 pb-2">
+            <input type="checkbox" checked={hargaTermasukPajak}
+              onChange={(e) => setHargaTermasukPajak(e.target.checked)} />
+            <span>
+              Harga termasuk PPN
+              <span className="block text-[10px] text-tanah-400 normal-case">
+                (harga tag/POS — DPP di-reverse-calc dari gross)
+              </span>
+            </span>
+          </label>
           {mode === 'purchase' && (
             <>
               <div>
@@ -379,7 +401,12 @@ export function InvoiceForm({
             {lines.map((l, i) => {
               const qty = Number(l.qty || 0);
               const harga = Number(l.hargaSatuan || 0);
-              const dpp = qty * harga * (1 - Number(l.diskonPersen || 0) / 100);
+              const partyPkp = mode === 'purchase' ? party?.isPkp ?? false : true;
+              const kena = PPNABLE.includes(l.klasifikasiPpn) && (mode === 'sales' || partyPkp);
+              const grossAfterDisc = qty * harga * (1 - Number(l.diskonPersen || 0) / 100);
+              const dpp = hargaTermasukPajak && kena
+                ? grossAfterDisc / (1 + tarifEff)
+                : grossAfterDisc;
               return (
                 <tr key={i}>
                   <td className="px-2 py-1 text-tanah-500 text-xs">{i + 1}</td>
@@ -473,7 +500,9 @@ export function InvoiceForm({
           <dl className="text-sm space-y-1.5">
             <div className="flex justify-between"><dt className="text-tanah-500">Total DPP</dt>
               <dd className="font-mono tabular-nums">{totals.totDpp.toLocaleString('id-ID')}</dd></div>
-            <div className="flex justify-between"><dt className="text-tanah-500">PPN ({tarifPpn}%)</dt>
+            <div className="flex justify-between"><dt className="text-tanah-500">
+              PPN ({tarifPpn}%){hargaTermasukPajak ? ' — incl.' : ''}
+            </dt>
               <dd className="font-mono tabular-nums">{totals.totPpn.toLocaleString('id-ID')}</dd></div>
             {mode === 'purchase' && (
               <div className="flex justify-between"><dt className="text-tanah-500">PPh 23 dipotong</dt>

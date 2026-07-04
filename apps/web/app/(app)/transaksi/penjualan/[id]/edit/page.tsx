@@ -25,6 +25,7 @@ interface Detail {
   id: string; tanggal: string; cabangId: string; customerId: string;
   termin: 'TUNAI' | 'KREDIT'; akunArId: string; deskripsi: string | null;
   linkBukti: string | null;
+  hargaTermasukPajak: boolean;
   status: 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
   lines: Array<{
     no: number; itemId: string | null; deskripsi: string; qty: string; satuan: string;
@@ -90,6 +91,7 @@ export default async function PenjualanEditPage({ params }: { params: Promise<{ 
             cabangId: inv.cabangId,
             termin: inv.termin,
             tarifPpn: 11,
+            hargaTermasukPajak: inv.hargaTermasukPajak,
             deskripsi: inv.deskripsi ?? '',
             linkBukti: inv.linkBukti ?? '',
             kasBankId: inv.termin === 'TUNAI' ? inv.akunArId : undefined,

@@ -168,6 +168,7 @@ export class PurchasesService {
         potongPph23: input.potongPph23,
         tarifPph23: input.tarifPph23Persen,
         vendorPunyaNpwp: !!vendor.npwp,
+        hargaTermasukPajak: input.hargaTermasukPajak,
       });
 
       const totalNetto = calc.totalDpp.plus(calc.totalPpn).minus(calc.totalPph23);
@@ -186,6 +187,7 @@ export class PurchasesService {
           nsfpMasukan: input.nsfpMasukan,
           deskripsi: input.deskripsi,
           linkBukti: input.linkBukti ?? null,
+          hargaTermasukPajak: input.hargaTermasukPajak,
           status: InvoiceStatus.DRAFT,
           totalDpp: calc.totalDpp.toFixed(2),
           totalPpn: calc.totalPpn.toFixed(2),
@@ -273,6 +275,7 @@ export class PurchasesService {
           nsfpMasukan: input.nsfpMasukan,
           deskripsi: input.deskripsi,
           linkBukti: input.linkBukti ?? null,
+          hargaTermasukPajak: input.hargaTermasukPajak,
           totalDpp: calc.totalDpp.toFixed(2),
           totalPpn: calc.totalPpn.toFixed(2),
           totalPph23: calc.totalPph23.toFixed(2),
@@ -511,6 +514,13 @@ export class PurchasesService {
     });
   }
 
+  /**
+   * Sama seperti sales, dengan tambahan `hargaTermasukPajak`:
+   *   - false (default): harga excl PPN → PPN ditambahkan di atas DPP.
+   *   - true: harga incl PPN → DPP di-reverse-calc dari gross.
+   *
+   * PPh 23 selalu dihitung dari DPP (harga netto), bukan dari gross.
+   */
   private computeTotals(
     lines: PurchaseLineInput[],
     opts: {
@@ -519,35 +529,39 @@ export class PurchasesService {
       potongPph23: boolean;
       tarifPph23: number;
       vendorPunyaNpwp: boolean;
+      hargaTermasukPajak?: boolean;
     },
   ) {
+    const tarifEff = new Decimal(opts.tarifPpn === 11 ? 11 : opts.tarifPpn).div(100);
     const perLine = lines.map((l) => {
       const qty = new Decimal(l.qty);
       const harga = new Decimal(l.hargaSatuan);
-      const bruto = qty.mul(harga);
-      const diskon = bruto.mul(new Decimal(l.diskonPersen).div(100)).toDecimalPlaces(2);
-      const dpp = bruto.minus(diskon);
+      const gross = qty.mul(harga);
+      const diskon = gross.mul(new Decimal(l.diskonPersen).div(100)).toDecimalPlaces(2);
+      const grossAfterDisc = gross.minus(diskon);
 
-      // PPN
-      let ppn = new Decimal(0);
-      if (opts.applyPpn && isPpnable(l.klasifikasiPpn)) {
-        if (opts.tarifPpn === 11) {
-          ppn = dpp.mul(new Decimal(11).div(12)).mul(new Decimal(12).div(100)).toDecimalPlaces(2);
-        } else {
-          ppn = dpp.mul(new Decimal(opts.tarifPpn).div(100)).toDecimalPlaces(2);
-        }
+      let dpp: Decimal;
+      let ppn: Decimal;
+      if (opts.hargaTermasukPajak && opts.applyPpn && isPpnable(l.klasifikasiPpn)) {
+        dpp = grossAfterDisc.div(new Decimal(1).plus(tarifEff)).toDecimalPlaces(2);
+        ppn = grossAfterDisc.minus(dpp);
+      } else {
+        dpp = grossAfterDisc;
+        ppn = (opts.applyPpn && isPpnable(l.klasifikasiPpn))
+          ? dpp.mul(tarifEff).toDecimalPlaces(2)
+          : new Decimal(0);
       }
 
       // PPh 23 — hanya untuk jasa, dan hanya kalau kita memang memotong.
       let pph23 = new Decimal(0);
       if (opts.potongPph23 && l.isJasa) {
-        const tarifEfektif = opts.vendorPunyaNpwp
+        const tarifEfPph23 = opts.vendorPunyaNpwp
           ? new Decimal(opts.tarifPph23)
           : new Decimal(opts.tarifPph23).mul(2); // surcharge 100% tanpa NPWP
-        pph23 = dpp.mul(tarifEfektif).div(100).toDecimalPlaces(0);
+        pph23 = dpp.mul(tarifEfPph23).div(100).toDecimalPlaces(0);
       }
 
-      return { bruto, diskonNilai: diskon, dpp, ppn, pph23 };
+      return { bruto: gross, diskonNilai: diskon, dpp, ppn, pph23 };
     });
     const totalDpp = perLine.reduce((a, c) => a.plus(c.dpp), new Decimal(0));
     const totalPpn = perLine.reduce((a, c) => a.plus(c.ppn), new Decimal(0));

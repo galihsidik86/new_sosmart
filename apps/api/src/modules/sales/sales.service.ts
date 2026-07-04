@@ -182,7 +182,7 @@ export class SalesService {
               ? { ...l, klasifikasiPpn: KlasifikasiPpn.NON_BKP }
               : l,
           );
-      const calc = this.computeTotals(lines, input.tarifPpnPersen);
+      const calc = this.computeTotals(lines, input.tarifPpnPersen, input.hargaTermasukPajak);
 
       const inv = await tx.salesInvoice.create({
         data: {
@@ -196,6 +196,7 @@ export class SalesService {
           akunArId: input.akunArId,
           deskripsi: input.deskripsi,
           linkBukti: input.linkBukti ?? null,
+          hargaTermasukPajak: input.hargaTermasukPajak,
           kodeFakturPajak: input.kodeFakturPajak,
           nsfp: input.nsfp,
           status: InvoiceStatus.DRAFT,
@@ -273,7 +274,7 @@ export class SalesService {
               ? { ...l, klasifikasiPpn: KlasifikasiPpn.NON_BKP }
               : l,
           );
-      const calc = this.computeTotals(lines, input.tarifPpnPersen);
+      const calc = this.computeTotals(lines, input.tarifPpnPersen, input.hargaTermasukPajak);
 
       await tx.salesInvoiceLine.deleteMany({ where: { invoiceId: id } });
       return tx.salesInvoice.update({
@@ -288,6 +289,7 @@ export class SalesService {
           akunArId: input.akunArId,
           deskripsi: input.deskripsi,
           linkBukti: input.linkBukti ?? null,
+          hargaTermasukPajak: input.hargaTermasukPajak,
           kodeFakturPajak: input.kodeFakturPajak,
           nsfp: input.nsfp,
           totalDpp: calc.totalDpp.toFixed(2),
@@ -616,26 +618,50 @@ export class SalesService {
   // Helpers
   // ----------------------------------------------------
 
-  private computeTotals(lines: SalesLineInput[], tarifPpn: number) {
-    const t = new Decimal(tarifPpn).div(100);
+  /**
+   * Hitung DPP + PPN per line.
+   *
+   * Mode "harga excl PPN" (default, `hargaTermasukPajak=false`):
+   *   bruto = qty × harga
+   *   dpp   = bruto − diskon
+   *   ppn   = dpp × tarifEfektif%
+   *   grand = dpp + ppn
+   *
+   * Mode "harga incl PPN" (`hargaTermasukPajak=true`, harga tag POS style):
+   *   gross = qty × harga (SUDAH termasuk PPN)
+   *   grossAfterDisc = gross − diskon
+   *   dpp   = grossAfterDisc / (1 + tarifEfektif/100)
+   *   ppn   = grossAfterDisc − dpp
+   */
+  private computeTotals(
+    lines: SalesLineInput[],
+    tarifPpn: number,
+    hargaTermasukPajak = false,
+  ) {
+    // Tarif efektif PPN: kalau tarif=11 pakai 11% (PMK 131/2024 efektif),
+    // kalau 12 pakai 12% penuh (BKP mewah).
+    const tarifEff = new Decimal(tarifPpn === 11 ? 11 : tarifPpn).div(100);
     const perLine = lines.map((l) => {
       const qty = new Decimal(l.qty);
       const harga = new Decimal(l.hargaSatuan);
-      const bruto = qty.mul(harga);
-      const diskon = bruto.mul(new Decimal(l.diskonPersen).div(100)).toDecimalPlaces(2);
-      const dpp = bruto.minus(diskon);
-      // PPN: efektif 11% untuk PMK 131/2024 default (DPP nilai lain 11/12 × 12%)
-      // Kalau tarif user pilih 12 → asumsi DPP penuh × 12% (BKP mewah)
-      let ppn = new Decimal(0);
-      if (isPpnable(l.klasifikasiPpn)) {
-        if (tarifPpn === 11) {
-          // DPP nilai lain: 11/12 × DPP × 12% = DPP × 11%
-          ppn = dpp.mul(new Decimal(11).div(12)).mul(new Decimal(12).div(100)).toDecimalPlaces(2);
-        } else {
-          ppn = dpp.mul(t).toDecimalPlaces(2);
-        }
+      const gross = qty.mul(harga);
+      const diskon = gross.mul(new Decimal(l.diskonPersen).div(100)).toDecimalPlaces(2);
+      const grossAfterDisc = gross.minus(diskon);
+
+      let dpp: Decimal;
+      let ppn: Decimal;
+      if (hargaTermasukPajak && isPpnable(l.klasifikasiPpn)) {
+        // Reverse-calc: gross = DPP × (1 + tarifEff)
+        dpp = grossAfterDisc.div(new Decimal(1).plus(tarifEff)).toDecimalPlaces(2);
+        ppn = grossAfterDisc.minus(dpp);
+      } else {
+        dpp = grossAfterDisc;
+        ppn = isPpnable(l.klasifikasiPpn)
+          ? dpp.mul(tarifEff).toDecimalPlaces(2)
+          : new Decimal(0);
       }
-      return { bruto, diskonNilai: diskon, dpp, ppn };
+      // Bruto untuk snapshot line = harga × qty (tanpa reverse-calc).
+      return { bruto: gross, diskonNilai: diskon, dpp, ppn };
     });
     const totalDpp = perLine.reduce((a, c) => a.plus(c.dpp), new Decimal(0));
     const totalPpn = perLine.reduce((a, c) => a.plus(c.ppn), new Decimal(0));

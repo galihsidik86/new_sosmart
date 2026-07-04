@@ -888,6 +888,10 @@ model SalesInvoice {
   akunArId          String        @map("akun_ar_id") @db.Uuid
   status            InvoiceStatus @default(DRAFT)
   deskripsi         String?
+  /// Kalau true, hargaSatuan yang diinput user sudah include PPN (harga tag).
+  /// Engine akan reverse-calc DPP = gross / (1 + tarifEfektif/100).
+  /// Default false = harga excl PPN (mode existing).
+  hargaTermasukPajak Boolean       @default(false) @map("harga_termasuk_pajak")
   /// URL bukti transaksi eksternal (scan invoice/PO/DO/foto tanda-tangan/dll).
   linkBukti         String?       @map("link_bukti")
   /// Faktur pajak data (untuk customer PKP)
@@ -997,6 +1001,9 @@ model PurchaseInvoice {
   akunApId          String        @map("akun_ap_id") @db.Uuid
   status            InvoiceStatus @default(DRAFT)
   deskripsi         String?
+  /// Kalau true, hargaSatuan input sudah include PPN (harga tag vendor).
+  /// Engine reverse-calc DPP dari gross.
+  hargaTermasukPajak Boolean       @default(false) @map("harga_termasuk_pajak")
   /// URL bukti tagihan eksternal (scan faktur vendor/PO/DO/dll).
   linkBukti         String?       @map("link_bukti")
   /// Faktur pajak masukan dari vendor (untuk vendor PKP).

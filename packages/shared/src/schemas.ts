@@ -290,6 +290,8 @@ export const createSalesInvoiceInputSchema = z.object({
   nsfp: z.string().regex(/^\d{16}$/, 'NSFP harus 16 digit').optional(),
   /// Tarif PPN efektif (11 utk PMK 131/2024 normal, 12 utk BKP mewah).
   tarifPpnPersen: z.coerce.number().refine((n) => [11, 12].includes(n), 'Tarif PPN harus 11 atau 12').default(11),
+  /// Kalau true, hargaSatuan input sudah include PPN. Engine reverse-calc DPP.
+  hargaTermasukPajak: z.boolean().default(false),
   lines: z.array(salesLineInputSchema).min(1, 'Minimal 1 baris'),
 });
 export type CreateSalesInvoiceInput = z.infer<typeof createSalesInvoiceInputSchema>;
@@ -320,6 +322,7 @@ export const createPurchaseInvoiceInputSchema = z.object({
   nsfpMasukan: z.string().regex(/^\d{16}$/).optional(),
   deskripsi: z.string().max(500).optional(),
   linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
+  hargaTermasukPajak: z.boolean().default(false),
   tarifPpnPersen: z.coerce.number().refine((n) => [11, 12].includes(n)).default(11),
   /// Tarif PPh 23 (2% jasa, 15% royalti/dividen/bunga).
   tarifPph23Persen: z.coerce.number().refine((n) => [0, 2, 15].includes(n)).default(2),
