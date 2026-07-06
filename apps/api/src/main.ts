@@ -8,8 +8,12 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 import { Logger } from '@nestjs/common';
 import { AppModule } from './app.module.js';
+import { assertProductionSecrets } from './common/config/env-guard.js';
 
 async function bootstrap() {
+  // Tolak boot kalau JWT secret / APP_DATABASE_URL tidak aman di produksi.
+  assertProductionSecrets();
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({ logger: false, trustProxy: true }),

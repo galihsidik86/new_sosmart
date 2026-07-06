@@ -20,6 +20,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { validateRequestedBy } from '../../common/tenancy/step-up.js';
+import { resolvePpnAccountId } from '../../common/gl-config/ppn-account.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
@@ -411,17 +412,13 @@ export class SalesService {
       // PPN keluaran (kalau ada)
       const totalPpn = new Decimal(inv.totalPpn);
       if (totalPpn.gt(0)) {
-        const akunUtangPpn = await tx.taxRate.findFirst({
-          where: { kode: 'PPN-EFEKTIF-11' },
-          select: { akunUtangId: true },
-        });
-        if (!akunUtangPpn?.akunUtangId) {
-          throw new BadRequestException(
-            'Akun Utang PPN belum di-set di tarif PPN-EFEKTIF-11',
-          );
-        }
+        // Pilih akun Utang PPN sesuai tarif efektif faktur — faktur 12%
+        // (BKP mewah) tidak lagi tersalah-posting ke akun tarif 11%.
+        const akunUtangPpnId = await resolvePpnAccountId(
+          tx, 'akunUtangId', inv.totalDpp, totalPpn,
+        );
         lines.push({
-          accountId: akunUtangPpn.akunUtangId,
+          accountId: akunUtangPpnId,
           debit: '0',
           kredit: totalPpn.toFixed(2),
           deskripsi: 'PPN Keluaran',

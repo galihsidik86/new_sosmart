@@ -20,6 +20,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
+import { resolvePpnAccountId } from '../../common/gl-config/ppn-account.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { validateRequestedBy } from '../../common/tenancy/step-up.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
@@ -375,15 +376,12 @@ export class PurchasesService {
       // PPN Masukan
       const totalPpn = new Decimal(inv.totalPpn);
       if (totalPpn.gt(0)) {
-        const taxRate = await tx.taxRate.findFirst({
-          where: { kode: 'PPN-EFEKTIF-11' },
-          select: { akunPiutangId: true },
-        });
-        if (!taxRate?.akunPiutangId) {
-          throw new BadRequestException('Akun PPN Masukan belum di-set di tarif PPN');
-        }
+        // Akun PPN Masukan sesuai tarif efektif faktur (11% / 12%).
+        const akunPpnMasukanId = await resolvePpnAccountId(
+          tx, 'akunPiutangId', inv.totalDpp, totalPpn,
+        );
         lines.push({
-          accountId: taxRate.akunPiutangId,
+          accountId: akunPpnMasukanId,
           debit: totalPpn.toFixed(2),
           kredit: '0',
           deskripsi: 'PPN Masukan',

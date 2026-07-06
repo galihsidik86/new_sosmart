@@ -73,8 +73,24 @@ export class AuthService {
       where: { tokenHash },
       include: { user: true },
     });
-    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+    if (!stored || stored.expiresAt < new Date()) {
       throw new UnauthorizedException('Refresh token tidak valid');
+    }
+    // Reuse detection: token yang SUDAH dirotasi (revokedAt terisi) tidak
+    // seharusnya muncul lagi. Kemunculannya berarti ada salinan beredar —
+    // kemungkinan dicuri. Karena kita tidak tahu salinan mana yang sah,
+    // cabut SELURUH sesi aktif user ini dan paksa login ulang. Tanpa ini,
+    // pencuri yang lebih dulu me-rotate token tetap memegang sesi valid
+    // sampai masa berlaku habis.
+    if (stored.revokedAt) {
+      await this.prisma.refreshToken.updateMany({
+        where: { userId: stored.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      throw new UnauthorizedException('Sesi tidak valid — silakan login ulang');
+    }
+    if (!stored.user.isActive) {
+      throw new UnauthorizedException('Akun tidak aktif');
     }
     await this.prisma.refreshToken.update({
       where: { id: stored.id },
