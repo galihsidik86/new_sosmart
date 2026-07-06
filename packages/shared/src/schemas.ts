@@ -4,6 +4,24 @@ import {
   PtkpStatus, Role,
 } from './enums.js';
 
+/**
+ * Regex tanggal `\d{4}-\d{2}-\d{2}` cuma cek FORMAT, bukan validitas kalender
+ * — "2026-02-30" lolos, lalu `new Date('2026-02-30T00:00:00Z')` diam-diam
+ * rollover jadi 2 Maret 2026. Tanggal yang salah ini lalu dipakai untuk
+ * lookup fiscal period (posting jurnal/faktur bisa "lari" ke periode lain
+ * tanpa peringatan). Dipakai sebagai `.refine()` tambahan di semua skema
+ * tanggal ISO di bawah.
+ */
+function isValidCalendarDate(s: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return false;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
+}
+
 /** Validator NPWP 15 digit (format DJP terbaru/NIK) atau 16 digit NIK. */
 export const npwpSchema = z
   .string()
@@ -164,7 +182,8 @@ export type JournalSourceInput = z.infer<typeof journalSourceSchema>;
 
 const isoDateSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal harus YYYY-MM-DD');
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal harus YYYY-MM-DD')
+  .refine(isValidCalendarDate, 'Tanggal tidak valid (mis. 30 Februari)');
 
 const lineMoneySchema = z
   .union([
@@ -251,10 +270,25 @@ export type UpdateAccountInput = z.infer<typeof updateAccountInputSchema>;
 
 // ---------- TRANSAKSI: FAKTUR ----------
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal YYYY-MM-DD');
+const isoDate = z.string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal YYYY-MM-DD')
+  .refine(isValidCalendarDate, 'Tanggal tidak valid (mis. 30 Februari)');
+// Sebelumnya lineMoney cuma `z.union([number, string]).transform(String)` — tidak
+// menolak angka negatif atau string non-numerik ("abc"). Nilai negatif lolos ke
+// computeTotals() dan bisa menghasilkan DPP/PPN negatif yang ditolak Postgres
+// (CHECK kredit>=0) sebagai 500 mentah, bukan error validasi yang rapi. Samakan
+// dengan lineMoneySchema (journal lines) yang sudah benar.
 const lineMoney = z
-  .union([z.number(), z.string()])
+  .union([
+    z.number().nonnegative('Nilai tidak boleh negatif'),
+    z.string().regex(/^\d+(\.\d+)?$/, 'Format nominal tidak valid'),
+  ])
   .transform((v) => String(v));
+// diskonPersen > 100 membuat grossAfterDisc (dan DPP turunannya) negatif —
+// bug yang sama dengan di atas, khusus untuk field diskon.
+const diskonPersenSchema = lineMoney
+  .refine((v) => Number(v) <= 100, 'Diskon tidak boleh lebih dari 100%')
+  .default('0');
 
 export const terminSchema = z.enum(['TUNAI', 'KREDIT']);
 export const kodeFakturPajakSchema = z.enum([
@@ -268,7 +302,7 @@ export const salesLineInputSchema = z.object({
   qty: lineMoney,
   satuan: z.string().min(1).max(20).default('Pcs'),
   hargaSatuan: lineMoney,
-  diskonPersen: lineMoney.default('0'),
+  diskonPersen: diskonPersenSchema,
   klasifikasiPpn: z.nativeEnum(KlasifikasiPpn).default(KlasifikasiPpn.BKP),
   isJasa: z.boolean().default(false),
   akunPendapatanId: z.string().uuid(),
@@ -302,7 +336,7 @@ export const purchaseLineInputSchema = z.object({
   qty: lineMoney,
   satuan: z.string().min(1).max(20).default('Pcs'),
   hargaSatuan: lineMoney,
-  diskonPersen: lineMoney.default('0'),
+  diskonPersen: diskonPersenSchema,
   klasifikasiPpn: z.nativeEnum(KlasifikasiPpn).default(KlasifikasiPpn.BKP),
   isJasa: z.boolean().default(false),
   /// Akun debit: persediaan (barang resale) atau beban (jasa/non-resale).
@@ -375,7 +409,9 @@ export type CancelInvoiceInput = z.infer<typeof cancelInvoiceInputSchema>;
 
 // ---------- INVENTORY (Fase 5) ----------
 
-const isoDateStrict = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const isoDateStrict = z.string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine(isValidCalendarDate, 'Tanggal tidak valid (mis. 30 Februari)');
 
 export const stokAdjustmentLineInputSchema = z.object({
   itemId: z.string().uuid(),

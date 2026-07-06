@@ -248,6 +248,11 @@ export class SalesService {
     return this.tenancy.run(async (tx) => {
       const existing = await tx.salesInvoice.findUnique({ where: { id } });
       if (!existing) throw new NotFoundException('Faktur tidak ditemukan');
+      // RLS cuma menjamin isolasi tenant — cabang belum dicek di jalur mutasi
+      // ini. Tanpa ini, user dengan MembershipCabang terbatas ke cabang A bisa
+      // edit faktur cabang B (sama tenant) kalau tahu/menebak id-nya.
+      this.cabangScope.assertAccess(existing.cabangId);
+      this.cabangScope.assertAccess(input.cabangId);
       if (existing.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya draft yang bisa diedit');
       }
@@ -352,6 +357,7 @@ export class SalesService {
         },
       });
       if (!inv) throw new NotFoundException('Faktur tidak ditemukan');
+      this.cabangScope.assertAccess(inv.cabangId);
       if (inv.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException(`Faktur status ${inv.status}, tidak bisa di-post`);
       }
@@ -559,6 +565,7 @@ export class SalesService {
         include: { customer: { select: { nama: true } } },
       });
       if (!inv) throw new NotFoundException('Faktur tidak ditemukan');
+      this.cabangScope.assertAccess(inv.cabangId);
       if (inv.status === InvoiceStatus.CANCELLED) {
         throw new BadRequestException('Faktur sudah dibatalkan');
       }
@@ -603,6 +610,7 @@ export class SalesService {
     return this.tenancy.run(async (tx) => {
       const inv = await tx.salesInvoice.findUnique({ where: { id } });
       if (!inv) throw new NotFoundException();
+      this.cabangScope.assertAccess(inv.cabangId);
       if (inv.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya DRAFT yang bisa dihapus');
       }

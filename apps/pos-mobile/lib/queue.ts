@@ -158,10 +158,25 @@ async function isOnline(): Promise<boolean> {
 }
 
 /**
+ * Cek status faktur di server tanpa membuat apa pun baru. Dipakai untuk
+ * reconcile setelah request /post gagal di jaringan — bisa jadi server
+ * sudah commit (jurnal + potong stok) sebelum respons hilang di tengah jalan.
+ */
+async function tryReconcile(serverId: string): Promise<{ nomor: string | null } | null> {
+  try {
+    const inv = await apiFetch<{ status: string; nomor: string | null }>(
+      `/sales-invoices/${serverId}`,
+    );
+    return inv.status && inv.status !== 'DRAFT' ? { nomor: inv.nomor } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Coba sync semua row yang belum synced. Best-effort:
- * - 'pending'  → POST /sales-invoices  →  status='created', serverId
- * - 'created'  → POST /sales-invoices/:id/post  →  status='synced', serverNomor
- * - 'failed'   → coba retry juga (mungkin error transient)
+ * - belum punya server_id → POST /sales-invoices  →  status='created', serverId
+ * - sudah punya server_id → POST /sales-invoices/:id/post  →  status='synced', serverNomor
  *
  * Tidak melempar; setiap row gagal ditandai sendiri.
  */
@@ -193,9 +208,15 @@ export async function syncOnce(): Promise<{
   for (const r of rows) {
     const row = rowToPending(r);
     attempted++;
-    try {
-      let serverId = row.serverId;
-      if (row.status === 'pending' || row.status === 'failed') {
+    let serverId = row.serverId;
+
+    // Step 1: bikin draft — HANYA kalau belum punya server_id. Dulu kondisi
+    // ini cek `row.status === 'pending' || 'failed'`, jadi retry dari status
+    // 'failed' (mis. /post gagal walau draft sudah kebentuk) bikin draft
+    // KEDUA untuk penjualan yang sama → risiko double-posting (2x jurnal,
+    // 2x potong stok) begitu keduanya berhasil di-post.
+    if (!serverId) {
+      try {
         const created = await apiFetch<{ id: string }>('/sales-invoices', {
           method: 'POST',
           body: row.payload.body,
@@ -205,9 +226,19 @@ export async function syncOnce(): Promise<{
           `UPDATE pending_sales SET status='created', server_id=?, attempts=attempts+1, error=NULL WHERE id=?`,
           [serverId, row.id],
         );
+      } catch (e) {
+        failed++;
+        const msg = e instanceof ApiError ? `${e.status}: ${e.message}` : String(e);
+        await db.runAsync(
+          `UPDATE pending_sales SET status='failed', attempts=attempts+1, error=? WHERE id=?`,
+          [msg, row.id],
+        );
+        continue;
       }
-      // Lanjut post
-      if (!serverId) throw new Error('Tidak punya server_id untuk post');
+    }
+
+    // Step 2: post.
+    try {
       const posted = await apiFetch<{ nomor: string }>(
         `/sales-invoices/${serverId}/post`,
         { method: 'POST' },
@@ -218,12 +249,26 @@ export async function syncOnce(): Promise<{
       );
       succeeded++;
     } catch (e) {
-      failed++;
-      const msg = e instanceof ApiError ? `${e.status}: ${e.message}` : String(e);
-      await db.runAsync(
-        `UPDATE pending_sales SET status='failed', attempts=attempts+1, error=? WHERE id=?`,
-        [msg, row.id],
-      );
+      // Respons /post bisa hilang di jaringan SETELAH server commit. Cek
+      // status faktur dulu sebelum menandai 'failed' — server menolak
+      // /post kedua (faktur sudah POSTED) sehingga tanpa reconcile ini
+      // baris akan macet 'failed' selamanya dan kasir bisa input ulang
+      // transaksi yang sebenarnya sudah tercatat (duplikat manual).
+      const reconciled = await tryReconcile(serverId);
+      if (reconciled) {
+        await db.runAsync(
+          `UPDATE pending_sales SET status='synced', server_nomor=?, attempts=attempts+1, error=NULL WHERE id=?`,
+          [reconciled.nomor, row.id],
+        );
+        succeeded++;
+      } else {
+        failed++;
+        const msg = e instanceof ApiError ? `${e.status}: ${e.message}` : String(e);
+        await db.runAsync(
+          `UPDATE pending_sales SET status='failed', attempts=attempts+1, error=? WHERE id=?`,
+          [msg, row.id],
+        );
+      }
     }
   }
   return { attempted, succeeded, failed };

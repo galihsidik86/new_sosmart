@@ -211,6 +211,10 @@ export class AdjustmentsService {
     return this.tenancy.run(async (tx) => {
       const existing = await tx.stokAdjustment.findUnique({ where: { id } });
       if (!existing) throw new NotFoundException('Penyesuaian tidak ditemukan');
+      // Lihat catatan di SalesService.updateDraft — RLS cuma isolasi tenant,
+      // cabang belum dicek di jalur mutasi ini.
+      this.cabangScope.assertAccess(existing.cabangId);
+      this.cabangScope.assertAccess(input.cabangId);
       if (existing.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya draft yang bisa diedit');
       }
@@ -284,6 +288,7 @@ export class AdjustmentsService {
         },
       });
       if (!adj) throw new NotFoundException();
+      this.cabangScope.assertAccess(adj.cabangId);
       if (adj.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException(`Status ${adj.status}, tidak bisa di-post`);
       }
@@ -406,6 +411,7 @@ export class AdjustmentsService {
       );
       const adj = await tx.stokAdjustment.findUnique({ where: { id } });
       if (!adj) throw new NotFoundException();
+      this.cabangScope.assertAccess(adj.cabangId);
       if (adj.status === InvoiceStatus.CANCELLED) {
         throw new BadRequestException('Sudah dibatalkan');
       }
@@ -437,6 +443,7 @@ export class AdjustmentsService {
     return this.tenancy.run(async (tx) => {
       const adj = await tx.stokAdjustment.findUnique({ where: { id } });
       if (!adj) throw new NotFoundException();
+      this.cabangScope.assertAccess(adj.cabangId);
       if (adj.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya DRAFT yang bisa dihapus');
       }

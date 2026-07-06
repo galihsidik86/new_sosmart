@@ -8,6 +8,7 @@ import argon2 from 'argon2';
 import crypto from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { LoginThrottleService } from './login-throttle.service.js';
 import type { LoginResponse } from '@lentera/shared/schemas';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly tenancy: TenancyService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly loginThrottle: LoginThrottleService,
   ) {}
 
   async login(
@@ -24,13 +26,22 @@ export class AuthService {
     password: string,
     meta?: { userAgent?: string; ip?: string },
   ): Promise<LoginResponse> {
+    // Tanpa ini, /auth/login tidak punya pembatasan sama sekali — brute
+    // force/credential-stuffing bebas dicoba tanpa hambatan.
+    this.loginThrottle.assertNotLocked(email);
+
     // Step 1: users table tidak ber-RLS, query langsung.
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !user.isActive) {
+      this.loginThrottle.recordFailure(email);
       throw new UnauthorizedException('Email/password salah');
     }
     const ok = await argon2.verify(user.passwordHash, password);
-    if (!ok) throw new UnauthorizedException('Email/password salah');
+    if (!ok) {
+      this.loginThrottle.recordFailure(email);
+      throw new UnauthorizedException('Email/password salah');
+    }
+    this.loginThrottle.recordSuccess(email);
 
     await this.prisma.user.update({
       where: { id: user.id },

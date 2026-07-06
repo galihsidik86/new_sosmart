@@ -6,8 +6,14 @@ import { Decimal } from 'decimal.js';
  *  - Lapisan service tukar pakai string atau Decimal, bukan number JS.
  *  - Formatting id-ID hanya di lapisan presentasi.
  *
- * Pajak Indonesia rounding: pembulatan ke bawah satuan rupiah pada
- * total PPN per faktur (Pasal 5 PER-03/PJ/2022 — turunan).
+ * Pembulatan pajak: seluruh fungsi hitungPpn/hitungPph* di bawah pakai
+ * ROUND_HALF_EVEN (banker's rounding), BUKAN pembulatan ke bawah. Komentar
+ * sebelumnya di sini mengklaim "pembulatan ke bawah (PER-03/PJ/2022)" tapi
+ * tidak pernah diimplementasikan begitu — perbaiki dokumentasi ini supaya
+ * cocok dengan kode. TODO kepatuhan: verifikasi ke peraturan DJP resmi apakah
+ * PPN/PPh per faktur harus round-down, lalu ubah rounding mode kalau perlu
+ * (blast radius besar — semua nominal pajak yang sudah ter-posting akan
+ * terpengaruh, jadi jangan ubah tanpa konfirmasi eksplisit).
  */
 
 Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_EVEN });

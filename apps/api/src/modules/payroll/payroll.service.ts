@@ -298,8 +298,21 @@ export class PayrollService {
         include: { lines: { include: { karyawan: { select: { nama: true } } } } },
       });
       if (!run) throw new NotFoundException();
+      // Lihat catatan di SalesService.updateDraft — RLS cuma isolasi tenant,
+      // cabang belum dicek di jalur mutasi ini.
+      this.cabangScope.assertAccess(run.cabangId);
       if (run.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException(`Status ${run.status}`);
+      }
+      // Draft bisa dibuat saat periode masih OPEN, lalu periode ditutup
+      // sebelum di-post — tanpa re-check ini jurnal gaji lolos ke periode
+      // yang sudah CLOSED (celah audit; lihat pola yang sama di sales/
+      // purchases/cashbank/adjustments — payroll dulu kelewatan).
+      const period = await tx.fiscalPeriod.findUnique({
+        where: { id: run.fiscalPeriodId },
+      });
+      if (period?.status === PeriodStatus.CLOSED) {
+        throw new ForbiddenException('Periode sudah ditutup');
       }
 
       const nomor = run.nomor ?? (await this.seq.next(tx, 'PR', run.tanggal));
@@ -407,6 +420,7 @@ export class PayrollService {
       );
       const run = await tx.payrollRun.findUnique({ where: { id } });
       if (!run) throw new NotFoundException();
+      this.cabangScope.assertAccess(run.cabangId);
       if (run.status !== InvoiceStatus.POSTED) {
         throw new BadRequestException('Hanya POSTED yang bisa di-cancel');
       }
@@ -439,6 +453,7 @@ export class PayrollService {
     return this.tenancy.run(async (tx) => {
       const r = await tx.payrollRun.findUnique({ where: { id } });
       if (!r) throw new NotFoundException();
+      this.cabangScope.assertAccess(r.cabangId);
       if (r.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya DRAFT yang bisa dihapus');
       }

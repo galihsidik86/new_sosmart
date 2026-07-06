@@ -182,6 +182,9 @@ export class AsetService {
     return this.tenancy.run(async (tx) => {
       const aset = await tx.asetTetap.findUnique({ where: { id } });
       if (!aset) throw new NotFoundException();
+      // Lihat catatan di SalesService.updateDraft — RLS cuma isolasi tenant,
+      // cabang belum dicek di jalur mutasi ini.
+      this.cabangScope.assertAccess(aset.cabangId);
       if (aset.status !== AsetStatus.AKTIF) {
         throw new BadRequestException(`Aset sudah ${aset.status}, tidak bisa dispose lagi`);
       }
@@ -301,6 +304,7 @@ export class AsetService {
     return this.tenancy.run(async (tx) => {
       const aset = await tx.asetTetap.findUnique({ where: { id } });
       if (!aset) throw new NotFoundException();
+      this.cabangScope.assertAccess(aset.cabangId);
       if (aset.status === AsetStatus.AKTIF) {
         throw new BadRequestException('Aset masih aktif');
       }

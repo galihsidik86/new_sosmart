@@ -9,6 +9,7 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 @Injectable()
 export class BuktiPotongService {
@@ -17,6 +18,7 @@ export class BuktiPotongService {
     private readonly ctx: TenantContext,
     private readonly seq: SequenceService,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async exportXlsx(opts: { jenisPph?: JenisPph; status?: BuktiPotongStatus; periodId?: string }): Promise<Buffer> {
@@ -49,6 +51,11 @@ export class BuktiPotongService {
     if (opts.jenisPph) where.jenisPph = opts.jenisPph;
     if (opts.status) where.status = opts.status;
     if (opts.periodId) where.fiscalPeriodId = opts.periodId;
+    // Sebelumnya modul ini tidak pernah dicek cabang sama sekali (tidak
+    // seperti sales/purchases/dll) — user restricted ke 1 cabang bisa lihat
+    // & batalkan bukti potong cabang lain dalam tenant yang sama.
+    const scope = this.cabangScope.cabangIdsForWhere();
+    if (scope) where.cabangId = { in: scope };
     return this.tenancy.run((tx) =>
       tx.buktiPotong.findMany({
         where,
@@ -68,6 +75,7 @@ export class BuktiPotongService {
         include: { cabang: true, fiscalPeriod: true },
       });
       if (!bp) throw new NotFoundException('Bukti Potong tidak ditemukan');
+      this.cabangScope.assertAccess(bp.cabangId);
       return bp;
     });
   }
@@ -132,6 +140,7 @@ export class BuktiPotongService {
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
     const tanggal = new Date(input.tanggal + 'T00:00:00Z');
+    this.cabangScope.assertAccess(input.cabangId);
 
     return this.tenancy.run(async (tx) => {
       const period = await tx.fiscalPeriod.findFirst({
@@ -171,14 +180,17 @@ export class BuktiPotongService {
   }
 
   async cancel(id: string, alasan: string) {
-    return this.tenancy.run((tx) =>
-      tx.buktiPotong.update({
+    return this.tenancy.run(async (tx) => {
+      const bp = await tx.buktiPotong.findUnique({ where: { id } });
+      if (!bp) throw new NotFoundException('Bukti Potong tidak ditemukan');
+      this.cabangScope.assertAccess(bp.cabangId);
+      return tx.buktiPotong.update({
         where: { id },
         data: {
           status: BuktiPotongStatus.DIBATALKAN,
           catatan: alasan,
         },
-      }),
-    );
+      });
+    });
   }
 }

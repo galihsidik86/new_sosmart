@@ -179,6 +179,10 @@ export class CashBankService {
     return this.tenancy.run(async (tx) => {
       const existing = await tx.cashBankEntry.findUnique({ where: { id } });
       if (!existing) throw new NotFoundException('Bukti tidak ditemukan');
+      // Lihat catatan di SalesService.updateDraft — RLS cuma isolasi tenant,
+      // cabang belum dicek di jalur mutasi ini.
+      this.cabangScope.assertAccess(existing.cabangId);
+      this.cabangScope.assertAccess(input.cabangId);
       if (existing.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya draft yang bisa diedit');
       }
@@ -242,6 +246,7 @@ export class CashBankService {
         include: { lines: true },
       });
       if (!e) throw new NotFoundException();
+      this.cabangScope.assertAccess(e.cabangId);
       if (e.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException(`Status ${e.status}`);
       }
@@ -357,6 +362,7 @@ export class CashBankService {
       );
       const e = await tx.cashBankEntry.findUnique({ where: { id } });
       if (!e) throw new NotFoundException();
+      this.cabangScope.assertAccess(e.cabangId);
       if (e.status !== InvoiceStatus.POSTED) {
         throw new BadRequestException('Hanya POSTED yang bisa dibatalkan');
       }
@@ -388,13 +394,25 @@ export class CashBankService {
     invoiceId: string,
     delta: Decimal,
   ) {
-    const inv = await tx.salesInvoice.findUnique({
-      where: { id: invoiceId },
-      select: { totalNetto: true, totalDibayar: true, status: true },
-    });
+    // SELECT ... FOR UPDATE: dua BKM untuk faktur yang sama yang diproses
+    // bersamaan (read-then-write tanpa lock) bisa saling timpa totalDibayar
+    // (lost update) — salah satu pembayaran "hilang" dari akumulasi walau
+    // jurnal GL keduanya tetap ter-posting. Lock baris ini dulu sebelum baca.
+    const rows = await tx.$queryRaw<
+      Array<{ total_netto: string; total_dibayar: string; status: InvoiceStatus }>
+    >`SELECT total_netto, total_dibayar, status FROM sales_invoices WHERE id = ${invoiceId}::uuid FOR UPDATE`;
+    const inv = rows[0];
     if (!inv) return;
-    const dibayar = new Decimal(inv.totalDibayar).plus(delta).toDecimalPlaces(2);
-    const netto = new Decimal(inv.totalNetto);
+    const dibayar = new Decimal(inv.total_dibayar).plus(delta).toDecimalPlaces(2);
+    const netto = new Decimal(inv.total_netto);
+    // Tanpa cap ini, kasir bisa input BKM lebih besar dari sisa piutang —
+    // sistem diam-diam menandai PAID walau lebih bayar, tanpa jejak akun
+    // kelebihan bayar/uang muka mana pun (uang itu "hilang" dari laporan).
+    if (dibayar.gt(netto)) {
+      throw new BadRequestException(
+        `Pembayaran melebihi sisa piutang (sisa ${netto.minus(inv.total_dibayar).toFixed(2)})`,
+      );
+    }
     let status = inv.status;
     if (dibayar.lte(0)) status = InvoiceStatus.POSTED;
     else if (dibayar.gte(netto)) status = InvoiceStatus.PAID;
@@ -410,13 +428,19 @@ export class CashBankService {
     invoiceId: string,
     delta: Decimal,
   ) {
-    const inv = await tx.purchaseInvoice.findUnique({
-      where: { id: invoiceId },
-      select: { totalNetto: true, totalDibayar: true, status: true },
-    });
+    // Lihat catatan lock di applySalesPayment.
+    const rows = await tx.$queryRaw<
+      Array<{ total_netto: string; total_dibayar: string; status: InvoiceStatus }>
+    >`SELECT total_netto, total_dibayar, status FROM purchase_invoices WHERE id = ${invoiceId}::uuid FOR UPDATE`;
+    const inv = rows[0];
     if (!inv) return;
-    const dibayar = new Decimal(inv.totalDibayar).plus(delta).toDecimalPlaces(2);
-    const netto = new Decimal(inv.totalNetto);
+    const dibayar = new Decimal(inv.total_dibayar).plus(delta).toDecimalPlaces(2);
+    const netto = new Decimal(inv.total_netto);
+    if (dibayar.gt(netto)) {
+      throw new BadRequestException(
+        `Pembayaran melebihi sisa utang (sisa ${netto.minus(inv.total_dibayar).toFixed(2)})`,
+      );
+    }
     let status = inv.status;
     if (dibayar.lte(0)) status = InvoiceStatus.POSTED;
     else if (dibayar.gte(netto)) status = InvoiceStatus.PAID;

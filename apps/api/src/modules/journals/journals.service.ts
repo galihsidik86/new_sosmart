@@ -235,6 +235,12 @@ export class JournalsService {
       include: { lines: true },
     });
     if (!j) throw new NotFoundException('Jurnal tidak ditemukan');
+    // RLS cuma isolasi tenant — cabang belum dicek di jalur mutasi ini. Tanpa
+    // ini, user dengan MembershipCabang terbatas ke cabang A bisa posting
+    // jurnal cabang B (sama tenant) kalau tahu/menebak id-nya. Aman dipanggil
+    // dari service lain (sales/purchases/dll) — cabangId jurnal selalu sama
+    // dengan cabangId dokumen sumber yang sudah mereka cek sendiri.
+    this.cabangScope.assertAccess(j.cabangId);
     if (j.status !== JournalStatus.DRAFT) {
       throw new BadRequestException(`Jurnal ${j.nomor ?? j.id} status ${j.status}, tidak bisa di-post`);
     }
@@ -294,6 +300,7 @@ export class JournalsService {
       include: { lines: { orderBy: { no: 'asc' } } },
     });
     if (!orig) throw new NotFoundException('Jurnal asli tidak ditemukan');
+    this.cabangScope.assertAccess(orig.cabangId);
     if (orig.status !== JournalStatus.POSTED) {
       throw new BadRequestException('Hanya jurnal POSTED yang bisa dibalik');
     }
@@ -370,6 +377,8 @@ export class JournalsService {
     return this.tenancy.run(async (tx) => {
       const existing = await tx.journal.findUnique({ where: { id } });
       if (!existing) throw new NotFoundException('Jurnal tidak ditemukan');
+      this.cabangScope.assertAccess(existing.cabangId);
+      this.cabangScope.assertAccess(input.cabangId);
       if (existing.status !== JournalStatus.DRAFT) {
         throw new BadRequestException('Hanya draft yang bisa diedit');
       }
@@ -429,6 +438,7 @@ export class JournalsService {
   async deleteDraftInTx(tx: Prisma.TransactionClient, id: string) {
     const j = await tx.journal.findUnique({ where: { id } });
     if (!j) throw new NotFoundException('Jurnal tidak ditemukan');
+    this.cabangScope.assertAccess(j.cabangId);
     if (j.status !== JournalStatus.DRAFT) {
       throw new BadRequestException('Hanya draft yang bisa dihapus');
     }

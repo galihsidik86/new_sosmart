@@ -233,6 +233,10 @@ export class PurchasesService {
     return this.tenancy.run(async (tx) => {
       const existing = await tx.purchaseInvoice.findUnique({ where: { id } });
       if (!existing) throw new NotFoundException('Tagihan tidak ditemukan');
+      // Lihat catatan di SalesService.updateDraft — RLS cuma isolasi tenant,
+      // cabang belum dicek di jalur mutasi ini.
+      this.cabangScope.assertAccess(existing.cabangId);
+      this.cabangScope.assertAccess(input.cabangId);
       if (existing.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya draft yang bisa diedit');
       }
@@ -328,6 +332,7 @@ export class PurchasesService {
         include: { lines: true, vendor: { select: { nama: true, isPkp: true } } },
       });
       if (!inv) throw new NotFoundException();
+      this.cabangScope.assertAccess(inv.cabangId);
       if (inv.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException(`Status ${inv.status}, tidak bisa di-post`);
       }
@@ -473,6 +478,7 @@ export class PurchasesService {
       );
       const inv = await tx.purchaseInvoice.findUnique({ where: { id } });
       if (!inv) throw new NotFoundException();
+      this.cabangScope.assertAccess(inv.cabangId);
       if (inv.status === InvoiceStatus.CANCELLED) {
         throw new BadRequestException('Sudah dibatalkan');
       }
@@ -504,6 +510,7 @@ export class PurchasesService {
     return this.tenancy.run(async (tx) => {
       const inv = await tx.purchaseInvoice.findUnique({ where: { id } });
       if (!inv) throw new NotFoundException();
+      this.cabangScope.assertAccess(inv.cabangId);
       if (inv.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya DRAFT yang bisa dihapus');
       }
