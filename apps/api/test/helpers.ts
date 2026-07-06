@@ -168,29 +168,29 @@ export async function createTestTenant(_prisma: PrismaService): Promise<MinimalT
       status: FiscalYearStatus.OPEN,
     },
   });
-  // Bikin periode Mei (target test) + Juni (covers `new Date()` di sales.cancel reversal).
-  const period = await prisma.fiscalPeriod.create({
-    data: {
-      tenantId: tenant.id,
-      fiscalYearId: fy.id,
-      no: 5,
-      label: 'Mei 2026',
-      startDate: new Date(Date.UTC(2026, 4, 1)),
-      endDate: new Date(Date.UTC(2026, 4, 31)),
-      status: PeriodStatus.OPEN,
-    },
-  });
-  await prisma.fiscalPeriod.create({
-    data: {
-      tenantId: tenant.id,
-      fiscalYearId: fy.id,
-      no: 6,
-      label: 'Juni 2026',
-      startDate: new Date(Date.UTC(2026, 5, 1)),
-      endDate: new Date(Date.UTC(2026, 5, 30)),
-      status: PeriodStatus.OPEN,
-    },
-  });
+  // Semua 12 periode 2026 dibuat OPEN — Mei jadi target test utama, tapi
+  // reversal (mis. sales.cancel) selalu pakai `new Date()` (hari ini), jadi
+  // harus ada periode terbuka untuk bulan berjalan juga, bukan cuma Mei/Juni.
+  const monthLabels = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  ];
+  const periods = await Promise.all(
+    monthLabels.map((label, idx) =>
+      prisma.fiscalPeriod.create({
+        data: {
+          tenantId: tenant.id,
+          fiscalYearId: fy.id,
+          no: idx + 1,
+          label: `${label} 2026`,
+          startDate: new Date(Date.UTC(2026, idx, 1)),
+          endDate: new Date(Date.UTC(2026, idx + 1, 0)),
+          status: PeriodStatus.OPEN,
+        },
+      }),
+    ),
+  );
+  const period = periods[4]; // Mei — target test utama.
 
   // Akun esensial — minimum untuk test GL & sales
   const mkAkun = (kode: string, nama: string, kind: AccountKind, normal: NormalBalance) =>
