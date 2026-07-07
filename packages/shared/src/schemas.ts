@@ -177,6 +177,7 @@ export const journalSourceSchema = z.enum([
   'PENYESUAIAN',
   'TUTUP_BUKU',
   'PAJAK',
+  'SALDO_AWAL',
 ]);
 export type JournalSourceInput = z.infer<typeof journalSourceSchema>;
 
@@ -557,3 +558,51 @@ export const createBuktiPotongManualInputSchema = z.object({
   catatan: z.string().max(500).optional(),
 });
 export type CreateBuktiPotongManualInput = z.infer<typeof createBuktiPotongManualInputSchema>;
+
+// ---------- SALDO AWAL TERINTEGRASI ----------
+
+export const saldoAwalAkunLineInputSchema = z.object({
+  accountId: z.string().uuid(),
+  /// Magnitude, tanda ikut normalBalance akun (konvensi sama Account.saldoAwal).
+  nilai: lineMoney,
+});
+export type SaldoAwalAkunLineInput = z.infer<typeof saldoAwalAkunLineInputSchema>;
+
+export const setSaldoAwalAkunInputSchema = z.object({
+  lines: z.array(saldoAwalAkunLineInputSchema),
+});
+export type SetSaldoAwalAkunInput = z.infer<typeof setSaldoAwalAkunInputSchema>;
+
+export const saldoAwalPiutangInputSchema = z.object({
+  customerId: z.string().uuid(),
+  cabangId: z.string().uuid(),
+  tanggal: isoDateStrict,
+  jatuhTempo: isoDateStrict.optional(),
+  nominal: lineMoney,
+  keterangan: z.string().max(500).optional(),
+});
+export type SaldoAwalPiutangInput = z.infer<typeof saldoAwalPiutangInputSchema>;
+
+export const saldoAwalUtangInputSchema = z.object({
+  vendorId: z.string().uuid(),
+  cabangId: z.string().uuid(),
+  tanggal: isoDateStrict,
+  jatuhTempo: isoDateStrict.optional(),
+  nominal: lineMoney,
+  keterangan: z.string().max(500).optional(),
+});
+export type SaldoAwalUtangInput = z.infer<typeof saldoAwalUtangInputSchema>;
+
+export const saldoAwalPersediaanLineInputSchema = z.object({
+  itemId: z.string().uuid(),
+  cabangId: z.string().uuid(),
+  tanggal: isoDateStrict,
+  qty: lineMoney,
+  hargaPokokPerUnit: lineMoney,
+});
+export type SaldoAwalPersediaanLineInput = z.infer<typeof saldoAwalPersediaanLineInputSchema>;
+
+export const setSaldoAwalPersediaanInputSchema = z.object({
+  lines: z.array(saldoAwalPersediaanLineInputSchema),
+});
+export type SetSaldoAwalPersediaanInput = z.infer<typeof setSaldoAwalPersediaanInputSchema>;

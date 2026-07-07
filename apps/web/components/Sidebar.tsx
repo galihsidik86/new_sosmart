@@ -53,6 +53,7 @@ const NAV: NavItem[] = [
   { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/user', label: 'Pengguna', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/akun-default', label: 'Akun Default', roles: FULL },
+  { group: 'Pengaturan', href: '/pengaturan/saldo-awal', label: 'Saldo Awal', roles: FULL },
 ];
 
 interface SidebarProps {

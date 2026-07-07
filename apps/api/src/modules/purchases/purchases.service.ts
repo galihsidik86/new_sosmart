@@ -27,6 +27,7 @@ import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
 import { BuktiPotongService } from '../bukti-potong/bukti-potong.service.js';
+import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 
 const isPpnable = (k: KlasifikasiPpn) =>
   k === KlasifikasiPpn.BKP || k === KlasifikasiPpn.JKP;
@@ -43,6 +44,7 @@ export class PurchasesService {
     private readonly buktiPotong: BuktiPotongService,
     private readonly excel: ExcelService,
     private readonly cabangScope: CabangScopeService,
+    private readonly glConfig: GlConfigService,
   ) {}
 
   async exportXlsx(filter: { status?: InvoiceStatus; vendorId?: string; periodId?: string }): Promise<Buffer> {
@@ -337,6 +339,37 @@ export class PurchasesService {
         throw new BadRequestException(`Status ${inv.status}, tidak bisa di-post`);
       }
       await this.assertPeriodOpen(tx, inv.tanggal);
+
+      // Entri utang saldo awal (prosedur Saldo Awal Terintegrasi) — lihat
+      // catatan analog di SalesService.post().
+      if (inv.isSaldoAwal) {
+        const nomorSaldoAwal = inv.nomor ?? (await this.seq.next(tx, 'BILL', inv.tanggal));
+        const totalNettoSaldoAwal = new Decimal(inv.totalNetto);
+        const akunKliringId = await this.glConfig.getAccountIdInTx(tx, 'SALDO_AWAL_KLIRING');
+        const journalSaldoAwal = await this.journals.createDraftInTx(tx, {
+          cabangId: inv.cabangId,
+          tanggal: inv.tanggal.toISOString().slice(0, 10),
+          deskripsi: `Saldo awal utang ${nomorSaldoAwal} — ${inv.vendor.nama}`,
+          sumber: JournalSource.SALDO_AWAL,
+          sumberRef: inv.saldoAwalId ?? inv.id,
+          lines: [
+            { accountId: akunKliringId, debit: totalNettoSaldoAwal.toFixed(2), kredit: '0' },
+            { accountId: inv.akunApId, debit: '0', kredit: totalNettoSaldoAwal.toFixed(2) },
+          ],
+        });
+        await this.journals.postInTx(tx, journalSaldoAwal.id);
+        return tx.purchaseInvoice.update({
+          where: { id },
+          data: {
+            status: InvoiceStatus.POSTED,
+            nomor: nomorSaldoAwal,
+            journalId: journalSaldoAwal.id,
+            postedAt: new Date(),
+            postedById: userId,
+            postedRequestedById: validRequester,
+          },
+        });
+      }
 
       const nomor = inv.nomor ?? (await this.seq.next(tx, 'BILL', inv.tanggal));
 

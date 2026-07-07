@@ -370,6 +370,21 @@ CREATE POLICY budgets_isolation ON budgets
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- SALDO AWAL TERINTEGRASI (Fase 9)
+ALTER TABLE saldo_awal ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saldo_awal FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS saldo_awal_isolation ON saldo_awal;
+CREATE POLICY saldo_awal_isolation ON saldo_awal
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
+ALTER TABLE saldo_awal_akun_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saldo_awal_akun_lines FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS saldo_awal_akun_lines_isolation ON saldo_awal_akun_lines;
+CREATE POLICY saldo_awal_akun_lines_isolation ON saldo_awal_akun_lines
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity

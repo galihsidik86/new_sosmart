@@ -157,6 +157,19 @@ export const GlConfigKey = {
   DIVIDEN: 'DIVIDEN',
   /** Beban Penyusutan (default 6-103) — untuk add-back arus kas. */
   BEBAN_PENYUSUTAN: 'BEBAN_PENYUSUTAN',
+  /** Piutang Usaha (default 1-103) — dipakai prosedur Saldo Awal Terintegrasi. */
+  PIUTANG_USAHA: 'PIUTANG_USAHA',
+  /** Utang Usaha (default 2-101) — dipakai prosedur Saldo Awal Terintegrasi. */
+  UTANG_USAHA: 'UTANG_USAHA',
+  /** Persediaan Barang Dagang (default 1-104) — dipakai prosedur Saldo Awal Terintegrasi. */
+  PERSEDIAAN: 'PERSEDIAAN',
+  /**
+   * Akun kliring "Saldo Awal — Ekuitas Kliring" (default 3-105, kode BARU —
+   * tidak ada di template COA lama). Lawan-transaksi untuk SEMUA entri
+   * prosedur Saldo Awal Terintegrasi; saldonya harus nol kalau input lengkap
+   * & seimbang. Auto-provisioned oleh OpeningBalanceService kalau belum ada.
+   */
+  SALDO_AWAL_KLIRING: 'SALDO_AWAL_KLIRING',
 } as const;
 export type GlConfigKey = (typeof GlConfigKey)[keyof typeof GlConfigKey];
 
@@ -173,4 +186,8 @@ export const GL_CONFIG_DEFAULTS: Record<GlConfigKey, string> = {
   LABA_DITAHAN: '3-102',
   DIVIDEN: '3-104',
   BEBAN_PENYUSUTAN: '6-103',
+  PIUTANG_USAHA: '1-103',
+  UTANG_USAHA: '2-101',
+  PERSEDIAAN: '1-104',
+  SALDO_AWAL_KLIRING: '3-105',
 };

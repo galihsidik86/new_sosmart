@@ -32,6 +32,7 @@ import { GlConfigControllerModule } from './modules/gl-config/gl-config-controll
 import { UsersModule } from './modules/users/users.module.js';
 import { ProjectsModule } from './modules/projects/projects.module.js';
 import { Pph23TarifModule } from './modules/pph23-tarif/pph23-tarif.module.js';
+import { OpeningBalanceModule } from './modules/opening-balance/opening-balance.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { HealthController } from './modules/health/health.controller.js';
 
@@ -69,6 +70,7 @@ import { HealthController } from './modules/health/health.controller.js';
     UsersModule,
     ProjectsModule,
     Pph23TarifModule,
+    OpeningBalanceModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

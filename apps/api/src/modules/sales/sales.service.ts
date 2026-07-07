@@ -26,6 +26,7 @@ import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
+import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 
 /**
  * Skema PPN per item (sesuai PMK 131/2024):
@@ -48,6 +49,7 @@ export class SalesService {
     private readonly inventory: InventoryService,
     private readonly excel: ExcelService,
     private readonly cabangScope: CabangScopeService,
+    private readonly glConfig: GlConfigService,
   ) {}
 
   async exportXlsx(filter: { status?: InvoiceStatus; customerId?: string; periodId?: string }): Promise<Buffer> {
@@ -362,6 +364,40 @@ export class SalesService {
         throw new BadRequestException(`Faktur status ${inv.status}, tidak bisa di-post`);
       }
       await this.assertPeriodOpen(tx, inv.tanggal);
+
+      // Entri piutang saldo awal (prosedur Saldo Awal Terintegrasi) — bukan
+      // penjualan riil. Jalur terpisah: cuma D akunArId / K akun kliring,
+      // SKIP total pendapatan/PPN/HPP/stok-outbound di bawah (kalau lewat
+      // jalur normal, baris ini akan salah kredit ke akun pendapatan dan
+      // salah keluarkan stok yang justru sedang di-input awal).
+      if (inv.isSaldoAwal) {
+        const nomorSaldoAwal = inv.nomor ?? (await this.seq.next(tx, 'INV', inv.tanggal));
+        const totalNettoSaldoAwal = new Decimal(inv.totalNetto);
+        const akunKliringId = await this.glConfig.getAccountIdInTx(tx, 'SALDO_AWAL_KLIRING');
+        const journalSaldoAwal = await this.journals.createDraftInTx(tx, {
+          cabangId: inv.cabangId,
+          tanggal: inv.tanggal.toISOString().slice(0, 10),
+          deskripsi: `Saldo awal piutang ${nomorSaldoAwal} — ${inv.customer.nama}`,
+          sumber: JournalSource.SALDO_AWAL,
+          sumberRef: inv.saldoAwalId ?? inv.id,
+          lines: [
+            { accountId: inv.akunArId, debit: totalNettoSaldoAwal.toFixed(2), kredit: '0' },
+            { accountId: akunKliringId, debit: '0', kredit: totalNettoSaldoAwal.toFixed(2) },
+          ],
+        });
+        await this.journals.postInTx(tx, journalSaldoAwal.id);
+        return tx.salesInvoice.update({
+          where: { id },
+          data: {
+            status: InvoiceStatus.POSTED,
+            nomor: nomorSaldoAwal,
+            journalId: journalSaldoAwal.id,
+            postedAt: new Date(),
+            postedById: userId,
+            postedRequestedById: validRequester,
+          },
+        });
+      }
 
       // Alokasi nomor INV
       const nomor = inv.nomor ?? (await this.seq.next(tx, 'INV', inv.tanggal));

@@ -67,11 +67,11 @@ enum AuditAction {
 /// Klasifikasi PPN per item — menentukan bagaimana item diperlakukan
 /// di faktur penjualan/pembelian dan SPT Masa PPN.
 enum KlasifikasiPpn {
-  BKP             // Barang Kena Pajak (kena PPN)
-  JKP             // Jasa Kena Pajak (kena PPN, biasanya juga PPh 23)
-  NON_BKP         // Tidak kena PPN
-  BKP_STRATEGIS   // BKP strategis (PPN 0% / dibebaskan, mis. sembako tertentu)
-  BEBAS_PPN       // PPN dibebaskan (kawasan berikat, ekspor, dll)
+  BKP // Barang Kena Pajak (kena PPN)
+  JKP // Jasa Kena Pajak (kena PPN, biasanya juga PPh 23)
+  NON_BKP // Tidak kena PPN
+  BKP_STRATEGIS // BKP strategis (PPN 0% / dibebaskan, mis. sembako tertentu)
+  BEBAS_PPN // PPN dibebaskan (kawasan berikat, ekspor, dll)
 }
 
 /// Tipe pelanggan — mempengaruhi termin & kebijakan harga.
@@ -87,7 +87,7 @@ enum TipeCustomer {
 /// Status periode buku — gating untuk posting transaksi.
 enum PeriodStatus {
   OPEN
-  CLOSING    // sedang proses tutup (jurnal penyesuaian)
+  CLOSING // sedang proses tutup (jurnal penyesuaian)
   CLOSED
 }
 
@@ -108,25 +108,26 @@ enum JournalStatus {
 /// Sumber jurnal — menentukan dari modul mana jurnal terbit.
 /// Dipakai di buku besar & audit untuk telusur balik ke dokumen sumber.
 enum JournalSource {
-  MANUAL          // input langsung oleh user
-  PENJUALAN       // dari faktur penjualan (Fase 4)
+  MANUAL // input langsung oleh user
+  PENJUALAN // dari faktur penjualan (Fase 4)
   RETUR_JUAL
-  PEMBELIAN       // dari tagihan pembelian (Fase 4)
+  PEMBELIAN // dari tagihan pembelian (Fase 4)
   RETUR_BELI
-  KAS_BANK        // penerimaan/pengeluaran kas/bank
-  PENYUSUTAN      // auto-post bulanan aset tetap (Fase 6)
-  PENYESUAIAN     // jurnal penyesuaian (adjusting)
-  TUTUP_BUKU      // jurnal penutup periode/tahun
-  PAJAK           // posting otomatis dari modul pajak (Fase 7)
+  KAS_BANK // penerimaan/pengeluaran kas/bank
+  PENYUSUTAN // auto-post bulanan aset tetap (Fase 6)
+  PENYESUAIAN // jurnal penyesuaian (adjusting)
+  TUTUP_BUKU // jurnal penutup periode/tahun
+  PAJAK // posting otomatis dari modul pajak (Fase 7)
+  SALDO_AWAL // dari prosedur saldo awal terintegrasi (Fase 9)
 }
 
 /// Status faktur penjualan/pembelian.
 enum InvoiceStatus {
   DRAFT
-  POSTED       // sudah dijurnal & menjadi AR/AP
-  PAID         // sudah lunas (semua pelunasan diterima)
-  PARTIAL      // sudah ada pelunasan tapi belum lunas
-  CANCELLED    // dibatalkan (kalau POSTED → pembalik diterbitkan)
+  POSTED // sudah dijurnal & menjadi AR/AP
+  PAID // sudah lunas (semua pelunasan diterima)
+  PARTIAL // sudah ada pelunasan tapi belum lunas
+  CANCELLED // dibatalkan (kalau POSTED → pembalik diterbitkan)
 }
 
 /// Termin pembayaran — TUNAI langsung clearing, KREDIT pakai termin hari.
@@ -159,9 +160,9 @@ enum KodeFakturPajak {
 
 /// Jenis transaksi kas/bank.
 enum CashBankType {
-  RECEIPT     // penerimaan kas/bank (debit kas/bank)
-  PAYMENT     // pengeluaran kas/bank (kredit kas/bank)
-  TRANSFER    // mutasi antar akun kas/bank internal
+  RECEIPT // penerimaan kas/bank (debit kas/bank)
+  PAYMENT // pengeluaran kas/bank (kredit kas/bank)
+  TRANSFER // mutasi antar akun kas/bank internal
 }
 
 /// Metode pencatatan harga pokok persediaan.
@@ -216,38 +217,38 @@ enum BuktiPotongStatus {
 
 /// Jenis Pajak Penghasilan untuk e-Bupot Unifikasi (PER-24/PJ/2021 + Coretax).
 enum JenisPph {
-  PPH_21          // gaji karyawan
-  PPH_22          // impor / pemungut tertentu
-  PPH_23          // jasa, dividen, bunga, royalti
-  PPH_25          // angsuran bulanan
-  PPH_26          // WP luar negeri
-  PPH_29          // kurang bayar tahunan
-  PPH_4_AYAT_2    // final: sewa tanah/bangunan, jasa konstruksi
-  PPH_15          // sektor tertentu (pelayaran, penerbangan, dll)
+  PPH_21 // gaji karyawan
+  PPH_22 // impor / pemungut tertentu
+  PPH_23 // jasa, dividen, bunga, royalti
+  PPH_25 // angsuran bulanan
+  PPH_26 // WP luar negeri
+  PPH_29 // kurang bayar tahunan
+  PPH_4_AYAT_2 // final: sewa tanah/bangunan, jasa konstruksi
+  PPH_15 // sektor tertentu (pelayaran, penerbangan, dll)
 }
 
 /// Status aset tetap.
 enum AsetStatus {
-  AKTIF        // sedang dipakai, masih disusutkan
-  DIJUAL       // sudah dilepas via penjualan aset
-  RUSAK        // dihentikan karena rusak (write-off)
-  PENSIUN      // diafkir tapi belum dijual
+  AKTIF // sedang dipakai, masih disusutkan
+  DIJUAL // sudah dilepas via penjualan aset
+  RUSAK // dihentikan karena rusak (write-off)
+  PENSIUN // diafkir tapi belum dijual
 }
 
 /// Kelompok aset tetap menurut Pasal 11 UU PPh.
 enum KelompokAsetTetap {
-  BANGUNAN_PERMANEN       // 20 tahun
-  BANGUNAN_NON_PERMANEN   // 10 tahun
-  KELOMPOK_I              // 4 tahun (peralatan, komputer)
-  KELOMPOK_II             // 8 tahun (kendaraan, mesin)
-  KELOMPOK_III            // 16 tahun
-  KELOMPOK_IV             // 20 tahun
+  BANGUNAN_PERMANEN // 20 tahun
+  BANGUNAN_NON_PERMANEN // 10 tahun
+  KELOMPOK_I // 4 tahun (peralatan, komputer)
+  KELOMPOK_II // 8 tahun (kendaraan, mesin)
+  KELOMPOK_III // 16 tahun
+  KELOMPOK_IV // 20 tahun
 }
 
 /// Metode penyusutan.
 enum MetodePenyusutan {
-  GARIS_LURUS             // wajib untuk bangunan (Pasal 11 UU PPh)
-  SALDO_MENURUN           // boleh untuk non-bangunan
+  GARIS_LURUS // wajib untuk bangunan (Pasal 11 UU PPh)
+  SALDO_MENURUN // boleh untuk non-bangunan
 }
 
 /// Jenis mutasi stok di kartu stok.
@@ -259,18 +260,18 @@ enum ProjectStatus {
 
 enum ProjectMemberRole {
   MANAGER // approve override budget, kelola member
-  MEMBER  // input transaksi ber-project ini
+  MEMBER // input transaksi ber-project ini
 }
 
 enum StokMovementType {
-  STOK_AWAL       // saldo awal saat onboarding
-  PEMBELIAN       // dari faktur pembelian (inbound)
-  RETUR_BELI      // retur ke vendor (outbound)
-  PENJUALAN       // dari faktur penjualan (outbound)
-  RETUR_JUAL      // dari pelanggan kembali (inbound)
-  OPNAME_PLUS     // hasil opname > pencatatan
-  OPNAME_MINUS    // hasil opname < pencatatan (rusak/hilang)
-  TRANSFER_IN     // dari cabang lain (Fase 5.1)
+  STOK_AWAL // saldo awal saat onboarding
+  PEMBELIAN // dari faktur pembelian (inbound)
+  RETUR_BELI // retur ke vendor (outbound)
+  PENJUALAN // dari faktur penjualan (outbound)
+  RETUR_JUAL // dari pelanggan kembali (inbound)
+  OPNAME_PLUS // hasil opname > pencatatan
+  OPNAME_MINUS // hasil opname < pencatatan (rusak/hilang)
+  TRANSFER_IN // dari cabang lain (Fase 5.1)
   TRANSFER_OUT
 }
 
@@ -279,33 +280,33 @@ enum StokMovementType {
 // ===============================================================
 
 model User {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email         String   @unique
-  passwordHash  String   @map("password_hash")
-  nama          String
-  isActive      Boolean  @default(true) @map("is_active")
-  lastLoginAt   DateTime? @map("last_login_at")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  nama         String
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  memberships   Membership[]
-  refreshTokens RefreshToken[]
+  memberships    Membership[]
+  refreshTokens  RefreshToken[]
   projectMembers ProjectMember[]
 
   @@map("users")
 }
 
 model RefreshToken {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  tokenHash   String   @unique @map("token_hash")
-  expiresAt   DateTime @map("expires_at")
-  revokedAt   DateTime? @map("revoked_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  userAgent   String?  @map("user_agent")
-  ipAddress   String?  @map("ip_address")
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  userAgent String?   @map("user_agent")
+  ipAddress String?   @map("ip_address")
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("refresh_tokens")
@@ -316,86 +317,89 @@ model RefreshToken {
 // ===============================================================
 
 model Tenant {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// Nama badan usaha (PT / CV / UD / Koperasi)
-  nama          String
+  nama       String
   /// NPWP pusat (15-16 digit, era Coretax)
-  npwp          String?
+  npwp       String?
   /// PKP atau bukan
-  isPkp         Boolean  @default(false) @map("is_pkp")
+  isPkp      Boolean    @default(false) @map("is_pkp")
   /// Pengukuhan PKP (untuk header faktur)
-  pkpNo         String?  @map("pkp_no")
-  alamat        String?
-  email         String?
-  telp          String?
+  pkpNo      String?    @map("pkp_no")
+  alamat     String?
+  email      String?
+  telp       String?
   /// Tahun buku — default kalender
-  tahunBuku     Int      @default(1) @map("tahun_buku")
+  tahunBuku  Int        @default(1) @map("tahun_buku")
   /// Metode harga pokok persediaan. Sekali ada transaksi, jangan diubah.
-  costMethod    CostMethod @default(AVERAGE) @map("cost_method")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  costMethod CostMethod @default(AVERAGE) @map("cost_method")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
 
-  cabang        Cabang[]
-  memberships   Membership[]
-  accounts      Account[]
-  taxRates      TaxRate[]
-  items         Item[]
-  vendors       Vendor[]
-  customers     Customer[]
-  fiscalYears   FiscalYear[]
-  fiscalPeriods FiscalPeriod[]
-  journals      Journal[]
-  sequences     Sequence[]
-  salesInvoices SalesInvoice[]
-  purchaseInvoices PurchaseInvoice[]
-  cashBank      CashBankEntry[]
-  stokMovements StokMovement[]
-  stokLots      StokLot[]
-  stokAdjustments StokAdjustment[]
-  asetTetap     AsetTetap[]
-  depresiasiRuns DepresiasiRun[]
-  karyawan      Karyawan[]
-  payrollRuns   PayrollRun[]
-  buktiPotong   BuktiPotong[]
-  auditLogs     AuditLog[]
-  glConfig      GlConfig[]
-  projects      Project[]
-  budgets       Budget[]
-  pph23Tarif    Pph23Tarif[]
+  cabang             Cabang[]
+  memberships        Membership[]
+  accounts           Account[]
+  taxRates           TaxRate[]
+  items              Item[]
+  vendors            Vendor[]
+  customers          Customer[]
+  fiscalYears        FiscalYear[]
+  fiscalPeriods      FiscalPeriod[]
+  journals           Journal[]
+  sequences          Sequence[]
+  salesInvoices      SalesInvoice[]
+  purchaseInvoices   PurchaseInvoice[]
+  cashBank           CashBankEntry[]
+  stokMovements      StokMovement[]
+  stokLots           StokLot[]
+  stokAdjustments    StokAdjustment[]
+  asetTetap          AsetTetap[]
+  depresiasiRuns     DepresiasiRun[]
+  karyawan           Karyawan[]
+  payrollRuns        PayrollRun[]
+  buktiPotong        BuktiPotong[]
+  auditLogs          AuditLog[]
+  glConfig           GlConfig[]
+  projects           Project[]
+  budgets            Budget[]
+  pph23Tarif         Pph23Tarif[]
+  saldoAwal          SaldoAwal[]
+  saldoAwalAkunLines SaldoAwalAkunLine[]
 
   @@map("tenants")
 }
 
 model Cabang {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String   @map("tenant_id") @db.Uuid
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
   /// Kode internal cabang (mis. "JKT", "SBY-01")
-  kode          String
-  nama          String
+  kode           String
+  nama           String
   /// 3 digit terakhir kode cabang NPWP (000 = pusat, 001+ = cabang)
-  kodeCabangNpwp String? @map("kode_cabang_npwp") @db.VarChar(3)
+  kodeCabangNpwp String?  @map("kode_cabang_npwp") @db.VarChar(3)
   /// NPWP cabang penuh (kalau berbeda dengan pusat — lazim untuk cabang fisik berbeda kota)
-  npwpCabang    String?  @map("npwp_cabang")
-  alamat        String?
-  isPusat       Boolean  @default(false) @map("is_pusat")
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  npwpCabang     String?  @map("npwp_cabang")
+  alamat         String?
+  isPusat        Boolean  @default(false) @map("is_pusat")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant           Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   membershipCabang MembershipCabang[]
-  itemStokAwal  ItemStokAwal[]
-  journals      Journal[]
-  salesInvoices SalesInvoice[]
+  itemStokAwal     ItemStokAwal[]
+  journals         Journal[]
+  salesInvoices    SalesInvoice[]
   purchaseInvoices PurchaseInvoice[]
-  cashBank      CashBankEntry[]
-  stokMovements StokMovement[]
-  stokLots      StokLot[]
-  stokAdjustments StokAdjustment[]
-  asetTetap     AsetTetap[]
-  karyawan      Karyawan[]
-  payrollRuns   PayrollRun[]
-  buktiPotong   BuktiPotong[]
+  cashBank         CashBankEntry[]
+  stokMovements    StokMovement[]
+  stokLots         StokLot[]
+  stokAdjustments  StokAdjustment[]
+  asetTetap        AsetTetap[]
+  karyawan         Karyawan[]
+  payrollRuns      PayrollRun[]
+  buktiPotong      BuktiPotong[]
+  saldoAwal        SaldoAwal[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
@@ -403,15 +407,15 @@ model Cabang {
 }
 
 model Membership {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
-  tenantId      String   @map("tenant_id") @db.Uuid
-  role          Role
-  createdAt     DateTime @default(now()) @map("created_at")
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  role      Role
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cabang        MembershipCabang[]
+  user   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang MembershipCabang[]
 
   @@unique([userId, tenantId])
   @@index([tenantId])
@@ -420,11 +424,11 @@ model Membership {
 
 /// Akses per-cabang. Kalau kosong (tidak ada baris) → user dianggap punya akses semua cabang.
 model MembershipCabang {
-  membershipId  String   @map("membership_id") @db.Uuid
-  cabangId      String   @map("cabang_id") @db.Uuid
+  membershipId String @map("membership_id") @db.Uuid
+  cabangId     String @map("cabang_id") @db.Uuid
 
-  membership    Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  cabang        Cabang     @relation(fields: [cabangId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  cabang     Cabang     @relation(fields: [cabangId], references: [id], onDelete: Cascade)
 
   @@id([membershipId, cabangId])
   @@map("membership_cabang")
@@ -435,45 +439,46 @@ model MembershipCabang {
 // ===============================================================
 
 model Account {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String   @map("tenant_id") @db.Uuid
-  parentId      String?  @map("parent_id") @db.Uuid
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String        @map("tenant_id") @db.Uuid
+  parentId      String?       @map("parent_id") @db.Uuid
   /// Nomor akun, mis. "1-101", "1-1021"
   kode          String
   nama          String
   kind          AccountKind
   normalBalance NormalBalance @map("normal_balance")
   /// Akun postable (hanya leaf yang boleh dijurnal); parent = false.
-  isPostable    Boolean  @default(true) @map("is_postable")
-  isActive      Boolean  @default(true) @map("is_active")
+  isPostable    Boolean       @default(true) @map("is_postable")
+  isActive      Boolean       @default(true) @map("is_active")
   /// Saldo awal periode pertama (opsional, dipakai saat onboarding).
-  saldoAwal     Decimal  @default(0) @map("saldo_awal") @db.Decimal(20, 2)
+  saldoAwal     Decimal       @default(0) @map("saldo_awal") @db.Decimal(20, 2)
   catatan       String?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  parent        Account? @relation("AccountTree", fields: [parentId], references: [id], onDelete: Restrict)
-  children      Account[] @relation("AccountTree")
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent   Account?  @relation("AccountTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children Account[] @relation("AccountTree")
 
-  itemPendapatan Item[]    @relation("ItemPendapatan")
-  itemPersediaan Item[]    @relation("ItemPersediaan")
-  itemHpp        Item[]    @relation("ItemHpp")
-  itemBeban      Item[]    @relation("ItemBeban")
-  vendorUtang    Vendor[]  @relation("VendorAkunUtang")
-  customerPiutang Customer[] @relation("CustomerAkunPiutang")
-  journalLines  JournalLine[]
-  salesAR        SalesInvoice[]    @relation("SalesAR")
-  purchaseAP     PurchaseInvoice[] @relation("PurchaseAP")
-  salesLineAccount SalesInvoiceLine[] @relation("SalesLineAccount")
+  itemPendapatan      Item[]                @relation("ItemPendapatan")
+  itemPersediaan      Item[]                @relation("ItemPersediaan")
+  itemHpp             Item[]                @relation("ItemHpp")
+  itemBeban           Item[]                @relation("ItemBeban")
+  vendorUtang         Vendor[]              @relation("VendorAkunUtang")
+  customerPiutang     Customer[]            @relation("CustomerAkunPiutang")
+  journalLines        JournalLine[]
+  salesAR             SalesInvoice[]        @relation("SalesAR")
+  purchaseAP          PurchaseInvoice[]     @relation("PurchaseAP")
+  salesLineAccount    SalesInvoiceLine[]    @relation("SalesLineAccount")
   purchaseLineAccount PurchaseInvoiceLine[] @relation("PurchaseLineAccount")
-  cashBank      CashBankEntry[]
-  cashBankLines CashBankEntryLine[]
-  asetAset      AsetTetap[] @relation("AsetAkunAset")
-  asetAkumulasi AsetTetap[] @relation("AsetAkunAkumulasi")
-  asetBeban     AsetTetap[] @relation("AsetAkunBeban")
-  glConfig      GlConfig[]
-  budgets       Budget[]
+  cashBank            CashBankEntry[]
+  cashBankLines       CashBankEntryLine[]
+  asetAset            AsetTetap[]           @relation("AsetAkunAset")
+  asetAkumulasi       AsetTetap[]           @relation("AsetAkunAkumulasi")
+  asetBeban           AsetTetap[]           @relation("AsetAkunBeban")
+  glConfig            GlConfig[]
+  budgets             Budget[]
+  saldoAwalAkunLines  SaldoAwalAkunLine[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
@@ -494,8 +499,8 @@ model GlConfig {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, key])
   @@index([tenantId])
@@ -507,23 +512,23 @@ model GlConfig {
 // ===============================================================
 
 model TaxRate {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String   @map("tenant_id") @db.Uuid
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
   /// Kode unik, mis. "PPN-11", "PPN-12", "PPH23-JASA"
   kode          String
   nama          String
   /// Tarif dalam persen (mis. 11, 12, 2, 15)
-  tarif         Decimal  @db.Decimal(7, 4)
+  tarif         Decimal   @db.Decimal(7, 4)
   /// Skema PPN (null untuk pajak non-PPN)
   ppnSkema      PpnSkema? @map("ppn_skema")
   /// Default akun utang/piutang pajak yang dipakai posting
-  akunUtangId   String?  @map("akun_utang_id") @db.Uuid
-  akunPiutangId String?  @map("akun_piutang_id") @db.Uuid
-  isAktif       Boolean  @default(true) @map("is_aktif")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  akunUtangId   String?   @map("akun_utang_id") @db.Uuid
+  akunPiutangId String?   @map("akun_piutang_id") @db.Uuid
+  isAktif       Boolean   @default(true) @map("is_aktif")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, kode])
   @@index([tenantId])
@@ -534,22 +539,22 @@ model TaxRate {
 /// 141/2015). Dipakai untuk auto-fill tarifPph23Persen saat item jasa
 /// dibeli. Nilai standar: 2% (jasa umum), 15% (royalti/dividen/bunga/hadiah).
 model Pph23Tarif {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String   @map("tenant_id") @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
   /// Kode singkat, mis. "JASA-TEKNIK", "ROYALTI", "JASA-KONSTRUKSI"
-  kode          String
+  kode       String
   /// Nama jenis jasa/penghasilan (dari Lampiran PMK 141/2015).
-  nama          String
+  nama       String
   /// Tarif dalam persen (2 atau 15 standar; boleh custom).
-  tarif         Decimal  @db.Decimal(5, 2)
+  tarif      Decimal  @db.Decimal(5, 2)
   /// Catatan/keterangan tambahan (mis. "dengan NPWP" atau spec dari PMK).
-  keterangan    String?
-  isAktif       Boolean  @default(true) @map("is_aktif")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  keterangan String?
+  isAktif    Boolean  @default(true) @map("is_aktif")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  items         Item[]
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items  Item[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
@@ -561,47 +566,47 @@ model Pph23Tarif {
 // ===============================================================
 
 model Item {
-  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String         @map("tenant_id") @db.Uuid
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String         @map("tenant_id") @db.Uuid
   /// SKU internal, mis. "BRG-001"
-  kode              String
-  nama              String
-  kategori          String?
+  kode             String
+  nama             String
+  kategori         String?
   /// Satuan default: Pcs, Sak, Karton, Tray, Box, dst.
-  satuan            String         @default("Pcs")
+  satuan           String         @default("Pcs")
   /// Harga jual default (boleh di-override per faktur).
-  hargaJualDefault  Decimal        @default(0) @map("harga_jual_default") @db.Decimal(20, 2)
+  hargaJualDefault Decimal        @default(0) @map("harga_jual_default") @db.Decimal(20, 2)
   /// Klasifikasi PPN — menentukan apakah kena PPN dan skema apa.
-  klasifikasiPpn    KlasifikasiPpn @default(BKP) @map("klasifikasi_ppn")
+  klasifikasiPpn   KlasifikasiPpn @default(BKP) @map("klasifikasi_ppn")
   /// Apakah item ini jasa (sehingga juga kena PPh 23) atau barang dagang.
-  isJasa            Boolean        @default(false) @map("is_jasa")
+  isJasa           Boolean        @default(false) @map("is_jasa")
   /// Kode satuan barang menurut DJP (opsional, dipakai saat generate e-Faktur XML).
-  kodeSatuanDjp     String?        @map("kode_satuan_djp")
+  kodeSatuanDjp    String?        @map("kode_satuan_djp")
   /// Akun default untuk posting jurnal — override per item dari setting tenant.
-  akunPendapatanId  String?        @map("akun_pendapatan_id") @db.Uuid
-  akunPersediaanId  String?        @map("akun_persediaan_id") @db.Uuid
-  akunHppId         String?        @map("akun_hpp_id") @db.Uuid
+  akunPendapatanId String?        @map("akun_pendapatan_id") @db.Uuid
+  akunPersediaanId String?        @map("akun_persediaan_id") @db.Uuid
+  akunHppId        String?        @map("akun_hpp_id") @db.Uuid
   /// Akun beban kalau item dibeli sebagai jasa/bukan resale (mis. jasa konsultan).
-  akunBebanId       String?        @map("akun_beban_id") @db.Uuid
+  akunBebanId      String?        @map("akun_beban_id") @db.Uuid
   /// Tarif PPh 23 preset — hanya relevan kalau isJasa=true. Auto-fill ke
   /// purchase line saat item ini dipilih.
-  pph23TarifId      String?        @map("pph23_tarif_id") @db.Uuid
-  isAktif           Boolean        @default(true) @map("is_aktif")
-  catatan           String?
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @updatedAt @map("updated_at")
+  pph23TarifId     String?        @map("pph23_tarif_id") @db.Uuid
+  isAktif          Boolean        @default(true) @map("is_aktif")
+  catatan          String?
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
 
-  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  akunPendapatan Account?       @relation("ItemPendapatan", fields: [akunPendapatanId], references: [id], onDelete: SetNull)
-  akunPersediaan Account?       @relation("ItemPersediaan", fields: [akunPersediaanId], references: [id], onDelete: SetNull)
-  akunHpp        Account?       @relation("ItemHpp", fields: [akunHppId], references: [id], onDelete: SetNull)
-  akunBeban      Account?       @relation("ItemBeban", fields: [akunBebanId], references: [id], onDelete: SetNull)
-  pph23Tarif     Pph23Tarif?    @relation(fields: [pph23TarifId], references: [id], onDelete: SetNull)
-  stokAwal       ItemStokAwal[]
-  salesLines     SalesInvoiceLine[]
-  purchaseLines  PurchaseInvoiceLine[]
-  stokMovements  StokMovement[]
-  stokLots       StokLot[]
+  tenant              Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  akunPendapatan      Account?              @relation("ItemPendapatan", fields: [akunPendapatanId], references: [id], onDelete: SetNull)
+  akunPersediaan      Account?              @relation("ItemPersediaan", fields: [akunPersediaanId], references: [id], onDelete: SetNull)
+  akunHpp             Account?              @relation("ItemHpp", fields: [akunHppId], references: [id], onDelete: SetNull)
+  akunBeban           Account?              @relation("ItemBeban", fields: [akunBebanId], references: [id], onDelete: SetNull)
+  pph23Tarif          Pph23Tarif?           @relation(fields: [pph23TarifId], references: [id], onDelete: SetNull)
+  stokAwal            ItemStokAwal[]
+  salesLines          SalesInvoiceLine[]
+  purchaseLines       PurchaseInvoiceLine[]
+  stokMovements       StokMovement[]
+  stokLots            StokLot[]
   stokAdjustmentLines StokAdjustmentLine[]
 
   @@unique([tenantId, kode])
@@ -612,19 +617,23 @@ model Item {
 
 /// Stok awal per item per cabang — dipakai saat onboarding & engine kartu stok (Fase 5).
 model ItemStokAwal {
-  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId            String   @map("tenant_id") @db.Uuid
-  itemId              String   @map("item_id") @db.Uuid
-  cabangId            String   @map("cabang_id") @db.Uuid
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  itemId            String   @map("item_id") @db.Uuid
+  cabangId          String   @map("cabang_id") @db.Uuid
   /// Jumlah unit pada tanggal saldo awal.
-  qty                 Decimal  @db.Decimal(20, 4)
+  qty               Decimal  @db.Decimal(20, 4)
   /// Harga pokok per unit (untuk valuasi persediaan awal).
-  hargaPokokPerUnit   Decimal  @map("harga_pokok_per_unit") @db.Decimal(20, 2)
-  tanggal             DateTime @db.Date
-  createdAt           DateTime @default(now()) @map("created_at")
+  hargaPokokPerUnit Decimal  @map("harga_pokok_per_unit") @db.Decimal(20, 2)
+  tanggal           DateTime @db.Date
+  /// Non-null kalau baris ini sudah diposting lewat prosedur Saldo Awal
+  /// Terintegrasi (StokMovement + jurnal GL sudah dibuat) — idempotency marker.
+  saldoAwalId       String?  @map("saldo_awal_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at")
 
-  item    Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  cabang  Cabang @relation(fields: [cabangId], references: [id], onDelete: Cascade)
+  item      Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  cabang    Cabang     @relation(fields: [cabangId], references: [id], onDelete: Cascade)
+  saldoAwal SaldoAwal? @relation(fields: [saldoAwalId], references: [id], onDelete: SetNull)
 
   @@unique([itemId, cabangId, tanggal])
   @@index([tenantId])
@@ -632,38 +641,95 @@ model ItemStokAwal {
   @@map("item_stok_awal")
 }
 
+/// Satu "sesi" prosedur saldo awal terintegrasi per tenant — mengorkestrasi
+/// saldo awal akun manual (Kas/Aset Tetap/Modal/dst) + piutang per customer +
+/// utang per vendor + persediaan per item SEKALIGUS dalam satu transaksi
+/// atomik, supaya Neraca (Aset = Liabilitas + Ekuitas) selalu balance sejak
+/// hari pertama. Lihat GlConfigKey.SALDO_AWAL_KLIRING untuk akun lawannya.
+model SaldoAwal {
+  id                  String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId            String        @map("tenant_id") @db.Uuid
+  /// Cabang default untuk jurnal akun manual (akun manual tidak per-cabang).
+  cabangId            String        @map("cabang_id") @db.Uuid
+  /// Tanggal cutover — wajib = startDate FiscalYear pertama tenant.
+  tanggal             DateTime      @db.Date
+  status              InvoiceStatus @default(DRAFT)
+  totalDebit          Decimal       @default(0) @map("total_debit") @db.Decimal(20, 2)
+  totalKredit         Decimal       @default(0) @map("total_kredit") @db.Decimal(20, 2)
+  postedAt            DateTime?     @map("posted_at")
+  postedById          String?       @map("posted_by_id") @db.Uuid
+  postedRequestedById String?       @map("posted_requested_by_id") @db.Uuid
+  cancelledAt         DateTime?     @map("cancelled_at")
+  cancelledById       String?       @map("cancelled_by_id") @db.Uuid
+  createdById         String?       @map("created_by_id") @db.Uuid
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  tenant           Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang           Cabang              @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  akunLines        SaldoAwalAkunLine[]
+  salesInvoices    SalesInvoice[]
+  purchaseInvoices PurchaseInvoice[]
+  itemStokAwal     ItemStokAwal[]
+
+  @@unique([tenantId])
+  @@map("saldo_awal")
+}
+
+/// Snapshot audit nilai Account.saldoAwal (akun manual non-subsidiary) SAAT
+/// diposting — Account.saldoAwal sendiri di-reset ke 0 setelah posting
+/// (nilainya "pindah" ke jurnal GL), baris ini jadi jejak historis + sumber
+/// restore kalau run di-void.
+model SaldoAwalAkunLine {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  saldoAwalId String   @map("saldo_awal_id") @db.Uuid
+  accountId   String   @map("account_id") @db.Uuid
+  /// Magnitude, tanda mengikuti account.normalBalance (konvensi sama dengan Account.saldoAwal).
+  nilai       Decimal  @db.Decimal(20, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  saldoAwal SaldoAwal @relation(fields: [saldoAwalId], references: [id], onDelete: Cascade)
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  Tenant    Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@unique([saldoAwalId, accountId])
+  @@index([tenantId])
+  @@map("saldo_awal_akun_lines")
+}
+
 // ===============================================================
 // MASTER: Vendor (Pemasok)
 // ===============================================================
 
 model Vendor {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String   @map("tenant_id") @db.Uuid
-  kode              String
-  nama              String
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  kode          String
+  nama          String
   /// NPWP 15/16 digit (era Coretax — NIK juga valid untuk OP).
-  npwp              String?
+  npwp          String?
   /// Apakah vendor adalah PKP (penting untuk PPN masukan).
-  isPkp             Boolean  @default(false) @map("is_pkp")
-  kategori          String?
-  alamat            String?
-  kota              String?
-  provinsi          String?
-  kodePos           String?  @map("kode_pos")
-  telp              String?
-  email             String?
-  contactPerson     String?  @map("contact_person")
+  isPkp         Boolean  @default(false) @map("is_pkp")
+  kategori      String?
+  alamat        String?
+  kota          String?
+  provinsi      String?
+  kodePos       String?  @map("kode_pos")
+  telp          String?
+  email         String?
+  contactPerson String?  @map("contact_person")
   /// Termin pembayaran dalam hari (default 30).
-  terminHari        Int      @default(30) @map("termin_hari")
+  terminHari    Int      @default(30) @map("termin_hari")
   /// Override akun utang usaha default (kalau null pakai 2-101).
-  akunUtangId       String?  @map("akun_utang_id") @db.Uuid
-  isAktif           Boolean  @default(true) @map("is_aktif")
-  catatan           String?
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  akunUtangId   String?  @map("akun_utang_id") @db.Uuid
+  isAktif       Boolean  @default(true) @map("is_aktif")
+  catatan       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  akunUtang  Account? @relation("VendorAkunUtang", fields: [akunUtangId], references: [id], onDelete: SetNull)
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  akunUtang        Account?          @relation("VendorAkunUtang", fields: [akunUtangId], references: [id], onDelete: SetNull)
   purchaseInvoices PurchaseInvoice[]
 
   @@unique([tenantId, kode])
@@ -677,32 +743,32 @@ model Vendor {
 // ===============================================================
 
 model Customer {
-  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String         @map("tenant_id") @db.Uuid
-  kode              String
-  nama              String
-  npwp              String?
-  isPkp             Boolean        @default(false) @map("is_pkp")
-  tipe              TipeCustomer   @default(RITEL)
-  alamat            String?
-  kota              String?
-  provinsi          String?
-  kodePos           String?        @map("kode_pos")
-  telp              String?
-  email             String?
-  contactPerson     String?        @map("contact_person")
-  terminHari        Int            @default(14) @map("termin_hari")
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String       @map("tenant_id") @db.Uuid
+  kode          String
+  nama          String
+  npwp          String?
+  isPkp         Boolean      @default(false) @map("is_pkp")
+  tipe          TipeCustomer @default(RITEL)
+  alamat        String?
+  kota          String?
+  provinsi      String?
+  kodePos       String?      @map("kode_pos")
+  telp          String?
+  email         String?
+  contactPerson String?      @map("contact_person")
+  terminHari    Int          @default(14) @map("termin_hari")
   /// Batas kredit pelanggan (untuk validasi penjualan kredit).
-  kreditLimit       Decimal        @default(0) @map("kredit_limit") @db.Decimal(20, 2)
+  kreditLimit   Decimal      @default(0) @map("kredit_limit") @db.Decimal(20, 2)
   /// Override akun piutang usaha (kalau null pakai 1-103).
-  akunPiutangId     String?        @map("akun_piutang_id") @db.Uuid
-  isAktif           Boolean        @default(true) @map("is_aktif")
-  catatan           String?
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @updatedAt @map("updated_at")
+  akunPiutangId String?      @map("akun_piutang_id") @db.Uuid
+  isAktif       Boolean      @default(true) @map("is_aktif")
+  catatan       String?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
 
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  akunPiutang  Account? @relation("CustomerAkunPiutang", fields: [akunPiutangId], references: [id], onDelete: SetNull)
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  akunPiutang   Account?       @relation("CustomerAkunPiutang", fields: [akunPiutangId], references: [id], onDelete: SetNull)
   salesInvoices SalesInvoice[]
 
   @@unique([tenantId, kode])
@@ -716,20 +782,20 @@ model Customer {
 // ===============================================================
 
 model FiscalYear {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId    String           @map("tenant_id") @db.Uuid
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String           @map("tenant_id") @db.Uuid
   /// Label tahun buku, mis. "2026". Boleh non-kalender ("2026/2027").
-  kode        String
-  startDate   DateTime         @map("start_date") @db.Date
-  endDate     DateTime         @map("end_date") @db.Date
-  status      FiscalYearStatus @default(OPEN)
-  closedAt    DateTime?        @map("closed_at")
-  closedById  String?          @map("closed_by_id") @db.Uuid
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
+  kode       String
+  startDate  DateTime         @map("start_date") @db.Date
+  endDate    DateTime         @map("end_date") @db.Date
+  status     FiscalYearStatus @default(OPEN)
+  closedAt   DateTime?        @map("closed_at")
+  closedById String?          @map("closed_by_id") @db.Uuid
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
 
-  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  periods  FiscalPeriod[]
+  tenant  Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  periods FiscalPeriod[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
@@ -737,33 +803,33 @@ model FiscalYear {
 }
 
 model FiscalPeriod {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String        @map("tenant_id") @db.Uuid
-  fiscalYearId    String        @map("fiscal_year_id") @db.Uuid
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String       @map("tenant_id") @db.Uuid
+  fiscalYearId String       @map("fiscal_year_id") @db.Uuid
   /// Nomor periode dalam tahun buku (1-12 untuk bulanan).
-  no              Int
+  no           Int
   /// Label "Jan 2026", "Feb 2026", dst.
-  label           String
-  startDate       DateTime      @map("start_date") @db.Date
-  endDate         DateTime      @map("end_date") @db.Date
-  status          PeriodStatus  @default(OPEN)
-  closedAt        DateTime?     @map("closed_at")
-  closedById      String?       @map("closed_by_id") @db.Uuid
+  label        String
+  startDate    DateTime     @map("start_date") @db.Date
+  endDate      DateTime     @map("end_date") @db.Date
+  status       PeriodStatus @default(OPEN)
+  closedAt     DateTime?    @map("closed_at")
+  closedById   String?      @map("closed_by_id") @db.Uuid
   /// Catatan tutup buku (mis. "Audit Q1 selesai, dikunci").
-  catatanTutup    String?       @map("catatan_tutup")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  catatanTutup String?      @map("catatan_tutup")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
 
-  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  fiscalYear  FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
-  journals    Journal[]
-  salesInvoices SalesInvoice[]
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fiscalYear       FiscalYear        @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+  journals         Journal[]
+  salesInvoices    SalesInvoice[]
   purchaseInvoices PurchaseInvoice[]
-  cashBank    CashBankEntry[]
-  stokAdjustments StokAdjustment[]
-  depresiasiRuns DepresiasiRun[]
-  payrollRuns PayrollRun[]
-  buktiPotong BuktiPotong[]
+  cashBank         CashBankEntry[]
+  stokAdjustments  StokAdjustment[]
+  depresiasiRuns   DepresiasiRun[]
+  payrollRuns      PayrollRun[]
+  buktiPotong      BuktiPotong[]
 
   @@unique([tenantId, fiscalYearId, no])
   @@index([tenantId])
@@ -776,48 +842,48 @@ model FiscalPeriod {
 // ===============================================================
 
 model Journal {
-  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String         @map("tenant_id") @db.Uuid
-  cabangId        String         @map("cabang_id") @db.Uuid
-  fiscalPeriodId  String         @map("fiscal_period_id") @db.Uuid
+  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId             String        @map("tenant_id") @db.Uuid
+  cabangId             String        @map("cabang_id") @db.Uuid
+  fiscalPeriodId       String        @map("fiscal_period_id") @db.Uuid
   /// Auto-generated, format "JU-2026-05-0001" per tenant per bulan.
   /// Dialokasi saat .post(), bukan saat draft.
-  nomor           String?
-  tanggal         DateTime       @db.Date
-  deskripsi       String
+  nomor                String?
+  tanggal              DateTime      @db.Date
+  deskripsi            String
   /// URL bukti transaksi eksternal (scan/foto/gdrive/dropbox/dll). Optional.
-  linkBukti       String?        @map("link_bukti")
-  sumber          JournalSource  @default(MANUAL)
+  linkBukti            String?       @map("link_bukti")
+  sumber               JournalSource @default(MANUAL)
   /// Pointer balik ke dokumen sumber (mis. invoice id) untuk telusur.
-  sumberRef       String?        @map("sumber_ref")
-  status          JournalStatus  @default(DRAFT)
+  sumberRef            String?       @map("sumber_ref")
+  status               JournalStatus @default(DRAFT)
   /// Pointer ke jurnal asli kalau baris ini ADALAH jurnal pembalik.
-  reversedFromId  String?        @map("reversed_from_id") @db.Uuid
+  reversedFromId       String?       @map("reversed_from_id") @db.Uuid
   /// Pointer ke jurnal pembalik kalau baris ini DIBALIK oleh jurnal lain.
-  reversedById    String?        @map("reversed_by_id") @db.Uuid
+  reversedById         String?       @map("reversed_by_id") @db.Uuid
   /// Snapshot total saat post — dicheck D=K dan disimpan untuk perf.
-  totalDebit      Decimal        @default(0) @map("total_debit") @db.Decimal(20, 2)
-  totalKredit     Decimal        @default(0) @map("total_kredit") @db.Decimal(20, 2)
-  postedAt        DateTime?      @map("posted_at")
-  postedById      String?        @map("posted_by_id") @db.Uuid
+  totalDebit           Decimal       @default(0) @map("total_debit") @db.Decimal(20, 2)
+  totalKredit          Decimal       @default(0) @map("total_kredit") @db.Decimal(20, 2)
+  postedAt             DateTime?     @map("posted_at")
+  postedById           String?       @map("posted_by_id") @db.Uuid
   /// Step-up audit: kalau posting dieksekusi atas permintaan user lain
   /// (mis. KASIR meminta approval AKUNTAN), simpan ID requester di sini.
   /// postedById tetap menunjuk ke approver (yang JWT-nya dipakai).
-  postedRequestedById String?    @map("posted_requested_by_id") @db.Uuid
+  postedRequestedById  String?       @map("posted_requested_by_id") @db.Uuid
   /// Audit override budget: kalau posting menembus limit Budget dan approver
   /// (OWNER/ADMIN/MANAGER) mengizinkan, flag ini true + alasan disimpan.
-  budgetOverridden      Boolean  @default(false) @map("budget_overridden")
-  budgetOverrideAlasan  String?  @map("budget_override_alasan")
-  createdById     String?        @map("created_by_id") @db.Uuid
-  createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime       @updatedAt @map("updated_at")
+  budgetOverridden     Boolean       @default(false) @map("budget_overridden")
+  budgetOverrideAlasan String?       @map("budget_override_alasan")
+  createdById          String?       @map("created_by_id") @db.Uuid
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
 
-  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cabang         Cabang       @relation(fields: [cabangId], references: [id], onDelete: Restrict)
-  fiscalPeriod   FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
-  lines          JournalLine[]
-  reversedFrom   Journal?     @relation("JournalReversal", fields: [reversedFromId], references: [id], onDelete: SetNull)
-  reversals      Journal[]    @relation("JournalReversal")
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang       Cabang        @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  fiscalPeriod FiscalPeriod  @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
+  lines        JournalLine[]
+  reversedFrom Journal?      @relation("JournalReversal", fields: [reversedFromId], references: [id], onDelete: SetNull)
+  reversals    Journal[]     @relation("JournalReversal")
 
   @@unique([tenantId, nomor])
   @@index([tenantId])
@@ -829,21 +895,21 @@ model Journal {
 }
 
 model JournalLine {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
-  journalId   String   @map("journal_id") @db.Uuid
-  accountId   String   @map("account_id") @db.Uuid
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String  @map("tenant_id") @db.Uuid
+  journalId String  @map("journal_id") @db.Uuid
+  accountId String  @map("account_id") @db.Uuid
   /// Attach transaksi ke project untuk budgeting + laporan per project.
   /// Nullable — baris tanpa project dianggap "overhead / general".
-  projectId   String?  @map("project_id") @db.Uuid
+  projectId String? @map("project_id") @db.Uuid
   /// Urutan baris di voucher (1, 2, 3, ...).
-  no          Int
-  debit       Decimal  @default(0) @db.Decimal(20, 2)
-  kredit      Decimal  @default(0) @db.Decimal(20, 2)
-  deskripsi   String?
+  no        Int
+  debit     Decimal @default(0) @db.Decimal(20, 2)
+  kredit    Decimal @default(0) @db.Decimal(20, 2)
+  deskripsi String?
 
-  journal Journal @relation(fields: [journalId], references: [id], onDelete: Cascade)
-  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  journal Journal  @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  account Account  @relation(fields: [accountId], references: [id], onDelete: Restrict)
   project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([journalId])
@@ -873,106 +939,115 @@ model Sequence {
 // ===============================================================
 
 model SalesInvoice {
-  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String        @map("tenant_id") @db.Uuid
-  cabangId          String        @map("cabang_id") @db.Uuid
-  fiscalPeriodId    String        @map("fiscal_period_id") @db.Uuid
-  customerId        String        @map("customer_id") @db.Uuid
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String           @map("tenant_id") @db.Uuid
+  cabangId           String           @map("cabang_id") @db.Uuid
+  fiscalPeriodId     String           @map("fiscal_period_id") @db.Uuid
+  customerId         String           @map("customer_id") @db.Uuid
   /// Auto: INV-2026-05-0001, dialokasi saat .post()
-  nomor             String?
-  tanggal           DateTime      @db.Date
-  jatuhTempo        DateTime      @map("jatuh_tempo") @db.Date
-  termin            TerminPembayaran @default(KREDIT)
+  nomor              String?
+  tanggal            DateTime         @db.Date
+  jatuhTempo         DateTime         @map("jatuh_tempo") @db.Date
+  termin             TerminPembayaran @default(KREDIT)
   /// Akun kas/bank untuk transaksi TUNAI, atau akun piutang untuk KREDIT
   /// (default dari customer.akunPiutangId).
-  akunArId          String        @map("akun_ar_id") @db.Uuid
-  status            InvoiceStatus @default(DRAFT)
-  deskripsi         String?
+  akunArId           String           @map("akun_ar_id") @db.Uuid
+  status             InvoiceStatus    @default(DRAFT)
+  deskripsi          String?
   /// Kalau true, hargaSatuan yang diinput user sudah include PPN (harga tag).
   /// Engine akan reverse-calc DPP = gross / (1 + tarifEfektif/100).
   /// Default false = harga excl PPN (mode existing).
-  hargaTermasukPajak Boolean       @default(false) @map("harga_termasuk_pajak")
+  hargaTermasukPajak Boolean          @default(false) @map("harga_termasuk_pajak")
   /// URL bukti transaksi eksternal (scan invoice/PO/DO/foto tanda-tangan/dll).
-  linkBukti         String?       @map("link_bukti")
+  linkBukti          String?          @map("link_bukti")
   /// Faktur pajak data (untuk customer PKP)
-  kodeFakturPajak   KodeFakturPajak? @map("kode_faktur_pajak")
-  nsfp              String?       // 16 digit nomor seri faktur pajak (Coretax)
+  kodeFakturPajak    KodeFakturPajak? @map("kode_faktur_pajak")
+  nsfp               String? // 16 digit nomor seri faktur pajak (Coretax)
 
   /// Snapshot total
-  totalDpp          Decimal       @default(0) @map("total_dpp") @db.Decimal(20, 2)
-  totalPpn          Decimal       @default(0) @map("total_ppn") @db.Decimal(20, 2)
-  totalPph23        Decimal       @default(0) @map("total_pph23") @db.Decimal(20, 2)
-  totalDiskon       Decimal       @default(0) @map("total_diskon") @db.Decimal(20, 2)
-  totalNetto        Decimal       @default(0) @map("total_netto") @db.Decimal(20, 2)  // DPP + PPN - PPh23 (yg dibayar customer)
+  totalDpp     Decimal @default(0) @map("total_dpp") @db.Decimal(20, 2)
+  totalPpn     Decimal @default(0) @map("total_ppn") @db.Decimal(20, 2)
+  totalPph23   Decimal @default(0) @map("total_pph23") @db.Decimal(20, 2)
+  totalDiskon  Decimal @default(0) @map("total_diskon") @db.Decimal(20, 2)
+  totalNetto   Decimal @default(0) @map("total_netto") @db.Decimal(20, 2) // DPP + PPN - PPh23 (yg dibayar customer)
   /// Akumulasi pelunasan
-  totalDibayar      Decimal       @default(0) @map("total_dibayar") @db.Decimal(20, 2)
+  totalDibayar Decimal @default(0) @map("total_dibayar") @db.Decimal(20, 2)
 
   /// Link ke jurnal yang ter-post (AR/Pendapatan/PPN)
-  journalId         String?       @unique @map("journal_id") @db.Uuid
+  journalId    String? @unique @map("journal_id") @db.Uuid
   /// Jurnal HPP terpisah (D HPP, K Persediaan) — terbit saat post kalau ada item barang.
-  hppJournalId      String?       @unique @map("hpp_journal_id") @db.Uuid
+  hppJournalId String? @unique @map("hpp_journal_id") @db.Uuid
 
-  postedAt          DateTime?     @map("posted_at")
-  postedById        String?       @map("posted_by_id") @db.Uuid
+  postedAt               DateTime? @map("posted_at")
+  postedById             String?   @map("posted_by_id") @db.Uuid
   /// Step-up audit: ID user yang meminta posting saat dijalankan dengan
   /// approval kredensial (mis. KASIR meminta AKUNTAN approve). Null untuk
   /// posting langsung. postedById tetap = approver.
-  postedRequestedById String?     @map("posted_requested_by_id") @db.Uuid
-  cancelledAt       DateTime?     @map("cancelled_at")
-  cancelledById     String?       @map("cancelled_by_id") @db.Uuid
+  postedRequestedById    String?   @map("posted_requested_by_id") @db.Uuid
+  cancelledAt            DateTime? @map("cancelled_at")
+  cancelledById          String?   @map("cancelled_by_id") @db.Uuid
   /// Step-up audit: ID requester saat cancel dieksekusi dengan approval kredensial.
-  cancelledRequestedById String?  @map("cancelled_requested_by_id") @db.Uuid
-  createdById       String?       @map("created_by_id") @db.Uuid
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  cancelledRequestedById String?   @map("cancelled_requested_by_id") @db.Uuid
+  createdById            String?   @map("created_by_id") @db.Uuid
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cabang       Cabang       @relation(fields: [cabangId], references: [id], onDelete: Restrict)
-  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
-  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  akunAr       Account      @relation("SalesAR", fields: [akunArId], references: [id], onDelete: Restrict)
+  /// Entri piutang saldo awal (prosedur Saldo Awal Terintegrasi), bukan
+  /// penjualan riil — .post() skip baris pendapatan/PPN/HPP/stok-outbound,
+  /// langsung D akunArId / K akun kliring. Tetap muncul di aging/statement
+  /// piutang seperti faktur biasa (by design — lihat opening-balance module).
+  isSaldoAwal Boolean @default(false) @map("is_saldo_awal")
+  saldoAwalId String? @map("saldo_awal_id") @db.Uuid
+
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang       Cabang             @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  fiscalPeriod FiscalPeriod       @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
+  customer     Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  akunAr       Account            @relation("SalesAR", fields: [akunArId], references: [id], onDelete: Restrict)
+  saldoAwal    SaldoAwal?         @relation(fields: [saldoAwalId], references: [id], onDelete: SetNull)
   lines        SalesInvoiceLine[]
 
   @@unique([tenantId, nomor])
   @@index([tenantId, status, tanggal])
   @@index([customerId, status])
   @@index([fiscalPeriodId])
+  @@index([tenantId, isSaldoAwal])
   @@map("sales_invoices")
 }
 
 model SalesInvoiceLine {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String   @map("tenant_id") @db.Uuid
-  invoiceId     String   @map("invoice_id") @db.Uuid
-  itemId        String?  @map("item_id") @db.Uuid
-  no            Int
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String         @map("tenant_id") @db.Uuid
+  invoiceId      String         @map("invoice_id") @db.Uuid
+  itemId         String?        @map("item_id") @db.Uuid
+  no             Int
   /// Snapshot nama item saat faktur dibuat (tahan rename).
-  deskripsi     String
-  qty           Decimal  @db.Decimal(20, 4)
-  satuan        String
-  hargaSatuan   Decimal  @map("harga_satuan") @db.Decimal(20, 2)
-  diskonPersen  Decimal  @default(0) @map("diskon_persen") @db.Decimal(7, 4)
+  deskripsi      String
+  qty            Decimal        @db.Decimal(20, 4)
+  satuan         String
+  hargaSatuan    Decimal        @map("harga_satuan") @db.Decimal(20, 2)
+  diskonPersen   Decimal        @default(0) @map("diskon_persen") @db.Decimal(7, 4)
   /// Klasifikasi PPN snapshot dari item; menentukan apakah baris ini kena PPN.
   klasifikasiPpn KlasifikasiPpn @map("klasifikasi_ppn")
   /// Snapshot apakah ini jasa (untuk PPh 23).
-  isJasa        Boolean  @default(false) @map("is_jasa")
+  isJasa         Boolean        @default(false) @map("is_jasa")
 
   /// Computed values (snapshot, in-sync dgn header total).
-  bruto         Decimal  @db.Decimal(20, 2)   // qty * harga
-  diskonNilai   Decimal  @default(0) @map("diskon_nilai") @db.Decimal(20, 2)
-  dpp           Decimal  @db.Decimal(20, 2)   // bruto - diskon (atau adj. nilai lain)
-  ppn           Decimal  @default(0) @db.Decimal(20, 2)
-  pph23         Decimal  @default(0) @db.Decimal(20, 2)
+  bruto       Decimal @db.Decimal(20, 2) // qty * harga
+  diskonNilai Decimal @default(0) @map("diskon_nilai") @db.Decimal(20, 2)
+  dpp         Decimal @db.Decimal(20, 2) // bruto - diskon (atau adj. nilai lain)
+  ppn         Decimal @default(0) @db.Decimal(20, 2)
+  pph23       Decimal @default(0) @db.Decimal(20, 2)
 
   /// Akun pendapatan (default dari item.akunPendapatanId).
-  akunPendapatanId String @map("akun_pendapatan_id") @db.Uuid
+  akunPendapatanId String  @map("akun_pendapatan_id") @db.Uuid
   /// Attach ke project (opsional) — untuk laporan + budget per project.
-  projectId       String? @map("project_id") @db.Uuid
+  projectId        String? @map("project_id") @db.Uuid
 
-  invoice SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  item    Item?        @relation(fields: [itemId], references: [id], onDelete: SetNull)
-  akunPendapatan Account @relation("SalesLineAccount", fields: [akunPendapatanId], references: [id], onDelete: Restrict)
-  project Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  invoice        SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  item           Item?        @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  akunPendapatan Account      @relation("SalesLineAccount", fields: [akunPendapatanId], references: [id], onDelete: Restrict)
+  project        Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([invoiceId])
   @@index([tenantId])
@@ -985,97 +1060,104 @@ model SalesInvoiceLine {
 // ===============================================================
 
 model PurchaseInvoice {
-  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String        @map("tenant_id") @db.Uuid
-  cabangId          String        @map("cabang_id") @db.Uuid
-  fiscalPeriodId    String        @map("fiscal_period_id") @db.Uuid
-  vendorId          String        @map("vendor_id") @db.Uuid
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String           @map("tenant_id") @db.Uuid
+  cabangId           String           @map("cabang_id") @db.Uuid
+  fiscalPeriodId     String           @map("fiscal_period_id") @db.Uuid
+  vendorId           String           @map("vendor_id") @db.Uuid
   /// Auto: BILL-2026-05-0001
-  nomor             String?
+  nomor              String?
   /// Nomor faktur dari pemasok (referensi eksternal, mis. faktur PPN mereka).
-  nomorVendor       String?       @map("nomor_vendor")
-  tanggal           DateTime      @db.Date
-  jatuhTempo        DateTime      @map("jatuh_tempo") @db.Date
-  termin            TerminPembayaran @default(KREDIT)
+  nomorVendor        String?          @map("nomor_vendor")
+  tanggal            DateTime         @db.Date
+  jatuhTempo         DateTime         @map("jatuh_tempo") @db.Date
+  termin             TerminPembayaran @default(KREDIT)
   /// Akun kas/bank (untuk TUNAI) atau utang usaha (untuk KREDIT)
-  akunApId          String        @map("akun_ap_id") @db.Uuid
-  status            InvoiceStatus @default(DRAFT)
-  deskripsi         String?
+  akunApId           String           @map("akun_ap_id") @db.Uuid
+  status             InvoiceStatus    @default(DRAFT)
+  deskripsi          String?
   /// Kalau true, hargaSatuan input sudah include PPN (harga tag vendor).
   /// Engine reverse-calc DPP dari gross.
-  hargaTermasukPajak Boolean       @default(false) @map("harga_termasuk_pajak")
+  hargaTermasukPajak Boolean          @default(false) @map("harga_termasuk_pajak")
   /// URL bukti tagihan eksternal (scan faktur vendor/PO/DO/dll).
-  linkBukti         String?       @map("link_bukti")
+  linkBukti          String?          @map("link_bukti")
   /// Faktur pajak masukan dari vendor (untuk vendor PKP).
-  nsfpMasukan       String?       @map("nsfp_masukan")
+  nsfpMasukan        String?          @map("nsfp_masukan")
 
-  totalDpp          Decimal       @default(0) @map("total_dpp") @db.Decimal(20, 2)
-  totalPpn          Decimal       @default(0) @map("total_ppn") @db.Decimal(20, 2)
-  totalPph23        Decimal       @default(0) @map("total_pph23") @db.Decimal(20, 2)
-  totalDiskon       Decimal       @default(0) @map("total_diskon") @db.Decimal(20, 2)
+  totalDpp     Decimal @default(0) @map("total_dpp") @db.Decimal(20, 2)
+  totalPpn     Decimal @default(0) @map("total_ppn") @db.Decimal(20, 2)
+  totalPph23   Decimal @default(0) @map("total_pph23") @db.Decimal(20, 2)
+  totalDiskon  Decimal @default(0) @map("total_diskon") @db.Decimal(20, 2)
   /// DPP + PPN - PPh23 yg dipotong = yang kita bayar ke vendor
-  totalNetto        Decimal       @default(0) @map("total_netto") @db.Decimal(20, 2)
-  totalDibayar      Decimal       @default(0) @map("total_dibayar") @db.Decimal(20, 2)
+  totalNetto   Decimal @default(0) @map("total_netto") @db.Decimal(20, 2)
+  totalDibayar Decimal @default(0) @map("total_dibayar") @db.Decimal(20, 2)
 
-  journalId         String?       @unique @map("journal_id") @db.Uuid
+  journalId String? @unique @map("journal_id") @db.Uuid
 
-  postedAt          DateTime?     @map("posted_at")
-  postedById        String?       @map("posted_by_id") @db.Uuid
+  postedAt               DateTime? @map("posted_at")
+  postedById             String?   @map("posted_by_id") @db.Uuid
   /// Step-up audit: ID user yang meminta posting saat dijalankan dengan
   /// approval kredensial (mis. KASIR meminta AKUNTAN approve). Null untuk
   /// posting langsung. postedById tetap = approver.
-  postedRequestedById String?     @map("posted_requested_by_id") @db.Uuid
-  cancelledAt       DateTime?     @map("cancelled_at")
-  cancelledById     String?       @map("cancelled_by_id") @db.Uuid
+  postedRequestedById    String?   @map("posted_requested_by_id") @db.Uuid
+  cancelledAt            DateTime? @map("cancelled_at")
+  cancelledById          String?   @map("cancelled_by_id") @db.Uuid
   /// Step-up audit: ID requester saat cancel dieksekusi dengan approval kredensial.
-  cancelledRequestedById String?  @map("cancelled_requested_by_id") @db.Uuid
-  createdById       String?       @map("created_by_id") @db.Uuid
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  cancelledRequestedById String?   @map("cancelled_requested_by_id") @db.Uuid
+  createdById            String?   @map("created_by_id") @db.Uuid
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cabang       Cabang       @relation(fields: [cabangId], references: [id], onDelete: Restrict)
-  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
-  vendor       Vendor       @relation(fields: [vendorId], references: [id], onDelete: Restrict)
-  akunAp       Account      @relation("PurchaseAP", fields: [akunApId], references: [id], onDelete: Restrict)
+  /// Entri utang saldo awal (prosedur Saldo Awal Terintegrasi) — lihat
+  /// catatan analog di SalesInvoice.isSaldoAwal.
+  isSaldoAwal Boolean @default(false) @map("is_saldo_awal")
+  saldoAwalId String? @map("saldo_awal_id") @db.Uuid
+
+  tenant       Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang       Cabang                @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  fiscalPeriod FiscalPeriod          @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
+  vendor       Vendor                @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  akunAp       Account               @relation("PurchaseAP", fields: [akunApId], references: [id], onDelete: Restrict)
+  saldoAwal    SaldoAwal?            @relation(fields: [saldoAwalId], references: [id], onDelete: SetNull)
   lines        PurchaseInvoiceLine[]
 
   @@unique([tenantId, nomor])
   @@index([tenantId, status, tanggal])
   @@index([vendorId, status])
   @@index([fiscalPeriodId])
+  @@index([tenantId, isSaldoAwal])
   @@map("purchase_invoices")
 }
 
 model PurchaseInvoiceLine {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String   @map("tenant_id") @db.Uuid
-  invoiceId     String   @map("invoice_id") @db.Uuid
-  itemId        String?  @map("item_id") @db.Uuid
-  no            Int
-  deskripsi     String
-  qty           Decimal  @db.Decimal(20, 4)
-  satuan        String
-  hargaSatuan   Decimal  @map("harga_satuan") @db.Decimal(20, 2)
-  diskonPersen  Decimal  @default(0) @map("diskon_persen") @db.Decimal(7, 4)
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String         @map("tenant_id") @db.Uuid
+  invoiceId      String         @map("invoice_id") @db.Uuid
+  itemId         String?        @map("item_id") @db.Uuid
+  no             Int
+  deskripsi      String
+  qty            Decimal        @db.Decimal(20, 4)
+  satuan         String
+  hargaSatuan    Decimal        @map("harga_satuan") @db.Decimal(20, 2)
+  diskonPersen   Decimal        @default(0) @map("diskon_persen") @db.Decimal(7, 4)
   klasifikasiPpn KlasifikasiPpn @map("klasifikasi_ppn")
-  isJasa        Boolean  @default(false) @map("is_jasa")
+  isJasa         Boolean        @default(false) @map("is_jasa")
 
-  bruto         Decimal  @db.Decimal(20, 2)
-  diskonNilai   Decimal  @default(0) @map("diskon_nilai") @db.Decimal(20, 2)
-  dpp           Decimal  @db.Decimal(20, 2)
-  ppn           Decimal  @default(0) @db.Decimal(20, 2)
-  pph23         Decimal  @default(0) @db.Decimal(20, 2)
+  bruto       Decimal @db.Decimal(20, 2)
+  diskonNilai Decimal @default(0) @map("diskon_nilai") @db.Decimal(20, 2)
+  dpp         Decimal @db.Decimal(20, 2)
+  ppn         Decimal @default(0) @db.Decimal(20, 2)
+  pph23       Decimal @default(0) @db.Decimal(20, 2)
 
   /// Akun debit: persediaan (barang) atau beban (jasa).
-  akunDebitId   String   @map("akun_debit_id") @db.Uuid
+  akunDebitId String  @map("akun_debit_id") @db.Uuid
   /// Attach ke project (opsional) — untuk laporan + budget per project.
-  projectId     String?  @map("project_id") @db.Uuid
+  projectId   String? @map("project_id") @db.Uuid
 
-  invoice PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  item    Item?           @relation(fields: [itemId], references: [id], onDelete: SetNull)
-  akunDebit Account @relation("PurchaseLineAccount", fields: [akunDebitId], references: [id], onDelete: Restrict)
-  project Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  invoice   PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  item      Item?           @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  akunDebit Account         @relation("PurchaseLineAccount", fields: [akunDebitId], references: [id], onDelete: Restrict)
+  project   Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([invoiceId])
   @@index([tenantId])
@@ -1088,45 +1170,45 @@ model PurchaseInvoiceLine {
 // ===============================================================
 
 model CashBankEntry {
-  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String       @map("tenant_id") @db.Uuid
-  cabangId        String       @map("cabang_id") @db.Uuid
-  fiscalPeriodId  String       @map("fiscal_period_id") @db.Uuid
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String        @map("tenant_id") @db.Uuid
+  cabangId           String        @map("cabang_id") @db.Uuid
+  fiscalPeriodId     String        @map("fiscal_period_id") @db.Uuid
   /// Auto: BKM/BKK/BBM/BBK-2026-05-0001
-  nomor           String?
-  tanggal         DateTime     @db.Date
-  tipe            CashBankType
+  nomor              String?
+  tanggal            DateTime      @db.Date
+  tipe               CashBankType
   /// Akun kas/bank utama yang dipengaruhi (debit kalau RECEIPT, kredit kalau PAYMENT).
-  akunKasBankId   String       @map("akun_kas_bank_id") @db.Uuid
+  akunKasBankId      String        @map("akun_kas_bank_id") @db.Uuid
   /// Total transaksi (positif). Untuk TRANSFER, sama dgn akunKasBankLawanId.
-  total           Decimal      @db.Decimal(20, 2)
+  total              Decimal       @db.Decimal(20, 2)
   /// Untuk TRANSFER: akun kas/bank lawan.
-  akunKasBankLawanId String?   @map("akun_kas_bank_lawan_id") @db.Uuid
+  akunKasBankLawanId String?       @map("akun_kas_bank_lawan_id") @db.Uuid
   /// Pihak transaksi (label saja). Untuk pelunasan AR/AP, link via salesInvoiceId/purchaseInvoiceId.
-  kontak          String?
-  deskripsi       String?
+  kontak             String?
+  deskripsi          String?
   /// URL bukti transaksi eksternal (scan slip bank/BKM/BKK, foto struk, dll).
-  linkBukti       String?      @map("link_bukti")
-  status          InvoiceStatus @default(DRAFT)
+  linkBukti          String?       @map("link_bukti")
+  status             InvoiceStatus @default(DRAFT)
   /// Link optional untuk pelunasan AR/AP.
-  salesInvoiceId    String?    @map("sales_invoice_id") @db.Uuid
-  purchaseInvoiceId String?    @map("purchase_invoice_id") @db.Uuid
+  salesInvoiceId     String?       @map("sales_invoice_id") @db.Uuid
+  purchaseInvoiceId  String?       @map("purchase_invoice_id") @db.Uuid
 
-  journalId       String?      @unique @map("journal_id") @db.Uuid
-  postedAt        DateTime?    @map("posted_at")
-  postedById      String?      @map("posted_by_id") @db.Uuid
-  cancelledAt     DateTime?    @map("cancelled_at")
-  cancelledById   String?      @map("cancelled_by_id") @db.Uuid
+  journalId              String?   @unique @map("journal_id") @db.Uuid
+  postedAt               DateTime? @map("posted_at")
+  postedById             String?   @map("posted_by_id") @db.Uuid
+  cancelledAt            DateTime? @map("cancelled_at")
+  cancelledById          String?   @map("cancelled_by_id") @db.Uuid
   /// Step-up audit: ID requester saat cancel dieksekusi dengan approval kredensial.
-  cancelledRequestedById String? @map("cancelled_requested_by_id") @db.Uuid
-  createdById     String?      @map("created_by_id") @db.Uuid
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
+  cancelledRequestedById String?   @map("cancelled_requested_by_id") @db.Uuid
+  createdById            String?   @map("created_by_id") @db.Uuid
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cabang       Cabang       @relation(fields: [cabangId], references: [id], onDelete: Restrict)
-  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
-  akunKasBank  Account      @relation(fields: [akunKasBankId], references: [id], onDelete: Restrict)
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang       Cabang              @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  fiscalPeriod FiscalPeriod        @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
+  akunKasBank  Account             @relation(fields: [akunKasBankId], references: [id], onDelete: Restrict)
   lines        CashBankEntryLine[]
 
   @@unique([tenantId, nomor])
@@ -1141,16 +1223,16 @@ model CashBankEntry {
 /// Untuk PAYMENT: tiap baris menjadi DEBIT (lawan dari kredit kas/bank).
 /// Untuk TRANSFER: tidak ada baris (akun lawan di header).
 model CashBankEntryLine {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
-  entryId     String   @map("entry_id") @db.Uuid
-  no          Int
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String  @map("tenant_id") @db.Uuid
+  entryId   String  @map("entry_id") @db.Uuid
+  no        Int
   /// Akun lawan (mis. piutang, utang, pendapatan lain, beban).
-  accountId   String   @map("account_id") @db.Uuid
+  accountId String  @map("account_id") @db.Uuid
   /// Attach ke project (opsional) — untuk laporan + budget per project.
-  projectId   String?  @map("project_id") @db.Uuid
-  nilai       Decimal  @db.Decimal(20, 2)
-  deskripsi   String?
+  projectId String? @map("project_id") @db.Uuid
+  nilai     Decimal @db.Decimal(20, 2)
+  deskripsi String?
 
   entry   CashBankEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
   account Account       @relation(fields: [accountId], references: [id], onDelete: Restrict)
@@ -1169,34 +1251,34 @@ model CashBankEntryLine {
 /// Setiap event yang mempengaruhi stok — sumber tunggal kebenaran untuk kartu stok.
 /// Saldo running disimpan per baris supaya report kartu stok cepat (tidak perlu re-aggregate).
 model StokMovement {
-  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String           @map("tenant_id") @db.Uuid
-  itemId        String           @map("item_id") @db.Uuid
-  cabangId      String           @map("cabang_id") @db.Uuid
-  tanggal       DateTime         @db.Date
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String           @map("tenant_id") @db.Uuid
+  itemId     String           @map("item_id") @db.Uuid
+  cabangId   String           @map("cabang_id") @db.Uuid
+  tanggal    DateTime         @db.Date
   /// Timestamp asli supaya urutan dalam satu hari tetap stabil.
-  occurredAt    DateTime         @default(now()) @map("occurred_at")
-  tipe          StokMovementType
+  occurredAt DateTime         @default(now()) @map("occurred_at")
+  tipe       StokMovementType
   /// Salah satu di antara qtyIn/qtyOut harus > 0 (CHECK di SQL).
-  qtyIn         Decimal          @default(0) @map("qty_in") @db.Decimal(20, 4)
-  qtyOut        Decimal          @default(0) @map("qty_out") @db.Decimal(20, 4)
+  qtyIn      Decimal          @default(0) @map("qty_in") @db.Decimal(20, 4)
+  qtyOut     Decimal          @default(0) @map("qty_out") @db.Decimal(20, 4)
   /// Harga pokok per unit pada movement ini.
-  hargaPokok    Decimal          @map("harga_pokok") @db.Decimal(20, 4)
+  hargaPokok Decimal          @map("harga_pokok") @db.Decimal(20, 4)
   /// Nilai movement signed (+ inbound, - outbound).
-  nilai         Decimal          @db.Decimal(20, 2)
+  nilai      Decimal          @db.Decimal(20, 2)
   /// Saldo BERJALAN setelah movement ini (per item per cabang).
-  saldoQty      Decimal          @map("saldo_qty") @db.Decimal(20, 4)
-  saldoNilai    Decimal          @map("saldo_nilai") @db.Decimal(20, 2)
+  saldoQty   Decimal          @map("saldo_qty") @db.Decimal(20, 4)
+  saldoNilai Decimal          @map("saldo_nilai") @db.Decimal(20, 2)
   /// Telusur balik: 'SALES_LINE' / 'PURCHASE_LINE' / 'ADJUSTMENT_LINE' / 'STOK_AWAL'.
-  sumberType    String?          @map("sumber_type")
-  sumberId      String?          @map("sumber_id")
-  keterangan    String?
-  createdAt     DateTime         @default(now()) @map("created_at")
+  sumberType String?          @map("sumber_type")
+  sumberId   String?          @map("sumber_id")
+  keterangan String?
+  createdAt  DateTime         @default(now()) @map("created_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  item   Item   @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  cabang Cabang @relation(fields: [cabangId], references: [id], onDelete: Restrict)
-  lots   StokLot[] @relation("StokLotMasuk")
+  tenant   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  item     Item              @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  cabang   Cabang            @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  lots     StokLot[]         @relation("StokLotMasuk")
   konsumsi StokLotKonsumsi[]
 
   @@index([tenantId, itemId, cabangId, occurredAt])
@@ -1207,23 +1289,23 @@ model StokMovement {
 /// Lot persediaan untuk FIFO — satu lot per movement INBOUND.
 /// Saat OUTBOUND, lot tertua diambil dulu sampai habis (boleh pecah).
 model StokLot {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String   @map("tenant_id") @db.Uuid
-  itemId         String   @map("item_id") @db.Uuid
-  cabangId       String   @map("cabang_id") @db.Uuid
-  tanggalMasuk   DateTime @map("tanggal_masuk") @db.Date
-  occurredAt     DateTime @default(now()) @map("occurred_at")
-  qtyMasuk       Decimal  @map("qty_masuk") @db.Decimal(20, 4)
-  qtyTerpakai    Decimal  @default(0) @map("qty_terpakai") @db.Decimal(20, 4)
-  hargaPokok     Decimal  @map("harga_pokok") @db.Decimal(20, 4)
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  itemId          String   @map("item_id") @db.Uuid
+  cabangId        String   @map("cabang_id") @db.Uuid
+  tanggalMasuk    DateTime @map("tanggal_masuk") @db.Date
+  occurredAt      DateTime @default(now()) @map("occurred_at")
+  qtyMasuk        Decimal  @map("qty_masuk") @db.Decimal(20, 4)
+  qtyTerpakai     Decimal  @default(0) @map("qty_terpakai") @db.Decimal(20, 4)
+  hargaPokok      Decimal  @map("harga_pokok") @db.Decimal(20, 4)
   /// Pointer ke movement masuk yang membuat lot ini.
-  movementMasukId String  @map("movement_masuk_id") @db.Uuid
+  movementMasukId String   @map("movement_masuk_id") @db.Uuid
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  item   Item   @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  cabang Cabang @relation(fields: [cabangId], references: [id], onDelete: Restrict)
-  movementMasuk StokMovement @relation("StokLotMasuk", fields: [movementMasukId], references: [id], onDelete: Restrict)
-  konsumsi StokLotKonsumsi[]
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  item          Item              @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  cabang        Cabang            @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  movementMasuk StokMovement      @relation("StokLotMasuk", fields: [movementMasukId], references: [id], onDelete: Restrict)
+  konsumsi      StokLotKonsumsi[]
 
   @@index([tenantId, itemId, cabangId, occurredAt])
   @@map("stok_lots")
@@ -1231,15 +1313,15 @@ model StokLot {
 
 /// Konsumsi lot oleh movement outbound (FIFO). Satu outbound bisa habiskan beberapa lot.
 model StokLotKonsumsi {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
-  lotId       String   @map("lot_id") @db.Uuid
-  movementOutId String @map("movement_out_id") @db.Uuid
-  qty         Decimal  @db.Decimal(20, 4)
-  hargaPokok  Decimal  @map("harga_pokok") @db.Decimal(20, 4)
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String  @map("tenant_id") @db.Uuid
+  lotId         String  @map("lot_id") @db.Uuid
+  movementOutId String  @map("movement_out_id") @db.Uuid
+  qty           Decimal @db.Decimal(20, 4)
+  hargaPokok    Decimal @map("harga_pokok") @db.Decimal(20, 4)
 
-  lot          StokLot      @relation(fields: [lotId], references: [id], onDelete: Restrict)
-  movementOut  StokMovement @relation(fields: [movementOutId], references: [id], onDelete: Cascade)
+  lot         StokLot      @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  movementOut StokMovement @relation(fields: [movementOutId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, lotId])
   @@index([movementOutId])
@@ -1248,32 +1330,32 @@ model StokLotKonsumsi {
 
 /// Opname / penyesuaian stok manual.
 model StokAdjustment {
-  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String         @map("tenant_id") @db.Uuid
-  cabangId        String         @map("cabang_id") @db.Uuid
-  fiscalPeriodId  String         @map("fiscal_period_id") @db.Uuid
+  id                     String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId               String        @map("tenant_id") @db.Uuid
+  cabangId               String        @map("cabang_id") @db.Uuid
+  fiscalPeriodId         String        @map("fiscal_period_id") @db.Uuid
   /// Auto: ADJ-2026-05-0001
-  nomor           String?
-  tanggal         DateTime       @db.Date
-  alasan          String         // mis. "Opname akhir Mei 2026", "Rusak gudang"
-  status          InvoiceStatus  @default(DRAFT)
-  journalId       String?        @unique @map("journal_id") @db.Uuid
-  totalDeltaNilai Decimal        @default(0) @map("total_delta_nilai") @db.Decimal(20, 2)
-  postedAt        DateTime?      @map("posted_at")
-  postedById      String?        @map("posted_by_id") @db.Uuid
+  nomor                  String?
+  tanggal                DateTime      @db.Date
+  alasan                 String // mis. "Opname akhir Mei 2026", "Rusak gudang"
+  status                 InvoiceStatus @default(DRAFT)
+  journalId              String?       @unique @map("journal_id") @db.Uuid
+  totalDeltaNilai        Decimal       @default(0) @map("total_delta_nilai") @db.Decimal(20, 2)
+  postedAt               DateTime?     @map("posted_at")
+  postedById             String?       @map("posted_by_id") @db.Uuid
   /// Step-up audit: requester ID kalau posting dengan approval kredensial.
-  postedRequestedById String?    @map("posted_requested_by_id") @db.Uuid
-  cancelledAt     DateTime?      @map("cancelled_at")
-  cancelledById   String?        @map("cancelled_by_id") @db.Uuid
+  postedRequestedById    String?       @map("posted_requested_by_id") @db.Uuid
+  cancelledAt            DateTime?     @map("cancelled_at")
+  cancelledById          String?       @map("cancelled_by_id") @db.Uuid
   /// Step-up audit: ID requester saat cancel dieksekusi dengan approval kredensial.
-  cancelledRequestedById String?  @map("cancelled_requested_by_id") @db.Uuid
-  createdById     String?        @map("created_by_id") @db.Uuid
-  createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime       @updatedAt @map("updated_at")
+  cancelledRequestedById String?       @map("cancelled_requested_by_id") @db.Uuid
+  createdById            String?       @map("created_by_id") @db.Uuid
+  createdAt              DateTime      @default(now()) @map("created_at")
+  updatedAt              DateTime      @updatedAt @map("updated_at")
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cabang       Cabang       @relation(fields: [cabangId], references: [id], onDelete: Restrict)
-  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
+  tenant       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang       Cabang               @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  fiscalPeriod FiscalPeriod         @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
   lines        StokAdjustmentLine[]
 
   @@unique([tenantId, nomor])
@@ -1282,21 +1364,21 @@ model StokAdjustment {
 }
 
 model StokAdjustmentLine {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId     String   @map("tenant_id") @db.Uuid
-  adjustmentId String   @map("adjustment_id") @db.Uuid
-  itemId       String   @map("item_id") @db.Uuid
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String  @map("tenant_id") @db.Uuid
+  adjustmentId String  @map("adjustment_id") @db.Uuid
+  itemId       String  @map("item_id") @db.Uuid
   no           Int
   /// Snapshot saldo pencatatan saat draft dibuat.
-  qtySaatIni   Decimal  @map("qty_saat_ini") @db.Decimal(20, 4)
+  qtySaatIni   Decimal @map("qty_saat_ini") @db.Decimal(20, 4)
   /// Hasil fisik (opname).
-  qtyFisik     Decimal  @map("qty_fisik") @db.Decimal(20, 4)
+  qtyFisik     Decimal @map("qty_fisik") @db.Decimal(20, 4)
   /// Delta = qtyFisik - qtySaatIni. Boleh + atau -.
-  delta        Decimal  @db.Decimal(20, 4)
+  delta        Decimal @db.Decimal(20, 4)
   /// Harga pokok untuk valuasi (pakai saldoNilai/saldoQty saat snapshot).
-  hargaPokok   Decimal  @map("harga_pokok") @db.Decimal(20, 4)
+  hargaPokok   Decimal @map("harga_pokok") @db.Decimal(20, 4)
   /// Signed: delta × hargaPokok.
-  nilaiDelta   Decimal  @map("nilai_delta") @db.Decimal(20, 2)
+  nilaiDelta   Decimal @map("nilai_delta") @db.Decimal(20, 2)
   keterangan   String?
 
   adjustment StokAdjustment @relation(fields: [adjustmentId], references: [id], onDelete: Cascade)
@@ -1312,57 +1394,57 @@ model StokAdjustmentLine {
 // ===============================================================
 
 model AsetTetap {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String   @map("tenant_id") @db.Uuid
-  cabangId        String   @map("cabang_id") @db.Uuid
+  id       String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String            @map("tenant_id") @db.Uuid
+  cabangId String            @map("cabang_id") @db.Uuid
   /// Kode internal, mis. AT-001
-  kode            String
-  nama            String
+  kode     String
+  nama     String
   /// Kelompok aset menurut Pasal 11 UU PPh — menentukan default masa manfaat.
-  kelompok        KelompokAsetTetap
+  kelompok KelompokAsetTetap
   /// Metode penyusutan. Bangunan WAJIB GARIS_LURUS (UU PPh).
-  metode          MetodePenyusutan @default(GARIS_LURUS)
+  metode   MetodePenyusutan  @default(GARIS_LURUS)
 
   tanggalPerolehan DateTime @map("tanggal_perolehan") @db.Date
   /// Tanggal mulai penyusutan (umumnya bulan setelah perolehan, bisa diatur).
   mulaiPenyusutan  DateTime @map("mulai_penyusutan") @db.Date
 
-  hargaPerolehan  Decimal  @map("harga_perolehan") @db.Decimal(20, 2)
+  hargaPerolehan   Decimal @map("harga_perolehan") @db.Decimal(20, 2)
   /// Nilai sisa pada akhir masa manfaat (umumnya 0).
-  nilaiResidu     Decimal  @default(0) @map("nilai_residu") @db.Decimal(20, 2)
+  nilaiResidu      Decimal @default(0) @map("nilai_residu") @db.Decimal(20, 2)
   /// Masa manfaat dalam BULAN (Kelompok I = 48, II = 96, III = 192, IV = 240, Bangunan 240, NonPerm 120).
   masaManfaatBulan Int     @map("masa_manfaat_bulan")
 
   /// Snapshot — sumber kebenaran adalah DepresiasiLine, tapi cache di sini supaya cepat.
-  akumulasiPenyusutan Decimal @default(0) @map("akumulasi_penyusutan") @db.Decimal(20, 2)
-  nilaiBuku           Decimal @map("nilai_buku") @db.Decimal(20, 2)
+  akumulasiPenyusutan   Decimal @default(0) @map("akumulasi_penyusutan") @db.Decimal(20, 2)
+  nilaiBuku             Decimal @map("nilai_buku") @db.Decimal(20, 2)
   /// "YYYY-MM" periode terakhir yang sudah dihitung penyusutannya.
   lastDepresiasiPeriode String? @map("last_depresiasi_periode")
 
   /// Akun aset (debit saat perolehan, kredit saat dijual).
-  akunAsetId      String   @map("akun_aset_id") @db.Uuid
+  akunAsetId      String @map("akun_aset_id") @db.Uuid
   /// Akun akumulasi (kontra-aset, kredit per bulan, debit saat dijual).
-  akunAkumulasiId String   @map("akun_akumulasi_id") @db.Uuid
+  akunAkumulasiId String @map("akun_akumulasi_id") @db.Uuid
   /// Akun beban penyusutan (debit per bulan).
-  akunBebanId     String   @map("akun_beban_id") @db.Uuid
+  akunBebanId     String @map("akun_beban_id") @db.Uuid
 
-  status            AsetStatus @default(AKTIF)
-  catatan           String?
+  status  AsetStatus @default(AKTIF)
+  catatan String?
 
   /// Diisi saat dispose.
-  tanggalDihentikan DateTime?  @map("tanggal_dihentikan") @db.Date
-  hargaJualDisposal Decimal?   @map("harga_jual_disposal") @db.Decimal(20, 2)
-  disposalJournalId String?    @unique @map("disposal_journal_id") @db.Uuid
+  tanggalDihentikan DateTime? @map("tanggal_dihentikan") @db.Date
+  hargaJualDisposal Decimal?  @map("harga_jual_disposal") @db.Decimal(20, 2)
+  disposalJournalId String?   @unique @map("disposal_journal_id") @db.Uuid
 
-  createdById     String?  @map("created_by_id") @db.Uuid
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  tenant         Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cabang         Cabang  @relation(fields: [cabangId], references: [id], onDelete: Restrict)
-  akunAset       Account @relation("AsetAkunAset", fields: [akunAsetId], references: [id], onDelete: Restrict)
-  akunAkumulasi  Account @relation("AsetAkunAkumulasi", fields: [akunAkumulasiId], references: [id], onDelete: Restrict)
-  akunBeban      Account @relation("AsetAkunBeban", fields: [akunBebanId], references: [id], onDelete: Restrict)
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang          Cabang           @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  akunAset        Account          @relation("AsetAkunAset", fields: [akunAsetId], references: [id], onDelete: Restrict)
+  akunAkumulasi   Account          @relation("AsetAkunAkumulasi", fields: [akunAkumulasiId], references: [id], onDelete: Restrict)
+  akunBeban       Account          @relation("AsetAkunBeban", fields: [akunBebanId], references: [id], onDelete: Restrict)
   depresiasiLines DepresiasiLine[]
 
   @@unique([tenantId, kode])
@@ -1384,18 +1466,18 @@ model DepresiasiRun {
   journalId       String?       @unique @map("journal_id") @db.Uuid
   totalPenyusutan Decimal       @default(0) @map("total_penyusutan") @db.Decimal(20, 2)
 
-  postedAt        DateTime?     @map("posted_at")
-  postedById      String?       @map("posted_by_id") @db.Uuid
-  cancelledAt     DateTime?     @map("cancelled_at")
-  cancelledById   String?       @map("cancelled_by_id") @db.Uuid
+  postedAt               DateTime? @map("posted_at")
+  postedById             String?   @map("posted_by_id") @db.Uuid
+  cancelledAt            DateTime? @map("cancelled_at")
+  cancelledById          String?   @map("cancelled_by_id") @db.Uuid
   /// Step-up audit: ID requester saat cancel dieksekusi dengan approval kredensial.
-  cancelledRequestedById String? @map("cancelled_requested_by_id") @db.Uuid
-  createdById     String?       @map("created_by_id") @db.Uuid
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  cancelledRequestedById String?   @map("cancelled_requested_by_id") @db.Uuid
+  createdById            String?   @map("created_by_id") @db.Uuid
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fiscalPeriod FiscalPeriod     @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
   lines        DepresiasiLine[]
 
   @@unique([tenantId, periode])
@@ -1404,16 +1486,16 @@ model DepresiasiRun {
 }
 
 model DepresiasiLine {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String   @map("tenant_id") @db.Uuid
-  runId           String   @map("run_id") @db.Uuid
-  asetId          String   @map("aset_id") @db.Uuid
+  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String  @map("tenant_id") @db.Uuid
+  runId            String  @map("run_id") @db.Uuid
+  asetId           String  @map("aset_id") @db.Uuid
   /// Penyusutan untuk bulan ini saja.
-  nilai           Decimal  @db.Decimal(20, 2)
+  nilai            Decimal @db.Decimal(20, 2)
   /// Snapshot nilai buku sebelum & sesudah (untuk audit & cancel).
-  nilaiBukuSebelum   Decimal @map("nilai_buku_sebelum") @db.Decimal(20, 2)
-  nilaiBukuSesudah   Decimal @map("nilai_buku_sesudah") @db.Decimal(20, 2)
-  akumulasiSesudah   Decimal @map("akumulasi_sesudah") @db.Decimal(20, 2)
+  nilaiBukuSebelum Decimal @map("nilai_buku_sebelum") @db.Decimal(20, 2)
+  nilaiBukuSesudah Decimal @map("nilai_buku_sesudah") @db.Decimal(20, 2)
+  akumulasiSesudah Decimal @map("akumulasi_sesudah") @db.Decimal(20, 2)
 
   run  DepresiasiRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   aset AsetTetap     @relation(fields: [asetId], references: [id], onDelete: Restrict)
@@ -1428,36 +1510,36 @@ model DepresiasiLine {
 // ===============================================================
 
 model Karyawan {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String        @map("tenant_id") @db.Uuid
-  cabangId        String?       @map("cabang_id") @db.Uuid
-  kode            String        // KAR-001
-  nip             String?       // nomor induk pegawai internal
-  nik             String        // NIK 16 digit
-  nama            String
-  email           String?
-  telp            String?
-  alamat          String?
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String        @map("tenant_id") @db.Uuid
+  cabangId          String?       @map("cabang_id") @db.Uuid
+  kode              String // KAR-001
+  nip               String? // nomor induk pegawai internal
+  nik               String // NIK 16 digit
+  nama              String
+  email             String?
+  telp              String?
+  alamat            String?
   /// NPWP 15-16 digit (kalau punya). Tanpa NPWP kena surcharge 20% di PPh 21.
-  npwp            String?
-  ptkpStatus      PtkpStatus
-  jenisKaryawan   JenisKaryawan @default(PEGAWAI_TETAP) @map("jenis_karyawan")
-  jabatan         String?
-  tanggalMasuk    DateTime      @map("tanggal_masuk") @db.Date
-  tanggalKeluar   DateTime?     @map("tanggal_keluar") @db.Date
+  npwp              String?
+  ptkpStatus        PtkpStatus
+  jenisKaryawan     JenisKaryawan @default(PEGAWAI_TETAP) @map("jenis_karyawan")
+  jabatan           String?
+  tanggalMasuk      DateTime      @map("tanggal_masuk") @db.Date
+  tanggalKeluar     DateTime?     @map("tanggal_keluar") @db.Date
   /// Gaji pokok bulanan default (boleh di-override per PayrollLine).
-  gajiPokok       Decimal       @map("gaji_pokok") @db.Decimal(20, 2)
+  gajiPokok         Decimal       @map("gaji_pokok") @db.Decimal(20, 2)
   /// Tunjangan tetap (transport, makan, posisi) — default monthly.
-  tunjanganTetap  Decimal       @default(0) @map("tunjangan_tetap") @db.Decimal(20, 2)
+  tunjanganTetap    Decimal       @default(0) @map("tunjangan_tetap") @db.Decimal(20, 2)
   /// Iuran BPJS yang ditanggung KARYAWAN (BPJS Kes 1%, BPJS TK 2% biasa) — di-deduct dari take-home.
-  iuranBpjsKaryawan Decimal     @default(0) @map("iuran_bpjs_karyawan") @db.Decimal(20, 2)
-  isActive        Boolean       @default(true) @map("is_active")
-  catatan         String?
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  iuranBpjsKaryawan Decimal       @default(0) @map("iuran_bpjs_karyawan") @db.Decimal(20, 2)
+  isActive          Boolean       @default(true) @map("is_active")
+  catatan           String?
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
-  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cabang       Cabang?        @relation(fields: [cabangId], references: [id], onDelete: SetNull)
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang       Cabang?       @relation(fields: [cabangId], references: [id], onDelete: SetNull)
   payrollLines PayrollLine[]
 
   @@unique([tenantId, kode])
@@ -1467,44 +1549,44 @@ model Karyawan {
 
 /// Run payroll bulanan — 1 per (tenant, periode YYYY-MM) per cabang.
 model PayrollRun {
-  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String        @map("tenant_id") @db.Uuid
-  cabangId          String        @map("cabang_id") @db.Uuid
-  fiscalPeriodId    String        @map("fiscal_period_id") @db.Uuid
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String        @map("tenant_id") @db.Uuid
+  cabangId       String        @map("cabang_id") @db.Uuid
+  fiscalPeriodId String        @map("fiscal_period_id") @db.Uuid
   /// "YYYY-MM"
-  periode           String
+  periode        String
   /// PR-2026-05-001
-  nomor             String?
-  tanggal           DateTime      @db.Date
-  status            InvoiceStatus @default(DRAFT)
+  nomor          String?
+  tanggal        DateTime      @db.Date
+  status         InvoiceStatus @default(DRAFT)
 
-  totalGajiPokok    Decimal       @default(0) @map("total_gaji_pokok") @db.Decimal(20, 2)
-  totalTunjangan    Decimal       @default(0) @map("total_tunjangan") @db.Decimal(20, 2)
-  totalIuranBpjs    Decimal       @default(0) @map("total_iuran_bpjs") @db.Decimal(20, 2)
-  totalPph21        Decimal       @default(0) @map("total_pph21") @db.Decimal(20, 2)
-  totalTakeHome     Decimal       @default(0) @map("total_take_home") @db.Decimal(20, 2)
+  totalGajiPokok Decimal @default(0) @map("total_gaji_pokok") @db.Decimal(20, 2)
+  totalTunjangan Decimal @default(0) @map("total_tunjangan") @db.Decimal(20, 2)
+  totalIuranBpjs Decimal @default(0) @map("total_iuran_bpjs") @db.Decimal(20, 2)
+  totalPph21     Decimal @default(0) @map("total_pph21") @db.Decimal(20, 2)
+  totalTakeHome  Decimal @default(0) @map("total_take_home") @db.Decimal(20, 2)
 
   /// Akun kas/bank tempat take-home dikeluarkan.
-  akunKasBankId     String        @map("akun_kas_bank_id") @db.Uuid
+  akunKasBankId String @map("akun_kas_bank_id") @db.Uuid
 
-  journalId         String?       @unique @map("journal_id") @db.Uuid
-  postedAt          DateTime?     @map("posted_at")
-  postedById        String?       @map("posted_by_id") @db.Uuid
+  journalId              String?   @unique @map("journal_id") @db.Uuid
+  postedAt               DateTime? @map("posted_at")
+  postedById             String?   @map("posted_by_id") @db.Uuid
   /// Step-up audit: ID user yang meminta posting saat dijalankan dengan
   /// approval kredensial (mis. KASIR meminta AKUNTAN approve). Null untuk
   /// posting langsung. postedById tetap = approver.
-  postedRequestedById String?     @map("posted_requested_by_id") @db.Uuid
-  cancelledAt       DateTime?     @map("cancelled_at")
-  cancelledById     String?       @map("cancelled_by_id") @db.Uuid
+  postedRequestedById    String?   @map("posted_requested_by_id") @db.Uuid
+  cancelledAt            DateTime? @map("cancelled_at")
+  cancelledById          String?   @map("cancelled_by_id") @db.Uuid
   /// Step-up audit: ID requester saat cancel dieksekusi dengan approval kredensial.
-  cancelledRequestedById String?  @map("cancelled_requested_by_id") @db.Uuid
-  createdById       String?       @map("created_by_id") @db.Uuid
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  cancelledRequestedById String?   @map("cancelled_requested_by_id") @db.Uuid
+  createdById            String?   @map("created_by_id") @db.Uuid
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cabang       Cabang       @relation(fields: [cabangId], references: [id], onDelete: Restrict)
-  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cabang       Cabang        @relation(fields: [cabangId], references: [id], onDelete: Restrict)
+  fiscalPeriod FiscalPeriod  @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
   lines        PayrollLine[]
 
   @@unique([tenantId, cabangId, periode])
@@ -1514,32 +1596,32 @@ model PayrollRun {
 }
 
 model PayrollLine {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String        @map("tenant_id") @db.Uuid
-  runId           String        @map("run_id") @db.Uuid
-  karyawanId      String        @map("karyawan_id") @db.Uuid
-  no              Int
+  id                 String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String       @map("tenant_id") @db.Uuid
+  runId              String       @map("run_id") @db.Uuid
+  karyawanId         String       @map("karyawan_id") @db.Uuid
+  no                 Int
   /// Snapshot identitas (tahan kalau karyawan rename / NPWP berubah).
-  namaSnapshot    String        @map("nama_snapshot")
-  npwpSnapshot    String?       @map("npwp_snapshot")
-  ptkpStatusSnapshot PtkpStatus @map("ptkp_status_snapshot")
-  ptkpKategori    PtkpKategori  @map("ptkp_kategori")
+  namaSnapshot       String       @map("nama_snapshot")
+  npwpSnapshot       String?      @map("npwp_snapshot")
+  ptkpStatusSnapshot PtkpStatus   @map("ptkp_status_snapshot")
+  ptkpKategori       PtkpKategori @map("ptkp_kategori")
 
-  gajiPokok       Decimal       @map("gaji_pokok") @db.Decimal(20, 2)
-  tunjangan       Decimal       @default(0) @db.Decimal(20, 2)
+  gajiPokok Decimal @map("gaji_pokok") @db.Decimal(20, 2)
+  tunjangan Decimal @default(0) @db.Decimal(20, 2)
   /// Bruto = gajiPokok + tunjangan
-  bruto           Decimal       @db.Decimal(20, 2)
+  bruto     Decimal @db.Decimal(20, 2)
 
   /// Tarif TER yang dipakai (%) — disnapshot untuk audit.
-  tarifTerPersen  Decimal       @map("tarif_ter_persen") @db.Decimal(7, 4)
+  tarifTerPersen Decimal @map("tarif_ter_persen") @db.Decimal(7, 4)
   /// PPh 21 yang dipotong (bruto × tarif TER, +20% kalau tanpa NPWP).
-  pph21           Decimal       @default(0) @db.Decimal(20, 2)
-  iuranBpjs       Decimal       @default(0) @map("iuran_bpjs") @db.Decimal(20, 2)
-  potonganLain    Decimal       @default(0) @map("potongan_lain") @db.Decimal(20, 2)
+  pph21          Decimal @default(0) @db.Decimal(20, 2)
+  iuranBpjs      Decimal @default(0) @map("iuran_bpjs") @db.Decimal(20, 2)
+  potonganLain   Decimal @default(0) @map("potongan_lain") @db.Decimal(20, 2)
   /// Take-home = bruto - pph21 - iuranBpjs - potonganLain.
-  takeHome        Decimal       @map("take_home") @db.Decimal(20, 2)
+  takeHome       Decimal @map("take_home") @db.Decimal(20, 2)
 
-  catatan         String?
+  catatan String?
 
   run      PayrollRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   karyawan Karyawan   @relation(fields: [karyawanId], references: [id], onDelete: Restrict)
@@ -1553,38 +1635,38 @@ model PayrollLine {
 /// Untuk Phase 7: auto-generate dari PurchaseInvoice (PPh 23) dan PayrollLine (PPh 21).
 /// Jurnal sudah ter-post di sumbernya — bukti potong di sini cuma untuk pencatatan & rekap SPT Masa.
 model BuktiPotong {
-  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String           @map("tenant_id") @db.Uuid
-  cabangId        String           @map("cabang_id") @db.Uuid
-  fiscalPeriodId  String           @map("fiscal_period_id") @db.Uuid
-  jenisPph        JenisPph         @map("jenis_pph")
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String            @map("tenant_id") @db.Uuid
+  cabangId       String            @map("cabang_id") @db.Uuid
+  fiscalPeriodId String            @map("fiscal_period_id") @db.Uuid
+  jenisPph       JenisPph          @map("jenis_pph")
   /// Format e-Bupot Unifikasi: pf-YYMMNNNN atau ph-YYMMNNNN.
-  nomor           String?
-  tanggal         DateTime         @db.Date
-  status          BuktiPotongStatus @default(DRAFT)
+  nomor          String?
+  tanggal        DateTime          @db.Date
+  status         BuktiPotongStatus @default(DRAFT)
 
   /// Pihak yang dipotong.
-  pihakNama       String           @map("pihak_nama")
-  pihakNpwp       String?          @map("pihak_npwp")
-  pihakNik        String?          @map("pihak_nik")
-  pihakAlamat     String?          @map("pihak_alamat")
+  pihakNama   String  @map("pihak_nama")
+  pihakNpwp   String? @map("pihak_npwp")
+  pihakNik    String? @map("pihak_nik")
+  pihakAlamat String? @map("pihak_alamat")
 
-  dpp             Decimal          @db.Decimal(20, 2)
+  dpp         Decimal @db.Decimal(20, 2)
   /// Tarif persen yang dipakai (mis. 2 untuk PPh 23 jasa, atau hasil TER untuk PPh 21).
-  tarifPersen     Decimal          @map("tarif_persen") @db.Decimal(7, 4)
-  pph             Decimal          @db.Decimal(20, 2)
+  tarifPersen Decimal @map("tarif_persen") @db.Decimal(7, 4)
+  pph         Decimal @db.Decimal(20, 2)
 
   /// Telusur balik: 'PURCHASE_INVOICE_LINE', 'PAYROLL_LINE', 'MANUAL'.
-  sumberType      String?          @map("sumber_type")
-  sumberId        String?          @map("sumber_id")
-  catatan         String?
+  sumberType String? @map("sumber_type")
+  sumberId   String? @map("sumber_id")
+  catatan    String?
 
   /// XML draft (untuk fase 9 Coretax integration).
-  xmlDraft        String?          @map("xml_draft")
+  xmlDraft String? @map("xml_draft")
 
-  createdById     String?          @map("created_by_id") @db.Uuid
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   cabang       Cabang       @relation(fields: [cabangId], references: [id], onDelete: Restrict)
@@ -1601,18 +1683,18 @@ model BuktiPotong {
 // ===============================================================
 
 model AuditLog {
-  id          BigInt      @id @default(autoincrement())
-  tenantId    String?     @map("tenant_id") @db.Uuid
-  userId      String?     @map("user_id") @db.Uuid
-  action      AuditAction
-  entity      String
-  entityId    String?     @map("entity_id")
-  before      Json?
-  after       Json?
-  ipAddress   String?     @map("ip_address")
-  createdAt   DateTime    @default(now()) @map("created_at")
+  id        BigInt      @id @default(autoincrement())
+  tenantId  String?     @map("tenant_id") @db.Uuid
+  userId    String?     @map("user_id") @db.Uuid
+  action    AuditAction
+  entity    String
+  entityId  String?     @map("entity_id")
+  before    Json?
+  after     Json?
+  ipAddress String?     @map("ip_address")
+  createdAt DateTime    @default(now()) @map("created_at")
 
-  tenant      Tenant?     @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, createdAt])
   @@index([entity, entityId])
@@ -1635,17 +1717,17 @@ model Project {
   budgetTotal    Decimal?      @map("budget_total") @db.Decimal(20, 2)
   catatan        String?
 
-  createdById    String?       @map("created_by_id") @db.Uuid
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  tenant             Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  members            ProjectMember[]
-  budgets            Budget[]
-  journalLines       JournalLine[]
-  salesInvoiceLines  SalesInvoiceLine[]
+  tenant               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members              ProjectMember[]
+  budgets              Budget[]
+  journalLines         JournalLine[]
+  salesInvoiceLines    SalesInvoiceLine[]
   purchaseInvoiceLines PurchaseInvoiceLine[]
-  cashBankEntryLines CashBankEntryLine[]
+  cashBankEntryLines   CashBankEntryLine[]
 
   @@unique([tenantId, kode])
   @@index([tenantId, status])
@@ -1654,11 +1736,11 @@ model Project {
 
 /// Membership user pada project — kontrol siapa boleh input/approve.
 model ProjectMember {
-  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId  String            @map("project_id") @db.Uuid
-  userId     String            @map("user_id") @db.Uuid
-  role       ProjectMemberRole @default(MEMBER)
-  createdAt  DateTime          @default(now()) @map("created_at")
+  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId String            @map("project_id") @db.Uuid
+  userId    String            @map("user_id") @db.Uuid
+  role      ProjectMemberRole @default(MEMBER)
+  createdAt DateTime          @default(now()) @map("created_at")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1672,16 +1754,16 @@ model ProjectMember {
 /// Enforcement di posting service: sebelum POST, cek sum posted amount
 /// untuk (projectId, accountId, periode) + amount txn ≤ budget.amount.
 model Budget {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
-  projectId   String   @map("project_id") @db.Uuid
-  accountId   String   @map("account_id") @db.Uuid
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String  @map("tenant_id") @db.Uuid
+  projectId String  @map("project_id") @db.Uuid
+  accountId String  @map("account_id") @db.Uuid
   /// Format "YYYY-MM"
-  periode     String
-  amount      Decimal  @db.Decimal(20, 2)
+  periode   String
+  amount    Decimal @db.Decimal(20, 2)
   /// true = tolak posting kalau over; false = izinkan tapi ada peringatan.
-  hardBlock   Boolean  @default(true) @map("hard_block")
-  catatan     String?
+  hardBlock Boolean @default(true) @map("hard_block")
+  catatan   String?
 
   createdById String?  @map("created_by_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at")

@@ -1,10 +1,22 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Decimal } from 'decimal.js';
 import type { UpdateAccountInput } from '@lentera/shared/schemas';
 import { Prisma, AccountKind, NormalBalance } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import type { ImportResult } from '../../common/http/multipart.js';
+
+/// Akun yang subsidiary ledger-nya dikelola prosedur Saldo Awal Terintegrasi —
+/// saldoAwal-nya harus derived dari subsidiary (piutang per customer, utang
+/// per vendor, kartu stok per item), bukan angka lump-sum yang bisa mismatch.
+const SALDO_AWAL_SUBSIDIARY_KEYS = ['PIUTANG_USAHA', 'UTANG_USAHA', 'PERSEDIAAN'] as const;
+const SALDO_AWAL_SUBSIDIARY_LABEL: Record<(typeof SALDO_AWAL_SUBSIDIARY_KEYS)[number], string> = {
+  PIUTANG_USAHA: 'piutang per pelanggan',
+  UTANG_USAHA: 'utang per vendor',
+  PERSEDIAAN: 'kartu stok per item',
+};
 
 @Injectable()
 export class AccountsService {
@@ -12,6 +24,7 @@ export class AccountsService {
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly excel: ExcelService,
+    private readonly glConfig: GlConfigService,
   ) {}
 
   /**
@@ -222,6 +235,28 @@ export class AccountsService {
             throw new BadRequestException('Parent membentuk siklus');
           }
           cur = await tx.account.findUnique({ where: { id: cur.parentId } });
+        }
+      }
+
+      // saldoAwal akun subsidiary (Piutang/Utang/Persediaan) tidak boleh
+      // di-edit lump-sum di sini — harus lewat prosedur Saldo Awal
+      // Terintegrasi (Pengaturan › Saldo Awal), supaya selalu derived dari
+      // subsidiary detail (per customer/vendor/item) dan tidak mismatch
+      // seperti sebelumnya (lihat EVALUASI.md).
+      if (!new Decimal(existing.saldoAwal).eq(new Decimal(input.saldoAwal))) {
+        for (const key of SALDO_AWAL_SUBSIDIARY_KEYS) {
+          let resolvedId: string | null = null;
+          try {
+            resolvedId = await this.glConfig.getAccountIdInTx(tx, key);
+          } catch {
+            continue; // akun default belum ada / belum di-provision — tidak relevan
+          }
+          if (resolvedId === id) {
+            throw new BadRequestException(
+              `Saldo awal akun ini (${SALDO_AWAL_SUBSIDIARY_LABEL[key]}) dikelola lewat ` +
+              'prosedur Saldo Awal Terintegrasi di Pengaturan › Saldo Awal, bukan di sini.',
+            );
+          }
         }
       }
 
