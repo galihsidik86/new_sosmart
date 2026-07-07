@@ -204,7 +204,11 @@ describe('OpeningBalanceService — integration', () => {
     const run = await withOwner(() => ob.post());
 
     const voided = await withOwner(() => ob.void('koreksi testing'));
-    expect(voided.status).toBe(InvoiceStatus.CANCELLED);
+    // Void = undo, bukan arsip terminal — run harus balik ke DRAFT (bukan
+    // CANCELLED) supaya wizard tetap bisa dipakai lagi. SaldoAwal dibatasi
+    // @@unique([tenantId]) — kalau run "mati" permanen di CANCELLED, tenant
+    // ini tidak akan PERNAH bisa input saldo awal lagi (dead-end).
+    expect(voided.status).toBe(InvoiceStatus.DRAFT);
 
     // Account.saldoAwal restored dari snapshot.
     const kasAfter = await superPrisma.account.findUnique({ where: { id: t.akun.kas } });
@@ -227,5 +231,14 @@ describe('OpeningBalanceService — integration', () => {
     for (const j of journals) {
       expect(j.status).toBe(JournalStatus.REVERSED);
     }
+
+    // Run harus genuinely re-usable — bukan cuma status yang bilang DRAFT
+    // tapi sebenarnya masih terkunci. Coba tambah piutang baru & re-post.
+    await withOwner(() =>
+      ob.addPiutang({ customerId, cabangId: t.cabangId, tanggal: '2026-01-01', nominal: '80000000' }),
+    );
+    const preview2 = await withOwner(() => ob.preview());
+    expect(preview2.status).toBe('DRAFT');
+    expect(preview2.countPiutang).toBe(1);
   });
 });

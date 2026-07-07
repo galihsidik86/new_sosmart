@@ -678,9 +678,21 @@ export class OpeningBalanceService {
       }
       await tx.saldoAwalAkunLine.deleteMany({ where: { saldoAwalId: run.id } });
 
+      // Void = undo, bukan arsip terminal — kembalikan run ke DRAFT supaya
+      // user bisa edit & posting ulang. `SaldoAwal` dibatasi @@unique([tenantId])
+      // (satu run per tenant selamanya), jadi kalau status di-set CANCELLED di
+      // sini, getOrCreateRunInTx() akan terus mengembalikan run mati ini dan
+      // wizard jadi dead-end permanen (tidak ada tombol apa pun yang muncul,
+      // karena UI cuma render aksi untuk status DRAFT/POSTED). cancelledAt/
+      // cancelledById tetap dicatat sebagai jejak audit "pernah di-void".
       return tx.saldoAwal.update({
         where: { id: run.id },
-        data: { status: InvoiceStatus.CANCELLED, cancelledAt: new Date(), cancelledById: userId },
+        data: {
+          status: InvoiceStatus.DRAFT,
+          cancelledAt: new Date(), cancelledById: userId,
+          postedAt: null, postedById: null, postedRequestedById: null,
+          totalDebit: 0, totalKredit: 0,
+        },
       });
     });
   }

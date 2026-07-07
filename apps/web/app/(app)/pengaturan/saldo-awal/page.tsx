@@ -50,6 +50,38 @@ interface Item { id: string; kode: string; nama: string }
 
 const PATH = '/pengaturan/saldo-awal';
 
+/**
+ * `apiFetch` melempar `Error("API {status}: {jsonBody}")` (lihat lib/api.ts).
+ * Tanpa ini, error apa pun dari API (mis. "periode sudah ditutup") jatuh
+ * sampai ke Next.js dev overlay / generic error page — user tidak pernah
+ * lihat pesan yang jelas kenapa aksinya gagal.
+ */
+function extractErrorMessage(err: unknown): string {
+  if (!(err instanceof Error)) return 'Terjadi kesalahan tak terduga.';
+  const m = err.message.match(/^API \d+: (.+)$/s);
+  if (m) {
+    try {
+      const body = JSON.parse(m[1]);
+      if (typeof body?.message === 'string') return body.message;
+    } catch {
+      // bukan JSON — pakai raw text
+    }
+    return m[1];
+  }
+  return err.message;
+}
+
+/** Jalankan aksi API; kalau gagal, redirect balik ke wizard dengan ?error=... alih-alih crash. */
+async function runAction(fn: () => Promise<unknown>): Promise<void> {
+  try {
+    await fn();
+  } catch (e) {
+    redirect(`${PATH}?error=${encodeURIComponent(extractErrorMessage(e))}`);
+  }
+  revalidatePath(PATH);
+  redirect(PATH); // normalisasi URL — bersihkan ?error= lama kalau ada, dan pastikan data fresh.
+}
+
 async function setAkunAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
@@ -59,17 +91,16 @@ async function setAkunAction(formData: FormData) {
   const lines = accountIds
     .map((accountId, i) => ({ accountId, nilai: nilaiList[i] ?? '0' }))
     .filter((l) => l.nilai.trim() !== '' && Number(l.nilai) !== 0);
-  await apiFetch('/opening-balance/akun', {
+  await runAction(() => apiFetch('/opening-balance/akun', {
     method: 'PUT', tenantId, body: JSON.stringify({ lines }),
-  });
-  revalidatePath(PATH);
+  }));
 }
 
 async function addPiutangAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch('/opening-balance/piutang', {
+  await runAction(() => apiFetch('/opening-balance/piutang', {
     method: 'POST', tenantId,
     body: JSON.stringify({
       customerId: String(formData.get('customerId')),
@@ -78,25 +109,23 @@ async function addPiutangAction(formData: FormData) {
       nominal: String(formData.get('nominal')),
       keterangan: String(formData.get('keterangan') ?? '') || undefined,
     }),
-  });
-  revalidatePath(PATH);
+  }));
 }
 
 async function removePiutangAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch(`/opening-balance/piutang/${String(formData.get('id'))}`, {
+  await runAction(() => apiFetch(`/opening-balance/piutang/${String(formData.get('id'))}`, {
     method: 'DELETE', tenantId,
-  });
-  revalidatePath(PATH);
+  }));
 }
 
 async function addUtangAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch('/opening-balance/utang', {
+  await runAction(() => apiFetch('/opening-balance/utang', {
     method: 'POST', tenantId,
     body: JSON.stringify({
       vendorId: String(formData.get('vendorId')),
@@ -105,25 +134,23 @@ async function addUtangAction(formData: FormData) {
       nominal: String(formData.get('nominal')),
       keterangan: String(formData.get('keterangan') ?? '') || undefined,
     }),
-  });
-  revalidatePath(PATH);
+  }));
 }
 
 async function removeUtangAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch(`/opening-balance/utang/${String(formData.get('id'))}`, {
+  await runAction(() => apiFetch(`/opening-balance/utang/${String(formData.get('id'))}`, {
     method: 'DELETE', tenantId,
-  });
-  revalidatePath(PATH);
+  }));
 }
 
 async function addPersediaanAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch('/opening-balance/persediaan', {
+  await runAction(() => apiFetch('/opening-balance/persediaan', {
     method: 'PUT', tenantId,
     body: JSON.stringify({
       lines: [{
@@ -134,40 +161,41 @@ async function addPersediaanAction(formData: FormData) {
         hargaPokokPerUnit: String(formData.get('hargaPokokPerUnit')),
       }],
     }),
-  });
-  revalidatePath(PATH);
+  }));
 }
 
 async function removePersediaanAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch(`/opening-balance/persediaan/${String(formData.get('id'))}`, {
+  await runAction(() => apiFetch(`/opening-balance/persediaan/${String(formData.get('id'))}`, {
     method: 'DELETE', tenantId,
-  });
-  revalidatePath(PATH);
+  }));
 }
 
 async function postAction() {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch('/opening-balance/post', { method: 'POST', tenantId });
-  revalidatePath(PATH);
+  await runAction(() => apiFetch('/opening-balance/post', { method: 'POST', tenantId }));
 }
 
 async function voidAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch('/opening-balance/void', {
+  await runAction(() => apiFetch('/opening-balance/void', {
     method: 'POST', tenantId,
     body: JSON.stringify({ alasan: String(formData.get('alasan') ?? 'Koreksi saldo awal') }),
-  });
-  revalidatePath(PATH);
+  }));
 }
 
-export default async function SaldoAwalPage() {
+export default async function SaldoAwalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const canPost = canPostAccounting(s.role);
@@ -203,6 +231,12 @@ export default async function SaldoAwalPage() {
             <strong>{fmtTanggal(preview.tanggal)}</strong>.
           </p>
         </div>
+
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-6">
+            <strong>Gagal: </strong>{error}
+          </div>
+        )}
 
         {/* Ringkasan cross-check */}
         <div
