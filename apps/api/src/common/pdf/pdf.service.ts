@@ -7,7 +7,10 @@ import type { TDocumentDefinitions } from 'pdfmake/interfaces.js';
 // API. Load PdfPrinter directly via createRequire so it works under
 // "type: module".
 const require = createRequire(import.meta.url);
-const printerModule = require('pdfmake/js/printer.js');
+// Nama file sungguhan `Printer.js` (P besar) — kalau ditulis huruf kecil,
+// jalan di Windows/macOS (case-insensitive filesystem) tapi gagal
+// MODULE_NOT_FOUND di Linux (case-sensitive), termasuk di kebanyakan server produksi.
+const printerModule = require('pdfmake/js/Printer.js');
 const PdfPrinter = (printerModule.default ?? printerModule) as PrinterCtor;
 
 interface UrlResolver {
