@@ -7,12 +7,12 @@ import {
 } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import {
-  JournalStatus,
   NormalBalance,
   Prisma,
   ProjectMemberRole,
 } from '@lentera/db';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { JOURNAL_BALANCE_STATUSES } from '../../common/gl/journal-balance-statuses.js';
 
 export interface BudgetViolation {
   projectId: string;
@@ -142,7 +142,7 @@ export class BudgetGuardService {
           projectId: b.projectId,
           accountId: b.accountId,
           journal: {
-            status: JournalStatus.POSTED,
+            status: { in: JOURNAL_BALANCE_STATUSES },
             tanggal: { gte: startDate, lte: endDate },
             ...(opts?.excludeJournalId ? { id: { not: opts.excludeJournalId } } : {}),
           },

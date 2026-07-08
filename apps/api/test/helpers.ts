@@ -68,8 +68,8 @@ export async function bootApp(extraModules: any[] = []): Promise<TestingModule> 
 }
 
 /** Bootstrap NestJS module dengan Sales + Inventory (untuk sales auto-post tests). */
-export async function bootAppWithSales(): Promise<TestingModule> {
-  return bootApp([InventoryModule, SalesModule]);
+export async function bootAppWithSales(extraModules: any[] = []): Promise<TestingModule> {
+  return bootApp([InventoryModule, SalesModule, ...extraModules]);
 }
 
 /** Run callback inside ALS tenant context. */

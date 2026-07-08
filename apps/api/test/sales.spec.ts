@@ -20,6 +20,8 @@ import { TenantContext } from '../src/common/tenancy/tenant-context.js';
 import { TenancyService } from '../src/common/tenancy/tenancy.service.js';
 import { InventoryService } from '../src/modules/inventory/inventory.service.js';
 import { SalesService } from '../src/modules/sales/sales.service.js';
+import { TrialBalanceService } from '../src/modules/ledger/trial-balance.service.js';
+import { LedgerModule } from '../src/modules/ledger/ledger.module.js';
 import {
   bootAppWithSales,
   createTestCustomer,
@@ -40,17 +42,19 @@ describe('Sales auto-post — integration', () => {
   let tenancy: TenancyService;
   let inventory: InventoryService;
   let sales: SalesService;
+  let trialBalance: TrialBalanceService;
   let t: Awaited<ReturnType<typeof createTestTenant>>;
   let customerId: string;
   let itemId: string;
 
   beforeAll(async () => {
-    app = await bootAppWithSales();
+    app = await bootAppWithSales([LedgerModule]);
     prisma = app.get(PrismaService);
     ctx = app.get(TenantContext);
     tenancy = app.get(TenancyService);
     inventory = app.get(InventoryService);
     sales = app.get(SalesService);
+    trialBalance = app.get(TrialBalanceService);
   });
 
   afterAll(async () => {
@@ -283,6 +287,25 @@ describe('Sales auto-post — integration', () => {
       });
       expect(lastMov!.saldoQty.toString()).toBe('50');
       expect(lastMov!.sumberType).toBe('REVERSAL');
+
+      // Regresi bug lama: saldo GL (Piutang/Pendapatan/HPP/Persediaan) harus
+      // BALIK ke 0 setelah cancel, bukan kebalikan dari transaksi asli.
+      // Reversal jurnal dipost dengan tanggal "hari ini" (bukan tanggal
+      // sale) — pakai periode Desember (cakup rentang tanggal manapun di
+      // 2026) supaya query trial balance mencakup baik transaksi asli
+      // (Mei) maupun jurnal pembaliknya (hari ini).
+      const desember = await superPrisma.fiscalPeriod.findFirst({
+        where: { tenantId: t.tenantId, no: 12 },
+      });
+      const tb = await withTenant(ctx, tenantCtxRaw(), () =>
+        trialBalance.build({ periodId: desember!.id }),
+      );
+      for (const akunId of [t.akun.piutang, t.akun.pendapatan, t.akun.hpp, t.akun.persediaan]) {
+        const row = tb.rows.find((r) => r.accountId === akunId);
+        expect(row, `akun ${akunId} harus muncul di trial balance`).toBeDefined();
+        expect(row!.saldoAkhirDebit).toBe('0.00');
+        expect(row!.saldoAkhirKredit).toBe('0.00');
+      }
     });
 
     it('cancel DRAFT (belum posted) → status CANCELLED tanpa reversal', async () => {

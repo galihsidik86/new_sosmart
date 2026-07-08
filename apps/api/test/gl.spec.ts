@@ -16,6 +16,8 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
 import { TenantContext } from '../src/common/tenancy/tenant-context.js';
 import { JournalsService } from '../src/modules/journals/journals.service.js';
 import { PeriodsService } from '../src/modules/periods/periods.service.js';
+import { TrialBalanceService } from '../src/modules/ledger/trial-balance.service.js';
+import { LedgerModule } from '../src/modules/ledger/ledger.module.js';
 import { bootApp, createTestTenant, resetDb, superPrisma, withTenant } from './helpers.js';
 import { JournalStatus, PeriodStatus } from '@lentera/db';
 
@@ -25,14 +27,16 @@ describe('GL Engine — integration', () => {
   let ctx: TenantContext;
   let journals: JournalsService;
   let periods: PeriodsService;
+  let trialBalance: TrialBalanceService;
   let t: Awaited<ReturnType<typeof createTestTenant>>;
 
   beforeAll(async () => {
-    app = await bootApp();
+    app = await bootApp([LedgerModule]);
     prisma = app.get(PrismaService);
     ctx = app.get(TenantContext);
     journals = app.get(JournalsService);
     periods = app.get(PeriodsService);
+    trialBalance = app.get(TrialBalanceService);
   });
 
   afterAll(async () => {
@@ -217,6 +221,40 @@ describe('GL Engine — integration', () => {
       expect(pembalikLines[1]!.accountId).toBe(t.akun.pendapatan);
       expect(pembalikLines[1]!.debit.toString()).toBe('500000');
       expect(pembalikLines[1]!.kredit.toString()).toBe('0');
+    });
+
+    it('saldo akun kembali ke 0 setelah reverse (lewat TrialBalanceService, bukan cuma cek journal.status)', async () => {
+      // Regresi untuk bug lama: reverseInTx set jurnal asli jadi REVERSED
+      // (baris-nya tidak dihapus) lalu bikin jurnal pembalik POSTED dengan
+      // D/K tertukar. Kalau query saldo cuma filter status POSTED, baris
+      // jurnal asli gugur dari hitungan sementara baris pembalik (sudah
+      // tertukar arah) tetap kehitung — saldo jadi KEBALIKAN dari transaksi
+      // asli, bukan balik ke 0. Test ini bukti saldo BENAR balik ke 0 lewat
+      // jalur produksi asli (TrialBalanceService), bukan raw query.
+      const periodId = await withTenant(ctx, tenantCtx(), async () => {
+        const draft = await journals.createDraft({
+          cabangId: t.cabangId, tanggal: '2026-05-15', deskripsi: 'Akan direverse', sumber: 'MANUAL',
+          lines: [
+            { accountId: t.akun.kas, debit: '750000', kredit: '0' },
+            { accountId: t.akun.pendapatan, debit: '0', kredit: '750000' },
+          ],
+        });
+        const posted = await journals.post(draft.id);
+        await journals.reverse(posted.id, {
+          tanggal: new Date('2026-05-20T00:00:00Z'),
+          alasan: 'Regresi bug reversal',
+        });
+        return t.periodId;
+      });
+
+      const tb = await withTenant(ctx, tenantCtx(), () => trialBalance.build({ periodId }));
+      const kasRow = tb.rows.find((r) => r.accountId === t.akun.kas);
+      const pendapatanRow = tb.rows.find((r) => r.accountId === t.akun.pendapatan);
+      expect(kasRow?.saldoAkhirDebit).toBe('0.00');
+      expect(kasRow?.saldoAkhirKredit).toBe('0.00');
+      expect(pendapatanRow?.saldoAkhirDebit).toBe('0.00');
+      expect(pendapatanRow?.saldoAkhirKredit).toBe('0.00');
+      expect(tb.balanced).toBe(true);
     });
 
     it('reject reverse dua kali (jurnal sudah dibalik)', async () => {

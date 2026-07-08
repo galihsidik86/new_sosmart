@@ -7,10 +7,10 @@
 import { Decimal } from 'decimal.js';
 import {
   AccountKind,
-  JournalStatus,
   NormalBalance,
   Prisma,
 } from '@lentera/db';
+import { JOURNAL_BALANCE_STATUSES } from '../../common/gl/journal-balance-statuses.js';
 
 export interface AggregatedAccount {
   id: string;
@@ -98,7 +98,7 @@ export async function aggregateAllAccounts(
       where: {
         ...projectLineFilter,
         journal: {
-          status: JournalStatus.POSTED,
+          status: { in: JOURNAL_BALANCE_STATUSES },
           tanggal: { lt: opts.startDate },
           ...cabangFilter,
         },
@@ -118,7 +118,7 @@ export async function aggregateAllAccounts(
 
   // Dalam periode (atau sampai endDate kalau startDate null).
   const dalamWhere: Prisma.JournalWhereInput = {
-    status: JournalStatus.POSTED,
+    status: { in: JOURNAL_BALANCE_STATUSES },
     tanggal: opts.startDate
       ? { gte: opts.startDate, lte: opts.endDate }
       : { lte: opts.endDate },

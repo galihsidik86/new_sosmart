@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
-import { JournalStatus, NormalBalance } from '@lentera/db';
+import { NormalBalance } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
+import { JOURNAL_BALANCE_STATUSES } from '../../common/gl/journal-balance-statuses.js';
 
 export interface LedgerRow {
   tanggal: Date;
@@ -117,7 +118,7 @@ export class LedgerService {
           accountId: account.id,
           ...projectLineFilter,
           journal: {
-            status: JournalStatus.POSTED,
+            status: { in: JOURNAL_BALANCE_STATUSES },
             tanggal: { lt: period.startDate },
             ...cabangFilter,
           },
@@ -147,7 +148,7 @@ export class LedgerService {
           accountId: account.id,
           ...projectLineFilter,
           journal: {
-            status: JournalStatus.POSTED,
+            status: { in: JOURNAL_BALANCE_STATUSES },
             tanggal: { gte: period.startDate, lte: period.endDate },
             ...cabangFilter,
           },

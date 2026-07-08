@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
-import { JournalStatus, NormalBalance, Prisma } from '@lentera/db';
+import { NormalBalance, Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
+import { JOURNAL_BALANCE_STATUSES } from '../../common/gl/journal-balance-statuses.js';
 
 export type BudgetStatus = 'OK' | 'WARNING' | 'EXCEEDED';
 
@@ -110,7 +111,7 @@ export class BudgetActualService {
           projectId: { in: projectIds },
           accountId: { in: accountIds },
           journal: {
-            status: JournalStatus.POSTED,
+            status: { in: JOURNAL_BALANCE_STATUSES },
             tanggal: { gte: startDate, lte: endDate },
             ...cabangScope,
           },
