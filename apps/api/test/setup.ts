@@ -12,6 +12,9 @@ if (!process.env.TEST_APP_DATABASE_URL) {
   process.env.TEST_APP_DATABASE_URL =
     'postgresql://lentera_app:lentera_app_pwd@localhost:5432/lentera_test?schema=public';
 }
+if (!process.env.REDIS_URL) {
+  process.env.REDIS_URL = 'redis://localhost:6379';
+}
 // Override env untuk PrismaService.
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 process.env.APP_DATABASE_URL = process.env.TEST_APP_DATABASE_URL;

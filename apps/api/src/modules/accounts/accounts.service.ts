@@ -242,8 +242,12 @@ export class AccountsService {
       // di-edit lump-sum di sini — harus lewat prosedur Saldo Awal
       // Terintegrasi (Pengaturan › Saldo Awal), supaya selalu derived dari
       // subsidiary detail (per customer/vendor/item) dan tidak mismatch
-      // seperti sebelumnya (lihat EVALUASI.md).
-      if (!new Decimal(existing.saldoAwal).eq(new Decimal(input.saldoAwal))) {
+      // seperti sebelumnya (lihat EVALUASI.md). KECUALI: target PERSIS 0 —
+      // itu jalur sah untuk "discharge" saldo lama (legacy/migrasi) yang
+      // sudah direkonsiliasi manual, supaya OpeningBalanceService.post() tidak
+      // diam-diam membuang nilai itu tanpa jurnal (lihat guard di post()).
+      const targetIsZero = new Decimal(input.saldoAwal).eq(0);
+      if (!targetIsZero && !new Decimal(existing.saldoAwal).eq(new Decimal(input.saldoAwal))) {
         for (const key of SALDO_AWAL_SUBSIDIARY_KEYS) {
           let resolvedId: string | null = null;
           try {

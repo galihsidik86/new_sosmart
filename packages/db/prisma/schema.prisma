@@ -1001,6 +1001,13 @@ model SalesInvoice {
   isSaldoAwal Boolean @default(false) @map("is_saldo_awal")
   saldoAwalId String? @map("saldo_awal_id") @db.Uuid
 
+  /// Idempotency key opsional dari client (mis. double-submit form/retry
+  /// jaringan) — createDraft() cek dulu sebelum insert, return row existing
+  /// kalau sudah pernah dipakai. Nullable + unique per tenant: Postgres
+  /// unique index abaikan baris NULL, jadi tidak breaking utk client lama
+  /// yang belum kirim key.
+  idempotencyKey String? @map("idempotency_key") @db.Uuid
+
   tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   cabang       Cabang             @relation(fields: [cabangId], references: [id], onDelete: Restrict)
   fiscalPeriod FiscalPeriod       @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
@@ -1010,6 +1017,7 @@ model SalesInvoice {
   lines        SalesInvoiceLine[]
 
   @@unique([tenantId, nomor])
+  @@unique([tenantId, idempotencyKey])
   @@index([tenantId, status, tanggal])
   @@index([customerId, status])
   @@index([fiscalPeriodId])
@@ -1115,6 +1123,10 @@ model PurchaseInvoice {
   isSaldoAwal Boolean @default(false) @map("is_saldo_awal")
   saldoAwalId String? @map("saldo_awal_id") @db.Uuid
 
+  /// Idempotency key opsional dari client — lihat catatan analog di
+  /// SalesInvoice.idempotencyKey.
+  idempotencyKey String? @map("idempotency_key") @db.Uuid
+
   tenant       Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   cabang       Cabang                @relation(fields: [cabangId], references: [id], onDelete: Restrict)
   fiscalPeriod FiscalPeriod          @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict)
@@ -1124,6 +1136,7 @@ model PurchaseInvoice {
   lines        PurchaseInvoiceLine[]
 
   @@unique([tenantId, nomor])
+  @@unique([tenantId, idempotencyKey])
   @@index([tenantId, status, tanggal])
   @@index([vendorId, status])
   @@index([fiscalPeriodId])

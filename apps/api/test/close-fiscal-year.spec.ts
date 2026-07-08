@@ -16,21 +16,19 @@
  *  - Reopen: jurnal REVERSED, periode & tahun kembali OPEN, reusable.
  *  - Reopen ditolak kalau tahun berikutnya sudah punya periode closed.
  *
- * CATATAN AUDIT (bukan bug fitur ini): `LabaRugiService.computeCore`
- * (apps/api/src/modules/reports/laba-rugi.service.ts) menjumlahkan `nilai`
- * (mutasiSigned, signed positif ke arah normalBalance akun ITU SENDIRI)
- * per KIND (mis. semua akun kind=PENDAPATAN dijumlah jadi `sub.pendapatan`).
- * Untuk akun kontra seperti "Retur Penjualan" (kind=PENDAPATAN tapi
- * normalBalance=DEBIT), ini SALAH ARAH — nilai kontra ikut DITAMBAH bukan
- * DIKURANG, jadi LabaRugiService melaporkan Laba Bersih lebih tinggi dari
- * yang sebenarnya kalau ada retur/potongan. FiscalYearClosingService di
- * fitur ini menghitung labaBersih dengan benar (sign murni dari
- * normalBalance per akun, agnostic terhadap kind), jadi utk skenario yang
- * melibatkan akun kontra, Laba Ditahan yang di-kredit TIDAK akan sama
- * dengan LabaRugiService.build().labaBersih — testnya sengaja verifikasi
- * terhadap angka yang benar secara akuntansi (dihitung manual), bukan
- * terhadap laporan yang berpotensi salah tersebut. Ini pre-existing di
- * modul Fase 8 (sudah shipped sebelum fitur ini), di luar scope tutup buku.
+ * CATATAN (sudah diperbaiki, review ronde 3): dulu `LabaRugiService`,
+ * `NeracaService`, `PerubahanEkuitasService`, dan `ArusKasService` (4 file
+ * independen) menjumlah `mutasiSigned()` langsung per KIND tanpa koreksi
+ * untuk akun kontra (mis. Retur Penjualan kind=PENDAPATAN tapi
+ * normalBalance=DEBIT) — nilainya ikut DITAMBAH bukan DIKURANG, jadi
+ * keempat laporan itu melaporkan laba lebih tinggi dari yang sebenarnya
+ * kalau ada retur/potongan. Sudah diperbaiki lewat helper bersama
+ * `plKindContribution()` (apps/api/src/modules/reports/helpers.ts), yang
+ * sign-nya murni dari normalBalance per akun — sama seperti
+ * FiscalYearClosingService yang dari awal sudah benar. Sekarang kelima
+ * angka (LabaRugi/Neraca/PerubahanEkuitas/ArusKas/FiscalYearClosing)
+ * dipastikan SAMA PERSIS lewat assertion cross-report di bawah, bukan
+ * cuma dihitung manual terpisah seperti sebelumnya.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { TestingModule } from '@nestjs/testing';
@@ -42,6 +40,8 @@ import { FiscalYearClosingModule } from '../src/modules/fiscal-year/fiscal-year-
 import { JournalsService } from '../src/modules/journals/journals.service.js';
 import { LabaRugiService } from '../src/modules/reports/laba-rugi.service.js';
 import { NeracaService } from '../src/modules/reports/neraca.service.js';
+import { PerubahanEkuitasService } from '../src/modules/reports/perubahan-ekuitas.service.js';
+import { ArusKasService } from '../src/modules/reports/arus-kas.service.js';
 import { ReportsModule } from '../src/modules/reports/reports.module.js';
 import { TrialBalanceService } from '../src/modules/ledger/trial-balance.service.js';
 import { LedgerModule } from '../src/modules/ledger/ledger.module.js';
@@ -62,6 +62,8 @@ describe('FiscalYearClosingService — integration', () => {
   let journals: JournalsService;
   let labaRugi: LabaRugiService;
   let neraca: NeracaService;
+  let perubahanEkuitas: PerubahanEkuitasService;
+  let arusKas: ArusKasService;
   let trialBalance: TrialBalanceService;
   let t: Awaited<ReturnType<typeof createTestTenant>>;
   let labaDitahanId: string;
@@ -75,6 +77,8 @@ describe('FiscalYearClosingService — integration', () => {
     journals = app.get(JournalsService);
     labaRugi = app.get(LabaRugiService);
     neraca = app.get(NeracaService);
+    perubahanEkuitas = app.get(PerubahanEkuitasService);
+    arusKas = app.get(ArusKasService);
     trialBalance = app.get(TrialBalanceService);
   });
 
@@ -103,6 +107,22 @@ describe('FiscalYearClosingService — integration', () => {
       data: {
         tenantId: t.tenantId, kode: '4-103', nama: 'Retur Penjualan',
         kind: AccountKind.PENDAPATAN, normalBalance: NormalBalance.DEBIT, isPostable: true,
+      },
+    });
+    // Dibutuhkan GlConfigService.getAccountIdInTx (fallback ke kode default)
+    // untuk PerubahanEkuitasService (DIVIDEN) / ArusKasService (BEBAN_PENYUSUTAN)
+    // — 0 mutasi di test ini, cuma supaya kedua service itu tidak throw
+    // NotFoundException saat resolve akun.
+    await superPrisma.account.create({
+      data: {
+        tenantId: t.tenantId, kode: '3-104', nama: 'Prive/Dividen',
+        kind: AccountKind.EKUITAS, normalBalance: NormalBalance.DEBIT, isPostable: true,
+      },
+    });
+    await superPrisma.account.create({
+      data: {
+        tenantId: t.tenantId, kode: '6-103', nama: 'Beban Penyusutan',
+        kind: AccountKind.BEBAN, normalBalance: NormalBalance.DEBIT, isPostable: true,
       },
     });
     returId = retur.id;
@@ -162,6 +182,33 @@ describe('FiscalYearClosingService — integration', () => {
       { accountId: t.akun.bebanGaji, debit: '2000000', kredit: '0' },
       { accountId: t.akun.kas, debit: '0', kredit: '2000000' },
     ]);
+
+    // --- Cross-report consistency check untuk akun kontra (Retur Penjualan)
+    // — dicek SEBELUM tutup buku (P&L belum dinolkan), supaya ke-4 laporan
+    // yang masing-masing agregasi P&L sendiri (LabaRugi/Neraca/PerubahanEkuitas/
+    // ArusKas) semua menghasilkan angka yang SAMA PERSIS dan konsisten
+    // dengan closing entry FiscalYearClosingService di bawah (3.5jt).
+    const desemberBefore = await superPrisma.fiscalPeriod.findFirst({
+      where: { tenantId: t.tenantId, no: 12 },
+    });
+    const lr = await withOwner(() => labaRugi.build({ periodId: desemberBefore!.id, ytd: true }));
+    expect(lr.pendapatan.total).toBe('9500000.00'); // 10jt - 500rb retur
+    const returRow = lr.pendapatan.rows.find((r) => r.id === returId);
+    expect(returRow?.nilai).toBe('-500000.00'); // baris kontra tampil negatif, bukan +500rb
+    expect(lr.labaKotor.nilai).toBe('5500000.00'); // 9.5jt - 4jt HPP
+    expect(lr.labaUsaha.nilai).toBe('3500000.00'); // 5.5jt - 2jt gaji
+    expect(lr.labaBersih.nilai).toBe('3500000.00');
+
+    const nr = await withOwner(() => neraca.build({ periodId: desemberBefore!.id }));
+    expect(nr.labaBerjalan.nilai).toBe('3500000.00');
+    expect(nr.balanced).toBe(true);
+
+    const pe = await withOwner(() => perubahanEkuitas.build({ periodId: desemberBefore!.id }));
+    expect(pe.labaBersih).toBe('3500000.00');
+
+    const ak = await withOwner(() => arusKas.build({ periodId: desemberBefore!.id }));
+    const labaBersihArusKasRow = ak.operasi.rows.find((r) => r.label === 'Laba Bersih');
+    expect(labaBersihArusKasRow?.nilai).toBe('3500000.00');
 
     await closeFirst11Periods();
 

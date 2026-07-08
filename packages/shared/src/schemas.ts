@@ -176,6 +176,17 @@ export const reopenFiscalYearInputSchema = z.object({
 });
 export type ReopenFiscalYearInput = z.infer<typeof reopenFiscalYearInputSchema>;
 
+export const createFiscalYearInputSchema = z.object({
+  kode: z.string().trim().min(1).max(20),
+  /// Wajib tanggal 1 (awal bulan) — 12 periode bulanan otomatis dibuat
+  /// berturut-turut dari bulan ini (boleh bulan apa pun, bukan cuma Januari,
+  /// supaya tahun buku non-kalender juga bisa dibuat).
+  startDate: z.string()
+    .regex(/^\d{4}-\d{2}-01$/, 'Tanggal mulai harus tanggal 1 (awal bulan)')
+    .refine(isValidCalendarDate, 'Tanggal tidak valid'),
+});
+export type CreateFiscalYearInput = z.infer<typeof createFiscalYearInputSchema>;
+
 // ---------- JOURNAL ----------
 
 export const journalSourceSchema = z.enum([
@@ -340,6 +351,9 @@ export const createSalesInvoiceInputSchema = z.object({
   /// Kalau true, hargaSatuan input sudah include PPN. Engine reverse-calc DPP.
   hargaTermasukPajak: z.boolean().default(false),
   lines: z.array(salesLineInputSchema).min(1, 'Minimal 1 baris'),
+  /// Opsional — client generate SEKALI per form mount (bukan per submit),
+  /// supaya retry jaringan/double-submit tidak bikin faktur dobel.
+  idempotencyKey: z.string().uuid().optional(),
 });
 export type CreateSalesInvoiceInput = z.infer<typeof createSalesInvoiceInputSchema>;
 
@@ -376,6 +390,8 @@ export const createPurchaseInvoiceInputSchema = z.object({
   /// Apakah memotong PPh 23 (hanya berlaku kalau ada baris jasa).
   potongPph23: z.boolean().default(true),
   lines: z.array(purchaseLineInputSchema).min(1),
+  /// Opsional — sama seperti CreateSalesInvoiceInput.idempotencyKey.
+  idempotencyKey: z.string().uuid().optional(),
 });
 export type CreatePurchaseInvoiceInput = z.infer<typeof createPurchaseInvoiceInputSchema>;
 

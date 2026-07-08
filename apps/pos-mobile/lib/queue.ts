@@ -48,12 +48,30 @@ export interface SaleSubmitPayload {
 export interface PendingRow {
   id: string;
   payload: SaleSubmitPayload;
-  status: 'pending' | 'created' | 'synced' | 'failed';
+  /**
+   * 'failed' = transient (jaringan/timeout/server sibuk) — akan di-retry
+   * otomatis. 'failed_permanent' = server menolak tegas (validasi/aturan
+   * bisnis, mis. 400/404/422) — retry ulang PASTI gagal lagi dengan payload
+   * yang sama, jadi TIDAK di-retry otomatis (lihat isPermanentError).
+   */
+  status: 'pending' | 'created' | 'synced' | 'failed' | 'failed_permanent';
   serverId: string | null;
   serverNomor: string | null;
   error: string | null;
   attempts: number;
   createdAt: number;
+}
+
+/**
+ * Klasifikasi error HTTP: permanent (retry percuma) vs transient (layak
+ * di-retry). 401/403 (token/izin — bisa pulih habis re-auth), 408 (timeout),
+ * dan 429 (rate limit) sengaja TETAP dianggap transient — sisanya di 4xx
+ * (400/404/409/422/dll) adalah penolakan tegas atas payload/state saat ini.
+ * 5xx dan error non-HTTP (jaringan putus dsb.) juga transient (default).
+ */
+const TRANSIENT_4XX = new Set([401, 403, 408, 429]);
+export function isPermanentError(status: number): boolean {
+  return status >= 400 && status < 500 && !TRANSIENT_4XX.has(status);
 }
 
 function uuid(): string {
@@ -124,6 +142,9 @@ export async function deleteSale(id: string): Promise<void> {
 
 export async function pendingCount(): Promise<number> {
   const db = await getDb();
+  // 'failed_permanent' sengaja TIDAK dihitung "belum tersync" — retry tidak
+  // akan pernah berhasil, jadi bukan pekerjaan yang "menunggu sync" (baris-nya
+  // tetap tampil di daftar riwayat dengan badge sendiri untuk ditindak manual).
   const r = await db.getFirstAsync<{ c: number }>(
     `SELECT COUNT(*) AS c FROM pending_sales WHERE status IN ('pending','created','failed')`,
   );
@@ -199,6 +220,9 @@ export async function syncOnce(): Promise<{
     attempts: number;
     created_at: number;
   };
+  // 'failed_permanent' sengaja dikecualikan — retry otomatis percuma, lihat
+  // isPermanentError. Baris tetap ada di listAllSales() untuk ditindak manual
+  // (hapus + input ulang) lewat layar riwayat.
   const rows = await db.getAllAsync<Row>(
     `SELECT * FROM pending_sales WHERE status IN ('pending','created','failed') ORDER BY created_at ASC`,
   );
@@ -229,9 +253,10 @@ export async function syncOnce(): Promise<{
       } catch (e) {
         failed++;
         const msg = e instanceof ApiError ? `${e.status}: ${e.message}` : String(e);
+        const status = e instanceof ApiError && isPermanentError(e.status) ? 'failed_permanent' : 'failed';
         await db.runAsync(
-          `UPDATE pending_sales SET status='failed', attempts=attempts+1, error=? WHERE id=?`,
-          [msg, row.id],
+          `UPDATE pending_sales SET status=?, attempts=attempts+1, error=? WHERE id=?`,
+          [status, msg, row.id],
         );
         continue;
       }
@@ -264,9 +289,10 @@ export async function syncOnce(): Promise<{
       } else {
         failed++;
         const msg = e instanceof ApiError ? `${e.status}: ${e.message}` : String(e);
+        const status = e instanceof ApiError && isPermanentError(e.status) ? 'failed_permanent' : 'failed';
         await db.runAsync(
-          `UPDATE pending_sales SET status='failed', attempts=attempts+1, error=? WHERE id=?`,
-          [msg, row.id],
+          `UPDATE pending_sales SET status=?, attempts=attempts+1, error=? WHERE id=?`,
+          [status, msg, row.id],
         );
       }
     }

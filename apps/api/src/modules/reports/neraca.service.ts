@@ -6,6 +6,7 @@ import {
   aggregateAllAccounts,
   saldoAkhirSigned,
   mutasiSigned,
+  plKindContribution,
   klasifikasiAset,
   klasifikasiLiabilitas,
 } from './helpers.js';
@@ -209,7 +210,8 @@ export class NeracaService {
     let pendapatan = new Decimal(0);
     let beban = new Decimal(0);
     for (const acc of labaResult.accounts.values()) {
-      const nilai = mutasiSigned(acc, labaResult.mutasiByAcc.get(acc.id));
+      // plKindContribution: koreksi arah untuk akun kontra (lihat helpers.ts).
+      const nilai = plKindContribution(acc, mutasiSigned(acc, labaResult.mutasiByAcc.get(acc.id)));
       if (acc.kind === AccountKind.PENDAPATAN || acc.kind === AccountKind.PENDAPATAN_LAIN) {
         pendapatan = pendapatan.plus(nilai);
       } else {

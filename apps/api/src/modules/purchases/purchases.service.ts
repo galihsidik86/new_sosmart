@@ -142,91 +142,120 @@ export class PurchasesService {
   async createDraft(input: CreatePurchaseInvoiceInput) {
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
-    this.cabangScope.assertAccess(input.cabangId);
     const tanggal = new Date(input.tanggal + 'T00:00:00Z');
 
-    return this.tenancy.run(async (tx) => {
-      const period = await tx.fiscalPeriod.findFirst({
-        where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
-      });
-      if (!period) throw new BadRequestException('Tanggal di luar tahun buku');
-      if (period.status === PeriodStatus.CLOSED) {
-        throw new ForbiddenException(`Periode ${period.label} sudah ditutup`);
-      }
+    try {
+      return await this.tenancy.run(async (tx) => {
+        // Idempotency (R3, EVALUASI.md) — lihat catatan analog di
+        // SalesService.createDraft.
+        if (input.idempotencyKey) {
+          const existing = await tx.purchaseInvoice.findFirst({
+            where: { tenantId, idempotencyKey: input.idempotencyKey },
+            include: { lines: true },
+          });
+          if (existing) return existing;
+        }
 
-      const vendor = await tx.vendor.findUnique({
-        where: { id: input.vendorId },
-        select: { id: true, isPkp: true, terminHari: true, npwp: true, nama: true },
-      });
-      if (!vendor) throw new BadRequestException('Vendor tidak ditemukan');
+        await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
+        const period = await tx.fiscalPeriod.findFirst({
+          where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
+        });
+        if (!period) throw new BadRequestException('Tanggal di luar tahun buku');
+        if (period.status === PeriodStatus.CLOSED) {
+          throw new ForbiddenException(`Periode ${period.label} sudah ditutup`);
+        }
 
-      const jatuhTempo = input.jatuhTempo
-        ? new Date(input.jatuhTempo + 'T00:00:00Z')
-        : new Date(tanggal.getTime() + vendor.terminHari * 86_400_000);
+        const vendor = await tx.vendor.findUnique({
+          where: { id: input.vendorId },
+          select: { id: true, isPkp: true, terminHari: true, npwp: true, nama: true },
+        });
+        if (!vendor) throw new BadRequestException('Vendor tidak ditemukan');
 
-      const calc = this.computeTotals(input.lines, {
-        tarifPpn: input.tarifPpnPersen,
-        // PPN masukan hanya kalau vendor PKP
-        applyPpn: vendor.isPkp,
-        potongPph23: input.potongPph23,
-        tarifPph23: input.tarifPph23Persen,
-        vendorPunyaNpwp: !!vendor.npwp,
-        hargaTermasukPajak: input.hargaTermasukPajak,
-      });
+        const jatuhTempo = input.jatuhTempo
+          ? new Date(input.jatuhTempo + 'T00:00:00Z')
+          : new Date(tanggal.getTime() + vendor.terminHari * 86_400_000);
 
-      const totalNetto = calc.totalDpp.plus(calc.totalPpn).minus(calc.totalPph23);
-
-      const inv = await tx.purchaseInvoice.create({
-        data: {
-          tenantId,
-          cabangId: input.cabangId,
-          fiscalPeriodId: period.id,
-          vendorId: input.vendorId,
-          tanggal,
-          jatuhTempo,
-          termin: input.termin,
-          akunApId: input.akunApId,
-          nomorVendor: input.nomorVendor,
-          nsfpMasukan: input.nsfpMasukan,
-          deskripsi: input.deskripsi,
-          linkBukti: input.linkBukti ?? null,
+        const calc = this.computeTotals(input.lines, {
+          tarifPpn: input.tarifPpnPersen,
+          // PPN masukan hanya kalau vendor PKP
+          applyPpn: vendor.isPkp,
+          potongPph23: input.potongPph23,
+          tarifPph23: input.tarifPph23Persen,
+          vendorPunyaNpwp: !!vendor.npwp,
           hargaTermasukPajak: input.hargaTermasukPajak,
-          status: InvoiceStatus.DRAFT,
-          totalDpp: calc.totalDpp.toFixed(2),
-          totalPpn: calc.totalPpn.toFixed(2),
-          totalPph23: calc.totalPph23.toFixed(2),
-          totalDiskon: calc.totalDiskon.toFixed(2),
-          totalNetto: totalNetto.toFixed(2),
-          createdById: userId,
-          lines: {
-            create: input.lines.map((l, i) => {
-              const c = calc.perLine[i]!;
-              return {
-                tenantId,
-                no: i + 1,
-                itemId: l.itemId ?? null,
-                deskripsi: l.deskripsi,
-                qty: l.qty,
-                satuan: l.satuan,
-                hargaSatuan: l.hargaSatuan,
-                diskonPersen: l.diskonPersen,
-                klasifikasiPpn: l.klasifikasiPpn,
-                isJasa: l.isJasa,
-                bruto: c.bruto.toFixed(2),
-                diskonNilai: c.diskonNilai.toFixed(2),
-                dpp: c.dpp.toFixed(2),
-                ppn: c.ppn.toFixed(2),
-                pph23: c.pph23.toFixed(2),
-                akunDebitId: l.akunDebitId,
-                projectId: l.projectId ?? null,
-              };
-            }),
+        });
+
+        const totalNetto = calc.totalDpp.plus(calc.totalPpn).minus(calc.totalPph23);
+
+        return tx.purchaseInvoice.create({
+          data: {
+            tenantId,
+            cabangId: input.cabangId,
+            fiscalPeriodId: period.id,
+            vendorId: input.vendorId,
+            tanggal,
+            jatuhTempo,
+            termin: input.termin,
+            akunApId: input.akunApId,
+            nomorVendor: input.nomorVendor,
+            nsfpMasukan: input.nsfpMasukan,
+            deskripsi: input.deskripsi,
+            linkBukti: input.linkBukti ?? null,
+            hargaTermasukPajak: input.hargaTermasukPajak,
+            status: InvoiceStatus.DRAFT,
+            totalDpp: calc.totalDpp.toFixed(2),
+            totalPpn: calc.totalPpn.toFixed(2),
+            totalPph23: calc.totalPph23.toFixed(2),
+            totalDiskon: calc.totalDiskon.toFixed(2),
+            totalNetto: totalNetto.toFixed(2),
+            createdById: userId,
+            idempotencyKey: input.idempotencyKey ?? null,
+            lines: {
+              create: input.lines.map((l, i) => {
+                const c = calc.perLine[i]!;
+                return {
+                  tenantId,
+                  no: i + 1,
+                  itemId: l.itemId ?? null,
+                  deskripsi: l.deskripsi,
+                  qty: l.qty,
+                  satuan: l.satuan,
+                  hargaSatuan: l.hargaSatuan,
+                  diskonPersen: l.diskonPersen,
+                  klasifikasiPpn: l.klasifikasiPpn,
+                  isJasa: l.isJasa,
+                  bruto: c.bruto.toFixed(2),
+                  diskonNilai: c.diskonNilai.toFixed(2),
+                  dpp: c.dpp.toFixed(2),
+                  ppn: c.ppn.toFixed(2),
+                  pph23: c.pph23.toFixed(2),
+                  akunDebitId: l.akunDebitId,
+                  projectId: l.projectId ?? null,
+                };
+              }),
+            },
           },
-        },
-        include: { lines: true },
+          include: { lines: true },
+        });
       });
-      return inv;
-    });
+    } catch (e) {
+      // Race: lihat catatan analog di SalesService.createDraft — recovery
+      // query WAJIB di transaksi baru, bukan reuse tx yang sudah aborted.
+      if (
+        input.idempotencyKey &&
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        const winner = await this.tenancy.run((tx) =>
+          tx.purchaseInvoice.findFirst({
+            where: { tenantId, idempotencyKey: input.idempotencyKey },
+            include: { lines: true },
+          }),
+        );
+        if (winner) return winner;
+      }
+      throw e;
+    }
   }
 
   async updateDraft(id: string, input: CreatePurchaseInvoiceInput) {
@@ -238,7 +267,9 @@ export class PurchasesService {
       // Lihat catatan di SalesService.updateDraft — RLS cuma isolasi tenant,
       // cabang belum dicek di jalur mutasi ini.
       this.cabangScope.assertAccess(existing.cabangId);
-      this.cabangScope.assertAccess(input.cabangId);
+      // existing.cabangId aman (RLS-scoped). Target input.cabangId (baru)
+      // butuh verifikasi tambahan — lihat CabangScopeService.assertOwnedByTenant.
+      await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
       if (existing.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya draft yang bisa diedit');
       }
@@ -340,35 +371,16 @@ export class PurchasesService {
       }
       await this.assertPeriodOpen(tx, inv.tanggal);
 
-      // Entri utang saldo awal (prosedur Saldo Awal Terintegrasi) — lihat
-      // catatan analog di SalesService.post().
+      // Entri utang saldo awal TIDAK BOLEH di-post lewat endpoint tagihan
+      // generik ini — lihat catatan lengkap analog di SalesService.post().
+      // Kalau lolos di sini, statusnya jadi POSTED dan hilang dari query
+      // DRAFT yang dipakai wizard buat cross-check total Debit=Kredit,
+      // sehingga saldo akun kliring bisa nyisa tidak nol permanen.
       if (inv.isSaldoAwal) {
-        const nomorSaldoAwal = inv.nomor ?? (await this.seq.next(tx, 'BILL', inv.tanggal));
-        const totalNettoSaldoAwal = new Decimal(inv.totalNetto);
-        const akunKliringId = await this.glConfig.getAccountIdInTx(tx, 'SALDO_AWAL_KLIRING');
-        const journalSaldoAwal = await this.journals.createDraftInTx(tx, {
-          cabangId: inv.cabangId,
-          tanggal: inv.tanggal.toISOString().slice(0, 10),
-          deskripsi: `Saldo awal utang ${nomorSaldoAwal} — ${inv.vendor.nama}`,
-          sumber: JournalSource.SALDO_AWAL,
-          sumberRef: inv.saldoAwalId ?? inv.id,
-          lines: [
-            { accountId: akunKliringId, debit: totalNettoSaldoAwal.toFixed(2), kredit: '0' },
-            { accountId: inv.akunApId, debit: '0', kredit: totalNettoSaldoAwal.toFixed(2) },
-          ],
-        });
-        await this.journals.postInTx(tx, journalSaldoAwal.id);
-        return tx.purchaseInvoice.update({
-          where: { id },
-          data: {
-            status: InvoiceStatus.POSTED,
-            nomor: nomorSaldoAwal,
-            journalId: journalSaldoAwal.id,
-            postedAt: new Date(),
-            postedById: userId,
-            postedRequestedById: validRequester,
-          },
-        });
+        throw new BadRequestException(
+          'Tagihan saldo awal cuma bisa diposting lewat Pengaturan › Saldo Awal ' +
+          '(supaya ikut cross-check total Debit=Kredit seluruh run), bukan di sini.',
+        );
       }
 
       const nomor = inv.nomor ?? (await this.seq.next(tx, 'BILL', inv.tanggal));

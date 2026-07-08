@@ -28,20 +28,20 @@ export class AuthService {
   ): Promise<LoginResponse> {
     // Tanpa ini, /auth/login tidak punya pembatasan sama sekali — brute
     // force/credential-stuffing bebas dicoba tanpa hambatan.
-    this.loginThrottle.assertNotLocked(email);
+    await this.loginThrottle.assertNotLocked(email);
 
     // Step 1: users table tidak ber-RLS, query langsung.
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !user.isActive) {
-      this.loginThrottle.recordFailure(email);
+      await this.loginThrottle.recordFailure(email);
       throw new UnauthorizedException('Email/password salah');
     }
     const ok = await argon2.verify(user.passwordHash, password);
     if (!ok) {
-      this.loginThrottle.recordFailure(email);
+      await this.loginThrottle.recordFailure(email);
       throw new UnauthorizedException('Email/password salah');
     }
-    this.loginThrottle.recordSuccess(email);
+    await this.loginThrottle.recordSuccess(email);
 
     await this.prisma.user.update({
       where: { id: user.id },

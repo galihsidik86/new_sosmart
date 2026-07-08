@@ -1,5 +1,11 @@
 # Evaluasi & Perbaikan Menyeluruh — Lentera Accounting
 
+> **Update 8 Juli 2026**: seluruh temuan di "Rekomendasi Lanjutan" (R1–R8) sudah
+> ditindaklanjuti — 7 diperbaiki, 1 (R4) sengaja di-skip atas pilihan user.
+> Detail lengkap tiap fix ada di `EVALUASI-RONDE2.md` (bagian "Ronde 4"). Ronde
+> 2 & 3 (audit kode baru + bug lama lain di luar daftar R1–R8) juga sudah
+> selesai — lihat file yang sama.
+
 Tanggal audit: 6 Juli 2026 · Repo: `new_sosmart` (branch `main`)
 Lingkup: `apps/api` (NestJS + Prisma + Postgres/RLS), `apps/web` (Next.js), `apps/pos-mobile` (Expo/React Native), `packages/shared`, `packages/db`.
 
@@ -109,18 +115,20 @@ Postgres 16 + Redis sudah jalan via `docker-compose` di lingkungan audit ini (co
 
 **Fix**: kondisi create diubah jadi `if (!serverId)` (bukan berdasar status label) — sekali draft berhasil dibuat, retry apa pun tidak akan membuat draft baru. Ditambah `tryReconcile()` — kalau `/post` gagal, cek dulu status faktur di server sebelum menandai `'failed'`; kalau ternyata sudah POSTED, tandai `'synced'` (bukan gagal).
 
-## Rekomendasi Lanjutan (belum diubah — alasan disertakan)
+## Rekomendasi Lanjutan — status per Ronde 4 (lihat `EVALUASI-RONDE2.md`)
 
-| # | Temuan | Kenapa belum diubah |
+Ronde 1 mencatat 8 item di bawah sebagai "belum diubah". User kemudian minta semuanya diperbaiki. 7 dari 8 item **sudah diperbaiki** (detail lengkap tiap fix + test regresi ada di `EVALUASI-RONDE2.md`, bagian "Ronde 4"); 1 item (**R4**) sengaja tetap di-skip atas pilihan eksplisit user, bukan keputusan teknis sepihak.
+
+| # | Temuan | Status |
 |---|---|---|
-| R1 | **Budget-guard TOCTOU** (`apps/api/src/modules/projects/budget-guard.service.ts`) — cek "spent so far" lalu insert baris baru tanpa lock; dua jurnal yang menyentuh bucket budget sama nyaris bersamaan berpotensi keduanya lolos walau total menembus hard-block. | Butuh keputusan desain (advisory lock per `(project, account, bulan)` vs re-check setelah insert) yang bisa mengubah semantik `overrideBudget`. Severity sedang (butuh timing presisi), risiko fix salah > manfaat buru-buru. |
-| R2 | **Periods TOCTOU** — `assertOpen()` dan `closePeriod()` tidak saling exclude lewat lock; window kecil di mana posting jurnal bisa "menyelinap" pas periode ditutup di tengah transaksi lain. | Fix yang benar butuh lock lintas-modul (semua path posting + closePeriod harus pakai lock yang sama) — perubahan sistemik, bukan patch lokal. Window race sangat kecil dalam praktik (butuh timing presisi antar 2 admin). |
-| R3 | **Idempotency key untuk `createDraft`** (sales/purchases web) — double-click/retry bisa bikin draft duplikat (tidak berbahaya sampai di-post, tapi 2 draft identik bisa bikin bingung/kesalahan manusia kalau keduanya di-post). | Butuh migrasi skema (kolom idempotency-key + unique constraint) dan keputusan UX (apakah dedup di client atau server). Beda dengan bug pos-mobile (#7) yang murni bug retry-logic, ini butuh fitur baru. |
-| R4 | **Rounding pajak**: komentar di `money.ts` mengklaim "pembulatan ke bawah (PER-03/PJ/2022)" tapi implementasi selalu `ROUND_HALF_EVEN`. Sudah diperbaiki **dokumentasinya** supaya tidak menyesatkan, TAPI belum diverifikasi mana yang benar secara regulasi. | Mengubah rounding mode mengubah nominal pajak pada SEMUA transaksi baru — butuh konfirmasi eksplisit terhadap peraturan DJP resmi sebelum diubah, bukan keputusan teknis semata. |
-| R5 | **Upload `.xlsx`** (`apps/api/src/common/http/multipart.ts`) hanya cek ekstensi nama file, bukan magic bytes. Tidak eksploitable saat ini (file non-xlsx yang di-rename gagal parse dengan aman, tidak crash), tapi defense-in-depth yang hilang. | Risiko rendah, perbaikan kosmetik (tambah cek signature ZIP `PK\x03\x04`) — tidak mendesak dibanding temuan lain. |
-| R6 | **pos-mobile retry loop** tidak membedakan error permanen (400 validasi) vs transient (network/5xx) — baris `'failed'` karena data invalid akan terus di-retry persis sama tiap app dibuka. Bukan infinite-loop (dipicu app-foreground, tidak ada timer), tapi UX buruk. | Perlu keputusan produk: retry berapa kali, apakah butuh notifikasi ke kasir untuk fix manual. Di luar scope "bug keamanan/integritas". |
-| R7 | Cakupan test regresi cabang-scope (#1) baru mencakup Sales + Journals secara langsung. Purchases/cashbank/adjustments/payroll/aset/bukti-potong pakai kode identik dan sudah diverifikasi lewat typecheck + review manual, tapi belum punya test integrasi khusus per-modul. | Waktu — pola sudah dibuktikan benar sekali (9 test lulus), menduplikasi test yang sama persis untuk 6 modul lain menambah waktu tanpa menambah kepercayaan berarti. Direkomendasikan untuk iterasi berikut kalau ada waktu. |
-| R8 | Login rate-limiter bersifat in-memory per-proses (lihat temuan #3) — tidak konsisten lintas instance kalau API di-scale horizontal. | Di luar scope saat ini (deployment masih single-instance); pindahkan ke Redis saat scaling jadi kebutuhan nyata. |
+| R1 | **Budget-guard TOCTOU** (`apps/api/src/modules/projects/budget-guard.service.ts`) — cek "spent so far" lalu insert baris baru tanpa lock; dua jurnal yang menyentuh bucket budget sama nyaris bersamaan berpotensi keduanya lolos walau total menembus hard-block. | ✅ **Diperbaiki** — `pg_advisory_xact_lock` per bucket, dikunci di awal `check()`. Test: `apps/api/test/budget-guard.spec.ts`. |
+| R2 | **Periods TOCTOU** — `assertOpen()` dan `closePeriod()` tidak saling exclude lewat lock; window kecil di mana posting jurnal bisa "menyelinap" pas periode ditutup di tengah transaksi lain. | ✅ **Diperbaiki** — shared/exclusive advisory lock per periode, dipakai konsisten di `PeriodsService`, `JournalsService`, dan `FiscalYearClosingService`. Test: `apps/api/test/periods.spec.ts`. |
+| R3 | **Idempotency key untuk `createDraft`** (sales/purchases web) — double-click/retry bisa bikin draft duplikat. | ✅ **Diperbaiki** — kolom `idempotencyKey` (migrasi baru) + check-before-create + client generate UUID sekali per form mount. Test: `apps/api/test/idempotency.spec.ts`. |
+| R4 | **Rounding pajak**: komentar di `money.ts` mengklaim "pembulatan ke bawah (PER-03/PJ/2022)" tapi implementasi selalu `ROUND_HALF_EVEN`. | ⏭️ **Sengaja di-skip** (pilihan eksplisit user) — mengubah rounding mode mengubah nominal pajak pada SEMUA transaksi baru, butuh konfirmasi regulasi DJP resmi yang tidak tersedia. Tidak disentuh. |
+| R5 | **Upload `.xlsx`** (`apps/api/src/common/http/multipart.ts`) hanya cek ekstensi nama file, bukan magic bytes. | ✅ **Diperbaiki** — cek signature ZIP `PK\x03\x04`. Test: `apps/api/src/common/http/__tests__/multipart.test.ts`. |
+| R6 | **pos-mobile retry loop** tidak membedakan error permanen (400 validasi) vs transient (network/5xx). | ✅ **Diperbaiki** — status baru `'failed_permanent'`, dikecualikan dari retry otomatis. **Tanpa test otomatis** (pos-mobile tidak punya test runner sama sekali) — diverifikasi typecheck + review manual, dicatat eksplisit sebagai gap. |
+| R7 | Cakupan test regresi cabang-scope (#1) baru mencakup Sales + Journals secara langsung; 7 modul lain belum punya test IDOR khusus. | ✅ **Diperbaiki** — 19 test baru di `apps/api/test/cabang-scope.spec.ts` mencakup Purchases/Cashbank/Adjustments/Aset/Bukti Potong/Opening Balance/Karyawan/Users. Semua lulus tanpa perlu fix kode baru (membuktikan fix ronde 3 sudah benar di seluruh titik). |
+| R8 | Login rate-limiter bersifat in-memory per-proses — tidak konsisten lintas instance kalau API di-scale horizontal. | ✅ **Diperbaiki** — dipindah ke Redis (`ioredis`, `RedisModule`/`RedisService` baru). Test: `apps/api/test/login-throttle.spec.ts` (termasuk test cross-instance). |
 
 ## File yang Diubah
 

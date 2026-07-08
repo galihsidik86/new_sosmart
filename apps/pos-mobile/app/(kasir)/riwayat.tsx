@@ -162,6 +162,10 @@ function SaleRow({ row, onDelete }: { row: PendingRow; onDelete: () => void }) {
     created: { bg: colors.sogan50, fg: colors.sogan600, label: 'DRAFT TERKIRIM' },
     synced: { bg: colors.padi100, fg: colors.padi700, label: 'TERSYNC' },
     failed: { bg: colors.bata100, fg: colors.bata700, label: 'GAGAL' },
+    failed_permanent: {
+      bg: colors.bata100, fg: colors.bata700,
+      label: 'GAGAL PERMANEN — cek data / hapus manual',
+    },
   };
   const c = colorMap[row.status];
   return (

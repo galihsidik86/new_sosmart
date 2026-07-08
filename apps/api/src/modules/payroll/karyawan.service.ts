@@ -7,6 +7,7 @@ import { Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
+import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 import type { ImportResult } from '../../common/http/multipart.js';
 import { PtkpStatus, JenisKaryawan } from '@lentera/db';
 import type { CreateKaryawanInput } from '@lentera/shared/schemas';
@@ -17,6 +18,7 @@ export class KaryawanService {
     private readonly tenancy: TenancyService,
     private readonly ctx: TenantContext,
     private readonly excel: ExcelService,
+    private readonly cabangScope: CabangScopeService,
   ) {}
 
   async importXlsx(buffer: Buffer): Promise<ImportResult> {
@@ -159,8 +161,15 @@ export class KaryawanService {
   async create(input: CreateKaryawanInput) {
     const tenantId = this.ctx.require().tenantId;
     return this.tenancy
-      .run((tx) =>
-        tx.karyawan.create({
+      .run(async (tx) => {
+        // KaryawanService sebelumnya tidak inject CabangScopeService sama
+        // sekali — cabangId (optional) dari input langsung jadi FK tanpa
+        // verifikasi apa pun, bukan cuma no-op assertAccess seperti modul
+        // lain. cabangId tenant lain (kalau ketebak) bisa lolos FK constraint.
+        if (input.cabangId) {
+          await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
+        }
+        return tx.karyawan.create({
           data: {
             tenantId,
             ...input,
@@ -169,8 +178,8 @@ export class KaryawanService {
               ? new Date(input.tanggalKeluar + 'T00:00:00Z')
               : null,
           },
-        }),
-      )
+        });
+      })
       .catch((e) => {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
           throw new ConflictException('Kode karyawan sudah dipakai');
@@ -180,8 +189,11 @@ export class KaryawanService {
   }
 
   async update(id: string, patch: Partial<CreateKaryawanInput>) {
-    return this.tenancy.run((tx) =>
-      tx.karyawan.update({
+    return this.tenancy.run(async (tx) => {
+      if (patch.cabangId) {
+        await this.cabangScope.assertOwnedByTenant(tx, patch.cabangId);
+      }
+      return tx.karyawan.update({
         where: { id },
         data: {
           ...patch,
@@ -192,8 +204,8 @@ export class KaryawanService {
             ? new Date(patch.tanggalKeluar + 'T00:00:00Z')
             : undefined,
         },
-      }),
-    );
+      });
+    });
   }
 
   async deactivate(id: string) {

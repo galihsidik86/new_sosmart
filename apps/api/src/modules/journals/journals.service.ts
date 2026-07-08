@@ -161,12 +161,18 @@ export class JournalsService {
   ) {
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
-    this.cabangScope.assertAccess(input.cabangId);
+    // createDraftInTx dipanggil LANGSUNG dari endpoint publik (POST /journals)
+    // dengan cabangId mentah dari body, TAPI juga dipanggil internal dari
+    // sales/purchases/cashbank/dll dengan cabangId yang sudah tervalidasi —
+    // assertOwnedByTenant aman dipanggil di kedua kasus (query tambahan
+    // murah, RLS-scoped, tidak ada efek samping kalau memang sudah valid).
+    await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
     const tanggal = new Date(input.tanggal + 'T00:00:00.000Z');
 
-    const period = await tx.fiscalPeriod.findFirst({
-      where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
-    });
+    // Lewat PeriodsService (bukan query inline) supaya ikut shared advisory
+    // lock — tanpa ini, closePeriod bisa commit di tengah-tengah createDraft
+    // baca status periode, lolos padahal periode sudah CLOSED (TOCTOU, R2).
+    const period = await this.periods.resolvePeriodForPosting(tx, tanggal);
     if (!period) {
       throw new BadRequestException(
         `Tanggal ${input.tanggal} di luar tahun buku — buat periode dulu`,
@@ -308,9 +314,9 @@ export class JournalsService {
       throw new BadRequestException('Jurnal sudah dibalik sebelumnya');
     }
     const tanggal = opts.tanggal ?? new Date();
-    const period = await tx.fiscalPeriod.findFirst({
-      where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
-    });
+    // Sama seperti createDraftInTx — lewat PeriodsService supaya ikut shared
+    // advisory lock, bukan query inline yang rawan TOCTOU dgn closePeriod.
+    const period = await this.periods.resolvePeriodForPosting(tx, tanggal);
     if (!period) {
       throw new BadRequestException('Tanggal pembalik di luar tahun buku');
     }
@@ -378,7 +384,9 @@ export class JournalsService {
       const existing = await tx.journal.findUnique({ where: { id } });
       if (!existing) throw new NotFoundException('Jurnal tidak ditemukan');
       this.cabangScope.assertAccess(existing.cabangId);
-      this.cabangScope.assertAccess(input.cabangId);
+      // existing.cabangId aman (RLS-scoped). Target input.cabangId (baru)
+      // butuh verifikasi tambahan — lihat CabangScopeService.assertOwnedByTenant.
+      await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
       if (existing.status !== JournalStatus.DRAFT) {
         throw new BadRequestException('Hanya draft yang bisa diedit');
       }

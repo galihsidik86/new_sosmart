@@ -153,91 +153,124 @@ export class SalesService {
   async createDraft(input: CreateSalesInvoiceInput) {
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
-    this.cabangScope.assertAccess(input.cabangId);
     const tanggal = new Date(input.tanggal + 'T00:00:00Z');
 
-    return this.tenancy.run(async (tx) => {
-      const period = await tx.fiscalPeriod.findFirst({
-        where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
-      });
-      if (!period) throw new BadRequestException('Tanggal di luar tahun buku');
-      if (period.status === PeriodStatus.CLOSED) {
-        throw new ForbiddenException(`Periode ${period.label} sudah ditutup`);
-      }
+    try {
+      return await this.tenancy.run(async (tx) => {
+        // Idempotency (R3, EVALUASI.md): client generate key SEKALI per form
+        // mount — kalau request ini pengulangan (double-submit/retry jaringan)
+        // dari key yang sama, return faktur yang SUDAH dibuat, bukan bikin baru.
+        if (input.idempotencyKey) {
+          const existing = await tx.salesInvoice.findFirst({
+            where: { tenantId, idempotencyKey: input.idempotencyKey },
+            include: { lines: true },
+          });
+          if (existing) return existing;
+        }
 
-      const customer = await tx.customer.findUnique({
-        where: { id: input.customerId },
-        select: { id: true, nama: true, terminHari: true, isPkp: true },
-      });
-      if (!customer) throw new BadRequestException('Pelanggan tidak ditemukan');
+        await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
+        const period = await tx.fiscalPeriod.findFirst({
+          where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
+        });
+        if (!period) throw new BadRequestException('Tanggal di luar tahun buku');
+        if (period.status === PeriodStatus.CLOSED) {
+          throw new ForbiddenException(`Periode ${period.label} sudah ditutup`);
+        }
 
-      const jatuhTempo = input.jatuhTempo
-        ? new Date(input.jatuhTempo + 'T00:00:00Z')
-        : new Date(tanggal.getTime() + customer.terminHari * 86_400_000);
+        const customer = await tx.customer.findUnique({
+          where: { id: input.customerId },
+          select: { id: true, nama: true, terminHari: true, isPkp: true },
+        });
+        if (!customer) throw new BadRequestException('Pelanggan tidak ditemukan');
 
-      // PMK 131/2024: Faktur pajak (dan PPN keluaran) hanya diterbitkan
-      // untuk customer PKP. Untuk non-PKP: klasifikasi kena PPN (BKP/JKP)
-      // di-coerce ke NON_BKP supaya PPN tidak dihitung.
-      const lines = customer.isPkp
-        ? input.lines
-        : input.lines.map((l) =>
-            isPpnable(l.klasifikasiPpn)
-              ? { ...l, klasifikasiPpn: KlasifikasiPpn.NON_BKP }
-              : l,
-          );
-      const calc = this.computeTotals(lines, input.tarifPpnPersen, input.hargaTermasukPajak);
+        const jatuhTempo = input.jatuhTempo
+          ? new Date(input.jatuhTempo + 'T00:00:00Z')
+          : new Date(tanggal.getTime() + customer.terminHari * 86_400_000);
 
-      const inv = await tx.salesInvoice.create({
-        data: {
-          tenantId,
-          cabangId: input.cabangId,
-          fiscalPeriodId: period.id,
-          customerId: input.customerId,
-          tanggal,
-          jatuhTempo,
-          termin: input.termin,
-          akunArId: input.akunArId,
-          deskripsi: input.deskripsi,
-          linkBukti: input.linkBukti ?? null,
-          hargaTermasukPajak: input.hargaTermasukPajak,
-          kodeFakturPajak: input.kodeFakturPajak,
-          nsfp: input.nsfp,
-          status: InvoiceStatus.DRAFT,
-          totalDpp: calc.totalDpp.toFixed(2),
-          totalPpn: calc.totalPpn.toFixed(2),
-          totalPph23: '0',                    // PPh 23 dipotong customer, bukan kita
-          totalDiskon: calc.totalDiskon.toFixed(2),
-          totalNetto: calc.totalDpp.plus(calc.totalPpn).toFixed(2),
-          createdById: userId,
-          lines: {
-            create: lines.map((l, i) => {
-              const c = calc.perLine[i]!;
-              return {
-                tenantId,
-                no: i + 1,
-                itemId: l.itemId ?? null,
-                deskripsi: l.deskripsi,
-                qty: l.qty,
-                satuan: l.satuan,
-                hargaSatuan: l.hargaSatuan,
-                diskonPersen: l.diskonPersen,
-                klasifikasiPpn: l.klasifikasiPpn,
-                isJasa: l.isJasa,
-                bruto: c.bruto.toFixed(2),
-                diskonNilai: c.diskonNilai.toFixed(2),
-                dpp: c.dpp.toFixed(2),
-                ppn: c.ppn.toFixed(2),
-                pph23: '0',
-                akunPendapatanId: l.akunPendapatanId,
-                projectId: l.projectId ?? null,
-              };
-            }),
+        // PMK 131/2024: Faktur pajak (dan PPN keluaran) hanya diterbitkan
+        // untuk customer PKP. Untuk non-PKP: klasifikasi kena PPN (BKP/JKP)
+        // di-coerce ke NON_BKP supaya PPN tidak dihitung.
+        const lines = customer.isPkp
+          ? input.lines
+          : input.lines.map((l) =>
+              isPpnable(l.klasifikasiPpn)
+                ? { ...l, klasifikasiPpn: KlasifikasiPpn.NON_BKP }
+                : l,
+            );
+        const calc = this.computeTotals(lines, input.tarifPpnPersen, input.hargaTermasukPajak);
+
+        return tx.salesInvoice.create({
+          data: {
+            tenantId,
+            cabangId: input.cabangId,
+            fiscalPeriodId: period.id,
+            customerId: input.customerId,
+            tanggal,
+            jatuhTempo,
+            termin: input.termin,
+            akunArId: input.akunArId,
+            deskripsi: input.deskripsi,
+            linkBukti: input.linkBukti ?? null,
+            hargaTermasukPajak: input.hargaTermasukPajak,
+            kodeFakturPajak: input.kodeFakturPajak,
+            nsfp: input.nsfp,
+            status: InvoiceStatus.DRAFT,
+            totalDpp: calc.totalDpp.toFixed(2),
+            totalPpn: calc.totalPpn.toFixed(2),
+            totalPph23: '0',                    // PPh 23 dipotong customer, bukan kita
+            totalDiskon: calc.totalDiskon.toFixed(2),
+            totalNetto: calc.totalDpp.plus(calc.totalPpn).toFixed(2),
+            createdById: userId,
+            idempotencyKey: input.idempotencyKey ?? null,
+            lines: {
+              create: lines.map((l, i) => {
+                const c = calc.perLine[i]!;
+                return {
+                  tenantId,
+                  no: i + 1,
+                  itemId: l.itemId ?? null,
+                  deskripsi: l.deskripsi,
+                  qty: l.qty,
+                  satuan: l.satuan,
+                  hargaSatuan: l.hargaSatuan,
+                  diskonPersen: l.diskonPersen,
+                  klasifikasiPpn: l.klasifikasiPpn,
+                  isJasa: l.isJasa,
+                  bruto: c.bruto.toFixed(2),
+                  diskonNilai: c.diskonNilai.toFixed(2),
+                  dpp: c.dpp.toFixed(2),
+                  ppn: c.ppn.toFixed(2),
+                  pph23: '0',
+                  akunPendapatanId: l.akunPendapatanId,
+                  projectId: l.projectId ?? null,
+                };
+              }),
+            },
           },
-        },
-        include: { lines: true },
+          include: { lines: true },
+        });
       });
-      return inv;
-    });
+    } catch (e) {
+      // Race: 2 request ber-idempotencyKey sama lolos findFirst check di
+      // dalam transaksi bersamaan (belum ada yang commit) — unique
+      // constraint DB jadi backstop terakhir. Recovery query WAJIB di
+      // transaksi BARU (bukan reuse tx di atas), karena Postgres menolak
+      // query lanjutan di transaksi yang sudah aborted akibat P2002.
+      if (
+        input.idempotencyKey &&
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        const winner = await this.tenancy.run((tx) =>
+          tx.salesInvoice.findFirst({
+            where: { tenantId, idempotencyKey: input.idempotencyKey },
+            include: { lines: true },
+          }),
+        );
+        if (winner) return winner;
+      }
+      throw e;
+    }
   }
 
   // ----------------------------------------------------
@@ -254,7 +287,10 @@ export class SalesService {
       // ini. Tanpa ini, user dengan MembershipCabang terbatas ke cabang A bisa
       // edit faktur cabang B (sama tenant) kalau tahu/menebak id-nya.
       this.cabangScope.assertAccess(existing.cabangId);
-      this.cabangScope.assertAccess(input.cabangId);
+      // existing.cabangId sudah aman (RLS-scoped findUnique di atas). Target
+      // input.cabangId (baru) belum tentu — cabangId tenant lain bisa lolos
+      // FK constraint (tidak kena RLS di UPDATE) kalau cuma assertAccess biasa.
+      await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
       if (existing.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya draft yang bisa diedit');
       }
@@ -365,38 +401,21 @@ export class SalesService {
       }
       await this.assertPeriodOpen(tx, inv.tanggal);
 
-      // Entri piutang saldo awal (prosedur Saldo Awal Terintegrasi) — bukan
-      // penjualan riil. Jalur terpisah: cuma D akunArId / K akun kliring,
-      // SKIP total pendapatan/PPN/HPP/stok-outbound di bawah (kalau lewat
-      // jalur normal, baris ini akan salah kredit ke akun pendapatan dan
-      // salah keluarkan stok yang justru sedang di-input awal).
+      // Entri piutang saldo awal (prosedur Saldo Awal Terintegrasi) TIDAK
+      // BOLEH di-post lewat endpoint faktur generik ini. OpeningBalanceService.
+      // post() nge-post SEMUA baris piutang/utang/persediaan/akun manual dalam
+      // SATU transaksi setelah cross-check total Debit=Kredit — kalau baris
+      // ini di-post duluan lewat sini, dia langsung lolos ke status POSTED dan
+      // "hilang" dari query DRAFT yang dipakai wizard buat hitung selisih
+      // (opening-balance.service.ts buildPreviewInTx), sehingga wizard bisa
+      // menyatakan "balanced" padahal saldo akun kliring (3-105) nyisa tidak
+      // nol secara permanen — jurnal sudah terlanjur POSTED, tidak ada validasi
+      // lanjutan yang menangkapnya. Wajib lewat Pengaturan › Saldo Awal.
       if (inv.isSaldoAwal) {
-        const nomorSaldoAwal = inv.nomor ?? (await this.seq.next(tx, 'INV', inv.tanggal));
-        const totalNettoSaldoAwal = new Decimal(inv.totalNetto);
-        const akunKliringId = await this.glConfig.getAccountIdInTx(tx, 'SALDO_AWAL_KLIRING');
-        const journalSaldoAwal = await this.journals.createDraftInTx(tx, {
-          cabangId: inv.cabangId,
-          tanggal: inv.tanggal.toISOString().slice(0, 10),
-          deskripsi: `Saldo awal piutang ${nomorSaldoAwal} — ${inv.customer.nama}`,
-          sumber: JournalSource.SALDO_AWAL,
-          sumberRef: inv.saldoAwalId ?? inv.id,
-          lines: [
-            { accountId: inv.akunArId, debit: totalNettoSaldoAwal.toFixed(2), kredit: '0' },
-            { accountId: akunKliringId, debit: '0', kredit: totalNettoSaldoAwal.toFixed(2) },
-          ],
-        });
-        await this.journals.postInTx(tx, journalSaldoAwal.id);
-        return tx.salesInvoice.update({
-          where: { id },
-          data: {
-            status: InvoiceStatus.POSTED,
-            nomor: nomorSaldoAwal,
-            journalId: journalSaldoAwal.id,
-            postedAt: new Date(),
-            postedById: userId,
-            postedRequestedById: validRequester,
-          },
-        });
+        throw new BadRequestException(
+          'Faktur saldo awal cuma bisa diposting lewat Pengaturan › Saldo Awal ' +
+          '(supaya ikut cross-check total Debit=Kredit seluruh run), bukan di sini.',
+        );
       }
 
       // Alokasi nomor INV

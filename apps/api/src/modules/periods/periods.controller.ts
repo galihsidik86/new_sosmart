@@ -13,8 +13,10 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   closePeriodInputSchema,
   reopenPeriodInputSchema,
+  createFiscalYearInputSchema,
   type ClosePeriodInput,
   type ReopenPeriodInput,
+  type CreateFiscalYearInput,
 } from '@lentera/shared/schemas';
 import { TenantGuard } from '../../common/guards/tenant.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
@@ -36,6 +38,15 @@ export class PeriodsController {
   @Get('years')
   listYears() {
     return this.periods.listYears();
+  }
+
+  @Post('years')
+  @Roles('OWNER', 'ADMIN')
+  createYear(
+    @Body(new ZodValidationPipe(createFiscalYearInputSchema))
+    body: CreateFiscalYearInput,
+  ) {
+    return this.periods.createFiscalYear(body);
   }
 
   @Get('resolve')

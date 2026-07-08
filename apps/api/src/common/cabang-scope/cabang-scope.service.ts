@@ -1,4 +1,5 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import type { Prisma } from '@lentera/db';
 import { TenantContext } from '../tenancy/tenant-context.js';
 
 /**
@@ -54,5 +55,21 @@ export class CabangScopeService {
         'User tidak punya akses ke cabang ini',
       );
     }
+  }
+
+  /**
+   * Sama seperti assertAccess() (blokir role restricted yang cabangId-nya
+   * di luar akses), TAPI juga verifikasi cabangId benar-benar ada di tenant
+   * ini — assertAccess() saja no-op untuk OWNER/ADMIN (cabangIds===null),
+   * jadi cabangId tenant lain (kalau ketebak) bisa lolos FK constraint
+   * (tidak kena RLS di INSERT/UPDATE, beda dari SELECT biasa). Dipakai di
+   * titik yang cabangId-nya jadi FK langsung ke .create()/.update() —
+   * bukan di read-path (list/byId), yang cukup assertAccess() biasa karena
+   * row-nya sendiri sudah RLS-scoped.
+   */
+  async assertOwnedByTenant(tx: Prisma.TransactionClient, cabangId: string): Promise<void> {
+    this.assertAccess(cabangId);
+    const cabang = await tx.cabang.findUnique({ where: { id: cabangId }, select: { id: true } });
+    if (!cabang) throw new BadRequestException('Cabang tidak ditemukan');
   }
 }

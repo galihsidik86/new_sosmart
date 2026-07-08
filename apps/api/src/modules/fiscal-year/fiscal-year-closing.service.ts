@@ -7,11 +7,13 @@ import {
   JournalStatus,
   NormalBalance,
   PeriodStatus,
+  Prisma,
 } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { JournalsService } from '../journals/journals.service.js';
+import { periodLockKey } from '../periods/periods.service.js';
 import { aggregateAllAccounts, mutasiSigned } from '../reports/helpers.js';
 
 const PL_KINDS: AccountKind[] = [
@@ -43,9 +45,45 @@ export class FiscalYearClosingService {
     private readonly journals: JournalsService,
   ) {}
 
+  /**
+   * Lock per-fiscal-year (pola sama InventoryService.lockItem) — tanpa ini,
+   * dua request close/reopen bersamaan untuk fiscalYearId yang SAMA bisa
+   * sama-sama lolos precondition check (belum ada yang commit statusnya),
+   * lalu sama-sama posting jurnal penutup / sama-sama reverse — dobel
+   * jurnal penutup (laba dipindah 2×) atau dobel-reverse. Advisory lock
+   * (transaction-scoped) bikin request kedua BLOK sampai yang pertama
+   * commit, baru baca status yang sudah ter-update.
+   */
+  private async lockFiscalYearInTx(tx: Prisma.TransactionClient, fiscalYearId: string): Promise<void> {
+    await tx.$executeRawUnsafe(
+      `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+      `fiscal-year-closing:${fiscalYearId}`,
+    );
+  }
+
+  /**
+   * Exclusive lock per-periode, key SAMA PERSIS (`periodLockKey`) dengan yang
+   * dipakai `PeriodsService.closePeriod/reopenPeriod` dan shared lock di
+   * `resolvePeriodForDateLocked` (dipakai JournalsService.createDraftInTx/
+   * postInTx/reverseInTx). Tanpa ini, closeFiscalYear/reopenFiscalYear yang
+   * mengubah status periode terakhir bisa TOCTOU-race dengan posting jurnal
+   * yang lagi baca status periode yang sama lewat jalur PeriodsService — dua
+   * jalur ini (PeriodsService & FiscalYearClosingService) TIDAK bisa share
+   * kode langsung (circular dependency, lihat komentar class di atas), jadi
+   * cukup duplikasi raw SQL pendek ini dengan key format yang di-impor supaya
+   * tetap saling exclude.
+   */
+  private async lockPeriodExclusiveInTx(tx: Prisma.TransactionClient, periodId: string): Promise<void> {
+    await tx.$executeRawUnsafe(
+      `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+      periodLockKey(periodId),
+    );
+  }
+
   async closeFiscalYear(fiscalYearId: string, catatan?: string) {
     const userId = this.ctx.require().userId;
     return this.tenancy.run(async (tx) => {
+      await this.lockFiscalYearInTx(tx, fiscalYearId);
       const fy = await tx.fiscalYear.findUnique({
         where: { id: fiscalYearId },
         include: { periods: { orderBy: { no: 'asc' } } },
@@ -59,6 +97,15 @@ export class FiscalYearClosingService {
       }
 
       const last = fy.periods[fy.periods.length - 1]!;
+      // Exclusive lock periode terakhir SEBELUM baca status-nya — key sama
+      // dgn shared lock di jalur posting jurnal (PeriodsService), supaya
+      // tidak TOCTOU-race dgn transaksi posting yang lagi baca status
+      // periode ini. Re-fetch setelah lock karena status bisa berubah
+      // selagi menunggu.
+      await this.lockPeriodExclusiveInTx(tx, last.id);
+      const freshLast = await tx.fiscalPeriod.findUnique({ where: { id: last.id } });
+      if (!freshLast) throw new NotFoundException('Periode tidak ditemukan');
+
       const belumTutup = fy.periods.filter(
         (p) => p.id !== last.id && p.status !== PeriodStatus.CLOSED,
       );
@@ -67,8 +114,8 @@ export class FiscalYearClosingService {
           `Tutup periode berikut dulu sebelum tutup tahun buku: ${belumTutup.map((p) => p.label).join(', ')}`,
         );
       }
-      if (last.status === PeriodStatus.CLOSED) {
-        throw new BadRequestException(`Periode terakhir (${last.label}) sudah ditutup`);
+      if (freshLast.status === PeriodStatus.CLOSED) {
+        throw new BadRequestException(`Periode terakhir (${freshLast.label}) sudah ditutup`);
       }
 
       // Hitung jurnal penutup: nolkan mutasi tahun berjalan akun Pendapatan/
@@ -160,6 +207,7 @@ export class FiscalYearClosingService {
 
   async reopenFiscalYear(fiscalYearId: string, alasan: string) {
     return this.tenancy.run(async (tx) => {
+      await this.lockFiscalYearInTx(tx, fiscalYearId);
       const fy = await tx.fiscalYear.findUnique({
         where: { id: fiscalYearId },
         include: { periods: { orderBy: { no: 'asc' } } },
@@ -190,11 +238,17 @@ export class FiscalYearClosingService {
       // masih CLOSED — jadi urutannya dibalik dari intuisi "reverse dulu baru
       // buka kunci".
       const last = fy.periods[fy.periods.length - 1];
-      if (last && last.status === PeriodStatus.CLOSED) {
-        await tx.fiscalPeriod.update({
-          where: { id: last.id },
-          data: { status: PeriodStatus.OPEN, closedAt: null, closedById: null, catatanTutup: alasan },
-        });
+      if (last) {
+        // Sama seperti closeFiscalYear — exclusive lock + re-fetch fresh
+        // status sebelum mutasi, key sama dgn jalur posting jurnal.
+        await this.lockPeriodExclusiveInTx(tx, last.id);
+        const freshLast = await tx.fiscalPeriod.findUnique({ where: { id: last.id } });
+        if (freshLast && freshLast.status === PeriodStatus.CLOSED) {
+          await tx.fiscalPeriod.update({
+            where: { id: last.id },
+            data: { status: PeriodStatus.OPEN, closedAt: null, closedById: null, catatanTutup: alasan },
+          });
+        }
       }
 
       const closingJournal = await tx.journal.findFirst({

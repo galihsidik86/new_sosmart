@@ -110,6 +110,11 @@ export function InvoiceForm({
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  // Generate SEKALI per form mount (bukan per submit) — kalau user klik
+  // submit dobel atau request retry karena jaringan lambat, backend
+  // (createDraft) mengenali key yang sama dan tidak bikin faktur dobel
+  // (R3, EVALUASI.md).
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   const [lines, setLines] = useState<Line[]>(
     defaultValues?.lines ?? [
@@ -232,6 +237,7 @@ export function InvoiceForm({
       linkBukti: linkBuktiTrim,
       tarifPpnPersen: tarifPpn,
       hargaTermasukPajak,
+      idempotencyKey,
       lines: lines.map((l) => ({
         itemId: l.itemId, deskripsi: l.deskripsi, qty: l.qty, satuan: l.satuan,
         hargaSatuan: l.hargaSatuan, diskonPersen: l.diskonPersen,
@@ -251,6 +257,7 @@ export function InvoiceForm({
       tarifPph23Persen: tarifPph23,
       potongPph23,
       hargaTermasukPajak,
+      idempotencyKey,
       lines: lines.map((l) => ({
         itemId: l.itemId, deskripsi: l.deskripsi, qty: l.qty, satuan: l.satuan,
         hargaSatuan: l.hargaSatuan, diskonPersen: l.diskonPersen,

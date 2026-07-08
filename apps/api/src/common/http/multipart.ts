@@ -28,7 +28,25 @@ export async function readXlsxUpload(req: RequestWithFile): Promise<{ filename: 
     throw new BadRequestException('Hanya file .xlsx yang didukung');
   }
   const buffer = await file.toBuffer();
+  if (!isXlsxMagicBytes(buffer)) {
+    // Nama file cuma metadata dari client, gampang dipalsukan (rename .txt
+    // jadi .xlsx). .xlsx sebenarnya container ZIP (Open Packaging Conventions)
+    // — cek signature ZIP asli (PK\x03\x04) di 4 byte pertama sebelum masuk
+    // parser, bukan cuma percaya nama file.
+    throw new BadRequestException('File bukan .xlsx valid (signature tidak cocok)');
+  }
   return { filename: file.filename, buffer };
+}
+
+/** Cek magic bytes ZIP (PK\x03\x04) — .xlsx adalah container ZIP (OPC). */
+export function isXlsxMagicBytes(buffer: Buffer): boolean {
+  return (
+    buffer.length >= 4 &&
+    buffer[0] === 0x50 &&
+    buffer[1] === 0x4b &&
+    buffer[2] === 0x03 &&
+    buffer[3] === 0x04
+  );
 }
 
 /** Standard return shape untuk import endpoints. */

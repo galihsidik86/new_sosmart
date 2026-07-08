@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
-import { canPostAccounting } from '@/lib/roles';
+import { canPostAccounting, canCancelPosted } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 
 interface Preview {
@@ -199,6 +199,11 @@ export default async function SaldoAwalPage({
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const canPost = canPostAccounting(s.role);
+  // Void = batalkan SATU-satunya run saldo awal tenant sekaligus (dampak
+  // tenant-wide) — dibatasi OWNER/ADMIN saja (canCancelPosted), bukan ikut
+  // aturan Post biasa (OWNER/ADMIN/AKUNTAN). Cuma UX hint; enforcement
+  // sebenarnya di server (opening-balance.controller.ts @Roles('OWNER','ADMIN')).
+  const canVoid = canCancelPosted(s.role);
 
   const [preview, akun, piutang, utang, persediaan, cabangList, customers, vendors, items] = await Promise.all([
     apiFetch<Preview>('/opening-balance/preview', { tenantId }),
@@ -289,7 +294,7 @@ export default async function SaldoAwalPage({
               )}
             </form>
           )}
-          {isPosted && canPost && (
+          {isPosted && canVoid && (
             <form action={voidAction} className="mt-4 flex items-end gap-3">
               <div className="flex-1">
                 <label className="text-xs text-tanah-500">Alasan void (untuk koreksi)</label>

@@ -51,7 +51,14 @@ export class OpeningBalanceController {
     return this.ob.post(requestedById);
   }
 
+  // Void membatalkan SATU-satunya run saldo awal tenant sekaligus (reverse
+  // semua jurnal + stok + restore Account.saldoAwal) — dampaknya tenant-wide,
+  // bukan satu dokumen. Dibatasi OWNER/ADMIN saja (bukan ikut level class
+  // OWNER/ADMIN/AKUNTAN di atas), sama seperti pola reopen-year di fitur
+  // Tutup Buku (fiscal-year-closing.controller.ts) — aksi "buka kunci" selalu
+  // lebih ketat daripada aksi "kunci"-nya sendiri.
   @Post('void')
+  @Roles('OWNER', 'ADMIN')
   void(
     @Body(new ZodValidationPipe(cancelInvoiceInputSchema)) body: CancelInvoiceInput,
     @Headers('x-requested-by-user-id') requestedById?: string,

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { AccountKind, Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
-import { aggregateAllAccounts, mutasiSigned } from './helpers.js';
+import { aggregateAllAccounts, mutasiSigned, plKindContribution } from './helpers.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
 export interface LabaRugiAccount {
@@ -193,7 +193,11 @@ export class LabaRugiService {
       bebanLain: new Decimal(0),
     };
     for (const acc of accounts.values()) {
-      const nilai = mutasiSigned(acc, mutasiByAcc.get(acc.id));
+      // plKindContribution: akun kontra (mis. Retur Penjualan kind=PENDAPATAN
+      // tapi normalBalance=DEBIT) dibalik arahnya di sini — supaya baris ini
+      // DAN subtotal di bawah (sub.pendapatan dst.) sama-sama benar (baris
+      // kontra tampil negatif, konsisten dengan kontribusinya mengurangi total).
+      const nilai = plKindContribution(acc, mutasiSigned(acc, mutasiByAcc.get(acc.id)));
       if (nilai.eq(0)) continue;
       rowsBySection[acc.kind]!.push({
         id: acc.id, kode: acc.kode, nama: acc.nama, nilai: nilai.toFixed(2),

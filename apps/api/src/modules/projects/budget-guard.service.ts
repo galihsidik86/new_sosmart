@@ -127,6 +127,26 @@ export class BudgetGuardService {
       newByBucket.set(key, (newByBucket.get(key) ?? new Decimal(0)).plus(signed));
     }
 
+    // Lock SEMUA bucket yang budget-nya match DAN newDelta > 0 — SEBELUM baca
+    // "spent so far" di loop bawah. Tanpa ini, dua jurnal bersamaan yang
+    // sama-sama nambah spending ke bucket (project, account, bulan) yang
+    // sama bisa sama-sama baca "spent" lama yang sama, sama-sama lolos hard
+    // block walau totalnya menembus limit (TOCTOU). Key di-sort dulu
+    // (deterministic) sebelum dikunci satu-satu — kalau tidak, dua jurnal
+    // yang sentuh bucket SAMA dalam urutan berbeda bisa saling deadlock
+    // (jurnal A kunci X lalu nunggu Y, jurnal B kunci Y lalu nunggu X).
+    const tenantId = this.ctx.require().tenantId;
+    const bucketKeysToLock = Array.from(
+      new Set(
+        budgets
+          .filter((b) => (newByBucket.get(`${b.projectId}|${b.accountId}`) ?? new Decimal(0)).gt(0))
+          .map((b) => `${tenantId}:${b.projectId}:${b.accountId}:${b.periode}`),
+      ),
+    ).sort();
+    for (const key of bucketKeysToLock) {
+      await tx.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, key);
+    }
+
     const violations: BudgetViolation[] = [];
 
     for (const b of budgets) {

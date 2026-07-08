@@ -93,6 +93,25 @@ export class UsersService {
   }
 
   /**
+   * assertCanManage() di atas cuma assertAccess() biasa — no-op untuk
+   * OWNER/unrestricted ADMIN (hasFullAccess), jadi tidak pernah verifikasi
+   * cabangId itu benar-benar milik tenant ini. Beda dari 15 titik lain yang
+   * dibenerin pakai CabangScopeService.assertOwnedByTenant(tx, id), method
+   * ini dipanggil SEBELUM tenancy.run() dibuka di create()/update() (tidak
+   * ada `tx` di scope saat itu) — jadi query verifikasi-nya dibuat mandiri
+   * di sini, bukan restrukturisasi assertCanManage jadi async+tx.
+   */
+  private async assertCabangIdsOwnedByTenant(cabangIds: string[]): Promise<void> {
+    if (cabangIds.length === 0) return;
+    await this.tenancy.run(async (tx) => {
+      const count = await tx.cabang.count({ where: { id: { in: cabangIds } } });
+      if (count !== cabangIds.length) {
+        throw new BadRequestException('Ada cabangId yang tidak ditemukan di tenant ini');
+      }
+    });
+  }
+
+  /**
    * Filter view target user: kalau caller restricted, hanya boleh lihat
    * user yang juga restricted ke cabang dalam scope caller. User OWNER /
    * unrestricted tidak visible.
@@ -187,6 +206,7 @@ export class UsersService {
   async create(input: CreateUserInput) {
     const tenantId = this.ctx.require().tenantId;
     this.assertCanManage(input.cabangIds, input.role);
+    await this.assertCabangIdsOwnedByTenant(input.cabangIds);
 
     // User row level pakai PrismaService superuser (RLS bypass) karena users
     // tidak ber-tenant.
@@ -231,6 +251,7 @@ export class UsersService {
     const newRole = input.role ?? current.role;
     const newCabangIds = input.cabangIds ?? current.cabang.map((c) => c.id);
     this.assertCanManage(newCabangIds, newRole);
+    await this.assertCabangIdsOwnedByTenant(newCabangIds);
 
     // Update user-level fields via PrismaService.
     if (input.nama || input.password || input.isActive !== undefined) {

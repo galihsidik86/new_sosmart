@@ -4,6 +4,7 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtTanggal } from '@/lib/format';
+import { canAdmin } from '@/lib/roles';
 
 interface PeriodRow {
   id: string;
@@ -113,6 +114,23 @@ async function reopenYearAction(formData: FormData) {
   }));
 }
 
+async function createFiscalYearAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  // Input <input type="month"> kasih value "YYYY-MM" — tahun buku selalu
+  // mulai tanggal 1, jadi tinggal tambah "-01" tanpa perlu date picker penuh.
+  const bulanMulai = formData.get('startDate');
+  await runAction(() => apiFetch('/periods/years', {
+    method: 'POST',
+    tenantId,
+    body: JSON.stringify({
+      kode: formData.get('kode'),
+      startDate: `${bulanMulai}-01`,
+    }),
+  }));
+}
+
 export default async function PeriodePage({
   searchParams,
 }: {
@@ -146,6 +164,47 @@ export default async function PeriodePage({
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-6">
             <strong>Gagal: </strong>{error}
+          </div>
+        )}
+
+        {canAdmin(s.role) && (
+          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5 mb-6">
+            <div className="text-sm font-bold text-tanah-700 mb-3">Tambah Tahun Buku</div>
+            <form action={createFiscalYearAction} className="flex items-end gap-3">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+                  Kode
+                </label>
+                <input
+                  type="text"
+                  name="kode"
+                  required
+                  placeholder="mis. 2027"
+                  className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm w-32"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
+                  Bulan Mulai
+                </label>
+                <input
+                  type="month"
+                  name="startDate"
+                  required
+                  className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 text-sm font-semibold rounded-lg"
+              >
+                Tambah Tahun Buku
+              </button>
+            </form>
+            <p className="text-xs text-tanah-400 mt-2">
+              12 periode bulanan otomatis dibuat berturut-turut dari bulan mulai — bisa untuk
+              tahun mendatang (mis. 2027) atau data historis (mis. 2024/2025).
+            </p>
           </div>
         )}
 

@@ -129,10 +129,10 @@ export class AdjustmentsService {
   async createDraft(input: CreateStokAdjustmentInput) {
     const tenantId = this.ctx.require().tenantId;
     const userId = this.ctx.require().userId;
-    this.cabangScope.assertAccess(input.cabangId);
     const tanggal = new Date(input.tanggal + 'T00:00:00Z');
 
     return this.tenancy.run(async (tx) => {
+      await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
       const period = await tx.fiscalPeriod.findFirst({
         where: { startDate: { lte: tanggal }, endDate: { gte: tanggal } },
       });
@@ -214,7 +214,9 @@ export class AdjustmentsService {
       // Lihat catatan di SalesService.updateDraft — RLS cuma isolasi tenant,
       // cabang belum dicek di jalur mutasi ini.
       this.cabangScope.assertAccess(existing.cabangId);
-      this.cabangScope.assertAccess(input.cabangId);
+      // existing.cabangId aman (RLS-scoped). Target input.cabangId (baru)
+      // butuh verifikasi tambahan — lihat CabangScopeService.assertOwnedByTenant.
+      await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
       if (existing.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException('Hanya draft yang bisa diedit');
       }

@@ -200,3 +200,24 @@ export function mutasiSigned(
     ? mutasi.debit.minus(mutasi.kredit)
     : mutasi.kredit.minus(mutasi.debit);
 }
+
+/**
+ * Kontribusi akun ke bucket P&L per-kind (Pendapatan/Beban Pokok/Beban/
+ * Pendapatan Lain/Beban Lain), sign-corrected untuk akun kontra.
+ *
+ * `nilai` (biasanya dari mutasiSigned) sudah positif ke arah normalBalance
+ * akun ITU SENDIRI. Tapi `kind` menentukan arah "diharapkan" (Pendapatan* →
+ * KREDIT, selain itu → DEBIT). Kalau normalBalance akun tidak cocok dengan
+ * arah yang diharapkan untuk kind-nya (akun kontra, mis. Retur Penjualan
+ * kind=PENDAPATAN tapi normalBalance=DEBIT), kontribusinya ke bucket harus
+ * DIBALIK — supaya konsisten dengan FiscalYearClosingService.closeFiscalYear
+ * (sign murni dari normalBalance, agnostic terhadap kind). Tanpa ini, akun
+ * kontra ikut DITAMBAH ke bucket bukan DIKURANG — laba bersih jadi salah.
+ */
+export function plKindContribution(acc: AggregatedAccount, nilai: Decimal): Decimal {
+  const expectedNormal =
+    acc.kind === AccountKind.PENDAPATAN || acc.kind === AccountKind.PENDAPATAN_LAIN
+      ? NormalBalance.KREDIT
+      : NormalBalance.DEBIT;
+  return acc.normalBalance === expectedNormal ? nilai : nilai.negated();
+}

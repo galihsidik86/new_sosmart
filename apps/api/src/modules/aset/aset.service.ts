@@ -114,7 +114,6 @@ export class AsetService {
 
   async create(input: CreateAsetInput) {
     const tenantId = this.ctx.require().tenantId;
-    this.cabangScope.assertAccess(input.cabangId);
     const userId = this.ctx.require().userId;
     const masa = input.masaManfaatBulan ?? MASA_MANFAAT_DEFAULT[input.kelompok];
     const perolehan = new Date(input.tanggalPerolehan + 'T00:00:00Z');
@@ -130,8 +129,9 @@ export class AsetService {
     const nilaiBuku = hp.minus(akumAwal);
 
     return this.tenancy
-      .run((tx) =>
-        tx.asetTetap.create({
+      .run(async (tx) => {
+        await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
+        return tx.asetTetap.create({
           data: {
             tenantId,
             cabangId: input.cabangId,
@@ -153,8 +153,8 @@ export class AsetService {
             catatan: input.catatan,
             createdById: userId,
           },
-        }),
-      )
+        });
+      })
       .catch((e) => {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
           throw new ConflictException('Kode aset sudah dipakai');

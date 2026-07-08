@@ -4,7 +4,7 @@ import { AccountKind } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
-import { aggregateAllAccounts, mutasiSigned, saldoAkhirSigned } from './helpers.js';
+import { aggregateAllAccounts, mutasiSigned, plKindContribution, saldoAkhirSigned } from './helpers.js';
 
 export interface PerubahanEkuitasResponse {
   periode: { id: string; label: string; startDate: Date; endDate: Date };
@@ -121,7 +121,8 @@ export class PerubahanEkuitasService {
       let pendapatan = new Decimal(0);
       let beban = new Decimal(0);
       for (const acc of labaResult.accounts.values()) {
-        const nilai = mutasiSigned(acc, labaResult.mutasiByAcc.get(acc.id));
+        // plKindContribution: koreksi arah untuk akun kontra (lihat helpers.ts).
+        const nilai = plKindContribution(acc, mutasiSigned(acc, labaResult.mutasiByAcc.get(acc.id)));
         if (acc.kind === AccountKind.PENDAPATAN || acc.kind === AccountKind.PENDAPATAN_LAIN) {
           pendapatan = pendapatan.plus(nilai);
         } else {

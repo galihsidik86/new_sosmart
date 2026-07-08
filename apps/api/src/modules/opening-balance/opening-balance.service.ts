@@ -66,8 +66,27 @@ export class OpeningBalanceService {
   // Run lifecycle
   // ----------------------------------------------------
 
+  /**
+   * Lock per-tenant (pola sama InventoryService.lockItem) — dipanggil di
+   * AWAL setiap transaksi yang baca/tulis run saldo awal tenant ini. Tanpa
+   * ini, dua request bersamaan (double-click, dua tab) bisa: (a) sama-sama
+   * lolos findUnique kosong lalu tabrakan create (SaldoAwal @@unique([tenantId]),
+   * salah satu 500 mentah), atau (b) sama-sama lolos assertDraft di post()/
+   * void() lalu sama-sama posting/reverse — jurnal dobel, saldo kliring rusak.
+   * Advisory lock (transaction-scoped, auto-release saat commit/rollback)
+   * bikin request kedua BLOK sampai request pertama selesai, baru lanjut
+   * baca state yang sudah ter-update — assertDraft/status check jadi benar.
+   */
+  private async lockRunInTx(tx: Prisma.TransactionClient, tenantId: string): Promise<void> {
+    await tx.$executeRawUnsafe(
+      `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+      `saldo-awal:${tenantId}`,
+    );
+  }
+
   private async getOrCreateRunInTx(tx: Prisma.TransactionClient) {
     const tenantId = this.ctx.require().tenantId;
+    await this.lockRunInTx(tx, tenantId);
     const existing = await tx.saldoAwal.findUnique({ where: { tenantId } });
     if (existing) return existing;
 
@@ -187,8 +206,13 @@ export class OpeningBalanceService {
   async listPiutang() {
     return this.tenancy.run(async (tx) => {
       const run = await this.getOrCreateRunInTx(tx);
+      // Run saldo awal tenant-wide, tapi tiap baris piutang tetap punya
+      // cabangId sendiri — user yang MembershipCabang-nya restricted tidak
+      // boleh lihat baris cabang lain (sama pola cabangIdsForWhere() yang
+      // dipakai list() di modul lain, mis. journals.service.ts).
+      const scope = this.cabangScope.cabangIdsForWhere();
       return tx.salesInvoice.findMany({
-        where: { saldoAwalId: run.id },
+        where: { saldoAwalId: run.id, ...(scope ? { cabangId: { in: scope } } : {}) },
         include: { customer: { select: { nama: true, kode: true } } },
         orderBy: { createdAt: 'asc' },
       });
@@ -199,7 +223,7 @@ export class OpeningBalanceService {
     return this.tenancy.run(async (tx) => {
       const run = await this.getOrCreateRunInTx(tx);
       this.assertDraft(run);
-      this.cabangScope.assertAccess(input.cabangId);
+      await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
       const tenantId = this.ctx.require().tenantId;
       const userId = this.ctx.require().userId;
       const tanggal = new Date(input.tanggal + 'T00:00:00Z');
@@ -240,6 +264,7 @@ export class OpeningBalanceService {
       this.assertDraft(run);
       const inv = await tx.salesInvoice.findUnique({ where: { id } });
       if (!inv || inv.saldoAwalId !== run.id) throw new NotFoundException();
+      this.cabangScope.assertAccess(inv.cabangId);
       await tx.salesInvoice.delete({ where: { id } });
       return { ok: true };
     });
@@ -252,8 +277,10 @@ export class OpeningBalanceService {
   async listUtang() {
     return this.tenancy.run(async (tx) => {
       const run = await this.getOrCreateRunInTx(tx);
+      // Lihat catatan cabang-scoping analog di listPiutang().
+      const scope = this.cabangScope.cabangIdsForWhere();
       return tx.purchaseInvoice.findMany({
-        where: { saldoAwalId: run.id },
+        where: { saldoAwalId: run.id, ...(scope ? { cabangId: { in: scope } } : {}) },
         include: { vendor: { select: { nama: true, kode: true } } },
         orderBy: { createdAt: 'asc' },
       });
@@ -264,7 +291,7 @@ export class OpeningBalanceService {
     return this.tenancy.run(async (tx) => {
       const run = await this.getOrCreateRunInTx(tx);
       this.assertDraft(run);
-      this.cabangScope.assertAccess(input.cabangId);
+      await this.cabangScope.assertOwnedByTenant(tx, input.cabangId);
       const tenantId = this.ctx.require().tenantId;
       const userId = this.ctx.require().userId;
       const tanggal = new Date(input.tanggal + 'T00:00:00Z');
@@ -305,6 +332,7 @@ export class OpeningBalanceService {
       this.assertDraft(run);
       const inv = await tx.purchaseInvoice.findUnique({ where: { id } });
       if (!inv || inv.saldoAwalId !== run.id) throw new NotFoundException();
+      this.cabangScope.assertAccess(inv.cabangId);
       await tx.purchaseInvoice.delete({ where: { id } });
       return { ok: true };
     });
@@ -317,8 +345,13 @@ export class OpeningBalanceService {
   async listPersediaan() {
     return this.tenancy.run(async (tx) => {
       const run = await this.getOrCreateRunInTx(tx);
+      // Lihat catatan cabang-scoping analog di listPiutang().
+      const scope = this.cabangScope.cabangIdsForWhere();
       return tx.itemStokAwal.findMany({
-        where: { tanggal: run.tanggal, saldoAwalId: null },
+        where: {
+          tanggal: run.tanggal, saldoAwalId: null,
+          ...(scope ? { cabangId: { in: scope } } : {}),
+        },
         include: {
           item: { select: { kode: true, nama: true, akunPersediaanId: true } },
           cabang: { select: { kode: true, nama: true } },
@@ -334,7 +367,15 @@ export class OpeningBalanceService {
       this.assertDraft(run);
       const tenantId = this.ctx.require().tenantId;
       for (const l of input.lines) {
-        this.cabangScope.assertAccess(l.cabangId);
+        await this.cabangScope.assertOwnedByTenant(tx, l.cabangId);
+        // Validasi itemId milik tenant ini via query ter-scope RLS — sama
+        // pola dengan addPiutang/addUtang (customerId/vendorId). Tanpa ini,
+        // itemId tenant lain (FK constraint tidak kena RLS) bisa lolos
+        // upsert dan bikin ItemStokAwal nunjuk item yang invisible bagi
+        // tenant ini — listPersediaan()/post() include:{item} lalu meledak
+        // karena relasi wajib resolve ke null.
+        const item = await tx.item.findUnique({ where: { id: l.itemId }, select: { id: true } });
+        if (!item) throw new BadRequestException(`Item ${l.itemId} tidak ditemukan`);
         const tanggal = new Date(l.tanggal + 'T00:00:00Z');
         await tx.itemStokAwal.upsert({
           where: { itemId_cabangId_tanggal: { itemId: l.itemId, cabangId: l.cabangId, tanggal } },
@@ -355,6 +396,7 @@ export class OpeningBalanceService {
       this.assertDraft(run);
       const row = await tx.itemStokAwal.findUnique({ where: { id: itemStokAwalId } });
       if (!row || row.saldoAwalId) throw new NotFoundException();
+      this.cabangScope.assertAccess(row.cabangId);
       await tx.itemStokAwal.delete({ where: { id: itemStokAwalId } });
       return { ok: true };
     });
@@ -398,8 +440,15 @@ export class OpeningBalanceService {
     const persediaan = await tx.itemStokAwal.findMany({
       where: { tanggal: run.tanggal, saldoAwalId: null },
     });
+    // Bulatkan PER BARIS ke 2 desimal sebelum dijumlah — harus sama persis
+    // dengan post() di bawah (juga .toDecimalPlaces(2) per baris sebelum
+    // dijumlah ke `total`). qty DECIMAL(20,4) × hargaPokokPerUnit DECIMAL(20,2)
+    // rutin menghasilkan >2 desimal; kalau preview jumlah RAW (tanpa bulatkan
+    // per baris) sementara post() bulatkan per baris, selisihnya bisa bikin
+    // preview bilang "balanced" padahal setelah posting akun kliring nyisa
+    // beberapa sen, atau sebaliknya preview nolak input yang sebenarnya pas.
     const totalPersediaan = persediaan.reduce(
-      (a, p) => a.plus(new Decimal(p.qty).mul(p.hargaPokokPerUnit)), new Decimal(0),
+      (a, p) => a.plus(new Decimal(p.qty).mul(p.hargaPokokPerUnit).toDecimalPlaces(2)), new Decimal(0),
     );
     totalDebit = totalDebit.plus(totalPersediaan);
 
@@ -441,6 +490,33 @@ export class OpeningBalanceService {
           `Saldo awal belum seimbang — selisih Rp ${preview.selisih.toFixed(2)} ` +
           `(Debit ${preview.totalDebit.toFixed(2)}, Kredit ${preview.totalKredit.toFixed(2)})`,
         );
+      }
+
+      // Akun subsidiary (Piutang/Utang/Persediaan) SENGAJA dikecualikan dari
+      // "akun manual" (preview.akunLines) — saldo awalnya harus derived dari
+      // detail per customer/vendor/item, bukan lump-sum. Tapi tenant lama
+      // (data legacy/migrasi sebelum fitur ini ada) bisa punya saldoAwal
+      // nonzero yang di-set langsung di akun itu. Reset di bawah (baris
+      // "Reset SEMUA Account.saldoAwal") akan menghapus nilai itu TANPA
+      // jurnal apa pun kalau tidak diblok di sini — hilang permanen, tidak
+      // ada jejak GL (beda dari void() yang bisa restore dari snapshot,
+      // karena ini bukan void, ini jalur SUKSES normal). Admin harus
+      // rekonsiliasi manual dulu (pastikan detail Piutang/Utang/Persediaan
+      // sudah mewakili nilai itu) lalu nolkan akunnya lewat Bagan Akun
+      // (AccountsService.update() sekarang izinkan target persis 0).
+      const subsidiary = await this.resolveSubsidiaryAccountIds(tx);
+      if (subsidiary.size > 0) {
+        const legacyNonZero = await tx.account.findMany({
+          where: { tenantId, id: { in: [...subsidiary.keys()] }, saldoAwal: { not: 0 } },
+        });
+        if (legacyNonZero.length > 0) {
+          const labels = legacyNonZero.map((a) => `${a.kode} — ${a.nama}`).join(', ');
+          throw new BadRequestException(
+            `Akun berikut punya saldo awal lama (legacy) yang belum direkonsiliasi: ${labels}. ` +
+            'Pastikan nilainya sudah terwakili di tab Piutang/Utang/Persediaan, lalu nolkan ' +
+            'akunnya lewat Pengaturan › Bagan Akun sebelum posting saldo awal.',
+          );
+        }
       }
 
       const akunKliringId = await this.ensureKliringAccountInTx(tx);
