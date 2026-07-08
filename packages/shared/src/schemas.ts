@@ -164,6 +164,18 @@ export const reopenPeriodInputSchema = z.object({
 });
 export type ReopenPeriodInput = z.infer<typeof reopenPeriodInputSchema>;
 
+export const closeFiscalYearInputSchema = z.object({
+  fiscalYearId: z.string().uuid(),
+  catatan: z.string().max(500).optional(),
+});
+export type CloseFiscalYearInput = z.infer<typeof closeFiscalYearInputSchema>;
+
+export const reopenFiscalYearInputSchema = z.object({
+  fiscalYearId: z.string().uuid(),
+  alasan: z.string().min(5).max(500),
+});
+export type ReopenFiscalYearInput = z.infer<typeof reopenFiscalYearInputSchema>;
+
 // ---------- JOURNAL ----------
 
 export const journalSourceSchema = z.enum([

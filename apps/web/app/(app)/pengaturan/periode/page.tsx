@@ -1,4 +1,5 @@
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -23,37 +24,101 @@ interface YearRow {
   periods: PeriodRow[];
 }
 
+const PATH = '/pengaturan/periode';
+
+/**
+ * `apiFetch` melempar `Error("API {status}: {jsonBody}")` (lihat lib/api.ts).
+ * Tanpa ini, error apa pun dari API (mis. "tutup periode Feb 2026 dulu")
+ * jatuh sampai ke Next.js dev overlay / generic error page — sama pola yang
+ * dipakai di wizard Saldo Awal (apps/web/app/(app)/pengaturan/saldo-awal/page.tsx).
+ */
+function extractErrorMessage(err: unknown): string {
+  if (!(err instanceof Error)) return 'Terjadi kesalahan tak terduga.';
+  const m = err.message.match(/^API \d+: (.+)$/s);
+  if (m) {
+    try {
+      const body = JSON.parse(m[1]);
+      if (typeof body?.message === 'string') return body.message;
+    } catch {
+      // bukan JSON — pakai raw text
+    }
+    return m[1];
+  }
+  return err.message;
+}
+
+async function runAction(fn: () => Promise<unknown>): Promise<void> {
+  try {
+    await fn();
+  } catch (e) {
+    redirect(`${PATH}?error=${encodeURIComponent(extractErrorMessage(e))}`);
+  }
+  revalidatePath(PATH);
+  redirect(PATH);
+}
+
 async function closePeriodAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
-  if (!tenantId) throw new Error('Tenant tidak aktif');
-  await apiFetch('/periods/close', {
+  if (!tenantId) redirect('/login');
+  await runAction(() => apiFetch('/periods/close', {
     method: 'POST',
     tenantId,
     body: JSON.stringify({
       periodId: formData.get('periodId'),
       catatan: formData.get('catatan') || undefined,
     }),
-  });
-  revalidatePath('/pengaturan/periode');
+  }));
 }
 
 async function reopenPeriodAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
-  if (!tenantId) throw new Error('Tenant tidak aktif');
-  await apiFetch('/periods/reopen', {
+  if (!tenantId) redirect('/login');
+  await runAction(() => apiFetch('/periods/reopen', {
     method: 'POST',
     tenantId,
     body: JSON.stringify({
       periodId: formData.get('periodId'),
       alasan: formData.get('alasan'),
     }),
-  });
-  revalidatePath('/pengaturan/periode');
+  }));
 }
 
-export default async function PeriodePage() {
+async function closeYearAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  await runAction(() => apiFetch('/periods/close-year', {
+    method: 'POST',
+    tenantId,
+    body: JSON.stringify({
+      fiscalYearId: formData.get('fiscalYearId'),
+      catatan: formData.get('catatan') || undefined,
+    }),
+  }));
+}
+
+async function reopenYearAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  await runAction(() => apiFetch('/periods/reopen-year', {
+    method: 'POST',
+    tenantId,
+    body: JSON.stringify({
+      fiscalYearId: formData.get('fiscalYearId'),
+      alasan: formData.get('alasan'),
+    }),
+  }));
+}
+
+export default async function PeriodePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const years = await apiFetch<YearRow[]>('/periods/years', { tenantId });
@@ -78,7 +143,20 @@ export default async function PeriodePage() {
           </a>
         </div>
 
-        {years.map((y) => (
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-6">
+            <strong>Gagal: </strong>{error}
+          </div>
+        )}
+
+        {years.map((y) => {
+          const last = y.periods[y.periods.length - 1];
+          const canCloseYear =
+            y.status === 'OPEN' &&
+            !!last &&
+            last.status === 'OPEN' &&
+            y.periods.slice(0, -1).every((p) => p.status === 'CLOSED');
+          return (
           <div
             key={y.id}
             className="bg-white rounded-xl border border-cream-200 shadow-sm mb-6 overflow-hidden"
@@ -100,6 +178,43 @@ export default async function PeriodePage() {
                     {y.status}
                   </span>
                 </div>
+              </div>
+              <div>
+                {canCloseYear && (
+                  <form action={closeYearAction} className="inline-flex items-center gap-1">
+                    <input type="hidden" name="fiscalYearId" value={y.id} />
+                    <input
+                      type="text"
+                      name="catatan"
+                      placeholder="Catatan tutup tahun (opsional)"
+                      className="px-2 py-1 text-xs border border-cream-300 rounded bg-white w-52"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 bg-bata-500 hover:bg-bata-700 text-cream-50 text-xs font-bold rounded"
+                    >
+                      Tutup Tahun Buku
+                    </button>
+                  </form>
+                )}
+                {y.status === 'CLOSED' && (
+                  <form action={reopenYearAction} className="inline-flex items-center gap-1">
+                    <input type="hidden" name="fiscalYearId" value={y.id} />
+                    <input
+                      type="text"
+                      name="alasan"
+                      required
+                      placeholder="Alasan buka tahun buku…"
+                      className="px-2 py-1 text-xs border border-cream-300 rounded bg-white w-52"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 bg-cream-200 hover:bg-cream-300 text-tanah-700 text-xs font-bold rounded border border-cream-400"
+                    >
+                      Buka Tahun Buku
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
 
@@ -173,7 +288,8 @@ export default async function PeriodePage() {
               </tbody>
             </table>
           </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );

@@ -33,6 +33,7 @@ import { UsersModule } from './modules/users/users.module.js';
 import { ProjectsModule } from './modules/projects/projects.module.js';
 import { Pph23TarifModule } from './modules/pph23-tarif/pph23-tarif.module.js';
 import { OpeningBalanceModule } from './modules/opening-balance/opening-balance.module.js';
+import { FiscalYearClosingModule } from './modules/fiscal-year/fiscal-year-closing.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { HealthController } from './modules/health/health.controller.js';
 
@@ -55,6 +56,7 @@ import { HealthController } from './modules/health/health.controller.js';
     CustomersModule,
     PeriodsModule,
     JournalsModule,
+    FiscalYearClosingModule,
     LedgerModule,
     SalesModule,
     PurchasesModule,

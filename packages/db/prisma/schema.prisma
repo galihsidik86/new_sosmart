@@ -791,6 +791,8 @@ model FiscalYear {
   status     FiscalYearStatus @default(OPEN)
   closedAt   DateTime?        @map("closed_at")
   closedById String?          @map("closed_by_id") @db.Uuid
+  /// Catatan tutup/reopen tahun buku (audit trail), sama pola FiscalPeriod.catatanTutup.
+  catatanTutup String?        @map("catatan_tutup")
   createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt @map("updated_at")
 
