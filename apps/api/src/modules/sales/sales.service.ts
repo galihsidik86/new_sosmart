@@ -491,6 +491,7 @@ export class SalesService {
         cabangId: inv.cabangId,
         tanggal: inv.tanggal.toISOString().slice(0, 10),
         deskripsi: `Faktur penjualan ${nomor}`,
+        linkBukti: inv.linkBukti ?? null,
         sumber: JournalSource.PENJUALAN,
         sumberRef: inv.id,
         lines,

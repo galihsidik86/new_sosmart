@@ -328,6 +328,7 @@ export class CashBankService {
         cabangId: e.cabangId,
         tanggal: e.tanggal.toISOString().slice(0, 10),
         deskripsi: `${e.tipe} ${nomor}` + (e.kontak ? ` — ${e.kontak}` : ''),
+        linkBukti: e.linkBukti ?? null,
         sumber: JournalSource.KAS_BANK,
         sumberRef: e.id,
         lines,

@@ -13,6 +13,9 @@ import { ReportsPdfService } from './reports-pdf.service.js';
 import { ReportsExcelService } from './reports-excel.service.js';
 import { ArAgingService } from './ar-aging.service.js';
 import { ApAgingService } from './ap-aging.service.js';
+import { LabaRugiProyekService } from './laba-rugi-proyek.service.js';
+import { JejakAuditService } from './jejak-audit.service.js';
+import type { JournalSource } from '@lentera/db';
 
 @Controller('reports')
 @UseGuards(TenantGuard)
@@ -26,6 +29,8 @@ export class ReportsController {
     private readonly ba: BudgetActualService,
     private readonly ar: ArAgingService,
     private readonly ap: ApAgingService,
+    private readonly lrp: LabaRugiProyekService,
+    private readonly audit: JejakAuditService,
     private readonly pdf: ReportsPdfService,
     private readonly xlsx: ReportsExcelService,
     private readonly tenancy: TenancyService,
@@ -103,6 +108,54 @@ export class ReportsController {
     @Query('cabangId') cabangId?: string,
   ) {
     return this.ba.build({ periode, projectId, cabangId });
+  }
+
+  // --------------- Laba Rugi per Proyek (batch semua proyek) ---------------
+
+  @Get('laba-rugi-proyek')
+  labaRugiProyek(
+    @Query('periodId') periodId: string,
+    @Query('ytd') ytd?: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    return this.lrp.build({ periodId, ytd: ytd === 'true', cabangId });
+  }
+
+  @Get('laba-rugi-proyek.pdf')
+  async labaRugiProyekPdf(
+    @Res() reply: ReplyLike,
+    @Query('periodId') periodId: string,
+    @Query('ytd') ytd?: string,
+    @Query('cabangId') cabangId?: string,
+  ) {
+    const [data, nama] = await Promise.all([
+      this.lrp.build({ periodId, ytd: ytd === 'true', cabangId }),
+      this.tenantNama(),
+    ]);
+    sendPdf(reply, 'laba-rugi-proyek.pdf', await this.pdf.buildLabaRugiProyek(data, nama));
+  }
+
+  // --------------- Jejak Audit (bukti transaksi bisa diklik) ---------------
+
+  @Get('jejak-audit')
+  jejakAudit(
+    @Query('periodId') periodId?: string,
+    @Query('dari') dari?: string,
+    @Query('sampai') sampai?: string,
+    @Query('sumber') sumber?: string,
+    @Query('projectId') projectId?: string,
+    @Query('cabangId') cabangId?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.audit.build({
+      periodId,
+      dari,
+      sampai,
+      sumber: (sumber || undefined) as JournalSource | undefined,
+      projectId: normalizeProjectFilter(projectId),
+      cabangId,
+      search,
+    });
   }
 
   @Get('budget-actual.xlsx')

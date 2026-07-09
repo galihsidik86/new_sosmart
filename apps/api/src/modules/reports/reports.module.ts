@@ -9,6 +9,8 @@ import { ReportsPdfService } from './reports-pdf.service.js';
 import { ReportsExcelService } from './reports-excel.service.js';
 import { ArAgingService } from './ar-aging.service.js';
 import { ApAgingService } from './ap-aging.service.js';
+import { LabaRugiProyekService } from './laba-rugi-proyek.service.js';
+import { JejakAuditService } from './jejak-audit.service.js';
 
 @Module({
   controllers: [ReportsController],
@@ -22,6 +24,8 @@ import { ApAgingService } from './ap-aging.service.js';
     ReportsExcelService,
     ArAgingService,
     ApAgingService,
+    LabaRugiProyekService,
+    JejakAuditService,
   ],
   exports: [
     LabaRugiService,
