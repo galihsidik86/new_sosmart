@@ -20,7 +20,6 @@ interface TenantProfile {
 }
 
 const PATH = '/pengaturan/profil-perusahaan';
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 /**
  * `apiFetch` melempar `Error("API {status}: {jsonBody}")` — sama pola
@@ -124,7 +123,7 @@ export default async function ProfilPerusahaanPage({
             <div className="w-20 h-20 rounded-xl border border-cream-300 bg-cream-50 grid place-items-center overflow-hidden flex-shrink-0">
               {t.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={`${API_URL}${t.logoUrl}`} alt="Logo perusahaan" className="w-full h-full object-contain" />
+                <img src={t.logoUrl} alt="Logo perusahaan" className="w-full h-full object-contain" />
               ) : (
                 <span className="text-[10px] text-tanah-400 text-center px-2">Belum ada logo</span>
               )}
