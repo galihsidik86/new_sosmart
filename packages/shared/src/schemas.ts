@@ -71,6 +71,19 @@ export const createCabangInputSchema = z.object({
 });
 export type CreateCabangInput = z.infer<typeof createCabangInputSchema>;
 
+// ---------- TENANT (Profil Perusahaan) ----------
+
+export const updateTenantInputSchema = z.object({
+  nama: z.string().min(2).max(160).optional(),
+  npwp: npwpSchema.optional(),
+  isPkp: z.boolean().optional(),
+  pkpNo: z.string().max(60).optional().or(z.literal('').transform(() => undefined)),
+  alamat: z.string().max(500).optional(),
+  email: z.string().email().optional().or(z.literal('').transform(() => undefined)),
+  telp: z.string().max(50).optional(),
+});
+export type UpdateTenantInput = z.infer<typeof updateTenantInputSchema>;
+
 // ---------- ITEM ----------
 
 /// Validasi nominal sebagai string (DECIMAL-safe) atau number positif.
