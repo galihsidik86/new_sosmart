@@ -17,8 +17,9 @@ import type { ApAgingResponse, ApStatementResponse } from './ap-aging.service.js
 export class ReportsPdfService {
   constructor(private readonly pdf: PdfService) {}
 
-  private header(judul: string, periodeLabel: string, tenantNama: string, subtitle?: string): Content {
+  private header(judul: string, periodeLabel: string, tenantNama: string, subtitle?: string, logoDataUri?: string | null): Content {
     const stack: Content[] = [
+      ...(logoDataUri ? [{ image: logoDataUri, fit: [150, 46] as [number, number], alignment: 'center' as const, margin: [0, 0, 0, 4] as [number, number, number, number] }] : []),
       { text: tenantNama, fontSize: 12, bold: true, alignment: 'center' },
       { text: judul, fontSize: 16, bold: true, alignment: 'center', margin: [0, 4, 0, 2] },
       { text: `Periode: ${periodeLabel}`, fontSize: 10, alignment: 'center', color: '#666' },
@@ -116,11 +117,11 @@ export class ReportsPdfService {
     ];
   }
 
-  buildLabaRugi(data: LabaRugiResponse, tenantNama: string): Promise<Buffer> {
+  buildLabaRugi(data: LabaRugiResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Laporan Laba Rugi', data.periode.label, tenantNama, this.filterSubtitle(data.filter)),
+        this.header('Laporan Laba Rugi', data.periode.label, tenantNama, this.filterSubtitle(data.filter), logoDataUri),
         ...this.labaRugiBody(data),
       ],
       footer: () => this.footer(),
@@ -130,7 +131,7 @@ export class ReportsPdfService {
   }
 
   /** Cetak batch: ringkasan semua proyek + detail Laba Rugi per proyek. */
-  buildLabaRugiProyek(data: LabaRugiProyekResponse, tenantNama: string): Promise<Buffer> {
+  buildLabaRugiProyek(data: LabaRugiProyekResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const rp = (v: string) => this.pdf.formatRp(v);
     const hcell = (t: string, right = false): TableCell => ({ text: t, bold: true, fontSize: 9, alignment: right ? 'right' : 'left', fillColor: '#f3efe6' });
     const summary: TableCell[][] = [
@@ -161,7 +162,7 @@ export class ReportsPdfService {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Laporan Laba Rugi per Proyek', data.periode.label, tenantNama, `Ringkasan Semua Proyek (${data.rows.length})${data.ytd ? ' · YTD' : ''}`),
+        this.header('Laporan Laba Rugi per Proyek', data.periode.label, tenantNama, `Ringkasan Semua Proyek (${data.rows.length})${data.ytd ? ' · YTD' : ''}`, logoDataUri),
         { text: 'Ringkasan Laba Rugi per Proyek', bold: true, fontSize: 12, margin: [0, 4, 0, 4] },
         { table: { widths: ['*', 68, 68, 68, 68, 34], body: summary }, layout: 'lightHorizontalLines' },
         { text: 'Detail per proyek pada halaman berikut.', italics: true, fontSize: 9, color: '#666', margin: [0, 6, 0, 0] },
@@ -173,7 +174,7 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildNeraca(data: NeracaResponse, tenantNama: string): Promise<Buffer> {
+  buildNeraca(data: NeracaResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const acctRows = (rows: { kode: string; nama: string; nilai: string }[]) =>
       rows.map((r): TableCell[] => [
         { text: r.kode, fontSize: 9 },
@@ -184,7 +185,7 @@ export class ReportsPdfService {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Neraca', data.periode.label, tenantNama),
+        this.header('Neraca', data.periode.label, tenantNama, undefined, logoDataUri),
 
         { text: 'ASET', bold: true, fontSize: 12, margin: [0, 4, 0, 4] },
         { text: 'Aset Lancar', bold: true, margin: [0, 0, 0, 2] },
@@ -231,7 +232,7 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildArusKas(data: ArusKasResponse, tenantNama: string): Promise<Buffer> {
+  buildArusKas(data: ArusKasResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const rowsTable = (rows: { label: string; nilai: string }[]) =>
       rows.map((r): TableCell[] => [
         { text: r.label, fontSize: 9 },
@@ -240,7 +241,7 @@ export class ReportsPdfService {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Laporan Arus Kas — Metode Tidak Langsung', data.periode.label, tenantNama),
+        this.header('Laporan Arus Kas — Metode Tidak Langsung', data.periode.label, tenantNama, undefined, logoDataUri),
 
         { text: 'Arus Kas dari Aktivitas Operasi', bold: true, margin: [0, 4, 0, 2] },
         { table: { widths: ['*', 100], body: [
@@ -270,11 +271,11 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildPerubahanEkuitas(data: PerubahanEkuitasResponse, tenantNama: string): Promise<Buffer> {
+  buildPerubahanEkuitas(data: PerubahanEkuitasResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Laporan Perubahan Ekuitas', data.periode.label, tenantNama),
+        this.header('Laporan Perubahan Ekuitas', data.periode.label, tenantNama, undefined, logoDataUri),
         { table: { widths: ['*', 100], body: [
           [{ text: 'Saldo Awal Modal Disetor' }, { text: this.pdf.formatRp(data.saldoAwal.modal), alignment: 'right' }],
           [{ text: '+ Tambahan Modal' }, { text: this.pdf.formatRp(data.tambahanModal), alignment: 'right' }],
@@ -296,9 +297,10 @@ export class ReportsPdfService {
 
   // -------- Fase G: Aging Piutang / Utang --------
 
-  private agingHeader(judul: string, asOf: string, tenantNama: string): Content {
+  private agingHeader(judul: string, asOf: string, tenantNama: string, logoDataUri?: string | null): Content {
     return {
       stack: [
+        ...(logoDataUri ? [{ image: logoDataUri, fit: [150, 46] as [number, number], alignment: 'center' as const, margin: [0, 0, 0, 4] as [number, number, number, number] }] : []),
         { text: tenantNama, fontSize: 12, bold: true, alignment: 'center' },
         { text: judul, fontSize: 16, bold: true, alignment: 'center', margin: [0, 4, 0, 2] },
         { text: `Per tanggal: ${asOf}`, fontSize: 10, alignment: 'center', color: '#666' },
@@ -356,13 +358,13 @@ export class ReportsPdfService {
     };
   }
 
-  buildArAging(data: ArAgingResponse, tenantNama: string): Promise<Buffer> {
+  buildArAging(data: ArAgingResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [30, 40, 30, 40],
       pageSize: 'A4',
       pageOrientation: 'landscape',
       content: [
-        this.agingHeader('Aging Piutang Usaha', data.asOf, tenantNama),
+        this.agingHeader('Aging Piutang Usaha', data.asOf, tenantNama, logoDataUri),
         this.agingSummaryTable(
           data.rows,
           { ...data.totalBuckets, saldo: data.totalSaldo },
@@ -375,7 +377,7 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildApAging(data: ApAgingResponse, tenantNama: string): Promise<Buffer> {
+  buildApAging(data: ApAgingResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const rowsMapped = data.rows.map((r) => ({
       kode: r.kode,
       nama: r.nama,
@@ -388,7 +390,7 @@ export class ReportsPdfService {
       pageSize: 'A4',
       pageOrientation: 'landscape',
       content: [
-        this.agingHeader('Aging Utang Usaha', data.asOf, tenantNama),
+        this.agingHeader('Aging Utang Usaha', data.asOf, tenantNama, logoDataUri),
         this.agingSummaryTable(
           rowsMapped,
           { ...data.totalBuckets, saldo: data.totalSaldo },
@@ -467,13 +469,13 @@ export class ReportsPdfService {
     };
   }
 
-  buildArStatement(data: ArStatementResponse, tenantNama: string): Promise<Buffer> {
+  buildArStatement(data: ArStatementResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
         this.agingHeader(
           `Statement Piutang — ${data.customer.kode} ${data.customer.nama}`,
-          data.asOf, tenantNama,
+          data.asOf, tenantNama, logoDataUri,
         ),
         this.statementBuckets(data.totalBuckets, data.totalSaldo),
         this.statementTable(data.invoices),
@@ -484,13 +486,13 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildApStatement(data: ApStatementResponse, tenantNama: string): Promise<Buffer> {
+  buildApStatement(data: ApStatementResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
         this.agingHeader(
           `Statement Utang — ${data.vendor.kode} ${data.vendor.nama}`,
-          data.asOf, tenantNama,
+          data.asOf, tenantNama, logoDataUri,
         ),
         this.statementBuckets(data.totalBuckets, data.totalSaldo),
         this.statementTable(data.invoices),

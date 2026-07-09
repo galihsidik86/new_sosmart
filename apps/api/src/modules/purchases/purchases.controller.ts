@@ -13,6 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { type ReplyLike, sendXlsx, sendPdf } from '../../common/http/reply.js';
+import { readLogoDataUri } from '../../common/pdf/logo.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { PurchasePdfService } from './purchase-pdf.service.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
@@ -39,11 +40,11 @@ export class PurchasesController {
     private readonly tenancy: TenancyService,
   ) {}
 
-  private async tenantNama(): Promise<string> {
+  private async brand(): Promise<{ nama: string; logo: string | null }> {
     const t = await this.tenancy.run((tx) =>
-      tx.tenant.findFirst({ select: { nama: true } }),
+      tx.tenant.findFirst({ select: { nama: true, logoUrl: true } }),
     );
-    return t?.nama ?? 'Tenant';
+    return { nama: t?.nama ?? 'Tenant', logo: await readLogoDataUri(t?.logoUrl) };
   }
 
   @Get()
@@ -68,12 +69,12 @@ export class PurchasesController {
 
   @Get(':id/print.pdf')
   async printPdf(@Res() reply: ReplyLike, @Param('id') id: string) {
-    const [inv, nama] = await Promise.all([
+    const [inv, brand] = await Promise.all([
       this.purchases.byId(id),
-      this.tenantNama(),
+      this.brand(),
     ]);
     sendPdf(reply, `tagihan-${inv.nomor ?? 'draft'}.pdf`,
-      await this.purchPdf.build(inv, nama));
+      await this.purchPdf.build(inv, brand.nama, brand.logo));
   }
 
   @Get(':id')

@@ -4,6 +4,7 @@ import { TenancyInterceptor } from '../../common/interceptors/tenancy.intercepto
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { type ReplyLike, sendPdf, sendXlsx } from '../../common/http/reply.js';
 import { normalizeProjectFilter } from '../../common/http/query.js';
+import { readLogoDataUri } from '../../common/pdf/logo.js';
 import { LabaRugiService } from './laba-rugi.service.js';
 import { NeracaService } from './neraca.service.js';
 import { ArusKasService } from './arus-kas.service.js';
@@ -41,6 +42,15 @@ export class ReportsController {
       tx.tenant.findFirst({ select: { nama: true } }),
     );
     return t?.nama ?? 'Tenant';
+  }
+
+  /** Nama tenant + logo (data URI) untuk header cetak PDF. */
+  private async brand(): Promise<{ nama: string; logo: string | null }> {
+    const t = await this.tenancy.run((tx) =>
+      tx.tenant.findFirst({ select: { nama: true, logoUrl: true } }),
+    );
+    const logo = await readLogoDataUri(t?.logoUrl);
+    return { nama: t?.nama ?? 'Tenant', logo };
   }
 
   @Get('laba-rugi')
@@ -130,9 +140,9 @@ export class ReportsController {
   ) {
     const [data, nama] = await Promise.all([
       this.lrp.build({ periodId, ytd: ytd === 'true', cabangId }),
-      this.tenantNama(),
+      this.brand(),
     ]);
-    sendPdf(reply, 'laba-rugi-proyek.pdf', await this.pdf.buildLabaRugiProyek(data, nama));
+    sendPdf(reply, 'laba-rugi-proyek.pdf', await this.pdf.buildLabaRugiProyek(data, nama.nama, nama.logo));
   }
 
   // --------------- Jejak Audit (bukti transaksi bisa diklik) ---------------
@@ -190,9 +200,9 @@ export class ReportsController {
         ytd: ytd === 'true',
         projectId: normalizeProjectFilter(projectId),
       }),
-      this.tenantNama(),
+      this.brand(),
     ]);
-    sendPdf(reply, 'laba-rugi.pdf', await this.pdf.buildLabaRugi(data, nama));
+    sendPdf(reply, 'laba-rugi.pdf', await this.pdf.buildLabaRugi(data, nama.nama, nama.logo));
   }
 
   @Get('neraca.pdf')
@@ -203,9 +213,9 @@ export class ReportsController {
   ) {
     const [data, nama] = await Promise.all([
       this.nrc.build({ periodId, cabangId }),
-      this.tenantNama(),
+      this.brand(),
     ]);
-    sendPdf(reply, 'neraca.pdf', await this.pdf.buildNeraca(data, nama));
+    sendPdf(reply, 'neraca.pdf', await this.pdf.buildNeraca(data, nama.nama, nama.logo));
   }
 
   @Get('arus-kas.pdf')
@@ -223,9 +233,9 @@ export class ReportsController {
         ytd: ytd !== 'false',
         projectId: normalizeProjectFilter(projectId),
       }),
-      this.tenantNama(),
+      this.brand(),
     ]);
-    sendPdf(reply, 'arus-kas.pdf', await this.pdf.buildArusKas(data, nama));
+    sendPdf(reply, 'arus-kas.pdf', await this.pdf.buildArusKas(data, nama.nama, nama.logo));
   }
 
   @Get('perubahan-ekuitas.pdf')
@@ -237,9 +247,9 @@ export class ReportsController {
   ) {
     const [data, nama] = await Promise.all([
       this.pe.build({ periodId, cabangId, ytd: ytd !== 'false' }),
-      this.tenantNama(),
+      this.brand(),
     ]);
-    sendPdf(reply, 'perubahan-ekuitas.pdf', await this.pdf.buildPerubahanEkuitas(data, nama));
+    sendPdf(reply, 'perubahan-ekuitas.pdf', await this.pdf.buildPerubahanEkuitas(data, nama.nama, nama.logo));
   }
 
   // --------------- Excel exports ---------------
@@ -343,9 +353,9 @@ export class ReportsController {
   ) {
     const [data, nama] = await Promise.all([
       this.ar.build({ asOf, cabangId: cabangId || undefined }),
-      this.tenantNama(),
+      this.brand(),
     ]);
-    sendPdf(reply, `aging-piutang-${asOf}.pdf`, await this.pdf.buildArAging(data, nama));
+    sendPdf(reply, `aging-piutang-${asOf}.pdf`, await this.pdf.buildArAging(data, nama.nama, nama.logo));
   }
 
   @Get('ar-statement.pdf')
@@ -357,9 +367,9 @@ export class ReportsController {
   ) {
     const [data, nama] = await Promise.all([
       this.ar.statement({ customerId, asOf, cabangId: cabangId || undefined }),
-      this.tenantNama(),
+      this.brand(),
     ]);
-    sendPdf(reply, `statement-piutang-${data.customer.kode}-${asOf}.pdf`, await this.pdf.buildArStatement(data, nama));
+    sendPdf(reply, `statement-piutang-${data.customer.kode}-${asOf}.pdf`, await this.pdf.buildArStatement(data, nama.nama, nama.logo));
   }
 
   @Get('ap-aging.pdf')
@@ -370,9 +380,9 @@ export class ReportsController {
   ) {
     const [data, nama] = await Promise.all([
       this.ap.build({ asOf, cabangId: cabangId || undefined }),
-      this.tenantNama(),
+      this.brand(),
     ]);
-    sendPdf(reply, `aging-utang-${asOf}.pdf`, await this.pdf.buildApAging(data, nama));
+    sendPdf(reply, `aging-utang-${asOf}.pdf`, await this.pdf.buildApAging(data, nama.nama, nama.logo));
   }
 
   @Get('ap-statement.pdf')
@@ -384,9 +394,9 @@ export class ReportsController {
   ) {
     const [data, nama] = await Promise.all([
       this.ap.statement({ vendorId, asOf, cabangId: cabangId || undefined }),
-      this.tenantNama(),
+      this.brand(),
     ]);
-    sendPdf(reply, `statement-utang-${data.vendor.kode}-${asOf}.pdf`, await this.pdf.buildApStatement(data, nama));
+    sendPdf(reply, `statement-utang-${data.vendor.kode}-${asOf}.pdf`, await this.pdf.buildApStatement(data, nama.nama, nama.logo));
   }
 
   // --------------- AR / AP Aging Excel ---------------
