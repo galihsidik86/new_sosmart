@@ -27,6 +27,9 @@ pnpm-debug.log*
 
 packages/db/prisma/migrations/dev.db*
 
+# Uploaded assets (logo perusahaan, dll) — runtime, tidak di-commit.
+apps/api/uploads/
+
 # Playwright
 test-results/
 playwright-report/

@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import path from 'node:path';
+import { mkdirSync } from 'node:fs';
 import { NestFactory } from '@nestjs/core';
 import {
   FastifyAdapter,
@@ -6,9 +8,11 @@ import {
 } from '@nestjs/platform-fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 import { Logger } from '@nestjs/common';
 import { AppModule } from './app.module.js';
 import { assertProductionSecrets } from './common/config/env-guard.js';
+import { API_ROOT } from './common/config/paths.js';
 
 async function bootstrap() {
   // Tolak boot kalau JWT secret / APP_DATABASE_URL tidak aman di produksi.
@@ -22,6 +26,14 @@ async function bootstrap() {
   await app.register(fastifyCookie);
   await app.register(fastifyMultipart, {
     limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max — cukup untuk Excel master data
+  });
+  // Serve file upload publik (logo perusahaan, dll) di luar prefix /api/v1
+  // — diregister langsung ke instance Fastify, bukan lewat Nest controller.
+  const uploadsRoot = path.join(API_ROOT, 'uploads');
+  mkdirSync(uploadsRoot, { recursive: true }); // @fastify/static butuh root ada saat register.
+  await app.register(fastifyStatic, {
+    root: uploadsRoot,
+    prefix: '/uploads/',
   });
 
   app.enableCors({

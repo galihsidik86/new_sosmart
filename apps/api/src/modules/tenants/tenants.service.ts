@@ -1,9 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { saveLogo, deleteLogoFile } from '../../common/storage/logo-storage.js';
+import type { UpdateTenantInput } from '@lentera/shared/schemas';
+
+const PROFILE_SELECT = {
+  id: true,
+  nama: true,
+  npwp: true,
+  isPkp: true,
+  pkpNo: true,
+  alamat: true,
+  email: true,
+  telp: true,
+  logoUrl: true,
+} as const;
 
 @Injectable()
 export class TenantsService {
-  constructor(private readonly tenancy: TenancyService) {}
+  constructor(
+    private readonly tenancy: TenancyService,
+    private readonly ctx: TenantContext,
+  ) {}
 
   /**
    * Daftar tenant + role yang user punya. Cross-tenant query —
@@ -42,5 +60,47 @@ export class TenantsService {
       role: m.role,
       cabang: m.cabang.length ? m.cabang.map((mc) => mc.cabang) : null,
     }));
+  }
+
+  /** Profil perusahaan (tenant aktif) — dipakai halaman Pengaturan > Profil Perusahaan. */
+  getCurrent() {
+    const tenantId = this.ctx.require().tenantId;
+    return this.tenancy.run((tx) =>
+      tx.tenant.findUniqueOrThrow({ where: { id: tenantId }, select: PROFILE_SELECT }),
+    );
+  }
+
+  updateProfile(input: UpdateTenantInput) {
+    const tenantId = this.ctx.require().tenantId;
+    return this.tenancy.run((tx) =>
+      tx.tenant.update({ where: { id: tenantId }, data: input, select: PROFILE_SELECT }),
+    );
+  }
+
+  async updateLogo(buffer: Buffer, ext: string) {
+    const tenantId = this.ctx.require().tenantId;
+    const before = await this.tenancy.run((tx) =>
+      tx.tenant.findUniqueOrThrow({ where: { id: tenantId }, select: { logoUrl: true } }),
+    );
+    const logoUrl = await saveLogo(tenantId, buffer, ext);
+    const updated = await this.tenancy.run((tx) =>
+      tx.tenant.update({ where: { id: tenantId }, data: { logoUrl }, select: { logoUrl: true } }),
+    );
+    // File lama dihapus SETELAH DB commit sukses — kalau update gagal,
+    // logo lama masih valid/referenced.
+    await deleteLogoFile(before.logoUrl);
+    return updated;
+  }
+
+  async removeLogo() {
+    const tenantId = this.ctx.require().tenantId;
+    const before = await this.tenancy.run((tx) =>
+      tx.tenant.findUniqueOrThrow({ where: { id: tenantId }, select: { logoUrl: true } }),
+    );
+    const updated = await this.tenancy.run((tx) =>
+      tx.tenant.update({ where: { id: tenantId }, data: { logoUrl: null }, select: { logoUrl: true } }),
+    );
+    await deleteLogoFile(before.logoUrl);
+    return updated;
   }
 }

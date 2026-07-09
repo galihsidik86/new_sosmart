@@ -13,6 +13,20 @@ export interface ImportResult {
 }
 
 export async function uploadXlsx(path: string, file: File): Promise<ImportResult> {
+  const res = await postMultipart(path, file);
+  return res.json() as Promise<ImportResult>;
+}
+
+export interface LogoUploadResult {
+  logoUrl: string | null;
+}
+
+export async function uploadLogo(file: File): Promise<LogoUploadResult> {
+  const res = await postMultipart('/tenants/current/logo', file);
+  return res.json() as Promise<LogoUploadResult>;
+}
+
+async function postMultipart(path: string, file: File): Promise<Response> {
   const c = await cookies();
   const access = c.get('lentera_access')?.value;
   if (!access) throw new Error('Session expired. Silakan login ulang.');
@@ -37,5 +51,5 @@ export async function uploadXlsx(path: string, file: File): Promise<ImportResult
     const text = await res.text();
     throw new Error(`Upload gagal (${res.status}): ${text.slice(0, 200)}`);
   }
-  return res.json() as Promise<ImportResult>;
+  return res;
 }

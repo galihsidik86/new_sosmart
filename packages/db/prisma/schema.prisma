@@ -329,6 +329,8 @@ model Tenant {
   alamat     String?
   email      String?
   telp       String?
+  /// Path relatif logo perusahaan (mis. /uploads/logos/xxx.png), disimpan di disk API.
+  logoUrl    String?    @map("logo_url")
   /// Tahun buku — default kalender
   tahunBuku  Int        @default(1) @map("tahun_buku")
   /// Metode harga pokok persediaan. Sekali ada transaksi, jangan diubah.
