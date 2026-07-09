@@ -16,16 +16,30 @@ import type { ApAgingResponse, ApStatementResponse } from './ap-aging.service.js
 export class ReportsPdfService {
   constructor(private readonly pdf: PdfService) {}
 
-  private header(judul: string, periodeLabel: string, tenantNama: string): Content {
-    return {
-      stack: [
-        { text: tenantNama, fontSize: 12, bold: true, alignment: 'center' },
-        { text: judul, fontSize: 16, bold: true, alignment: 'center', margin: [0, 4, 0, 2] },
-        { text: `Periode: ${periodeLabel}`, fontSize: 10, alignment: 'center', color: '#666' },
-        { canvas: [{ type: 'line', x1: 0, y1: 8, x2: 515, y2: 8, lineWidth: 0.5, lineColor: '#999' }] },
-      ],
-      margin: [0, 0, 0, 12],
-    };
+  private header(judul: string, periodeLabel: string, tenantNama: string, subtitle?: string): Content {
+    const stack: Content[] = [
+      { text: tenantNama, fontSize: 12, bold: true, alignment: 'center' },
+      { text: judul, fontSize: 16, bold: true, alignment: 'center', margin: [0, 4, 0, 2] },
+      { text: `Periode: ${periodeLabel}`, fontSize: 10, alignment: 'center', color: '#666' },
+    ];
+    if (subtitle) {
+      stack.push({ text: subtitle, fontSize: 10, bold: true, alignment: 'center', color: '#333', margin: [0, 2, 0, 0] });
+    }
+    stack.push({ canvas: [{ type: 'line', x1: 0, y1: 8, x2: 515, y2: 8, lineWidth: 0.5, lineColor: '#999' }] });
+    return { stack, margin: [0, 0, 0, 12] };
+  }
+
+  /** Rangkai teks identitas filter proyek/cabang untuk sub-header cetak. */
+  private filterSubtitle(filter?: LabaRugiResponse['filter']): string | undefined {
+    if (!filter) return undefined;
+    const parts: string[] = [];
+    if (filter.project) {
+      parts.push(`Proyek: ${filter.project.kode !== '-' ? filter.project.kode + ' — ' : ''}${filter.project.nama}`);
+    }
+    if (filter.cabang) {
+      parts.push(`Cabang: ${filter.cabang.kode} — ${filter.cabang.nama}`);
+    }
+    return parts.length ? parts.join('   |   ') : undefined;
   }
 
   private footer(): Content {
@@ -48,7 +62,7 @@ export class ReportsPdfService {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Laporan Laba Rugi', data.periode.label, tenantNama),
+        this.header('Laporan Laba Rugi', data.periode.label, tenantNama, this.filterSubtitle(data.filter)),
 
         { text: 'Pendapatan', bold: true, margin: [0, 6, 0, 2] },
         {
