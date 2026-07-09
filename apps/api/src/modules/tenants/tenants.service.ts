@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { saveLogo, deleteLogoFile } from '../../common/storage/logo-storage.js';
+import { API_ROOT } from '../../common/config/paths.js';
 import type { UpdateTenantInput } from '@lentera/shared/schemas';
 
 const PROFILE_SELECT = {
@@ -70,11 +73,31 @@ export class TenantsService {
     );
   }
 
-  updateProfile(input: UpdateTenantInput) {
+  /**
+   * Tulis branding publik (nama + logoUrl) ke uploads/branding.json — dipakai
+   * halaman login yang pra-auth (tidak punya konteks tenant). Disajikan statis
+   * via /uploads/branding.json. Non-fatal kalau gagal tulis.
+   */
+  private async writeBranding() {
     const tenantId = this.ctx.require().tenantId;
-    return this.tenancy.run((tx) =>
+    const t = await this.tenancy.run((tx) =>
+      tx.tenant.findUniqueOrThrow({ where: { id: tenantId }, select: { nama: true, logoUrl: true } }),
+    );
+    try {
+      await writeFile(
+        path.join(API_ROOT, 'uploads', 'branding.json'),
+        JSON.stringify({ nama: t.nama, logoUrl: t.logoUrl }),
+      );
+    } catch { /* non-fatal */ }
+  }
+
+  async updateProfile(input: UpdateTenantInput) {
+    const tenantId = this.ctx.require().tenantId;
+    const updated = await this.tenancy.run((tx) =>
       tx.tenant.update({ where: { id: tenantId }, data: input, select: PROFILE_SELECT }),
     );
+    await this.writeBranding();
+    return updated;
   }
 
   async updateLogo(buffer: Buffer, ext: string) {
@@ -89,6 +112,7 @@ export class TenantsService {
     // File lama dihapus SETELAH DB commit sukses — kalau update gagal,
     // logo lama masih valid/referenced.
     await deleteLogoFile(before.logoUrl);
+    await this.writeBranding();
     return updated;
   }
 
@@ -101,6 +125,7 @@ export class TenantsService {
       tx.tenant.update({ where: { id: tenantId }, data: { logoUrl: null }, select: { logoUrl: true } }),
     );
     await deleteLogoFile(before.logoUrl);
+    await this.writeBranding();
     return updated;
   }
 }

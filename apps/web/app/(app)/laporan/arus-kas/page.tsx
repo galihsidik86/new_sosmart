@@ -137,13 +137,23 @@ export default async function ArusKasPage({
               </table>
             </div>
 
-            <div className={`rounded-xl p-4 text-sm font-semibold ${
-              ak.balanced ? 'bg-padi-100 text-padi-700' : 'bg-bata-100 text-bata-700'
-            }`}>
-              {ak.balanced
-                ? '✓ Konsisten: kas awal + perubahan = kas akhir'
-                : `⚠ Selisih: ${fmtRp(ak.selisih)} — kemungkinan ada transaksi non-jurnal atau jurnal yang belum di-POST`}
-            </div>
+            {projectId && projectId !== 'none' ? (
+              <div className="rounded-xl p-4 text-sm font-medium bg-tanah-100 text-tanah-700">
+                ℹ Tampilan per-proyek — Arus Kas metode tidak langsung tidak direkonsiliasi di
+                level proyek karena kas, piutang, dan pajak tidak berdimensi proyek. Angka di atas
+                mencerminkan arus dari baris pendapatan &amp; biaya yang ditandai proyek ini. Untuk
+                analisis proyek, gunakan <span className="font-semibold">Laba Rugi per proyek</span> dan
+                {' '}<span className="font-semibold">Anggaran vs Realisasi</span>.
+              </div>
+            ) : (
+              <div className={`rounded-xl p-4 text-sm font-semibold ${
+                ak.balanced ? 'bg-padi-100 text-padi-700' : 'bg-bata-100 text-bata-700'
+              }`}>
+                {ak.balanced
+                  ? '✓ Konsisten: kas awal + perubahan = kas akhir'
+                  : `⚠ Selisih: ${fmtRp(ak.selisih)} — kemungkinan ada transaksi non-jurnal atau jurnal yang belum di-POST`}
+              </div>
+            )}
           </>
         )}
       </div>

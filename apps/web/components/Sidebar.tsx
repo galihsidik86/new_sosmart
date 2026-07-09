@@ -43,12 +43,14 @@ const NAV: NavItem[] = [
   { group: 'Pajak', href: '/pajak/spt/pph', label: 'SPT Masa PPh', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/neraca-saldo', label: 'Neraca Saldo', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/laba-rugi', label: 'Laba Rugi', roles: ACCOUNTING },
+  { group: 'Laporan', href: '/laporan/laba-rugi-proyek', label: 'Laba Rugi per Proyek', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/neraca', label: 'Neraca', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/arus-kas', label: 'Arus Kas', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/perubahan-ekuitas', label: 'Perubahan Ekuitas', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/piutang', label: 'Aging Piutang', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/utang', label: 'Aging Utang', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/budget-actual', label: 'Budget vs Actual', roles: FULL },
+  { group: 'Laporan', href: '/laporan/jejak-audit', label: 'Jejak Audit', roles: ACCOUNTING },
   { group: 'Pengaturan', href: '/pengaturan/profil-perusahaan', label: 'Profil Perusahaan', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/periode', label: 'Periode Buku', roles: FULL },
   { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang', roles: ADMIN_ONLY },
@@ -61,9 +63,10 @@ interface SidebarProps {
   user: { nama: string; email: string };
   tenantNama?: string;
   role?: string;
+  logoUrl?: string | null;
 }
 
-export function Sidebar({ user, tenantNama, role }: SidebarProps) {
+export function Sidebar({ user, tenantNama, role, logoUrl }: SidebarProps) {
   const pathname = usePathname();
   const userRole = role as Role | undefined;
   const visibleNav = NAV.filter(
@@ -73,15 +76,20 @@ export function Sidebar({ user, tenantNama, role }: SidebarProps) {
   return (
     <aside className="w-60 flex-shrink-0 bg-white border-r border-cream-200 h-screen sticky top-0 flex flex-col py-5 px-3">
       <div className="flex items-center gap-3 px-2 pb-4 border-b border-cream-200 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-sogan-500 grid place-items-center text-cream-50 font-bold shadow-sm">
-          L
-        </div>
-        <div>
-          <div className="font-display text-lg font-semibold text-tanah-700">
-            Lentera
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="Logo perusahaan" className="w-10 h-10 rounded-xl object-contain bg-white border border-cream-200 shadow-sm" />
+        ) : (
+          <div className="w-10 h-10 rounded-xl bg-sogan-500 grid place-items-center text-cream-50 font-bold shadow-sm">
+            L
+          </div>
+        )}
+        <div className="min-w-0">
+          <div className="font-display text-lg font-semibold text-tanah-700 truncate">
+            {tenantNama ?? 'Lentera'}
           </div>
           <div className="text-[8.5px] tracking-[0.14em] uppercase text-sogan-500 font-bold">
-            Akuntansi · Pajak
+            Lentera · Akuntansi
           </div>
         </div>
       </div>

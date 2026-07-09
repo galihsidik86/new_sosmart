@@ -45,6 +45,10 @@ interface LR {
   labaBersih: Sub;
   vertikal: boolean;
   horizontal: boolean;
+  filter?: {
+    project?: { kode: string; nama: string };
+    cabang?: { kode: string; nama: string };
+  };
 }
 
 export default async function LabaRugiPage({
@@ -173,6 +177,17 @@ export default async function LabaRugiPage({
                   <> · vs {lr.periodeCompare.label} ({fmtTanggal(lr.periodeCompare.startDate)}–{fmtTanggal(lr.periodeCompare.endDate)})</>
                 )}
               </div>
+              {lr.filter && (lr.filter.project || lr.filter.cabang) && (
+                <div className="mt-1 text-xs font-semibold text-wedel-800">
+                  {lr.filter.project && (
+                    <span>Proyek: {lr.filter.project.kode !== '-' ? `${lr.filter.project.kode} — ` : ''}{lr.filter.project.nama}</span>
+                  )}
+                  {lr.filter.project && lr.filter.cabang && <span className="mx-2 text-tanah-400">|</span>}
+                  {lr.filter.cabang && (
+                    <span>Cabang: {lr.filter.cabang.kode} — {lr.filter.cabang.nama}</span>
+                  )}
+                </div>
+              )}
             </div>
             <table className="w-full text-sm">
               <thead>

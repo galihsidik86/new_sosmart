@@ -53,6 +53,11 @@ export interface LabaRugiResponse {
   vertikal: boolean;
   /// True kalau horizontal aktif (previous/delta terisi).
   horizontal: boolean;
+  /// Identitas filter yang aktif (proyek / cabang) — dipakai di header cetak.
+  filter?: {
+    project?: { kode: string; nama: string };
+    cabang?: { kode: string; nama: string };
+  };
 }
 
 interface CoreCompute {
@@ -127,10 +132,31 @@ export class LabaRugiService {
             projectId: opts.projectId,
           })
         : null;
-      return this.assemble(current, compare, {
+      const resp = this.assemble(current, compare, {
         vertikal: !!opts.vertikal,
         horizontal: !!compare,
       });
+
+      // Identitas filter (proyek/cabang) untuk header cetak & tampilan.
+      const filter: LabaRugiResponse['filter'] = {};
+      if (typeof opts.projectId === 'string') {
+        const p = await tx.project.findUnique({
+          where: { id: opts.projectId },
+          select: { kode: true, nama: true },
+        });
+        if (p) filter.project = p;
+      } else if (opts.projectId === null) {
+        filter.project = { kode: '-', nama: 'Tanpa proyek (overhead)' };
+      }
+      if (opts.cabangId) {
+        const c = await tx.cabang.findUnique({
+          where: { id: opts.cabangId },
+          select: { kode: true, nama: true },
+        });
+        if (c) filter.cabang = c;
+      }
+      if (filter.project || filter.cabang) resp.filter = filter;
+      return resp;
     });
   }
 

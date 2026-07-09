@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
-import { AccountKind, Prisma } from '@lentera/db';
+import { AccountKind, NormalBalance, Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import {
   aggregateAllAccounts,
@@ -166,7 +166,16 @@ export class NeracaService {
     };
     for (const acc of balResult.accounts.values()) {
       const saldoAwalSigned = balResult.signedSaldoAwalByAcc.get(acc.id) ?? new Decimal(0);
-      const saldo = saldoAkhirSigned(acc, saldoAwalSigned, balResult.mutasiByAcc.get(acc.id));
+      const saldoRaw = saldoAkhirSigned(acc, saldoAwalSigned, balResult.mutasiByAcc.get(acc.id));
+      // Koreksi akun KONTRA di neraca. `saldoAkhirSigned` mengembalikan nilai
+      // positif ke arah normalBalance akun itu sendiri. Untuk akun kontra —
+      // mis. Akumulasi Penyusutan (kind=ASET, normalBalance=KREDIT) atau
+      // Dividen/Prive (kind=EKUITAS, normalBalance=DEBIT) — kontribusinya ke
+      // seksi neraca harus DIBALIK supaya MENGURANGI (bukan menambah) totalnya.
+      // Konsisten dengan plKindContribution() untuk laba rugi.
+      const expectedNormal =
+        acc.kind === AccountKind.ASET ? NormalBalance.DEBIT : NormalBalance.KREDIT;
+      const saldo = acc.normalBalance === expectedNormal ? saldoRaw : saldoRaw.negated();
       if (saldo.eq(0)) continue;
       const row: NeracaAccount = {
         id: acc.id, kode: acc.kode, nama: acc.nama, nilai: saldo.toFixed(2),

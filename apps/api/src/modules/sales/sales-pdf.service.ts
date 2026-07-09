@@ -35,7 +35,7 @@ interface SalesDoc {
 export class SalesPdfService {
   constructor(private readonly pdf: PdfService) {}
 
-  build(s: SalesDoc, tenantNama: string): Promise<Buffer> {
+  build(s: SalesDoc, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const sisa = Number(s.totalNetto.toString()) - Number(s.totalDibayar.toString());
     const body: TableCell[][] = [
       [
@@ -61,6 +61,7 @@ export class SalesPdfService {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
+        ...(logoDataUri ? [{ image: logoDataUri, fit: [130, 40] as [number, number], alignment: 'center' as const, margin: [0, 0, 0, 4] as [number, number, number, number] }] : []),
         { text: tenantNama, bold: true, fontSize: 12, alignment: 'center' },
         { text: 'FAKTUR PENJUALAN', bold: true, fontSize: 16, alignment: 'center', margin: [0, 4, 0, 8] },
         {

@@ -32,14 +32,30 @@ export default async function LoginPage({
   const s = await getSession();
   if (s?.tenantId) redirect('/dashboard');
 
+  // Branding perusahaan (opsional) — dibaca dari file publik yang ditulis saat
+  // profil/logo di-update. Halaman login pra-auth jadi tak butuh konteks tenant.
+  let branding: { nama: string; logoUrl: string | null } | null = null;
+  try {
+    const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+    const res = await fetch(`${base}/uploads/branding.json`, { cache: 'no-store' });
+    if (res.ok) branding = await res.json();
+  } catch { /* pakai brand Lentera */ }
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-cream-100 p-6">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md border border-cream-200 p-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-11 h-11 rounded-xl bg-sogan-500 grid place-items-center text-cream-50 font-bold text-lg">L</div>
+          {branding?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={branding.logoUrl} alt="Logo perusahaan" className="w-12 h-12 rounded-xl object-contain bg-white border border-cream-200" />
+          ) : (
+            <div className="w-11 h-11 rounded-xl bg-sogan-500 grid place-items-center text-cream-50 font-bold text-lg">L</div>
+          )}
           <div>
-            <div className="font-display text-2xl font-semibold text-tanah-700">Lentera</div>
-            <div className="text-[10px] tracking-[0.14em] uppercase text-sogan-500 font-bold">Akuntansi · Pajak</div>
+            <div className="font-display text-2xl font-semibold text-tanah-700">{branding?.nama ?? 'Lentera'}</div>
+            <div className="text-[10px] tracking-[0.14em] uppercase text-sogan-500 font-bold">
+              {branding?.nama ? 'Lentera · Akuntansi & Pajak' : 'Akuntansi · Pajak'}
+            </div>
           </div>
         </div>
         <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-1">Masuk ke akun</h1>

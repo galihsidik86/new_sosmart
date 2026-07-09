@@ -469,6 +469,7 @@ export class PurchasesService {
         cabangId: inv.cabangId,
         tanggal: inv.tanggal.toISOString().slice(0, 10),
         deskripsi: `Tagihan pembelian ${nomor}`,
+        linkBukti: inv.linkBukti ?? null,
         sumber: JournalSource.PEMBELIAN,
         sumberRef: inv.id,
         lines,

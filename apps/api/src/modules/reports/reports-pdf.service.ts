@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { TDocumentDefinitions, Content, TableCell } from 'pdfmake/interfaces.js';
 import { PdfService } from '../../common/pdf/pdf.service.js';
 import type { LabaRugiResponse, LabaRugiAccount } from './laba-rugi.service.js';
+import type { LabaRugiProyekResponse } from './laba-rugi-proyek.service.js';
 import type { NeracaResponse } from './neraca.service.js';
 import type { ArusKasResponse } from './arus-kas.service.js';
 import type { PerubahanEkuitasResponse } from './perubahan-ekuitas.service.js';
@@ -16,16 +17,31 @@ import type { ApAgingResponse, ApStatementResponse } from './ap-aging.service.js
 export class ReportsPdfService {
   constructor(private readonly pdf: PdfService) {}
 
-  private header(judul: string, periodeLabel: string, tenantNama: string): Content {
-    return {
-      stack: [
-        { text: tenantNama, fontSize: 12, bold: true, alignment: 'center' },
-        { text: judul, fontSize: 16, bold: true, alignment: 'center', margin: [0, 4, 0, 2] },
-        { text: `Periode: ${periodeLabel}`, fontSize: 10, alignment: 'center', color: '#666' },
-        { canvas: [{ type: 'line', x1: 0, y1: 8, x2: 515, y2: 8, lineWidth: 0.5, lineColor: '#999' }] },
-      ],
-      margin: [0, 0, 0, 12],
-    };
+  private header(judul: string, periodeLabel: string, tenantNama: string, subtitle?: string, logoDataUri?: string | null): Content {
+    const stack: Content[] = [
+      ...(logoDataUri ? [{ image: logoDataUri, fit: [150, 46] as [number, number], alignment: 'center' as const, margin: [0, 0, 0, 4] as [number, number, number, number] }] : []),
+      { text: tenantNama, fontSize: 12, bold: true, alignment: 'center' },
+      { text: judul, fontSize: 16, bold: true, alignment: 'center', margin: [0, 4, 0, 2] },
+      { text: `Periode: ${periodeLabel}`, fontSize: 10, alignment: 'center', color: '#666' },
+    ];
+    if (subtitle) {
+      stack.push({ text: subtitle, fontSize: 10, bold: true, alignment: 'center', color: '#333', margin: [0, 2, 0, 0] });
+    }
+    stack.push({ canvas: [{ type: 'line', x1: 0, y1: 8, x2: 515, y2: 8, lineWidth: 0.5, lineColor: '#999' }] });
+    return { stack, margin: [0, 0, 0, 12] };
+  }
+
+  /** Rangkai teks identitas filter proyek/cabang untuk sub-header cetak. */
+  private filterSubtitle(filter?: LabaRugiResponse['filter']): string | undefined {
+    if (!filter) return undefined;
+    const parts: string[] = [];
+    if (filter.project) {
+      parts.push(`Proyek: ${filter.project.kode !== '-' ? filter.project.kode + ' — ' : ''}${filter.project.nama}`);
+    }
+    if (filter.cabang) {
+      parts.push(`Cabang: ${filter.cabang.kode} — ${filter.cabang.nama}`);
+    }
+    return parts.length ? parts.join('   |   ') : undefined;
   }
 
   private footer(): Content {
@@ -44,69 +60,69 @@ export class ReportsPdfService {
     ]);
   }
 
-  buildLabaRugi(data: LabaRugiResponse, tenantNama: string): Promise<Buffer> {
+  /** Body isi Laba Rugi (tanpa header) — dipakai ulang oleh cetak per-proyek. */
+  private labaRugiBody(data: LabaRugiResponse): Content[] {
+    return [
+      { text: 'Pendapatan', bold: true, margin: [0, 6, 0, 2] },
+      {
+        table: {
+          widths: [60, '*', 80],
+          body: [
+            ...this.rowsTable(data.pendapatan.rows),
+            [{ text: 'Total Pendapatan', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.pendapatan.total), bold: true, alignment: 'right' }],
+          ],
+        },
+        layout: 'lightHorizontalLines',
+      },
+      { text: 'Beban Pokok Jasa', bold: true, margin: [0, 10, 0, 2] },
+      {
+        table: {
+          widths: [60, '*', 80],
+          body: [
+            ...this.rowsTable(data.bebanPokok.rows),
+            [{ text: 'Total Beban Pokok', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.bebanPokok.total), bold: true, alignment: 'right' }],
+          ],
+        },
+        layout: 'lightHorizontalLines',
+      },
+      { columns: [{ text: 'LABA KOTOR', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaKotor.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 8] },
+      { text: 'Beban Operasi', bold: true, margin: [0, 6, 0, 2] },
+      {
+        table: {
+          widths: [60, '*', 80],
+          body: [
+            ...this.rowsTable(data.bebanOperasi.rows),
+            [{ text: 'Total Beban Operasi', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.bebanOperasi.total), bold: true, alignment: 'right' }],
+          ],
+        },
+        layout: 'lightHorizontalLines',
+      },
+      { columns: [{ text: 'LABA USAHA', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaUsaha.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 8] },
+      ...(data.pendapatanLain.rows.length || data.bebanLain.rows.length ? [
+        { text: 'Pendapatan & Beban Lain-lain', bold: true, margin: [0, 6, 0, 2] as [number, number, number, number] },
+        {
+          table: {
+            widths: [60, '*', 80],
+            body: [
+              ...this.rowsTable(data.pendapatanLain.rows),
+              ...this.rowsTable(data.bebanLain.rows),
+            ],
+          },
+          layout: 'lightHorizontalLines' as const,
+        },
+      ] : []),
+      { columns: [{ text: 'LABA SEBELUM PAJAK', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaSebelumPajak.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 4] },
+      { columns: [{ text: 'Beban PPh', fontSize: 10 }, { text: this.pdf.formatRp(data.bebanPajak.nilai), alignment: 'right', fontSize: 10 }], margin: [0, 0, 0, 4] },
+      { columns: [{ text: 'LABA BERSIH', bold: true, fontSize: 12 }, { text: this.pdf.formatRp(data.labaBersih.nilai), alignment: 'right', bold: true, fontSize: 12 }], margin: [0, 4, 0, 0] },
+    ];
+  }
+
+  buildLabaRugi(data: LabaRugiResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Laporan Laba Rugi', data.periode.label, tenantNama),
-
-        { text: 'Pendapatan', bold: true, margin: [0, 6, 0, 2] },
-        {
-          table: {
-            widths: [60, '*', 80],
-            body: [
-              ...this.rowsTable(data.pendapatan.rows),
-              [{ text: 'Total Pendapatan', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.pendapatan.total), bold: true, alignment: 'right' }],
-            ],
-          },
-          layout: 'lightHorizontalLines',
-        },
-
-        { text: 'Beban Pokok Penjualan', bold: true, margin: [0, 10, 0, 2] },
-        {
-          table: {
-            widths: [60, '*', 80],
-            body: [
-              ...this.rowsTable(data.bebanPokok.rows),
-              [{ text: 'Total HPP', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.bebanPokok.total), bold: true, alignment: 'right' }],
-            ],
-          },
-          layout: 'lightHorizontalLines',
-        },
-
-        { columns: [{ text: 'LABA KOTOR', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaKotor.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 8] },
-
-        { text: 'Beban Operasi', bold: true, margin: [0, 6, 0, 2] },
-        {
-          table: {
-            widths: [60, '*', 80],
-            body: [
-              ...this.rowsTable(data.bebanOperasi.rows),
-              [{ text: 'Total Beban Operasi', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.bebanOperasi.total), bold: true, alignment: 'right' }],
-            ],
-          },
-          layout: 'lightHorizontalLines',
-        },
-
-        { columns: [{ text: 'LABA USAHA', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaUsaha.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 8] },
-
-        ...(data.pendapatanLain.rows.length || data.bebanLain.rows.length ? [
-          { text: 'Pendapatan & Beban Lain-lain', bold: true, margin: [0, 6, 0, 2] as [number, number, number, number] },
-          {
-            table: {
-              widths: [60, '*', 80],
-              body: [
-                ...this.rowsTable(data.pendapatanLain.rows),
-                ...this.rowsTable(data.bebanLain.rows),
-              ],
-            },
-            layout: 'lightHorizontalLines',
-          },
-        ] : []),
-
-        { columns: [{ text: 'LABA SEBELUM PAJAK', bold: true, fontSize: 11 }, { text: this.pdf.formatRp(data.labaSebelumPajak.nilai), alignment: 'right', bold: true, fontSize: 11 }], margin: [0, 8, 0, 4] },
-        { columns: [{ text: 'Beban PPh', fontSize: 10 }, { text: this.pdf.formatRp(data.bebanPajak.nilai), alignment: 'right', fontSize: 10 }], margin: [0, 0, 0, 4] },
-        { columns: [{ text: 'LABA BERSIH', bold: true, fontSize: 12 }, { text: this.pdf.formatRp(data.labaBersih.nilai), alignment: 'right', bold: true, fontSize: 12 }], margin: [0, 4, 0, 0] },
+        this.header('Laporan Laba Rugi', data.periode.label, tenantNama, this.filterSubtitle(data.filter), logoDataUri),
+        ...this.labaRugiBody(data),
       ],
       footer: () => this.footer(),
       defaultStyle: { font: 'Roboto' },
@@ -114,7 +130,51 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildNeraca(data: NeracaResponse, tenantNama: string): Promise<Buffer> {
+  /** Cetak batch: ringkasan semua proyek + detail Laba Rugi per proyek. */
+  buildLabaRugiProyek(data: LabaRugiProyekResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
+    const rp = (v: string) => this.pdf.formatRp(v);
+    const hcell = (t: string, right = false): TableCell => ({ text: t, bold: true, fontSize: 9, alignment: right ? 'right' : 'left', fillColor: '#f3efe6' });
+    const summary: TableCell[][] = [
+      [hcell('Proyek'), hcell('Pendapatan', true), hcell('Beban Pokok', true), hcell('Beban Operasi', true), hcell('Laba Bersih', true), hcell('Margin', true)],
+      ...data.rows.map((r): TableCell[] => [
+        { text: `${r.project.kode} — ${r.project.nama}`, fontSize: 8 },
+        { text: rp(r.pendapatan), alignment: 'right', fontSize: 8 },
+        { text: rp(r.bebanPokok), alignment: 'right', fontSize: 8 },
+        { text: rp(r.bebanOperasi), alignment: 'right', fontSize: 8 },
+        { text: rp(r.labaBersih), alignment: 'right', fontSize: 8 },
+        { text: `${r.marginPersen}%`, alignment: 'right', fontSize: 8 },
+      ]),
+      [
+        { text: 'TOTAL SEMUA PROYEK', bold: true, fontSize: 9 },
+        { text: rp(data.total.pendapatan), bold: true, alignment: 'right', fontSize: 9 },
+        { text: rp(data.total.bebanPokok), bold: true, alignment: 'right', fontSize: 9 },
+        { text: rp(data.total.bebanOperasi), bold: true, alignment: 'right', fontSize: 9 },
+        { text: rp(data.total.labaBersih), bold: true, alignment: 'right', fontSize: 9 },
+        { text: `${data.total.marginPersen}%`, bold: true, alignment: 'right', fontSize: 9 },
+      ],
+    ];
+    const detail: Content[] = [];
+    for (const r of data.rows) {
+      detail.push({ text: `Proyek: ${r.project.kode} — ${r.project.nama}`, bold: true, fontSize: 12, pageBreak: 'before', margin: [0, 0, 0, 2] });
+      detail.push({ text: `Status: ${r.project.status}`, fontSize: 9, color: '#666', margin: [0, 0, 0, 6] });
+      detail.push(...this.labaRugiBody(r.detail));
+    }
+    const def: TDocumentDefinitions = {
+      pageMargins: [40, 40, 40, 40],
+      content: [
+        this.header('Laporan Laba Rugi per Proyek', data.periode.label, tenantNama, `Ringkasan Semua Proyek (${data.rows.length})${data.ytd ? ' · YTD' : ''}`, logoDataUri),
+        { text: 'Ringkasan Laba Rugi per Proyek', bold: true, fontSize: 12, margin: [0, 4, 0, 4] },
+        { table: { widths: ['*', 68, 68, 68, 68, 34], body: summary }, layout: 'lightHorizontalLines' },
+        { text: 'Detail per proyek pada halaman berikut.', italics: true, fontSize: 9, color: '#666', margin: [0, 6, 0, 0] },
+        ...detail,
+      ],
+      footer: () => this.footer(),
+      defaultStyle: { font: 'Roboto' },
+    };
+    return this.pdf.buildBuffer(def);
+  }
+
+  buildNeraca(data: NeracaResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const acctRows = (rows: { kode: string; nama: string; nilai: string }[]) =>
       rows.map((r): TableCell[] => [
         { text: r.kode, fontSize: 9 },
@@ -125,7 +185,7 @@ export class ReportsPdfService {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Neraca', data.periode.label, tenantNama),
+        this.header('Neraca', data.periode.label, tenantNama, undefined, logoDataUri),
 
         { text: 'ASET', bold: true, fontSize: 12, margin: [0, 4, 0, 4] },
         { text: 'Aset Lancar', bold: true, margin: [0, 0, 0, 2] },
@@ -172,7 +232,7 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildArusKas(data: ArusKasResponse, tenantNama: string): Promise<Buffer> {
+  buildArusKas(data: ArusKasResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const rowsTable = (rows: { label: string; nilai: string }[]) =>
       rows.map((r): TableCell[] => [
         { text: r.label, fontSize: 9 },
@@ -181,7 +241,7 @@ export class ReportsPdfService {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Laporan Arus Kas — Metode Tidak Langsung', data.periode.label, tenantNama),
+        this.header('Laporan Arus Kas — Metode Tidak Langsung', data.periode.label, tenantNama, undefined, logoDataUri),
 
         { text: 'Arus Kas dari Aktivitas Operasi', bold: true, margin: [0, 4, 0, 2] },
         { table: { widths: ['*', 100], body: [
@@ -211,11 +271,11 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildPerubahanEkuitas(data: PerubahanEkuitasResponse, tenantNama: string): Promise<Buffer> {
+  buildPerubahanEkuitas(data: PerubahanEkuitasResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
-        this.header('Laporan Perubahan Ekuitas', data.periode.label, tenantNama),
+        this.header('Laporan Perubahan Ekuitas', data.periode.label, tenantNama, undefined, logoDataUri),
         { table: { widths: ['*', 100], body: [
           [{ text: 'Saldo Awal Modal Disetor' }, { text: this.pdf.formatRp(data.saldoAwal.modal), alignment: 'right' }],
           [{ text: '+ Tambahan Modal' }, { text: this.pdf.formatRp(data.tambahanModal), alignment: 'right' }],
@@ -237,9 +297,10 @@ export class ReportsPdfService {
 
   // -------- Fase G: Aging Piutang / Utang --------
 
-  private agingHeader(judul: string, asOf: string, tenantNama: string): Content {
+  private agingHeader(judul: string, asOf: string, tenantNama: string, logoDataUri?: string | null): Content {
     return {
       stack: [
+        ...(logoDataUri ? [{ image: logoDataUri, fit: [150, 46] as [number, number], alignment: 'center' as const, margin: [0, 0, 0, 4] as [number, number, number, number] }] : []),
         { text: tenantNama, fontSize: 12, bold: true, alignment: 'center' },
         { text: judul, fontSize: 16, bold: true, alignment: 'center', margin: [0, 4, 0, 2] },
         { text: `Per tanggal: ${asOf}`, fontSize: 10, alignment: 'center', color: '#666' },
@@ -297,13 +358,13 @@ export class ReportsPdfService {
     };
   }
 
-  buildArAging(data: ArAgingResponse, tenantNama: string): Promise<Buffer> {
+  buildArAging(data: ArAgingResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [30, 40, 30, 40],
       pageSize: 'A4',
       pageOrientation: 'landscape',
       content: [
-        this.agingHeader('Aging Piutang Usaha', data.asOf, tenantNama),
+        this.agingHeader('Aging Piutang Usaha', data.asOf, tenantNama, logoDataUri),
         this.agingSummaryTable(
           data.rows,
           { ...data.totalBuckets, saldo: data.totalSaldo },
@@ -316,7 +377,7 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildApAging(data: ApAgingResponse, tenantNama: string): Promise<Buffer> {
+  buildApAging(data: ApAgingResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const rowsMapped = data.rows.map((r) => ({
       kode: r.kode,
       nama: r.nama,
@@ -329,7 +390,7 @@ export class ReportsPdfService {
       pageSize: 'A4',
       pageOrientation: 'landscape',
       content: [
-        this.agingHeader('Aging Utang Usaha', data.asOf, tenantNama),
+        this.agingHeader('Aging Utang Usaha', data.asOf, tenantNama, logoDataUri),
         this.agingSummaryTable(
           rowsMapped,
           { ...data.totalBuckets, saldo: data.totalSaldo },
@@ -408,13 +469,13 @@ export class ReportsPdfService {
     };
   }
 
-  buildArStatement(data: ArStatementResponse, tenantNama: string): Promise<Buffer> {
+  buildArStatement(data: ArStatementResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
         this.agingHeader(
           `Statement Piutang — ${data.customer.kode} ${data.customer.nama}`,
-          data.asOf, tenantNama,
+          data.asOf, tenantNama, logoDataUri,
         ),
         this.statementBuckets(data.totalBuckets, data.totalSaldo),
         this.statementTable(data.invoices),
@@ -425,13 +486,13 @@ export class ReportsPdfService {
     return this.pdf.buildBuffer(def);
   }
 
-  buildApStatement(data: ApStatementResponse, tenantNama: string): Promise<Buffer> {
+  buildApStatement(data: ApStatementResponse, tenantNama: string, logoDataUri?: string | null): Promise<Buffer> {
     const def: TDocumentDefinitions = {
       pageMargins: [40, 40, 40, 40],
       content: [
         this.agingHeader(
           `Statement Utang — ${data.vendor.kode} ${data.vendor.nama}`,
-          data.asOf, tenantNama,
+          data.asOf, tenantNama, logoDataUri,
         ),
         this.statementBuckets(data.totalBuckets, data.totalSaldo),
         this.statementTable(data.invoices),

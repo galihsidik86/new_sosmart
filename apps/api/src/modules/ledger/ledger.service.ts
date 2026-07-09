@@ -17,6 +17,11 @@ export interface LedgerRow {
   kredit: string;
   /// Saldo berjalan setelah baris ini (signed berdasar saldo normal akun).
   saldo: string;
+  /// Jejak audit: id jurnal, sumber & dokumen sumber, dan tautan bukti klik.
+  journalId: string;
+  sumber: string;
+  sumberRef: string | null;
+  linkBukti: string | null;
 }
 
 export interface LedgerResponse {
@@ -157,9 +162,13 @@ export class LedgerService {
         include: {
           journal: {
             select: {
+              id: true,
               nomor: true,
               tanggal: true,
               deskripsi: true,
+              sumber: true,
+              sumberRef: true,
+              linkBukti: true,
               cabang: { select: { kode: true } },
             },
           },
@@ -186,6 +195,10 @@ export class LedgerService {
           debit: d.toFixed(2),
           kredit: k.toFixed(2),
           saldo: saldo.toFixed(2),
+          journalId: l.journal.id,
+          sumber: l.journal.sumber,
+          sumberRef: l.journal.sumberRef,
+          linkBukti: l.journal.linkBukti,
         });
       }
 

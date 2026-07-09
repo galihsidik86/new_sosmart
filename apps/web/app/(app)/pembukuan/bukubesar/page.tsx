@@ -18,6 +18,10 @@ interface LedgerRow {
   debit: string;
   kredit: string;
   saldo: string;
+  journalId: string;
+  sumber: string;
+  sumberRef: string | null;
+  linkBukti: string | null;
 }
 interface LedgerResp {
   account: { id: string; kode: string; nama: string; normalBalance: 'DEBIT' | 'KREDIT' };
@@ -166,6 +170,7 @@ export default async function BukuBesarPage({
                   <th className="px-3 py-2 font-bold text-right">Debit</th>
                   <th className="px-3 py-2 font-bold text-right">Kredit</th>
                   <th className="px-3 py-2 font-bold text-right">Saldo</th>
+                  <th className="px-3 py-2 font-bold text-center">Bukti</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-cream-200">
@@ -176,6 +181,7 @@ export default async function BukuBesarPage({
                   <td className="px-3 py-1.5 text-right font-mono font-bold text-tanah-700 tabular-nums">
                     {fmtPlain(data.saldoAwal)}
                   </td>
+                  <td />
                 </tr>
                 {data.rows.map((r, i) => (
                   <tr key={i} className="hover:bg-cream-50">
@@ -197,11 +203,16 @@ export default async function BukuBesarPage({
                     <td className="px-3 py-1.5 text-right font-mono tabular-nums text-tanah-700">
                       {fmtPlain(r.saldo)}
                     </td>
+                    <td className="px-3 py-1.5 text-center">
+                      {r.linkBukti
+                        ? <a href={r.linkBukti} target="_blank" rel="noreferrer" className="inline-flex items-center px-1.5 py-0.5 rounded bg-padi-100 text-padi-700 hover:bg-padi-200 text-[11px] font-semibold" title="Buka bukti transaksi">🔗</a>
+                        : <span className="text-tanah-300 text-xs">—</span>}
+                    </td>
                   </tr>
                 ))}
                 {data.rows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-tanah-500 text-sm">
+                    <td colSpan={8} className="px-3 py-8 text-center text-tanah-500 text-sm">
                       Tidak ada mutasi di periode ini.
                     </td>
                   </tr>
@@ -212,6 +223,7 @@ export default async function BukuBesarPage({
                   <td colSpan={4} className="px-3 py-2 text-right">TOTAL MUTASI</td>
                   <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtPlain(data.totalDebit)}</td>
                   <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtPlain(data.totalKredit)}</td>
+                  <td />
                   <td />
                 </tr>
               </tfoot>
