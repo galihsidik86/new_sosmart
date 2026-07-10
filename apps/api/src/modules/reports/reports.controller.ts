@@ -114,10 +114,11 @@ export class ReportsController {
   @Get('budget-actual')
   budgetActual(
     @Query('periode') periode: string,
+    @Query('ytd') ytd?: string,
     @Query('projectId') projectId?: string,
     @Query('cabangId') cabangId?: string,
   ) {
-    return this.ba.build({ periode, projectId, cabangId });
+    return this.ba.build({ periode, ytd: ytd === 'true', projectId, cabangId });
   }
 
   // --------------- Laba Rugi per Proyek (batch semua proyek) ---------------
@@ -172,14 +173,15 @@ export class ReportsController {
   async budgetActualXlsx(
     @Res() reply: ReplyLike,
     @Query('periode') periode: string,
+    @Query('ytd') ytd?: string,
     @Query('projectId') projectId?: string,
     @Query('cabangId') cabangId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.ba.build({ periode, projectId, cabangId }),
+      this.ba.build({ periode, ytd: ytd === 'true', projectId, cabangId }),
       this.tenantNama(),
     ]);
-    sendXlsx(reply, `budget-actual-${periode}.xlsx`,
+    sendXlsx(reply, `budget-actual-${ytd === 'true' ? 'ytd-' : ''}${periode}.xlsx`,
       await this.xlsx.buildBudgetActual(data, nama));
   }
 

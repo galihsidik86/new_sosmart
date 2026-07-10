@@ -31,6 +31,7 @@ export interface BudgetActualProjectGroup {
 
 export interface BudgetActualResponse {
   periode: string;
+  ytd: boolean;
   startDate: Date;
   endDate: Date;
   projects: BudgetActualProjectGroup[];
@@ -59,6 +60,7 @@ export class BudgetActualService {
 
   async build(opts: {
     periode: string; // YYYY-MM
+    ytd?: boolean;
     projectId?: string;
     cabangId?: string;
   }): Promise<BudgetActualResponse> {
@@ -66,7 +68,8 @@ export class BudgetActualService {
       throw new BadRequestException('Periode harus format YYYY-MM');
     }
     const [y, m] = opts.periode.split('-').map(Number);
-    const startDate = new Date(Date.UTC(y, m - 1, 1));
+    // YTD: dari awal tahun (Januari) s/d akhir bulan `periode`; per-bulan: hanya bulan itu.
+    const startDate = opts.ytd ? new Date(Date.UTC(y, 0, 1)) : new Date(Date.UTC(y, m - 1, 1));
     const endDate = new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
 
     if (opts.cabangId) this.cabangScope.assertAccess(opts.cabangId);
@@ -80,7 +83,9 @@ export class BudgetActualService {
     return this.tenancy.run(async (tx) => {
       const budgets = await tx.budget.findMany({
         where: {
-          periode: opts.periode,
+          ...(opts.ytd
+            ? { periode: { gte: `${y}-01`, lte: opts.periode } }
+            : { periode: opts.periode }),
           ...(opts.projectId ? { projectId: opts.projectId } : {}),
         },
         include: {
@@ -95,6 +100,7 @@ export class BudgetActualService {
       if (budgets.length === 0) {
         return {
           periode: opts.periode,
+          ytd: !!opts.ytd,
           startDate,
           endDate,
           projects: [],
@@ -130,15 +136,41 @@ export class BudgetActualService {
         });
       }
 
+      // Agregasi budget per (project, akun) — YTD menjumlah lintas bulan;
+      // per-bulan tetap 1 budget per key (grup berisi 1).
+      const budgetByKey = new Map<string, {
+        budgetId: string;
+        projectId: string;
+        project: BudgetActualRow['project'];
+        account: BudgetActualRow['account'];
+        amount: Decimal;
+        hardBlock: boolean;
+        catatan: string | null;
+      }>();
+      for (const b of budgets) {
+        const key = `${b.projectId}|${b.accountId}`;
+        const e = budgetByKey.get(key);
+        if (e) {
+          e.amount = e.amount.plus(b.amount);
+          e.hardBlock = e.hardBlock || b.hardBlock;
+        } else {
+          budgetByKey.set(key, {
+            budgetId: b.id, projectId: b.projectId, project: b.project,
+            account: b.account, amount: new Decimal(b.amount),
+            hardBlock: b.hardBlock, catatan: b.catatan,
+          });
+        }
+      }
+
       // Susun row + group by project.
       const groups = new Map<string, BudgetActualProjectGroup>();
       let grandBudget = new Decimal(0);
       let grandActual = new Decimal(0);
+      const periodeLabel = opts.ytd ? `s/d ${opts.periode}` : opts.periode;
 
-      for (const b of budgets) {
-        const key = `${b.projectId}|${b.accountId}`;
+      for (const [key, b] of budgetByKey) {
         const agg = actualByKey.get(key);
-        const budget = new Decimal(b.amount);
+        const budget = b.amount;
         const actual = agg
           ? b.account.normalBalance === NormalBalance.DEBIT
             ? agg.debit.minus(agg.kredit)
@@ -155,10 +187,10 @@ export class BudgetActualService {
             : 'OK';
 
         const row: BudgetActualRow = {
-          budgetId: b.id,
+          budgetId: b.budgetId,
           project: b.project,
           account: b.account,
-          periode: b.periode,
+          periode: periodeLabel,
           budget: budget.toFixed(2),
           actual: actual.toFixed(2),
           variance: variance.toFixed(2),
@@ -195,6 +227,7 @@ export class BudgetActualService {
 
       return {
         periode: opts.periode,
+        ytd: !!opts.ytd,
         startDate,
         endDate,
         projects: Array.from(groups.values()),

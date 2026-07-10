@@ -51,7 +51,7 @@ function statusClass(s: BudgetStatus): string {
 export default async function BudgetActualPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periode?: string; projectId?: string }>;
+  searchParams: Promise<{ periode?: string; projectId?: string; ytd?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
@@ -59,11 +59,13 @@ export default async function BudgetActualPage({
 
   const periode = sp.periode ?? periodeNow();
   const projectId = sp.projectId ?? '';
+  const ytd = sp.ytd === 'true';
   const projectQs = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
+  const ytdQs = ytd ? '&ytd=true' : '';
 
   const [projects, data] = await Promise.all([
     apiFetch<Project[]>('/projects', { tenantId }).catch(() => [] as Project[]),
-    apiFetch<Resp>(`/reports/budget-actual?periode=${periode}${projectQs}`, { tenantId }),
+    apiFetch<Resp>(`/reports/budget-actual?periode=${periode}${ytdQs}${projectQs}`, { tenantId }),
   ]);
 
   return (
@@ -76,12 +78,13 @@ export default async function BudgetActualPage({
               Budget vs Actual
             </h1>
             <p className="text-sm text-tanah-500">
-              Realisasi mutasi POSTED per (Project × Akun) dibanding anggaran bulan berjalan.
+              Realisasi mutasi POSTED per (Project × Akun) dibanding anggaran{' '}
+              {ytd ? <span className="font-semibold text-wedel-900">kumulatif (YTD s/d {periode})</span> : <span className="font-semibold text-wedel-900">bulan {periode}</span>}.
               Utilisasi &gt; 80% = WARNING, &gt; 100% = EXCEEDED.
             </p>
           </div>
           <a
-            href={`/proxy/reports/budget-actual.xlsx?periode=${periode}${projectQs}`}
+            href={`/proxy/reports/budget-actual.xlsx?periode=${periode}${ytdQs}${projectQs}`}
             className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
           >
             Export Excel
@@ -114,6 +117,9 @@ export default async function BudgetActualPage({
               </select>
             </div>
           )}
+          <label className="flex items-center gap-1.5 text-sm text-tanah-700 pb-2 whitespace-nowrap">
+            <input type="checkbox" name="ytd" value="true" defaultChecked={ytd} /> YTD (kumulatif)
+          </label>
           <button className="px-3 py-2 bg-cream-200 border border-cream-400 rounded-md text-sm font-semibold text-tanah-700">
             Tampilkan
           </button>
