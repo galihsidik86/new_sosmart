@@ -102,22 +102,22 @@ export default async function LabaRugiProyekPage({
                         <span className="font-mono text-xs text-sogan-500">{r.project.kode}</span>{' '}
                         <span className="text-tanah-700">{r.project.nama}</span>
                       </td>
-                      <td className="px-4 py-2 text-right font-mono tabular-nums">{fmtRp(r.pendapatan)}</td>
-                      <td className="px-4 py-2 text-right font-mono tabular-nums">{fmtRp(r.bebanPokok)}</td>
-                      <td className="px-4 py-2 text-right font-mono tabular-nums">{fmtRp(r.bebanOperasi)}</td>
-                      <td className={`px-4 py-2 text-right font-mono tabular-nums font-semibold ${Number(r.labaBersih) < 0 ? 'text-bata-600' : 'text-padi-700'}`}>{fmtRp(r.labaBersih)}</td>
-                      <td className="px-4 py-2 text-right font-mono tabular-nums">{r.marginPersen}%</td>
+                      <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(r.pendapatan)}</td>
+                      <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(r.bebanPokok)}</td>
+                      <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(r.bebanOperasi)}</td>
+                      <td className={`px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap font-semibold ${Number(r.labaBersih) < 0 ? 'text-bata-600' : 'text-padi-700'}`}>{fmtRp(r.labaBersih)}</td>
+                      <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap">{r.marginPersen}%</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="bg-wedel-900 text-cream-50 font-bold">
                     <td className="px-4 py-3">TOTAL SEMUA PROYEK</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtRp(data.total.pendapatan)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtRp(data.total.bebanPokok)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtRp(data.total.bebanOperasi)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtRp(data.total.labaBersih)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">{data.total.marginPersen}%</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(data.total.pendapatan)}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(data.total.bebanPokok)}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(data.total.bebanOperasi)}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(data.total.labaBersih)}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums whitespace-nowrap">{data.total.marginPersen}%</td>
                   </tr>
                 </tfoot>
               </table>

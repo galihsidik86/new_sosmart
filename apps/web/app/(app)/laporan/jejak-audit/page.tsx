@@ -131,7 +131,7 @@ export default async function JejakAuditPage({
                             <span key={p.kode} title={p.nama} className="inline-block px-1.5 py-0.5 rounded bg-cream-100 text-wedel-800 font-mono text-[10px] mr-1">{p.kode}</span>
                           ))}
                         </td>
-                        <td className="px-3 py-1.5 text-right font-mono tabular-nums text-xs">{fmtRp(r.nilai)}</td>
+                        <td className="px-3 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-xs">{fmtRp(r.nilai)}</td>
                         <td className="px-3 py-1.5 text-center">
                           {r.linkBukti
                             ? <a href={r.linkBukti} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-padi-100 text-padi-700 hover:bg-padi-200 text-xs font-semibold">🔗 Bukti</a>

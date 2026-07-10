@@ -175,11 +175,11 @@ export default async function UtangStatementPage({
                     >
                       {inv.daysOverdue > 0 ? `+${inv.daysOverdue}` : inv.daysOverdue} hr
                     </td>
-                    <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtRp(inv.totalNetto)}</td>
-                    <td className="px-3 py-2 text-right font-mono tabular-nums text-tanah-500">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(inv.totalNetto)}</td>
+                    <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap text-tanah-500">
                       {fmtRp(inv.dibayar)}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono tabular-nums font-semibold">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap font-semibold">
                       {fmtRp(inv.sisa)}
                     </td>
                     <td className="px-3 py-2 text-xs">
@@ -206,7 +206,7 @@ export default async function UtangStatementPage({
                         <td colSpan={3} className="px-3 py-1 text-tanah-400 italic">
                           pelunasan
                         </td>
-                        <td className="px-3 py-1 text-right font-mono tabular-nums text-tanah-500">
+                        <td className="px-3 py-1 text-right font-mono tabular-nums whitespace-nowrap text-tanah-500">
                           ({fmtRp(p.total)})
                         </td>
                         <td colSpan={2} />

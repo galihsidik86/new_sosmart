@@ -97,45 +97,45 @@ export default async function PerubahanEkuitasPage({
               <tbody className="divide-y divide-cream-200">
                 <tr className="bg-cream-100 font-semibold">
                   <td className="px-4 py-2 text-tanah-700">Saldo Awal Periode</td>
-                  <td className="px-4 py-2 text-right font-mono tabular-nums">{fmtRp(pe.saldoAwal.modal)}</td>
-                  <td className="px-4 py-2 text-right font-mono tabular-nums">{fmtRp(pe.saldoAwal.saldoLaba)}</td>
-                  <td className="px-4 py-2 text-right font-mono tabular-nums font-bold">{fmtRp(pe.saldoAwal.total)}</td>
+                  <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(pe.saldoAwal.modal)}</td>
+                  <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(pe.saldoAwal.saldoLaba)}</td>
+                  <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap font-bold">{fmtRp(pe.saldoAwal.total)}</td>
                 </tr>
                 <tr>
                   <td className="px-4 py-1.5 text-tanah-700 pl-8">Penambahan Modal Disetor</td>
-                  <td className="px-4 py-1.5 text-right font-mono tabular-nums text-padi-700">
+                  <td className="px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-padi-700">
                     {Number(pe.tambahanModal) > 0 ? `+${fmtRp(pe.tambahanModal)}` : '—'}
                   </td>
                   <td className="px-4 py-1.5 text-right text-tanah-400">—</td>
-                  <td className="px-4 py-1.5 text-right font-mono tabular-nums text-padi-700">
+                  <td className="px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-padi-700">
                     {Number(pe.tambahanModal) > 0 ? `+${fmtRp(pe.tambahanModal)}` : '—'}
                   </td>
                 </tr>
                 <tr>
                   <td className="px-4 py-1.5 text-tanah-700 pl-8">Laba Bersih Periode</td>
                   <td className="px-4 py-1.5 text-right text-tanah-400">—</td>
-                  <td className={`px-4 py-1.5 text-right font-mono tabular-nums ${Number(pe.labaBersih) >= 0 ? 'text-padi-700' : 'text-bata-700'}`}>
+                  <td className={`px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap ${Number(pe.labaBersih) >= 0 ? 'text-padi-700' : 'text-bata-700'}`}>
                     {Number(pe.labaBersih) >= 0 ? '+' : ''}{fmtRp(pe.labaBersih)}
                   </td>
-                  <td className={`px-4 py-1.5 text-right font-mono tabular-nums ${Number(pe.labaBersih) >= 0 ? 'text-padi-700' : 'text-bata-700'}`}>
+                  <td className={`px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap ${Number(pe.labaBersih) >= 0 ? 'text-padi-700' : 'text-bata-700'}`}>
                     {Number(pe.labaBersih) >= 0 ? '+' : ''}{fmtRp(pe.labaBersih)}
                   </td>
                 </tr>
                 <tr>
                   <td className="px-4 py-1.5 text-tanah-700 pl-8">(Dividen / Prive)</td>
                   <td className="px-4 py-1.5 text-right text-tanah-400">—</td>
-                  <td className="px-4 py-1.5 text-right font-mono tabular-nums text-bata-700">
+                  <td className="px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-bata-700">
                     {Number(pe.dividen) > 0 ? `(${fmtRp(pe.dividen).replace('Rp ', '')})` : '—'}
                   </td>
-                  <td className="px-4 py-1.5 text-right font-mono tabular-nums text-bata-700">
+                  <td className="px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-bata-700">
                     {Number(pe.dividen) > 0 ? `(${fmtRp(pe.dividen).replace('Rp ', '')})` : '—'}
                   </td>
                 </tr>
                 <tr className="bg-wedel-900 text-cream-50 font-bold">
                   <td className="px-4 py-3 text-base">Saldo Akhir Periode</td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtRp(pe.saldoAkhir.modal)}</td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums">{fmtRp(pe.saldoAkhir.saldoLaba)}</td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums text-base">{fmtRp(pe.saldoAkhir.total)}</td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(pe.saldoAkhir.modal)}</td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(pe.saldoAkhir.saldoLaba)}</td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums whitespace-nowrap text-base">{fmtRp(pe.saldoAkhir.total)}</td>
                 </tr>
               </tbody>
             </table>

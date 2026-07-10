@@ -211,10 +211,10 @@ export default async function JurnalDetailPage({
                     )}
                   </td>
                   <td className="px-3 py-2 text-tanah-500 text-xs">{l.deskripsi ?? '—'}</td>
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">
+                  <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">
                     {Number(l.debit) > 0 ? fmtPlain(l.debit) : ''}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">
+                  <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">
                     {Number(l.kredit) > 0 ? fmtPlain(l.kredit) : ''}
                   </td>
                 </tr>
@@ -223,8 +223,8 @@ export default async function JurnalDetailPage({
             <tfoot>
               <tr className="border-t-2 border-cream-300 bg-cream-50 font-bold text-tanah-700">
                 <td colSpan={4} className="px-3 py-2.5 text-right">TOTAL</td>
-                <td className="px-3 py-2.5 text-right font-mono tabular-nums">{fmtPlain(j.totalDebit)}</td>
-                <td className="px-3 py-2.5 text-right font-mono tabular-nums">{fmtPlain(j.totalKredit)}</td>
+                <td className="px-3 py-2.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(j.totalDebit)}</td>
+                <td className="px-3 py-2.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(j.totalKredit)}</td>
               </tr>
             </tfoot>
           </table>

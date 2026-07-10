@@ -66,7 +66,7 @@ export class ReportsPdfService {
       { text: 'Pendapatan', bold: true, margin: [0, 6, 0, 2] },
       {
         table: {
-          widths: [60, '*', 80],
+          widths: [52, '*', 100],
           body: [
             ...this.rowsTable(data.pendapatan.rows),
             [{ text: 'Total Pendapatan', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.pendapatan.total), bold: true, alignment: 'right' }],
@@ -77,7 +77,7 @@ export class ReportsPdfService {
       { text: 'Beban Pokok Jasa', bold: true, margin: [0, 10, 0, 2] },
       {
         table: {
-          widths: [60, '*', 80],
+          widths: [52, '*', 100],
           body: [
             ...this.rowsTable(data.bebanPokok.rows),
             [{ text: 'Total Beban Pokok', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.bebanPokok.total), bold: true, alignment: 'right' }],
@@ -89,7 +89,7 @@ export class ReportsPdfService {
       { text: 'Beban Operasi', bold: true, margin: [0, 6, 0, 2] },
       {
         table: {
-          widths: [60, '*', 80],
+          widths: [52, '*', 100],
           body: [
             ...this.rowsTable(data.bebanOperasi.rows),
             [{ text: 'Total Beban Operasi', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.bebanOperasi.total), bold: true, alignment: 'right' }],
@@ -102,7 +102,7 @@ export class ReportsPdfService {
         { text: 'Pendapatan & Beban Lain-lain', bold: true, margin: [0, 6, 0, 2] as [number, number, number, number] },
         {
           table: {
-            widths: [60, '*', 80],
+            widths: [52, '*', 100],
             body: [
               ...this.rowsTable(data.pendapatanLain.rows),
               ...this.rowsTable(data.bebanLain.rows),
@@ -189,13 +189,13 @@ export class ReportsPdfService {
 
         { text: 'ASET', bold: true, fontSize: 12, margin: [0, 4, 0, 4] },
         { text: 'Aset Lancar', bold: true, margin: [0, 0, 0, 2] },
-        { table: { widths: [60, '*', 80], body: [
+        { table: { widths: [52, '*', 100], body: [
           ...acctRows(data.asetLancar.rows),
           [{ text: 'Total Aset Lancar', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.asetLancar.total), alignment: 'right', bold: true }],
         ] }, layout: 'lightHorizontalLines' },
 
         { text: 'Aset Tetap', bold: true, margin: [0, 8, 0, 2] },
-        { table: { widths: [60, '*', 80], body: [
+        { table: { widths: [52, '*', 100], body: [
           ...acctRows(data.asetTetap.rows),
           [{ text: 'Total Aset Tetap', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.asetTetap.total), alignment: 'right', bold: true }],
         ] }, layout: 'lightHorizontalLines' },
@@ -204,19 +204,19 @@ export class ReportsPdfService {
 
         { text: 'LIABILITAS & EKUITAS', bold: true, fontSize: 12, margin: [0, 0, 0, 4] },
         { text: 'Liabilitas Jangka Pendek', bold: true, margin: [0, 0, 0, 2] },
-        { table: { widths: [60, '*', 80], body: [
+        { table: { widths: [52, '*', 100], body: [
           ...acctRows(data.liabilitasJangkaPendek.rows),
           [{ text: 'Total Liab. Pendek', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.liabilitasJangkaPendek.total), alignment: 'right', bold: true }],
         ] }, layout: 'lightHorizontalLines' },
 
         { text: 'Liabilitas Jangka Panjang', bold: true, margin: [0, 8, 0, 2] },
-        { table: { widths: [60, '*', 80], body: [
+        { table: { widths: [52, '*', 100], body: [
           ...acctRows(data.liabilitasJangkaPanjang.rows),
           [{ text: 'Total Liab. Panjang', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.liabilitasJangkaPanjang.total), alignment: 'right', bold: true }],
         ] }, layout: 'lightHorizontalLines' },
 
         { text: 'Ekuitas', bold: true, margin: [0, 8, 0, 2] },
-        { table: { widths: [60, '*', 80], body: [
+        { table: { widths: [52, '*', 100], body: [
           ...acctRows(data.ekuitas.rows),
           [{ text: 'Laba Berjalan Tahun Buku', bold: false, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.labaBerjalan.nilai), alignment: 'right' }],
           [{ text: 'Total Ekuitas', bold: true, colSpan: 2 }, {}, { text: this.pdf.formatRp(data.ekuitas.total), alignment: 'right', bold: true }],

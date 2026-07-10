@@ -141,7 +141,7 @@ export default async function NeracaPage({
                 <thead>
                   <tr className="bg-cream-50 text-[10px] uppercase tracking-wider text-tanah-500">
                     <th className="px-4 py-1.5 text-left" colSpan={2}>Akun</th>
-                    <th className="px-4 py-1.5 text-right w-32">Saldo</th>
+                    <th className="px-4 py-1.5 text-right w-44">Saldo</th>
                     {showVertikal && <th className="px-2 py-1.5 text-right w-16">%</th>}
                     {showCompare && <>
                       <th className="px-4 py-1.5 text-right w-32">Sebelumnya</th>
@@ -206,9 +206,9 @@ function SectionRow({
         <tr><td colSpan={cols} className="px-4 py-1.5 text-tanah-400 text-xs italic pl-8">— tidak ada —</td></tr>
       ) : rows.map((r) => (
         <tr key={r.id}>
-          <td className="px-4 py-1 font-mono text-xs text-tanah-500 pl-8 w-20">{r.kode}</td>
+          <td className="px-4 py-1 font-mono text-xs text-tanah-500 pl-8 whitespace-nowrap">{r.kode}</td>
           <td className="px-2 py-1 text-tanah-700 text-sm">{r.nama}</td>
-          <td className="px-4 py-1 text-right font-mono tabular-nums text-sm">{fmtRp(r.nilai)}</td>
+          <td className="px-4 py-1 text-right font-mono tabular-nums text-sm whitespace-nowrap">{fmtRp(r.nilai)}</td>
           {showVertikal && <td className="px-2 py-1 text-right font-mono text-xs text-tanah-500">{r.persenBase}%</td>}
           {showCompare && <>
             <td className="px-4 py-1 text-right font-mono tabular-nums text-xs text-tanah-500">{fmtRp(r.previous ?? '0')}</td>
@@ -227,7 +227,7 @@ function TotalRow({
   return (
     <tr className="bg-cream-100">
       <td colSpan={2} className="px-4 py-1.5 text-sm font-semibold text-tanah-700">{label}</td>
-      <td className="px-4 py-1.5 text-right font-mono tabular-nums text-sm font-semibold">{fmtRp(sect.total)}</td>
+      <td className="px-4 py-1.5 text-right font-mono tabular-nums text-sm font-semibold whitespace-nowrap">{fmtRp(sect.total)}</td>
       {showVertikal && <td className="px-2 py-1.5 text-right font-mono text-xs text-tanah-500">{sect.persenBase}%</td>}
       {showCompare && <>
         <td className="px-4 py-1.5 text-right font-mono tabular-nums text-xs text-tanah-500">{fmtRp(sect.previous ?? '0')}</td>
@@ -247,7 +247,7 @@ function SubRow({
   return (
     <tr className={cls}>
       <td colSpan={2} className={`px-4 py-2 ${highlight ? 'font-bold text-base' : 'font-display text-base font-semibold'}`}>{label}</td>
-      <td className="px-4 py-2 text-right font-mono font-bold tabular-nums">{fmtRp(sub.nilai)}</td>
+      <td className="px-4 py-2 text-right font-mono font-bold tabular-nums whitespace-nowrap">{fmtRp(sub.nilai)}</td>
       {showVertikal && <td className="px-2 py-2 text-right font-mono text-sm">{sub.persenBase}%</td>}
       {showCompare && <>
         <td className="px-4 py-2 text-right font-mono tabular-nums text-xs">{fmtRp(sub.previous ?? '0')}</td>

@@ -125,7 +125,7 @@ export default async function ArusKasPage({
 
                   <tr className="bg-cream-200 border-y-2 border-cream-400">
                     <td className="px-4 py-2 font-display text-base font-semibold text-wedel-900">KENAIKAN (PENURUNAN) KAS BERSIH</td>
-                    <td className="px-4 py-2 text-right font-display font-semibold text-base text-wedel-900 tabular-nums">{fmtRp(ak.kenaikanKasBersih)}</td>
+                    <td className="px-4 py-2 text-right font-display font-semibold text-base text-wedel-900 tabular-nums whitespace-nowrap">{fmtRp(ak.kenaikanKasBersih)}</td>
                   </tr>
                   <tr><td className="px-4 py-1.5 text-sm text-tanah-700">Kas & Bank Awal Periode</td>
                     <td className="px-4 py-1.5 text-right font-mono tabular-nums">{fmtRp(ak.kasAwal)}</td></tr>
@@ -173,7 +173,7 @@ function LineRow({ l }: { l: Line }) {
   return (
     <tr>
       <td className="px-4 py-1 text-tanah-700 text-sm pl-8">{l.label}</td>
-      <td className={`px-4 py-1 text-right font-mono tabular-nums text-sm ${n < 0 ? 'text-bata-700' : n > 0 ? '' : 'text-tanah-400'}`}>
+      <td className={`px-4 py-1 text-right font-mono tabular-nums text-sm whitespace-nowrap ${n < 0 ? 'text-bata-700' : n > 0 ? '' : 'text-tanah-400'}`}>
         {n === 0 ? '—' : fmtRp(Math.abs(n)).replace('Rp ', n < 0 ? '(' : '') + (n < 0 ? ')' : '')}
       </td>
     </tr>
@@ -184,7 +184,7 @@ function Total({ label, value }: { label: string; value: string }) {
   return (
     <tr className="bg-cream-100">
       <td className="px-4 py-1.5 text-sm font-semibold text-tanah-700">{label}</td>
-      <td className={`px-4 py-1.5 text-right font-mono tabular-nums text-sm font-semibold ${n < 0 ? 'text-bata-700' : ''}`}>
+      <td className={`px-4 py-1.5 text-right font-mono tabular-nums text-sm font-semibold whitespace-nowrap ${n < 0 ? 'text-bata-700' : ''}`}>
         {n === 0 ? '—' : fmtRp(Math.abs(n)).replace('Rp ', n < 0 ? '(' : '') + (n < 0 ? ')' : '')}
       </td>
     </tr>

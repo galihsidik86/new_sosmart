@@ -74,11 +74,16 @@ export class PdfService {
     });
   }
 
-  /** Currency Indonesia: 1.234.567,89 */
+  /** Currency Indonesia — rupiah bulat (tanpa desimal); desimal ditampilkan
+   *  hanya bila memang ada sen, mis. "316.250.000,04". Lebih rapi untuk laporan. */
   formatRp(v: string | number): string {
     const n = typeof v === 'string' ? Number(v) : v;
-    if (!isFinite(n)) return '0,00';
-    return n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (!isFinite(n)) return '0';
+    const hasCents = Math.round(Math.abs(n) * 100) % 100 !== 0;
+    return n.toLocaleString('id-ID', {
+      minimumFractionDigits: hasCents ? 2 : 0,
+      maximumFractionDigits: 2,
+    });
   }
 
   formatTanggal(d: Date | string): string {

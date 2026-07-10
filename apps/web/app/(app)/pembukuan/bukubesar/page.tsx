@@ -194,13 +194,13 @@ export default async function BukuBesarPage({
                       )}
                     </td>
                     <td className="px-3 py-1.5 text-xs text-tanah-500 font-mono">{r.cabangKode}</td>
-                    <td className="px-3 py-1.5 text-right font-mono tabular-nums">
+                    <td className="px-3 py-1.5 text-right font-mono tabular-nums whitespace-nowrap">
                       {Number(r.debit) > 0 ? fmtPlain(r.debit) : ''}
                     </td>
-                    <td className="px-3 py-1.5 text-right font-mono tabular-nums">
+                    <td className="px-3 py-1.5 text-right font-mono tabular-nums whitespace-nowrap">
                       {Number(r.kredit) > 0 ? fmtPlain(r.kredit) : ''}
                     </td>
-                    <td className="px-3 py-1.5 text-right font-mono tabular-nums text-tanah-700">
+                    <td className="px-3 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-tanah-700">
                       {fmtPlain(r.saldo)}
                     </td>
                     <td className="px-3 py-1.5 text-center">
@@ -221,8 +221,8 @@ export default async function BukuBesarPage({
               <tfoot>
                 <tr className="border-t-2 border-cream-300 bg-cream-50 font-bold text-tanah-700 text-sm">
                   <td colSpan={4} className="px-3 py-2 text-right">TOTAL MUTASI</td>
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtPlain(data.totalDebit)}</td>
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtPlain(data.totalKredit)}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(data.totalDebit)}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(data.totalKredit)}</td>
                   <td />
                   <td />
                 </tr>

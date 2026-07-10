@@ -166,9 +166,9 @@ export default async function BudgetActualPage({
                             <span className="font-mono text-tanah-700">{r.account.kode}</span>{' '}
                             <span className="text-tanah-500">— {r.account.nama}</span>
                           </td>
-                          <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtPlain(r.budget)}</td>
-                          <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtPlain(r.actual)}</td>
-                          <td className={`px-3 py-2 text-right font-mono tabular-nums ${variance < 0 ? 'text-bata-700 font-bold' : 'text-tanah-700'}`}>
+                          <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(r.budget)}</td>
+                          <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(r.actual)}</td>
+                          <td className={`px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap ${variance < 0 ? 'text-bata-700 font-bold' : 'text-tanah-700'}`}>
                             {fmtPlain(r.variance)}
                           </td>
                           <td className="px-3 py-2">
@@ -194,9 +194,9 @@ export default async function BudgetActualPage({
                     })}
                     <tr className="border-t border-cream-200 bg-cream-50 font-semibold text-tanah-700">
                       <td className="px-3 py-1.5 text-xs text-right">Sub-total</td>
-                      <td className="px-3 py-1.5 text-right font-mono tabular-nums">{fmtPlain(g.totalBudget)}</td>
-                      <td className="px-3 py-1.5 text-right font-mono tabular-nums">{fmtPlain(g.totalActual)}</td>
-                      <td className={`px-3 py-1.5 text-right font-mono tabular-nums ${Number(g.totalVariance) < 0 ? 'text-bata-700' : ''}`}>
+                      <td className="px-3 py-1.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(g.totalBudget)}</td>
+                      <td className="px-3 py-1.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(g.totalActual)}</td>
+                      <td className={`px-3 py-1.5 text-right font-mono tabular-nums whitespace-nowrap ${Number(g.totalVariance) < 0 ? 'text-bata-700' : ''}`}>
                         {fmtPlain(g.totalVariance)}
                       </td>
                       <td colSpan={2} />
@@ -207,9 +207,9 @@ export default async function BudgetActualPage({
               <tfoot>
                 <tr className="border-t-2 border-cream-300 bg-cream-100 font-bold text-tanah-700 text-sm">
                   <td className="px-3 py-2.5 text-right">GRAND TOTAL</td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">{fmtPlain(data.grandTotal.budget)}</td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">{fmtPlain(data.grandTotal.actual)}</td>
-                  <td className={`px-3 py-2.5 text-right font-mono tabular-nums ${Number(data.grandTotal.variance) < 0 ? 'text-bata-700' : ''}`}>
+                  <td className="px-3 py-2.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(data.grandTotal.budget)}</td>
+                  <td className="px-3 py-2.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtPlain(data.grandTotal.actual)}</td>
+                  <td className={`px-3 py-2.5 text-right font-mono tabular-nums whitespace-nowrap ${Number(data.grandTotal.variance) < 0 ? 'text-bata-700' : ''}`}>
                     {fmtPlain(data.grandTotal.variance)}
                   </td>
                   <td colSpan={2} />

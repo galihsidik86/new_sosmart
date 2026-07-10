@@ -241,7 +241,7 @@ export default async function NeracaSaldoPage({
 function Cell({ v, bg }: { v: string; bg?: string }) {
   const n = Number(v);
   return (
-    <td className={`px-3 py-1 text-right font-mono tabular-nums ${bg ?? ''}`}>
+    <td className={`px-3 py-1 text-right font-mono tabular-nums whitespace-nowrap ${bg ?? ''}`}>
       {n > 0 ? fmtPlain(v) : ''}
     </td>
   );

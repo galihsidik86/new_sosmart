@@ -108,7 +108,7 @@ function renderRow(n: AccountNode, depth: number): React.ReactNode[] {
           {n.normalBalance}
         </span>
       </td>
-      <td className="px-4 py-2 text-right font-mono tabular-nums text-tanah-700">
+      <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap text-tanah-700">
         {Number(n.saldoAwal) > 0 ? fmtRp(n.saldoAwal) : ''}
       </td>
       <td className="px-4 py-2 text-right">

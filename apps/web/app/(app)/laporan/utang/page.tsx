@@ -178,7 +178,7 @@ export default async function UtangPage({
                   {bucketKeys.map((k) => (
                     <td
                       key={k}
-                      className={`px-3 py-2 text-right font-mono tabular-nums ${
+                      className={`px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap ${
                         k === 'above90' && Number(r.buckets[k]) > 0
                           ? 'text-bata-700 font-semibold'
                           : ''
@@ -187,7 +187,7 @@ export default async function UtangPage({
                       {Number(r.buckets[k]) > 0 ? fmtRp(r.buckets[k]) : '—'}
                     </td>
                   ))}
-                  <td className="px-3 py-2 text-right font-mono tabular-nums font-semibold">
+                  <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap font-semibold">
                     {fmtRp(r.saldo)}
                   </td>
                 </tr>
@@ -199,11 +199,11 @@ export default async function UtangPage({
                   <td className="px-3 py-2 text-tanah-700">TOTAL</td>
                   <td />
                   {bucketKeys.map((k) => (
-                    <td key={k} className="px-3 py-2 text-right font-mono tabular-nums">
+                    <td key={k} className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">
                       {fmtRp(ap.totalBuckets[k])}
                     </td>
                   ))}
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">
+                  <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">
                     {fmtRp(ap.totalSaldo)}
                   </td>
                 </tr>

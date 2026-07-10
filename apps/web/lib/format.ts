@@ -1,23 +1,20 @@
 /**
  * Helper format id-ID untuk tampilan. Tidak menyentuh logika moneter.
  */
+// Rupiah bulat; desimal hanya bila ada sen (mis. 316.250.000,04). withDecimal=true → paksa 2.
+const decDigits = (n: number, withDecimal: boolean): number =>
+  withDecimal || Math.round(Math.abs(n) * 100) % 100 !== 0 ? 2 : 0;
+
 export const fmtRp = (v: string | number, withDecimal = false): string => {
   const n = typeof v === 'string' ? Number(v) : v;
-  return (
-    'Rp ' +
-    new Intl.NumberFormat('id-ID', {
-      minimumFractionDigits: withDecimal ? 2 : 0,
-      maximumFractionDigits: withDecimal ? 2 : 0,
-    }).format(n)
-  );
+  const d = decDigits(n, withDecimal);
+  return 'Rp ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: d, maximumFractionDigits: 2 }).format(n);
 };
 
 export const fmtPlain = (v: string | number, withDecimal = false): string => {
   const n = typeof v === 'string' ? Number(v) : v;
-  return new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: withDecimal ? 2 : 0,
-    maximumFractionDigits: withDecimal ? 2 : 0,
-  }).format(n);
+  const d = decDigits(n, withDecimal);
+  return new Intl.NumberFormat('id-ID', { minimumFractionDigits: d, maximumFractionDigits: 2 }).format(n);
 };
 
 export const fmtTanggal = (iso: string | Date): string => {

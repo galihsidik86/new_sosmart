@@ -193,10 +193,10 @@ export default async function LabaRugiPage({
               <thead>
                 <tr className="bg-cream-50 text-[10px] uppercase tracking-wider text-tanah-500">
                   <th className="px-4 py-1.5 text-left" colSpan={2}>Akun</th>
-                  <th className="px-4 py-1.5 text-right w-32">Nilai</th>
+                  <th className="px-4 py-1.5 text-right w-44">Nilai</th>
                   {showVertikal && <th className="px-2 py-1.5 text-right w-16">%</th>}
                   {showCompare && <>
-                    <th className="px-4 py-1.5 text-right w-32">Sebelumnya</th>
+                    <th className="px-4 py-1.5 text-right w-40">Sebelumnya</th>
                     <th className="px-3 py-1.5 text-right w-28">Δ</th>
                     <th className="px-2 py-1.5 text-right w-16">Δ %</th>
                   </>}
@@ -237,7 +237,7 @@ export default async function LabaRugiPage({
 
                 <tr className="bg-wedel-900 text-cream-50">
                   <td colSpan={2} className="px-4 py-3 font-bold text-base">LABA BERSIH</td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-base tabular-nums">{fmtRp(lr.labaBersih.nilai)}</td>
+                  <td className="px-4 py-3 text-right font-mono font-bold text-base tabular-nums whitespace-nowrap">{fmtRp(lr.labaBersih.nilai)}</td>
                   {showVertikal && <td className="px-2 py-3 text-right font-mono text-sm">{lr.labaBersih.persenBase}%</td>}
                   {showCompare && <>
                     <td className="px-4 py-3 text-right font-mono text-sm">{fmtRp(lr.labaBersih.previous ?? '0')}</td>
@@ -275,9 +275,9 @@ function SectionRow({
         <tr><td colSpan={cols} className="px-4 py-1.5 text-tanah-400 text-xs italic pl-8">— tidak ada —</td></tr>
       ) : rows.map((r) => (
         <tr key={r.id}>
-          <td className="px-4 py-1 font-mono text-xs text-tanah-500 pl-8 w-20">{r.kode}</td>
+          <td className="px-4 py-1 font-mono text-xs text-tanah-500 pl-8 whitespace-nowrap">{r.kode}</td>
           <td className="px-2 py-1 text-tanah-700 text-sm">{r.nama}</td>
-          <td className={`px-4 py-1 text-right font-mono tabular-nums text-sm ${negative ? 'text-bata-700' : ''}`}>
+          <td className={`px-4 py-1 text-right font-mono tabular-nums text-sm whitespace-nowrap ${negative ? 'text-bata-700' : ''}`}>
             {negative ? `(${fmtRp(r.nilai).replace('Rp ', '')})` : fmtRp(r.nilai)}
           </td>
           {showVertikal && <td className="px-2 py-1 text-right font-mono text-xs text-tanah-500">{r.persenBase}%</td>}
@@ -298,12 +298,13 @@ function TotalRow({
   label: string; sect: Section; negative?: boolean;
   showVertikal: boolean; showCompare: boolean;
 }) {
-  const displayTotal = negative ? `(${sect.total})` : sect.total;
+  const t = fmtRp(sect.total);
+  const displayTotal = negative ? `(${t.replace('Rp ', '')})` : t;
   return (
     <tr className="bg-cream-100">
       <td colSpan={2} className="px-4 py-1.5 text-sm font-semibold text-tanah-700">{label}</td>
-      <td className="px-4 py-1.5 text-right font-mono tabular-nums text-sm font-semibold">
-        {displayTotal.startsWith('(') ? displayTotal : fmtRp(displayTotal)}
+      <td className="px-4 py-1.5 text-right font-mono tabular-nums text-sm font-semibold whitespace-nowrap">
+        {displayTotal}
       </td>
       {showVertikal && <td className="px-2 py-1.5 text-right font-mono text-xs text-tanah-500">{sect.persenBase}%</td>}
       {showCompare && <>
@@ -324,7 +325,7 @@ function SubRow({
   return (
     <tr className="bg-cream-200 border-y-2 border-cream-400">
       <td colSpan={2} className="px-4 py-2 font-display text-base font-semibold text-wedel-900">{label}</td>
-      <td className="px-4 py-2 text-right font-display font-semibold text-base text-wedel-900 tabular-nums">{fmtRp(sub.nilai)}</td>
+      <td className="px-4 py-2 text-right font-display font-semibold text-base text-wedel-900 tabular-nums whitespace-nowrap">{fmtRp(sub.nilai)}</td>
       {showVertikal && <td className="px-2 py-2 text-right font-mono text-sm text-wedel-900">{sub.persenBase}%</td>}
       {showCompare && <>
         <td className="px-4 py-2 text-right font-mono tabular-nums text-sm text-tanah-500">{fmtRp(sub.previous ?? '0')}</td>

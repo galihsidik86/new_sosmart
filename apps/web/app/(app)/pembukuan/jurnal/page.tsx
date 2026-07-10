@@ -154,7 +154,7 @@ export default async function JurnalPage({
                   <td className="px-4 py-2.5 text-xs text-tanah-500 font-mono">
                     {j.cabang.kode}
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono tabular-nums">
+                  <td className="px-4 py-2.5 text-right font-mono tabular-nums whitespace-nowrap">
                     {fmtRp(j.totalDebit)}
                   </td>
                   <td className="px-4 py-2.5 text-center">
