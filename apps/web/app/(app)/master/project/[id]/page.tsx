@@ -5,7 +5,10 @@ import { redirect } from 'next/navigation';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
-import { fmtRp, fmtTanggal } from '@/lib/format';
+import { fmtRp } from '@/lib/format';
+import {
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select, Textarea, buttonClass,
+} from '@/components/ui';
 
 type Status = 'AKTIF' | 'SELESAI' | 'DIBATALKAN';
 type MemberRole = 'MANAGER' | 'MEMBER';
@@ -135,53 +138,48 @@ export default async function ProjectDetailPage({
   return (
     <>
       <Topbar breadcrumb={`Project › ${p.kode}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <Link href="/master/project" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
-            <div className="flex items-baseline gap-3 mt-2">
-              <h1 className="font-display text-3xl font-semibold text-wedel-900">{p.nama}</h1>
-              <span className="font-mono text-tanah-500">{p.kode}</span>
-            </div>
-            {p.deskripsi && <p className="text-sm text-tanah-500 mt-1">{p.deskripsi}</p>}
-          </div>
-          <Link
-            href={`/laporan/budget-actual?projectId=${p.id}` as Route}
-            className="px-3 py-2 bg-sogan-100 hover:bg-sogan-200 border border-sogan-300 rounded-lg text-sm font-semibold text-sogan-700"
-          >
-            Lihat Realisasi Anggaran →
-          </Link>
-        </div>
+      <PageContainer size="form">
+        <Link href="/master/project" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
+        <PageHeader
+          className="mt-2"
+          title={
+            <span className="flex items-baseline gap-3">
+              {p.nama}
+              <span className="font-mono text-tanah-500 text-base font-normal">{p.kode}</span>
+            </span>
+          }
+          subtitle={p.deskripsi || undefined}
+          actions={
+            <Link
+              href={`/laporan/budget-actual?projectId=${p.id}` as Route}
+              className={buttonClass('soft-sogan')}
+            >
+              Lihat Realisasi Anggaran →
+            </Link>
+          }
+        />
 
         <div className="grid grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Info & Status</h2>
             <form action={updateAction} className="space-y-3 text-sm">
               <input type="hidden" name="id" value={p.id} />
-              <FF label="Nama" name="nama" defaultValue={p.nama} required />
-              <FF label="Tanggal Selesai" name="tanggalSelesai" type="date" defaultValue={p.tanggalSelesai?.slice(0, 10) ?? ''} />
-              <FF label="Budget Total" name="budgetTotal" type="number" defaultValue={p.budgetTotal ?? ''} />
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Status</label>
-                <select name="status" defaultValue={p.status}
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <FormField label="Nama" required><Input name="nama" defaultValue={p.nama} required /></FormField>
+              <FormField label="Tanggal Selesai"><Input name="tanggalSelesai" type="date" defaultValue={p.tanggalSelesai?.slice(0, 10) ?? ''} /></FormField>
+              <FormField label="Budget Total"><Input name="budgetTotal" type="number" defaultValue={p.budgetTotal ?? ''} /></FormField>
+              <FormField label="Status">
+                <Select name="status" defaultValue={p.status}>
                   <option value="AKTIF">AKTIF</option>
                   <option value="SELESAI">SELESAI</option>
                   <option value="DIBATALKAN">DIBATALKAN</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Catatan</label>
-                <textarea name="catatan" rows={2} defaultValue={p.catatan ?? ''}
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-              </div>
-              <button className="w-full py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                Simpan
-              </button>
+                </Select>
+              </FormField>
+              <FormField label="Catatan"><Textarea name="catatan" rows={2} defaultValue={p.catatan ?? ''} /></FormField>
+              <Button type="submit" className="w-full">Simpan</Button>
             </form>
-          </div>
+          </Card>
 
-          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Anggota Project ({p.members.length})</h2>
             <ul className="space-y-1.5 mb-3">
               {p.members.map((m) => (
@@ -191,11 +189,9 @@ export default async function ProjectDetailPage({
                     <div className="text-xs text-tanah-500">{m.user.email}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                      m.role === 'MANAGER' ? 'bg-sogan-100 text-sogan-700' : 'bg-cream-100 text-tanah-700'
-                    }`}>
+                    <Badge variant={m.role === 'MANAGER' ? 'brand' : 'neutral'} size="sm">
                       {m.role}
-                    </span>
+                    </Badge>
                     <form action={removeMemberAction} className="inline">
                       <input type="hidden" name="id" value={p.id} />
                       <input type="hidden" name="userId" value={m.userId} />
@@ -212,31 +208,26 @@ export default async function ProjectDetailPage({
             </ul>
             <form action={addMemberAction} className="space-y-2 text-sm pt-2 border-t border-cream-200">
               <input type="hidden" name="id" value={p.id} />
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tambah user</label>
-                <select name="userId" required
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <FormField label="Tambah user">
+                <Select name="userId" required>
                   <option value="">— pilih user —</option>
                   {nonMembers.map((u) => (
                     <option key={u.userId} value={u.userId}>{u.nama} ({u.email})</option>
                   ))}
-                </select>
-              </div>
+                </Select>
+              </FormField>
               <div className="flex gap-2 items-end">
-                <select name="role" defaultValue="MEMBER"
-                  className="flex-1 px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+                <Select name="role" defaultValue="MEMBER" fullWidth={false} className="flex-1">
                   <option value="MEMBER">MEMBER</option>
                   <option value="MANAGER">MANAGER</option>
-                </select>
-                <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                  Tambah
-                </button>
+                </Select>
+                <Button type="submit">Tambah</Button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
 
-        <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+        <Card>
           <h2 className="font-semibold text-tanah-700 mb-3">Budget per Akun × Bulan ({p.budgets.length})</h2>
           {p.budgets.length > 0 && (
             <table className="w-full text-sm mb-4">
@@ -259,11 +250,9 @@ export default async function ProjectDetailPage({
                     </td>
                     <td className="py-2 text-right font-mono tabular-nums">{fmtRp(b.amount)}</td>
                     <td className="py-2 text-center">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                        b.hardBlock ? 'bg-bata-100 text-bata-700' : 'bg-emas-100 text-emas-700'
-                      }`}>
+                      <Badge variant={b.hardBlock ? 'danger' : 'warning'} size="sm">
                         {b.hardBlock ? 'HARD' : 'SOFT'}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="py-2 text-right space-x-3">
                       <Link
@@ -285,56 +274,30 @@ export default async function ProjectDetailPage({
           )}
           <form action={setBudgetAction} className="grid grid-cols-5 gap-2 text-sm items-end pt-3 border-t border-cream-200">
             <input type="hidden" name="id" value={p.id} />
-            <div className="col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akun (postable)</label>
-              <select name="accountId" required
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+            <FormField label="Akun (postable)" className="col-span-2">
+              <Select name="accountId" required>
                 <option value="">— pilih akun —</option>
                 {postableAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>
                 ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Periode</label>
-              <input name="periode" placeholder="2026-07" pattern="\d{4}-\d{2}" required
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Amount</label>
-              <input name="amount" type="number" required
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm text-right font-mono" />
-            </div>
+              </Select>
+            </FormField>
+            <FormField label="Periode">
+              <Input name="periode" placeholder="2026-07" pattern="\d{4}-\d{2}" required mono />
+            </FormField>
+            <FormField label="Amount">
+              <Input name="amount" type="number" required numeric />
+            </FormField>
             <div>
               <label className="flex items-center gap-1.5 text-xs text-tanah-500 mb-2">
                 <input type="checkbox" name="hardBlock" defaultChecked />
                 Hard block
               </label>
-              <button className="w-full py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                Simpan
-              </button>
+              <Button type="submit" className="w-full">Simpan</Button>
             </div>
           </form>
-        </div>
-      </div>
+        </Card>
+      </PageContainer>
     </>
-  );
-}
-
-function FF(props: { label: string; name: string; required?: boolean; type?: string; defaultValue?: string }) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-        {props.label}
-        {props.required && <span className="text-bata-500 ml-0.5">*</span>}
-      </label>
-      <input
-        name={props.name}
-        type={props.type ?? 'text'}
-        required={props.required}
-        defaultValue={props.defaultValue}
-        className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm focus:outline-none focus:border-sogan-500"
-      />
-    </div>
   );
 }

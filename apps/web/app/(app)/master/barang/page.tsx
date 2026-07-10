@@ -6,6 +6,10 @@ import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
+import {
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
+  Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow, buttonClass,
+} from '@/components/ui';
 
 async function importItemsAction(formData: FormData) {
   'use server';
@@ -84,74 +88,64 @@ export default async function MasterBarangPage({
   return (
     <>
       <Topbar breadcrumb="Master Barang" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Master Barang & Jasa
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              {items.length} item · klasifikasi PPN mengikuti PMK 131/2024.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href="/proxy/items/export.xlsx"
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-            >
-              Export Excel
-            </a>
-            <ImportExcelButton importAction={importItemsAction} />
-            <form className="flex items-center gap-2">
-              <input
-                name="search"
-                defaultValue={sp.search ?? ''}
-                placeholder="Cari kode / nama…"
-                className="px-3 py-2 bg-white border border-cream-300 rounded-lg text-sm w-64 focus:outline-none focus:border-sogan-500"
-              />
-              <button className="px-3 py-2 bg-cream-100 border border-cream-300 rounded-lg text-sm font-semibold text-tanah-700">
-                Cari
-              </button>
-            </form>
-          </div>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Master Barang & Jasa"
+          subtitle={`${items.length} item · klasifikasi PPN mengikuti PMK 131/2024.`}
+          actions={
+            <>
+              <a href="/proxy/items/export.xlsx" className={buttonClass('success')}>Export Excel</a>
+              <ImportExcelButton importAction={importItemsAction} />
+              <form className="flex items-center gap-2">
+                <input
+                  name="search"
+                  defaultValue={sp.search ?? ''}
+                  placeholder="Cari kode / nama…"
+                  className="px-3 py-2 bg-white border border-cream-300 rounded-lg text-sm w-64 focus:outline-none focus:border-sogan-500"
+                />
+                <button className="px-3 py-2 bg-cream-100 border border-cream-300 rounded-lg text-sm font-semibold text-tanah-700">
+                  Cari
+                </button>
+              </form>
+            </>
+          }
+        />
 
         <div className="grid grid-cols-3 gap-6">
-          <section className="col-span-2 bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-cream-50 text-left">
-                <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
-                  <th className="px-4 py-3 font-bold">Kode</th>
-                  <th className="px-4 py-3 font-bold">Nama</th>
-                  <th className="px-4 py-3 font-bold">Klasifikasi PPN</th>
-                  <th className="px-4 py-3 font-bold text-right">Harga Jual</th>
-                  <th className="px-4 py-3 font-bold text-right">Stok Awal</th>
-                  <th className="px-4 py-3 font-bold text-right w-16"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cream-200">
+          <section className="col-span-2">
+            <Table>
+              <THead>
+                <TH>Kode</TH>
+                <TH>Nama</TH>
+                <TH>Klasifikasi PPN</TH>
+                <TH numeric>Harga Jual</TH>
+                <TH numeric>Stok Awal</TH>
+                <TH numeric className="w-16" />
+              </THead>
+              <TBody>
                 {items.map((it) => (
-                  <tr key={it.id} className="hover:bg-cream-50">
-                    <td className="px-4 py-2.5 font-mono text-tanah-700">{it.kode}</td>
-                    <td className="px-4 py-2.5">
+                  <TR key={it.id}>
+                    <TD className="font-mono text-tanah-700">{it.kode}</TD>
+                    <TD>
                       <div className="font-semibold text-tanah-700">{it.nama}</div>
                       <div className="text-xs text-tanah-500">
                         {it.kategori ?? '—'} · {it.satuan}
                       </div>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <span
-                        className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                    </TD>
+                    <TD>
+                      <Badge
+                        variant={
                           it.klasifikasiPpn === 'BKP_STRATEGIS'
-                            ? 'bg-padi-100 text-padi-700'
+                            ? 'success'
                             : it.klasifikasiPpn === 'NON_BKP' ||
                               it.klasifikasiPpn === 'BEBAS_PPN'
-                            ? 'bg-cream-200 text-tanah-500'
-                            : 'bg-sogan-50 text-sogan-500'
-                        }`}
+                            ? 'neutral'
+                            : 'brand'
+                        }
+                        size="sm"
                       >
                         {KLASIFIKASI_LABEL[it.klasifikasiPpn]}
-                      </span>
+                      </Badge>
                       {it.isJasa && (
                         <span className="ml-2 text-[10px] text-emas-700 font-semibold uppercase">
                           Jasa
@@ -165,110 +159,71 @@ export default async function MasterBarangPage({
                           PPh23 {Number(it.pph23Tarif.tarif)}%
                         </span>
                       )}
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-tanah-700 tabular-nums">
+                    </TD>
+                    <MoneyCell className="text-tanah-700">
                       {fmtRp(it.hargaJualDefault)}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-tanah-500 tabular-nums">
+                    </MoneyCell>
+                    <TD className="text-right text-tanah-500 tabular-nums">
                       {it.stokAwal[0]?.qty
                         ? `${Number(it.stokAwal[0].qty).toLocaleString('id-ID')} · ${it.stokAwal[0].cabang.kode}`
                         : '—'}
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
+                    </TD>
+                    <TD className="text-right">
                       <Link href={`/master/barang/${it.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
                         Edit
                       </Link>
-                    </td>
-                  </tr>
+                    </TD>
+                  </TR>
                 ))}
-                {items.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-tanah-500">
-                      Belum ada barang.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                {items.length === 0 && <EmptyRow colSpan={6}>Belum ada barang.</EmptyRow>}
+              </TBody>
+            </Table>
           </section>
 
-          <aside className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Item</h2>
             <form action={createItem} className="space-y-3">
-              <FormField label="Kode" name="kode" required placeholder="BRG-007" />
-              <FormField label="Nama" name="nama" required placeholder="Beras Medium 5 kg" />
+              <FormField label="Kode" required><Input name="kode" required placeholder="BRG-007" /></FormField>
+              <FormField label="Nama" required><Input name="nama" required placeholder="Beras Medium 5 kg" /></FormField>
               <div className="grid grid-cols-2 gap-2">
-                <FormField label="Kategori" name="kategori" placeholder="Sembako" />
-                <FormField label="Satuan" name="satuan" defaultValue="Pcs" />
+                <FormField label="Kategori"><Input name="kategori" placeholder="Sembako" /></FormField>
+                <FormField label="Satuan"><Input name="satuan" defaultValue="Pcs" /></FormField>
               </div>
-              <FormField label="Harga jual (Rp)" name="hargaJualDefault" type="number" defaultValue="0" />
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-                  Klasifikasi PPN
-                </label>
-                <select
-                  name="klasifikasiPpn"
-                  defaultValue="BKP"
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-                >
+              <FormField label="Harga jual (Rp)"><Input name="hargaJualDefault" type="number" defaultValue="0" /></FormField>
+              <FormField label="Klasifikasi PPN">
+                <Select name="klasifikasiPpn" defaultValue="BKP">
                   {(['BKP', 'JKP', 'NON_BKP', 'BKP_STRATEGIS', 'BEBAS_PPN'] as const).map((k) => (
                     <option key={k} value={k}>
                       {KLASIFIKASI_LABEL[k]}
                     </option>
                   ))}
-                </select>
-              </div>
+                </Select>
+              </FormField>
               <label className="flex items-center gap-2 text-sm text-tanah-700">
                 <input type="checkbox" name="isJasa" />
                 Adalah jasa (kena PPh 23)
               </label>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-                  Tarif PPh 23 <span className="text-tanah-400 normal-case font-normal">(hanya jika jasa)</span>
-                </label>
-                <select name="pph23TarifId" defaultValue=""
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <FormField
+                label={
+                  <>
+                    Tarif PPh 23 <span className="text-tanah-400 normal-case font-normal">(hanya jika jasa)</span>
+                  </>
+                }
+              >
+                <Select name="pph23TarifId" defaultValue="">
                   <option value="">— tidak preset —</option>
                   {tarifList.map((t) => (
                     <option key={t.id} value={t.id}>
                       {Number(t.tarif)}% · {t.nama}
                     </option>
                   ))}
-                </select>
-              </div>
-              <button className="w-full py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                Simpan
-              </button>
+                </Select>
+              </FormField>
+              <Button type="submit" className="w-full">Simpan</Button>
             </form>
-          </aside>
+          </Card>
         </div>
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function FormField(props: {
-  label: string;
-  name: string;
-  type?: string;
-  required?: boolean;
-  placeholder?: string;
-  defaultValue?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-        {props.label}
-        {props.required && <span className="text-bata-500 ml-0.5">*</span>}
-      </label>
-      <input
-        name={props.name}
-        type={props.type ?? 'text'}
-        required={props.required}
-        placeholder={props.placeholder}
-        defaultValue={props.defaultValue}
-        className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm focus:outline-none focus:border-sogan-500"
-      />
-    </div>
   );
 }

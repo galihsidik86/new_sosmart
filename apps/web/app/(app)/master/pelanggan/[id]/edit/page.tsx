@@ -4,6 +4,9 @@ import { redirect } from 'next/navigation';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import {
+  PageContainer, PageHeader, Card, Button, FormField, Input, Select, buttonClass,
+} from '@/components/ui';
 
 type Tipe = 'DISTRIBUTOR' | 'RITEL' | 'KORPORAT' | 'KOPERASI' | 'PEMERINTAH' | 'LAINNYA';
 
@@ -62,66 +65,44 @@ export default async function EditPelangganPage({ params }: { params: Promise<{ 
   return (
     <>
       <Topbar breadcrumb={`Data Pelanggan › Edit ${c.kode}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-2xl mx-auto w-full">
-        <div className="mb-6">
-          <Link href="/master/pelanggan" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
-          <h1 className="font-display text-3xl font-semibold text-wedel-900 mt-2">Edit Pelanggan</h1>
-          <p className="text-sm text-tanah-500 mt-1">{c.kode} · {c.nama}</p>
-        </div>
+      <PageContainer size="form">
+        <Link href="/master/pelanggan" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
+        <PageHeader title="Edit Pelanggan" subtitle={`${c.kode} · ${c.nama}`} className="mt-2" />
 
-        <form action={updateCustomer} className="bg-white rounded-xl border border-cream-200 shadow-sm p-6 space-y-4">
-          <input type="hidden" name="id" value={c.id} />
-          <FF label="Kode" name="kode" required defaultValue={c.kode} />
-          <FF label="Nama" name="nama" required defaultValue={c.nama} />
-          <FF label="NPWP" name="npwp" defaultValue={c.npwp ?? ''} />
-          <label className="flex items-center gap-2 text-sm text-tanah-700">
-            <input type="checkbox" name="isPkp" defaultChecked={c.isPkp} />
-            Pelanggan ini PKP
-          </label>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tipe</label>
-            <select
-              name="tipe" defaultValue={c.tipe}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-            >
-              {(Object.keys(TIPE_LABEL) as Tipe[]).map((t) => (
-                <option key={t} value={t}>{TIPE_LABEL[t]}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <FF label="Kota" name="kota" defaultValue={c.kota ?? ''} />
-            <FF label="Telp" name="telp" defaultValue={c.telp ?? ''} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <FF label="Termin (hari)" name="terminHari" type="number" defaultValue={String(c.terminHari)} />
-            <FF label="Limit kredit" name="kreditLimit" type="number" defaultValue={c.kreditLimit} />
-          </div>
-          <div className="flex gap-2 pt-2">
-            <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-              Simpan perubahan
-            </button>
-            <Link href="/master/pelanggan" className="px-4 py-2 bg-cream-100 hover:bg-cream-200 text-tanah-700 font-semibold rounded-lg text-sm">
-              Batal
-            </Link>
-          </div>
-        </form>
-      </div>
+        <Card padding="lg">
+          <form action={updateCustomer} className="space-y-4">
+            <input type="hidden" name="id" value={c.id} />
+            <FormField label="Kode" required><Input name="kode" required defaultValue={c.kode} /></FormField>
+            <FormField label="Nama" required><Input name="nama" required defaultValue={c.nama} /></FormField>
+            <FormField label="NPWP"><Input name="npwp" defaultValue={c.npwp ?? ''} /></FormField>
+            <label className="flex items-center gap-2 text-sm text-tanah-700">
+              <input type="checkbox" name="isPkp" defaultChecked={c.isPkp} />
+              Pelanggan ini PKP
+            </label>
+            <FormField label="Tipe">
+              <Select name="tipe" defaultValue={c.tipe}>
+                {(Object.keys(TIPE_LABEL) as Tipe[]).map((t) => (
+                  <option key={t} value={t}>{TIPE_LABEL[t]}</option>
+                ))}
+              </Select>
+            </FormField>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Kota"><Input name="kota" defaultValue={c.kota ?? ''} /></FormField>
+              <FormField label="Telp"><Input name="telp" defaultValue={c.telp ?? ''} /></FormField>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Termin (hari)"><Input name="terminHari" type="number" defaultValue={String(c.terminHari)} /></FormField>
+              <FormField label="Limit kredit"><Input name="kreditLimit" type="number" defaultValue={c.kreditLimit} /></FormField>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button type="submit">Simpan perubahan</Button>
+              <Link href="/master/pelanggan" className={buttonClass('secondary')}>
+                Batal
+              </Link>
+            </div>
+          </form>
+        </Card>
+      </PageContainer>
     </>
-  );
-}
-
-function FF(props: { label: string; name: string; required?: boolean; type?: string; defaultValue?: string }) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-        {props.label}{props.required && <span className="text-bata-500 ml-0.5">*</span>}
-      </label>
-      <input
-        name={props.name} type={props.type ?? 'text'} required={props.required}
-        defaultValue={props.defaultValue}
-        className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm focus:outline-none focus:border-sogan-500"
-      />
-    </div>
   );
 }

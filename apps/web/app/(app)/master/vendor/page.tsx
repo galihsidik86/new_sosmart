@@ -6,6 +6,10 @@ import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp } from '@/lib/format';
+import {
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input,
+  Table, THead, TH, TBody, TR, TD, EmptyRow, buttonClass,
+} from '@/components/ui';
 
 async function importVendorsAction(formData: FormData) {
   'use server';
@@ -57,125 +61,81 @@ export default async function VendorPage() {
   return (
     <>
       <Topbar breadcrumb="Data Vendor" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Data Vendor
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              {vendors.length} pemasok · status PKP menentukan PPN masukan dapat dikreditkan.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href="/proxy/vendors/export.xlsx"
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-            >
-              Export Excel
-            </a>
-            <ImportExcelButton importAction={importVendorsAction} />
-          </div>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Data Vendor"
+          subtitle={`${vendors.length} pemasok · status PKP menentukan PPN masukan dapat dikreditkan.`}
+          actions={
+            <>
+              <a href="/proxy/vendors/export.xlsx" className={buttonClass('success')}>Export Excel</a>
+              <ImportExcelButton importAction={importVendorsAction} />
+            </>
+          }
+        />
 
         <div className="grid grid-cols-3 gap-6">
-          <section className="col-span-2 bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-cream-50 text-left">
-                <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
-                  <th className="px-4 py-3 font-bold">Kode</th>
-                  <th className="px-4 py-3 font-bold">Nama / Kategori</th>
-                  <th className="px-4 py-3 font-bold">NPWP</th>
-                  <th className="px-4 py-3 font-bold text-center">PKP</th>
-                  <th className="px-4 py-3 font-bold text-right">Termin</th>
-                  <th className="px-4 py-3 font-bold text-right w-16"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cream-200">
+          <section className="col-span-2">
+            <Table>
+              <THead>
+                <TH>Kode</TH>
+                <TH>Nama / Kategori</TH>
+                <TH>NPWP</TH>
+                <TH className="text-center">PKP</TH>
+                <TH numeric>Termin</TH>
+                <TH numeric className="w-16" />
+              </THead>
+              <TBody>
                 {vendors.map((v) => (
-                  <tr key={v.id} className="hover:bg-cream-50">
-                    <td className="px-4 py-2.5 font-mono text-tanah-700">{v.kode}</td>
-                    <td className="px-4 py-2.5">
+                  <TR key={v.id}>
+                    <TD className="font-mono text-tanah-700">{v.kode}</TD>
+                    <TD>
                       <div className="font-semibold text-tanah-700">{v.nama}</div>
                       <div className="text-xs text-tanah-500">
                         {v.kategori ?? '—'} · {v.kota ?? '—'} · {v.telp ?? '—'}
                       </div>
-                    </td>
-                    <td className="px-4 py-2.5 font-mono text-xs text-tanah-500">
-                      {fmtNpwp(v.npwp)}
-                    </td>
-                    <td className="px-4 py-2.5 text-center">
+                    </TD>
+                    <TD className="font-mono text-xs text-tanah-500">{fmtNpwp(v.npwp)}</TD>
+                    <TD className="text-center">
                       {v.isPkp ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-padi-100 text-padi-700 px-2 py-0.5 rounded">
-                          PKP
-                        </span>
+                        <Badge variant="success" size="sm">PKP</Badge>
                       ) : (
                         <span className="text-[10px] text-tanah-400">non-PKP</span>
                       )}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-tanah-700 tabular-nums">
-                      {v.terminHari} hari
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
+                    </TD>
+                    <TD className="text-right text-tanah-700 tabular-nums">{v.terminHari} hari</TD>
+                    <TD className="text-right">
                       <Link href={`/master/vendor/${v.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
                         Edit
                       </Link>
-                    </td>
-                  </tr>
+                    </TD>
+                  </TR>
                 ))}
-                {vendors.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-tanah-500">
-                      Belum ada vendor.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                {vendors.length === 0 && <EmptyRow colSpan={6}>Belum ada vendor.</EmptyRow>}
+              </TBody>
+            </Table>
           </section>
 
-          <aside className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Vendor</h2>
             <form action={createVendor} className="space-y-3">
-              <FF label="Kode" name="kode" required placeholder="VEN-006" />
-              <FF label="Nama" name="nama" required placeholder="PT …" />
-              <FF label="NPWP (15/16 digit)" name="npwp" placeholder="01.234.567.8-501.000" />
+              <FormField label="Kode" required><Input name="kode" required placeholder="VEN-006" /></FormField>
+              <FormField label="Nama" required><Input name="nama" required placeholder="PT …" /></FormField>
+              <FormField label="NPWP (15/16 digit)"><Input name="npwp" placeholder="01.234.567.8-501.000" /></FormField>
               <label className="flex items-center gap-2 text-sm text-tanah-700">
                 <input type="checkbox" name="isPkp" />
                 Pemasok ini PKP
               </label>
-              <FF label="Kategori" name="kategori" placeholder="Barang Dagang / Jasa" />
+              <FormField label="Kategori"><Input name="kategori" placeholder="Barang Dagang / Jasa" /></FormField>
               <div className="grid grid-cols-2 gap-2">
-                <FF label="Kota" name="kota" />
-                <FF label="Telp" name="telp" />
+                <FormField label="Kota"><Input name="kota" /></FormField>
+                <FormField label="Telp"><Input name="telp" /></FormField>
               </div>
-              <FF label="Termin (hari)" name="terminHari" type="number" defaultValue="30" />
-              <button className="w-full py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                Simpan
-              </button>
+              <FormField label="Termin (hari)"><Input name="terminHari" type="number" defaultValue="30" /></FormField>
+              <Button type="submit" className="w-full">Simpan</Button>
             </form>
-          </aside>
+          </Card>
         </div>
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function FF(props: {
-  label: string; name: string; required?: boolean;
-  type?: string; placeholder?: string; defaultValue?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-        {props.label}
-        {props.required && <span className="text-bata-500 ml-0.5">*</span>}
-      </label>
-      <input
-        name={props.name} type={props.type ?? 'text'} required={props.required}
-        placeholder={props.placeholder} defaultValue={props.defaultValue}
-        className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm focus:outline-none focus:border-sogan-500"
-      />
-    </div>
   );
 }

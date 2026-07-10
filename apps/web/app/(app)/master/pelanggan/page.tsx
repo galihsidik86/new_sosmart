@@ -6,6 +6,10 @@ import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp } from '@/lib/format';
+import {
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
+  Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow, buttonClass,
+} from '@/components/ui';
 
 async function importCustomersAction(formData: FormData) {
   'use server';
@@ -70,140 +74,86 @@ export default async function PelangganPage() {
   return (
     <>
       <Topbar breadcrumb="Data Pelanggan" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Data Pelanggan
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              {customers.length} pelanggan · pelanggan PKP berhak terima faktur pajak.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href="/proxy/customers/export.xlsx"
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-            >
-              Export Excel
-            </a>
-            <ImportExcelButton importAction={importCustomersAction} />
-          </div>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Data Pelanggan"
+          subtitle={`${customers.length} pelanggan · pelanggan PKP berhak terima faktur pajak.`}
+          actions={
+            <>
+              <a href="/proxy/customers/export.xlsx" className={buttonClass('success')}>Export Excel</a>
+              <ImportExcelButton importAction={importCustomersAction} />
+            </>
+          }
+        />
 
         <div className="grid grid-cols-3 gap-6">
-          <section className="col-span-2 bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-cream-50 text-left">
-                <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
-                  <th className="px-4 py-3 font-bold">Kode</th>
-                  <th className="px-4 py-3 font-bold">Nama / Tipe</th>
-                  <th className="px-4 py-3 font-bold">NPWP</th>
-                  <th className="px-4 py-3 font-bold text-right">Termin</th>
-                  <th className="px-4 py-3 font-bold text-right">Limit Kredit</th>
-                  <th className="px-4 py-3 font-bold text-right w-16"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cream-200">
+          <section className="col-span-2">
+            <Table>
+              <THead>
+                <TH>Kode</TH>
+                <TH>Nama / Tipe</TH>
+                <TH>NPWP</TH>
+                <TH numeric>Termin</TH>
+                <TH numeric>Limit Kredit</TH>
+                <TH numeric className="w-16" />
+              </THead>
+              <TBody>
                 {customers.map((c) => (
-                  <tr key={c.id} className="hover:bg-cream-50">
-                    <td className="px-4 py-2.5 font-mono text-tanah-700">{c.kode}</td>
-                    <td className="px-4 py-2.5">
+                  <TR key={c.id}>
+                    <TD className="font-mono text-tanah-700">{c.kode}</TD>
+                    <TD>
                       <div className="font-semibold text-tanah-700">{c.nama}</div>
                       <div className="text-xs text-tanah-500 flex items-center gap-2">
                         <span>{TIPE_LABEL[c.tipe]}</span>
-                        {c.isPkp && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider bg-padi-100 text-padi-700 px-1.5 py-0.5 rounded">
-                            PKP
-                          </span>
-                        )}
+                        {c.isPkp && <Badge variant="success" size="sm">PKP</Badge>}
                         <span>· {c.kota ?? '—'}</span>
                       </div>
-                    </td>
-                    <td className="px-4 py-2.5 font-mono text-xs text-tanah-500">
-                      {fmtNpwp(c.npwp)}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-tanah-700 tabular-nums">
-                      {c.terminHari} hari
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-tanah-700 tabular-nums">
-                      {fmtRp(c.kreditLimit)}
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
+                    </TD>
+                    <TD className="font-mono text-xs text-tanah-500">{fmtNpwp(c.npwp)}</TD>
+                    <TD className="text-right text-tanah-700 tabular-nums">{c.terminHari} hari</TD>
+                    <MoneyCell className="text-tanah-700">{fmtRp(c.kreditLimit)}</MoneyCell>
+                    <TD className="text-right">
                       <Link href={`/master/pelanggan/${c.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
                         Edit
                       </Link>
-                    </td>
-                  </tr>
+                    </TD>
+                  </TR>
                 ))}
-                {customers.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-tanah-500">
-                      Belum ada pelanggan.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                {customers.length === 0 && <EmptyRow colSpan={6}>Belum ada pelanggan.</EmptyRow>}
+              </TBody>
+            </Table>
           </section>
 
-          <aside className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Pelanggan</h2>
             <form action={createCustomer} className="space-y-3">
-              <FF label="Kode" name="kode" required placeholder="PLG-006" />
-              <FF label="Nama" name="nama" required placeholder="CV …" />
-              <FF label="NPWP" name="npwp" placeholder="0X.XXX.XXX.X-XXX.XXX" />
+              <FormField label="Kode" required><Input name="kode" required placeholder="PLG-006" /></FormField>
+              <FormField label="Nama" required><Input name="nama" required placeholder="CV …" /></FormField>
+              <FormField label="NPWP"><Input name="npwp" placeholder="0X.XXX.XXX.X-XXX.XXX" /></FormField>
               <label className="flex items-center gap-2 text-sm text-tanah-700">
                 <input type="checkbox" name="isPkp" />
                 Pelanggan ini PKP
               </label>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-                  Tipe
-                </label>
-                <select
-                  name="tipe" defaultValue="RITEL"
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-                >
+              <FormField label="Tipe">
+                <Select name="tipe" defaultValue="RITEL">
                   {(Object.keys(TIPE_LABEL) as Tipe[]).map((t) => (
                     <option key={t} value={t}>{TIPE_LABEL[t]}</option>
                   ))}
-                </select>
+                </Select>
+              </FormField>
+              <div className="grid grid-cols-2 gap-2">
+                <FormField label="Kota"><Input name="kota" /></FormField>
+                <FormField label="Telp"><Input name="telp" /></FormField>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <FF label="Kota" name="kota" />
-                <FF label="Telp" name="telp" />
+                <FormField label="Termin (hari)"><Input name="terminHari" type="number" defaultValue="14" /></FormField>
+                <FormField label="Limit kredit"><Input name="kreditLimit" type="number" defaultValue="0" /></FormField>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <FF label="Termin (hari)" name="terminHari" type="number" defaultValue="14" />
-                <FF label="Limit kredit" name="kreditLimit" type="number" defaultValue="0" />
-              </div>
-              <button className="w-full py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                Simpan
-              </button>
+              <Button type="submit" className="w-full">Simpan</Button>
             </form>
-          </aside>
+          </Card>
         </div>
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function FF(props: {
-  label: string; name: string; required?: boolean;
-  type?: string; placeholder?: string; defaultValue?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-        {props.label}
-        {props.required && <span className="text-bata-500 ml-0.5">*</span>}
-      </label>
-      <input
-        name={props.name} type={props.type ?? 'text'} required={props.required}
-        placeholder={props.placeholder} defaultValue={props.defaultValue}
-        className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm focus:outline-none focus:border-sogan-500"
-      />
-    </div>
   );
 }
