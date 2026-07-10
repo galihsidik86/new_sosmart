@@ -24,7 +24,14 @@ export function Money({
   prefix?: boolean;
   className?: string;
 }) {
-  const text = prefix ? fmtRp(value, withDecimal) : fmtPlain(value, withDecimal);
+  // number → diformat Rupiah; string → tampil apa adanya (mis. sudah ringkas
+  // "Rp 6,72 M" atau persentase "20,1%").
+  const text =
+    typeof value === 'number'
+      ? prefix
+        ? fmtRp(value, withDecimal)
+        : fmtPlain(value, withDecimal)
+      : value;
   return (
     <span
       className={cn('font-display font-semibold tabular-nums text-wedel-900 tracking-tight', className)}

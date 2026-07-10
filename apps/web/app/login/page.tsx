@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { apiLogin } from '@/lib/api';
 import { setSession, getSession } from '@/lib/session';
+import { Button, Input, FormField, Icon } from '@/components/ui';
 
 async function loginAction(formData: FormData) {
   'use server';
@@ -21,14 +22,18 @@ async function loginAction(formData: FormData) {
   redirect(single ? '/dashboard' : '/pilih-tenant');
 }
 
+const FITUR = [
+  'Laporan keuangan SAK ETAP otomatis',
+  'PPN & PPh sesuai regulasi terbaru',
+  'Multi-cabang, multi-proyek & jejak audit',
+];
+
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ session_expired?: string }>;
 }) {
   const sp = await searchParams;
-  // Cookie clearing untuk session_expired sudah dilakukan di /logout Route Handler.
-  // Di sini cukup cek session aktif — kalau ada, user memang sudah login.
   const s = await getSession();
   if (s?.tenantId) redirect('/dashboard');
 
@@ -41,65 +46,100 @@ export default async function LoginPage({
     if (res.ok) branding = await res.json();
   } catch { /* pakai brand Lentera */ }
 
+  const nama = branding?.nama ?? 'Lentera';
+
+  const LogoTile = ({ size }: { size: 'sm' | 'lg' }) =>
+    branding?.logoUrl ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={branding.logoUrl}
+        alt="Logo perusahaan"
+        className={`${size === 'lg' ? 'w-14 h-14' : 'w-11 h-11'} rounded-xl object-contain bg-white border border-cream-200`}
+      />
+    ) : (
+      <div
+        className={`${size === 'lg' ? 'w-14 h-14 text-xl' : 'w-11 h-11 text-lg'} rounded-xl bg-sogan-500 grid place-items-center text-cream-50 font-bold`}
+      >
+        L
+      </div>
+    );
+
   return (
-    <main className="min-h-screen flex items-center justify-center bg-cream-100 p-6">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-md border border-cream-200 p-8">
-        <div className="flex items-center gap-3 mb-6">
-          {branding?.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={branding.logoUrl} alt="Logo perusahaan" className="w-12 h-12 rounded-xl object-contain bg-white border border-cream-200" />
-          ) : (
-            <div className="w-11 h-11 rounded-xl bg-sogan-500 grid place-items-center text-cream-50 font-bold text-lg">L</div>
-          )}
+    <main className="min-h-screen flex bg-cream-100">
+      {/* Panel brand (batik) — desktop */}
+      <aside className="hidden lg:flex lg:w-[44%] flex-col justify-between p-12 bg-sogan-500 text-cream-50 batik-overlay overflow-hidden">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-white/10 border border-cream-50/20 grid place-items-center font-display text-2xl font-semibold">
+            L
+          </div>
           <div>
-            <div className="font-display text-2xl font-semibold text-tanah-700">{branding?.nama ?? 'Lentera'}</div>
-            <div className="text-[10px] tracking-[0.14em] uppercase text-sogan-500 font-bold">
-              {branding?.nama ? 'Lentera · Akuntansi & Pajak' : 'Akuntansi · Pajak'}
+            <div className="font-display text-xl font-semibold">Lentera</div>
+            <div className="text-[10px] tracking-[0.14em] uppercase text-emas-300 font-bold">
+              Akuntansi &amp; Pajak
             </div>
           </div>
         </div>
-        <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-1">Masuk ke akun</h1>
-        <p className="text-sm text-tanah-500 mb-6">Sistem akuntansi & pajak Indonesia.</p>
 
-        {sp.session_expired && (
-          <div className="mb-4 px-3 py-2 rounded-lg bg-emas-100 border border-emas-300 text-sm text-emas-700">
-            Sesi sudah berakhir. Silakan masuk ulang.
-          </div>
-        )}
+        <div>
+          <h2 className="font-display text-4xl font-semibold leading-tight">
+            Akuntansi &amp; pajak Indonesia, dalam satu sistem yang rapi.
+          </h2>
+          <ul className="mt-8 space-y-3">
+            {FITUR.map((f) => (
+              <li key={f} className="flex items-center gap-3">
+                <span className="w-5 h-5 rounded-full bg-cream-50/15 grid place-items-center text-emas-300">
+                  <Icon name="check" size={14} />
+                </span>
+                <span className="text-cream-100 text-sm">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        <form action={loginAction} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-tanah-700 mb-1">Email</label>
-            <input
-              name="email"
-              type="email"
-              required
-              defaultValue="owner@lentera.id"
-              className="w-full px-3 py-2.5 bg-cream-50 border border-cream-300 rounded-lg text-tanah-700 focus:outline-none focus:border-sogan-500 focus:shadow-focus"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-tanah-700 mb-1">Password</label>
-            <input
-              name="password"
-              type="password"
-              required
-              defaultValue="lentera123"
-              className="w-full px-3 py-2.5 bg-cream-50 border border-cream-300 rounded-lg text-tanah-700 focus:outline-none focus:border-sogan-500 focus:shadow-focus"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full py-2.5 bg-sogan-500 hover:bg-sogan-600 text-cream-50 rounded-lg font-semibold transition"
-          >
-            Masuk
-          </button>
-        </form>
+        <div className="text-[11px] text-cream-100/70">
+          © 2026 Lentera · Sistem akuntansi &amp; pajak multi-tenant.
+        </div>
+      </aside>
 
-        <p className="text-xs text-tanah-300 mt-6 text-center">
-          Demo: <code className="font-mono">owner@lentera.id</code> /{' '}
-          <code className="font-mono">lentera123</code>
-        </p>
+      {/* Panel form */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <div className="flex items-center gap-3 mb-8">
+            <LogoTile size="lg" />
+            <div>
+              <div className="font-display text-2xl font-semibold text-tanah-700 leading-tight">{nama}</div>
+              <div className="text-[10px] tracking-[0.14em] uppercase text-sogan-500 font-bold">
+                {branding?.nama ? 'via Lentera' : 'Akuntansi · Pajak'}
+              </div>
+            </div>
+          </div>
+
+          <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-1">Masuk ke akun</h1>
+          <p className="text-sm text-tanah-500 mb-6">Sistem akuntansi &amp; pajak Indonesia.</p>
+
+          {sp.session_expired && (
+            <div className="mb-4 px-3 py-2 rounded-lg bg-emas-100 border border-emas-300 text-sm text-emas-700">
+              Sesi sudah berakhir. Silakan masuk ulang.
+            </div>
+          )}
+
+          <form action={loginAction} className="space-y-4">
+            <FormField label="Email" htmlFor="email">
+              <Input id="email" name="email" type="email" required defaultValue="owner@lentera.id" />
+            </FormField>
+            <FormField label="Password" htmlFor="password">
+              <Input id="password" name="password" type="password" required defaultValue="lentera123" />
+            </FormField>
+            <Button type="submit" className="w-full" size="md">
+              Masuk
+            </Button>
+          </form>
+
+          <p className="text-xs text-tanah-300 mt-6 text-center">
+            Demo: <code className="font-mono text-tanah-500">owner@lentera.id</code> /{' '}
+            <code className="font-mono text-tanah-500">lentera123</code>
+          </p>
+        </div>
       </div>
     </main>
   );

@@ -39,6 +39,7 @@ export type IconName =
   | 'menu'
   | 'close'
   | 'logout'
+  | 'check'
   | 'chevron-down';
 
 import type { ReactNode } from 'react';
@@ -287,6 +288,7 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   'chevron-down': <polyline points="6 9 12 15 18 9" />,
+  check: <polyline points="4 12 9 17 20 6" />,
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {

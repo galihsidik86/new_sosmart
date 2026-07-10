@@ -1,6 +1,7 @@
 import { getSession, getActiveTenantId } from '@/lib/session';
 import { apiFetch } from '@/lib/api';
 import { Topbar } from '@/components/Topbar';
+import { PageHeader, PageContainer, StatCard, Card, Badge } from '@/components/ui';
 
 interface CabangRow { id: string; kode: string; nama: string; isPusat: boolean; npwpCabang: string | null }
 interface PeriodYear {
@@ -77,30 +78,30 @@ export default async function Dashboard() {
   return (
     <>
       <Topbar breadcrumb="Dashboard" tenantNama={s.tenantNama!} periodeLabel={periodAktif?.label} />
-      <div className="px-8 py-8 max-w-7xl mx-auto w-full">
-        <h1 className="font-display text-4xl font-semibold text-wedel-900 mb-2">
-          Halo, {s.user.nama.split(' ')[0]}
-        </h1>
-        <p className="text-tanah-500 mb-8">
-          {hasFinance ? (
-            <>Ringkasan keuangan {s.tenantNama} — Tahun Buku {fy?.kode}, posisi s/d <span className="font-semibold text-wedel-900">{refPeriod?.label}</span>. {nClosed} dari {periods.length} periode sudah ditutup.</>
-          ) : (
-            <>Tahun Buku {fy?.kode ?? '—'} siap. Mulai catat transaksi untuk melihat ringkasan keuangan di sini.</>
-          )}
-        </p>
+      <PageContainer>
+        <PageHeader
+          title={`Halo, ${s.user.nama.split(' ')[0]}`}
+          subtitle={
+            hasFinance ? (
+              <>Ringkasan keuangan {s.tenantNama} — Tahun Buku {fy?.kode}, posisi s/d <span className="font-semibold text-wedel-900">{refPeriod?.label}</span>. {nClosed} dari {periods.length} periode sudah ditutup.</>
+            ) : (
+              <>Tahun Buku {fy?.kode ?? '—'} siap. Mulai catat transaksi untuk melihat ringkasan keuangan di sini.</>
+            )
+          }
+        />
 
         {hasFinance && (
           <>
             <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-              <StatCard label="Pendapatan YTD" value={compactRp(pendapatanYtd)} accent="wedel" />
-              <StatCard label="Laba Bersih YTD" value={compactRp(labaYtd)} accent={labaYtd < 0 ? 'bata' : 'padi'} />
-              <StatCard label="Margin Bersih" value={`${margin.toLocaleString('id-ID', { maximumFractionDigits: 1 })}%`} accent="emas" />
-              <StatCard label="Total Aset" value={compactRp(totalAset)} accent="wedel" />
-              <StatCard label="Piutang Usaha" value={compactRp(piutang)} accent="tanah" />
-              <StatCard label="Utang Usaha" value={compactRp(utang)} accent="tanah" />
+              <StatCard label="Pendapatan YTD" value={compactRp(pendapatanYtd)} />
+              <StatCard label="Laba Bersih YTD" value={compactRp(labaYtd)} tone={labaYtd < 0 ? 'danger' : 'success'} />
+              <StatCard label="Margin Bersih" value={`${margin.toLocaleString('id-ID', { maximumFractionDigits: 1 })}%`} tone="warning" />
+              <StatCard label="Total Aset" value={compactRp(totalAset)} />
+              <StatCard label="Piutang Usaha" value={compactRp(piutang)} tone="muted" />
+              <StatCard label="Utang Usaha" value={compactRp(utang)} tone="muted" />
             </section>
 
-            <section className="bg-white rounded-xl border border-cream-200 shadow-sm p-6 mb-6">
+            <Card padding="lg" className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold">
                   Pendapatan &amp; Laba Bersih per Bulan
@@ -133,19 +134,19 @@ export default async function Dashboard() {
                   <div key={i} className="flex-1 text-center text-[11px] font-semibold text-tanah-500">{m.label}</div>
                 ))}
               </div>
-            </section>
+            </Card>
           </>
         )}
 
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Cabang" value={String(cabang.length)} accent="tanah" small />
-          <StatCard label="Item / Jasa" value={String(items.length)} accent="tanah" small />
-          <StatCard label="Vendor" value={String(vendors.length)} accent="tanah" small />
-          <StatCard label="Pelanggan" value={String(customers.length)} accent="tanah" small />
+          <StatCard label="Cabang" value={String(cabang.length)} tone="muted" />
+          <StatCard label="Item / Jasa" value={String(items.length)} tone="muted" />
+          <StatCard label="Vendor" value={String(vendors.length)} tone="muted" />
+          <StatCard label="Pelanggan" value={String(customers.length)} tone="muted" />
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-6">
+          <Card padding="lg">
             <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Cabang</div>
             <ul className="space-y-2">
               {cabang.map((c) => (
@@ -156,15 +157,13 @@ export default async function Dashboard() {
                       {c.kode}{c.npwpCabang ? ` · NPWP ${c.npwpCabang}` : ''}
                     </div>
                   </div>
-                  {c.isPusat && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-emas-100 text-emas-700 px-2 py-1 rounded">Pusat</span>
-                  )}
+                  {c.isPusat && <Badge variant="warning">Pusat</Badge>}
                 </li>
               ))}
             </ul>
-          </div>
+          </Card>
 
-          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-6">
+          <Card padding="lg">
             <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Tahun Buku {fy?.kode}</div>
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 text-center">
               {periods.map((p) => (
@@ -178,24 +177,9 @@ export default async function Dashboard() {
               ))}
             </div>
             <div className="text-xs text-tanah-500 mt-3">{nClosed} dari {periods.length} periode sudah ditutup.</div>
-          </div>
+          </Card>
         </section>
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-const ACCENT: Record<string, string> = {
-  wedel: 'text-wedel-900', padi: 'text-padi-700', bata: 'text-bata-700', emas: 'text-emas-700', tanah: 'text-tanah-700',
-};
-
-function StatCard({ label, value, accent = 'wedel', small = false }: { label: string; value: string; accent?: string; small?: boolean }) {
-  return (
-    <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
-      <div className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold">{label}</div>
-      <div className={`font-display font-semibold mt-2 tabular-nums ${small ? 'text-3xl' : 'text-2xl'} ${ACCENT[accent] ?? ACCENT.wedel}`}>
-        {value}
-      </div>
-    </div>
   );
 }
