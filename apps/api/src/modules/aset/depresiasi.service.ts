@@ -81,12 +81,15 @@ export class DepresiasiService {
 
     if (nilaiBuku.lte(residu)) return new Decimal(0);
 
+    // Penyusutan bulanan dibulatkan ke rupiah penuh (konvensi Indonesia — sen
+    // praktis tidak dipakai). Ini menghindari ekor pecahan sen (mis. ",04")
+    // yang menumpuk di akumulasi & laporan keuangan.
     let mvm: Decimal;
     if (aset.metode === MetodePenyusutan.GARIS_LURUS) {
-      mvm = hp.minus(residu).div(aset.masaManfaatBulan).toDecimalPlaces(2);
+      mvm = hp.minus(residu).div(aset.masaManfaatBulan).toDecimalPlaces(0);
     } else {
       // Saldo menurun: tarif_bulanan = 2/masaManfaatBulan * nilai buku berjalan.
-      mvm = nilaiBuku.mul(2).div(aset.masaManfaatBulan).toDecimalPlaces(2);
+      mvm = nilaiBuku.mul(2).div(aset.masaManfaatBulan).toDecimalPlaces(0);
     }
     // Cap supaya nilai buku tidak jatuh di bawah residu.
     const maxAllowed = nilaiBuku.minus(residu);
