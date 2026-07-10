@@ -16,3 +16,4 @@ export { Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow } from './Table';
 export { StatCard } from './StatCard';
 export { Modal } from './Modal';
 export { Segmented, type SegmentedOption } from './Segmented';
+export { Icon, type IconName } from './icons';
