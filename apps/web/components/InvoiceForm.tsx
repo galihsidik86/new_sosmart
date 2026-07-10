@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
+import { Card, Button, FormField, Input, Select } from './ui';
 
 type Klasifikasi = 'BKP' | 'JKP' | 'NON_BKP' | 'BKP_STRATEGIS' | 'BEBAS_PPN';
 
@@ -282,66 +283,54 @@ export function InvoiceForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <section className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+      <Card>
         <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tanggal</label>
-            <input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} required
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Cabang</label>
+          <FormField label="Tanggal">
+            <Input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} required />
+          </FormField>
+          <FormField label="Cabang">
             {cabang.length <= 1 ? (
-              <div className="w-full px-2.5 py-2 bg-cream-100 border border-cream-300 rounded-md text-sm text-tanah-700">
+              <div className="w-full px-3 py-2 bg-cream-100 border border-cream-300 rounded-lg text-sm text-tanah-700">
                 {cabang[0] ? `${cabang[0].kode} — ${cabang[0].nama}` : '—'}
               </div>
             ) : (
-              <select value={cabangId} onChange={(e) => setCabangId(e.target.value)} required
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <Select value={cabangId} onChange={(e) => setCabangId(e.target.value)} required>
                 {cabang.map((c) => (
                   <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
                 ))}
-              </select>
+              </Select>
             )}
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">{partyLabel}</label>
-            <select value={partyId} onChange={(e) => setPartyId(e.target.value)} required
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+          </FormField>
+          <FormField label={partyLabel}>
+            <Select value={partyId} onChange={(e) => setPartyId(e.target.value)} required>
               {parties.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.kode} — {p.nama}{p.isPkp ? ' (PKP)' : ''}
                 </option>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Termin</label>
-            <select value={termin} onChange={(e) => setTermin(e.target.value as 'TUNAI' | 'KREDIT')}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+            </Select>
+          </FormField>
+          <FormField label="Termin">
+            <Select value={termin} onChange={(e) => setTermin(e.target.value as 'TUNAI' | 'KREDIT')}>
               <option value="KREDIT">KREDIT (termin {party?.terminHari ?? 0} hari)</option>
               <option value="TUNAI">TUNAI</option>
-            </select>
-          </div>
+            </Select>
+          </FormField>
           {termin === 'TUNAI' && (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akun Kas/Bank</label>
-              <select value={kasBankId} onChange={(e) => setKasBankId(e.target.value)}
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
+            <FormField label="Akun Kas/Bank">
+              <Select value={kasBankId} onChange={(e) => setKasBankId(e.target.value)} className="font-mono">
                 {kasBankAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.kode} — {a.nama}</option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </FormField>
           )}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tarif PPN</label>
-            <select value={tarifPpn} onChange={(e) => setTarifPpn(Number(e.target.value) as 11 | 12)}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+          <FormField label="Tarif PPN">
+            <Select value={tarifPpn} onChange={(e) => setTarifPpn(Number(e.target.value) as 11 | 12)}>
               <option value={11}>11% (PMK 131/2024 — DPP nilai lain)</option>
               <option value={12}>12% (BKP mewah, DPP penuh)</option>
-            </select>
-          </div>
+            </Select>
+          </FormField>
           <label className="flex items-end gap-2 text-sm text-tanah-700 pb-2">
             <input type="checkbox" checked={hargaTermasukPajak}
               onChange={(e) => setHargaTermasukPajak(e.target.checked)} />
@@ -354,37 +343,30 @@ export function InvoiceForm({
           </label>
           {mode === 'purchase' && (
             <>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">PPh 23</label>
-                <select value={tarifPph23} onChange={(e) => setTarifPph23(Number(e.target.value) as 0 | 2 | 15)}
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <FormField label="PPh 23">
+                <Select value={tarifPph23} onChange={(e) => setTarifPph23(Number(e.target.value) as 0 | 2 | 15)}>
                   <option value={0}>0% (tidak potong)</option>
                   <option value={2}>2% (jasa)</option>
                   <option value={15}>15% (royalti/dividen/bunga)</option>
-                </select>
-              </div>
+                </Select>
+              </FormField>
               <label className="flex items-end gap-2 text-sm text-tanah-700 pb-2">
                 <input type="checkbox" checked={potongPph23} onChange={(e) => setPotongPph23(e.target.checked)} />
                 Potong PPh 23
               </label>
             </>
           )}
-          <div className="col-span-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Deskripsi</label>
-            <input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)}
-              placeholder="(opsional)"
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-          </div>
-          <div className="col-span-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span>
-            </label>
-            <input type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)}
-              placeholder="https://drive.google.com/…"
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono" />
-          </div>
+          <FormField label="Deskripsi" className="col-span-3">
+            <Input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} placeholder="(opsional)" />
+          </FormField>
+          <FormField
+            className="col-span-3"
+            label={<>Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span></>}
+          >
+            <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />
+          </FormField>
         </div>
-      </section>
+      </Card>
 
       <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
         <table className="w-full text-xs">
@@ -494,14 +476,11 @@ export function InvoiceForm({
           </tbody>
         </table>
         <div className="bg-cream-50 px-3 py-2 border-t border-cream-200">
-          <button type="button" onClick={addLine}
-            className="text-xs px-2.5 py-1.5 bg-white border border-cream-300 rounded-md text-tanah-700 hover:bg-cream-100">
-            + Tambah baris
-          </button>
+          <Button type="button" variant="secondary" size="sm" onClick={addLine}>+ Tambah baris</Button>
         </div>
       </section>
 
-      <section className="bg-white rounded-xl border border-cream-200 shadow-sm p-5 grid grid-cols-2 gap-6">
+      <Card className="grid grid-cols-2 gap-6">
         <div>
           <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-2">Ringkasan</div>
           <dl className="text-sm space-y-1.5">
@@ -523,12 +502,11 @@ export function InvoiceForm({
         </div>
         <div className="flex flex-col justify-end items-end">
           {error && <div className="text-bata-700 text-xs mb-2 max-w-sm text-right">{error}</div>}
-          <button type="submit" disabled={submitting}
-            className="px-4 py-2.5 bg-sogan-500 hover:bg-sogan-600 disabled:bg-cream-400 text-cream-50 rounded-lg text-sm font-semibold">
+          <Button type="submit" disabled={submitting}>
             {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
-          </button>
+          </Button>
         </div>
-      </section>
+      </Card>
     </form>
   );
 }

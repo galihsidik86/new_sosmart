@@ -12,6 +12,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { canCancelPosted, canPostAccounting } from '@/lib/roles';
 import { runWithApprover } from '@/lib/stepUp';
 import { fmtPlain, fmtRp, fmtTanggal, fmtNpwp } from '@/lib/format';
+import { PageContainer, PageHeader, Card, StatusBadge, Button, buttonClass } from '@/components/ui';
 
 type Status = 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
 
@@ -138,66 +139,64 @@ export default async function PenjualanDetailPage({
   return (
     <>
       <Topbar breadcrumb={`Penjualan / ${inv.nomor ?? 'Draft'}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              {inv.nomor ?? '— Draft —'}
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
+      <PageContainer size="form">
+        <PageHeader
+          title={inv.nomor ?? '— Draft —'}
+          subtitle={
+            <>
               {fmtTanggal(inv.tanggal)} · jatuh tempo {fmtTanggal(inv.jatuhTempo)} ·
               cabang {inv.cabang.kode} · termin {inv.termin}
-            </p>
-            {inv.journalId && (
-              <p className="text-xs text-tanah-500 mt-1">
-                Jurnal terkait:{' '}
-                <Link href={`/pembukuan/jurnal/${inv.journalId}`}
-                  className="text-sogan-500 font-mono hover:underline">
-                  lihat jurnal
-                </Link>
-              </p>
-            )}
-            {inv.linkBukti && (
-              <p className="text-xs mt-1">
-                <span className="text-tanah-500 mr-1">Bukti:</span>
-                <LinkBukti url={inv.linkBukti} variant="full" />
-              </p>
-            )}
-            {inv.postedBy && (
-              <p className="text-xs text-tanah-500 mt-1">
-                Diposting oleh <span className="font-semibold text-tanah-700">{inv.postedBy.nama}</span> ({inv.postedBy.email})
-                {inv.postedRequestedBy && (
-                  <> · atas permintaan <span className="font-semibold text-tanah-700">{inv.postedRequestedBy.nama}</span> ({inv.postedRequestedBy.email})</>
-                )}
-              </p>
-            )}
-            {inv.cancelledBy && (
-              <p className="text-xs text-bata-700 mt-1">
-                Dibatalkan oleh <span className="font-semibold">{inv.cancelledBy.nama}</span> ({inv.cancelledBy.email})
-                {inv.cancelledRequestedBy && (
-                  <> · atas permintaan <span className="font-semibold">{inv.cancelledRequestedBy.nama}</span> ({inv.cancelledRequestedBy.email})</>
-                )}
-              </p>
-            )}
-          </div>
-          <StatusBadge status={inv.status} />
-        </div>
+              {inv.journalId && (
+                <span className="block text-xs text-tanah-500 mt-1">
+                  Jurnal terkait:{' '}
+                  <Link href={`/pembukuan/jurnal/${inv.journalId}`}
+                    className="text-sogan-500 font-mono hover:underline">
+                    lihat jurnal
+                  </Link>
+                </span>
+              )}
+              {inv.linkBukti && (
+                <span className="block text-xs mt-1">
+                  <span className="text-tanah-500 mr-1">Bukti:</span>
+                  <LinkBukti url={inv.linkBukti} variant="full" />
+                </span>
+              )}
+              {inv.postedBy && (
+                <span className="block text-xs text-tanah-500 mt-1">
+                  Diposting oleh <span className="font-semibold text-tanah-700">{inv.postedBy.nama}</span> ({inv.postedBy.email})
+                  {inv.postedRequestedBy && (
+                    <> · atas permintaan <span className="font-semibold text-tanah-700">{inv.postedRequestedBy.nama}</span> ({inv.postedRequestedBy.email})</>
+                  )}
+                </span>
+              )}
+              {inv.cancelledBy && (
+                <span className="block text-xs text-bata-700 mt-1">
+                  Dibatalkan oleh <span className="font-semibold">{inv.cancelledBy.nama}</span> ({inv.cancelledBy.email})
+                  {inv.cancelledRequestedBy && (
+                    <> · atas permintaan <span className="font-semibold">{inv.cancelledRequestedBy.nama}</span> ({inv.cancelledRequestedBy.email})</>
+                  )}
+                </span>
+              )}
+            </>
+          }
+          actions={<StatusBadge status={inv.status} />}
+        />
 
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white border border-cream-200 rounded-xl p-4 shadow-sm">
+          <Card padding="sm">
             <div className="text-[10px] uppercase tracking-wider text-tanah-500 font-bold">Pelanggan</div>
             <div className="font-semibold text-tanah-700 mt-1">{inv.customer.nama}</div>
             <div className="text-xs text-tanah-500 font-mono">{inv.customer.kode}</div>
             <div className="text-xs text-tanah-500 mt-1">
               NPWP {fmtNpwp(inv.customer.npwp)} {inv.customer.isPkp && <span className="text-padi-700 font-semibold ml-1">PKP</span>}
             </div>
-          </div>
-          <div className="bg-white border border-cream-200 rounded-xl p-4 shadow-sm">
+          </Card>
+          <Card padding="sm">
             <div className="text-[10px] uppercase tracking-wider text-tanah-500 font-bold">Akun AR</div>
             <div className="font-semibold text-tanah-700 font-mono mt-1">{inv.akunAr.kode}</div>
             <div className="text-xs text-tanah-500">{inv.akunAr.nama}</div>
             <div className="text-xs text-tanah-500 mt-2">Periode: {inv.fiscalPeriod.label}</div>
-          </div>
+          </Card>
         </div>
 
         <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">
@@ -267,7 +266,7 @@ export default async function PenjualanDetailPage({
             href={`/proxy/sales-invoices/${inv.id}/print.pdf`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-bata-100 hover:bg-bata-200 text-bata-700 font-semibold rounded-lg text-sm border border-bata-300"
+            className={buttonClass('soft-bata')}
           >
             Preview PDF
           </a>
@@ -281,15 +280,15 @@ export default async function PenjualanDetailPage({
               />
               <Link
                 href={`/transaksi/penjualan/${inv.id}/edit` as Route}
-                className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"
+                className={buttonClass('secondary')}
               >
                 Edit Draft
               </Link>
               <form action={deleteAction}>
                 <input type="hidden" name="id" value={inv.id} />
-                <button className="px-4 py-2 bg-cream-200 hover:bg-cream-300 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-400">
+                <Button type="submit" variant="secondary">
                   Hapus Draft
-                </button>
+                </Button>
               </form>
             </>
           )}
@@ -298,9 +297,9 @@ export default async function PenjualanDetailPage({
               <input type="hidden" name="id" value={inv.id} />
               <input name="alasan" required minLength={5} placeholder="Alasan pembatalan…"
                 className="px-3 py-2 bg-white border border-cream-300 rounded-md text-sm w-72" />
-              <button className="px-4 py-2 bg-bata-500 hover:bg-bata-700 text-cream-50 font-semibold rounded-lg text-sm">
+              <Button type="submit" variant="danger">
                 Batalkan
-              </button>
+              </Button>
             </form>
           )}
           {(inv.status === 'POSTED' || inv.status === 'PARTIAL') && !mayCancel && s.role === 'AKUNTAN' && (
@@ -315,22 +314,7 @@ export default async function PenjualanDetailPage({
             />
           )}
         </div>
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function StatusBadge({ status }: { status: Status }) {
-  const m = {
-    DRAFT: 'bg-emas-100 text-emas-700',
-    POSTED: 'bg-padi-100 text-padi-700',
-    PARTIAL: 'bg-sogan-50 text-sogan-500',
-    PAID: 'bg-padi-300 text-padi-700',
-    CANCELLED: 'bg-cream-200 text-tanah-500 line-through',
-  }[status];
-  return (
-    <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${m}`}>
-      {status}
-    </span>
   );
 }

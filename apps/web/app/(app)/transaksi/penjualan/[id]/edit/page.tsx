@@ -3,6 +3,7 @@ import { Topbar } from '@/components/Topbar';
 import { InvoiceForm } from '@/components/InvoiceForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { PageContainer, PageHeader } from '@/components/ui';
 
 interface Item {
   id: string; kode: string; nama: string; satuan: string;
@@ -70,10 +71,8 @@ export default async function PenjualanEditPage({ params }: { params: Promise<{ 
   return (
     <>
       <Topbar breadcrumb="Penjualan / Edit Draft" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-6">
-          Edit Draft Faktur
-        </h1>
+      <PageContainer size="form">
+        <PageHeader title="Edit Draft Faktur" />
         <InvoiceForm
           mode="sales"
           items={items.filter((i) => i.isAktif || inv.lines.some((l) => l.itemId === i.id))}
@@ -111,7 +110,7 @@ export default async function PenjualanEditPage({ params }: { params: Promise<{ 
               })),
           }}
         />
-      </div>
+      </PageContainer>
     </>
   );
 }

@@ -11,6 +11,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting, canPostCashBank } from '@/lib/roles';
 import { fmtPlain, fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, Card, StatusBadge, Button, buttonClass } from '@/components/ui';
 
 interface Detail {
   id: string;
@@ -100,48 +101,42 @@ export default async function KasBankDetailPage({
   return (
     <>
       <Topbar breadcrumb={`Kas/Bank / ${e.nomor ?? 'Draft'}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-4xl mx-auto w-full">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              {e.nomor ?? '— Draft —'}
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
+      <PageContainer size="form">
+        <PageHeader
+          title={e.nomor ?? '— Draft —'}
+          subtitle={
+            <>
               {fmtTanggal(e.tanggal)} · {e.tipe} · {e.akunKasBank.kode} {e.akunKasBank.nama}
-            </p>
-            {e.journalId && (
-              <p className="text-xs text-tanah-500 mt-1">
-                Jurnal:{' '}
-                <Link href={`/pembukuan/jurnal/${e.journalId}`}
-                  className="text-sogan-500 font-mono hover:underline">lihat</Link>
-              </p>
-            )}
-            {(e.salesInvoiceId || e.purchaseInvoiceId) && (
-              <p className="text-xs text-tanah-500 mt-1">
-                Pelunasan untuk:{' '}
-                <Link
-                  href={e.salesInvoiceId ? `/transaksi/penjualan/${e.salesInvoiceId}` : `/transaksi/pembelian/${e.purchaseInvoiceId}`}
-                  className="text-sogan-500 hover:underline"
-                >
-                  faktur terkait
-                </Link>
-              </p>
-            )}
-            {e.linkBukti && (
-              <p className="text-xs mt-1">
-                <span className="text-tanah-500 mr-1">Bukti:</span>
-                <LinkBukti url={e.linkBukti} variant="full" />
-              </p>
-            )}
-          </div>
-          <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${
-            e.status === 'POSTED' ? 'bg-padi-100 text-padi-700' :
-            e.status === 'DRAFT' ? 'bg-emas-100 text-emas-700' :
-            'bg-cream-200 text-tanah-500'
-          }`}>{e.status}</span>
-        </div>
+              {e.journalId && (
+                <span className="block text-xs text-tanah-500 mt-1">
+                  Jurnal:{' '}
+                  <Link href={`/pembukuan/jurnal/${e.journalId}`}
+                    className="text-sogan-500 font-mono hover:underline">lihat</Link>
+                </span>
+              )}
+              {(e.salesInvoiceId || e.purchaseInvoiceId) && (
+                <span className="block text-xs text-tanah-500 mt-1">
+                  Pelunasan untuk:{' '}
+                  <Link
+                    href={e.salesInvoiceId ? `/transaksi/penjualan/${e.salesInvoiceId}` : `/transaksi/pembelian/${e.purchaseInvoiceId}`}
+                    className="text-sogan-500 hover:underline"
+                  >
+                    faktur terkait
+                  </Link>
+                </span>
+              )}
+              {e.linkBukti && (
+                <span className="block text-xs mt-1">
+                  <span className="text-tanah-500 mr-1">Bukti:</span>
+                  <LinkBukti url={e.linkBukti} variant="full" />
+                </span>
+              )}
+            </>
+          }
+          actions={<StatusBadge status={e.status} />}
+        />
 
-        <div className="bg-white border border-cream-200 rounded-xl p-5 shadow-sm mb-6">
+        <Card padding="md" className="mb-6">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <div className="text-[10px] uppercase tracking-wider text-tanah-500 font-bold">Kontak</div>
@@ -162,7 +157,7 @@ export default async function KasBankDetailPage({
               </div>
             </div>
           </div>
-        </div>
+        </Card>
 
         {e.lines.length > 0 && (
           <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">
@@ -219,7 +214,7 @@ export default async function KasBankDetailPage({
               )}
               <Link
                 href={`/transaksi/kas-bank/${e.id}/edit` as Route}
-                className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"
+                className={buttonClass('secondary')}
               >
                 Edit Draft
               </Link>
@@ -230,13 +225,13 @@ export default async function KasBankDetailPage({
               <input type="hidden" name="id" value={e.id} />
               <input name="alasan" required minLength={5} placeholder="Alasan pembatalan…"
                 className="px-3 py-2 bg-white border border-cream-300 rounded-md text-sm w-72" />
-              <button className="px-4 py-2 bg-bata-500 hover:bg-bata-700 text-cream-50 font-semibold rounded-lg text-sm">
+              <Button type="submit" variant="danger">
                 Batalkan
-              </button>
+              </Button>
             </form>
           )}
         </div>
-      </div>
+      </PageContainer>
     </>
   );
 }

@@ -3,6 +3,7 @@ import { Topbar } from '@/components/Topbar';
 import { CashBankForm } from '@/components/CashBankForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { PageContainer, PageHeader } from '@/components/ui';
 
 interface Account { id: string; kode: string; nama: string; isPostable: boolean }
 interface Cabang { id: string; kode: string; nama: string }
@@ -58,17 +59,15 @@ export default async function KasBankBaruPage() {
   return (
     <>
       <Topbar breadcrumb="Kas/Bank / Baru" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-6">
-          Bukti Kas / Bank Baru
-        </h1>
+      <PageContainer size="form">
+        <PageHeader title="Bukti Kas / Bank Baru" />
         <CashBankForm
           accounts={accounts} kasBank={kasBank} cabang={cabang}
           openSales={openSales} openPurchases={openPurchases}
           projects={projects}
           submit={submitCashBank}
         />
-      </div>
+      </PageContainer>
     </>
   );
 }

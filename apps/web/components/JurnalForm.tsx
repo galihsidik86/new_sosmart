@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
+import { Card, Button, FormField, Input, Select, StatusBanner } from './ui';
 
 interface Account {
   id: string;
@@ -169,74 +170,43 @@ export function JurnalForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <section className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+      <Card>
         <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Tanggal
-            </label>
-            <input
-              type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Cabang
-            </label>
+          <FormField label="Tanggal">
+            <Input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} required />
+          </FormField>
+          <FormField label="Cabang">
             {cabang.length <= 1 ? (
-              <div className="w-full px-2.5 py-2 bg-cream-100 border border-cream-300 rounded-md text-sm text-tanah-700">
+              <div className="w-full px-3 py-2 bg-cream-100 border border-cream-300 rounded-lg text-sm text-tanah-700">
                 {cabang[0] ? `${cabang[0].kode} — ${cabang[0].nama}` : '—'}
               </div>
             ) : (
-              <select
-                value={cabangId} onChange={(e) => setCabangId(e.target.value)}
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-                required
-              >
+              <Select value={cabangId} onChange={(e) => setCabangId(e.target.value)} required>
                 {cabang.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.kode} — {c.nama}
-                  </option>
+                  <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
                 ))}
-              </select>
+              </Select>
             )}
-          </div>
-          <div className="col-start-1 col-span-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Deskripsi
-            </label>
-            <input
-              type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)}
-              placeholder="Penjualan tunai barang dagang"
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-              required
-            />
-          </div>
-          <div className="col-span-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span>
-            </label>
-            <input
-              type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)}
-              placeholder="https://drive.google.com/…"
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono"
-            />
-          </div>
+          </FormField>
+          <FormField label="Deskripsi" className="col-start-1 col-span-3">
+            <Input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} placeholder="Penjualan tunai barang dagang" required />
+          </FormField>
+          <FormField
+            className="col-span-3"
+            label={<>Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span></>}
+          >
+            <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />
+          </FormField>
         </div>
         <div className="mt-3 flex gap-2">
           <span className="text-xs text-tanah-500 self-center">Template cepat:</span>
           {TEMPLATES.map((t) => (
-            <button
-              key={t.label} type="button" onClick={() => applyTemplate(t)}
-              className="text-xs px-2.5 py-1.5 bg-cream-100 border border-cream-300 rounded-md text-tanah-700 hover:bg-cream-200"
-            >
+            <Button key={t.label} type="button" variant="secondary" size="sm" onClick={() => applyTemplate(t)}>
               {t.label}
-            </button>
+            </Button>
           ))}
         </div>
-      </section>
+      </Card>
 
       <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
@@ -324,12 +294,7 @@ export function JurnalForm({
           <tfoot>
             <tr className="border-t-2 border-cream-300 bg-cream-50">
               <td colSpan={showProjects ? 4 : 3} className="px-3 py-2.5">
-                <button
-                  type="button" onClick={addLine}
-                  className="text-xs px-2.5 py-1.5 bg-white border border-cream-300 rounded-md text-tanah-700 hover:bg-cream-100"
-                >
-                  + Tambah baris
-                </button>
+                <Button type="button" variant="secondary" size="sm" onClick={addLine}>+ Tambah baris</Button>
               </td>
               <td className="px-3 py-2.5 text-right font-mono tabular-nums font-bold text-tanah-700">
                 {totals.td.toLocaleString('id-ID')}
@@ -343,32 +308,23 @@ export function JurnalForm({
         </table>
       </section>
 
-      <div
-        className={`rounded-xl px-4 py-3 text-sm font-semibold flex items-center justify-between ${
-          totals.balanced
-            ? 'bg-padi-100 text-padi-700'
-            : totals.td > 0 || totals.tk > 0
-            ? 'bg-bata-100 text-bata-700'
-            : 'bg-cream-50 text-tanah-500'
-        }`}
+      <StatusBanner
+        tone={totals.balanced ? 'success' : totals.td > 0 || totals.tk > 0 ? 'danger' : 'neutral'}
+        right={
+          <div className="flex items-center gap-2">
+            {error && <span className="text-bata-700 text-xs">{error}</span>}
+            <Button type="submit" size="sm" disabled={submitting || !totals.balanced}>
+              {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
+            </Button>
+          </div>
+        }
       >
-        <span>
-          {totals.balanced
-            ? '✓ Seimbang — siap diposting'
-            : totals.td === totals.tk
-            ? 'Isi nominal debit & kredit dulu'
-            : `Belum seimbang — selisih Rp ${Math.abs(totals.diff).toLocaleString('id-ID')}`}
-        </span>
-        <div className="flex gap-2">
-          {error && <span className="text-bata-700 text-xs">{error}</span>}
-          <button
-            type="submit" disabled={submitting || !totals.balanced}
-            className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 disabled:bg-cream-400 disabled:cursor-not-allowed text-cream-50 rounded-lg text-sm font-semibold"
-          >
-            {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
-          </button>
-        </div>
-      </div>
+        {totals.balanced
+          ? '✓ Seimbang — siap diposting'
+          : totals.td === totals.tk
+          ? 'Isi nominal debit & kredit dulu'
+          : `Belum seimbang — selisih Rp ${Math.abs(totals.diff).toLocaleString('id-ID')}`}
+      </StatusBanner>
     </form>
   );
 }

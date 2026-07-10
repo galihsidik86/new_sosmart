@@ -4,6 +4,7 @@ import { LinkBukti } from '@/components/LinkBukti';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, StatusBadge, buttonClass, filterBarClass } from '@/components/ui';
 
 type Status = 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
 
@@ -34,29 +35,24 @@ export default async function PembelianPage({
   return (
     <>
       <Topbar breadcrumb="Pembelian" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Tagihan Pembelian
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              {rows.length} tagihan · vendor PKP → PPN masukan dikreditkan; jasa → potong PPh 23.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a href={`/proxy/purchase-invoices/export.xlsx${sp.status ? '?status=' + sp.status : ''}`}
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-              Export Excel
-            </a>
-            <Link href="/transaksi/pembelian/baru"
-              className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-              + Tagihan Baru
-            </Link>
-          </div>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Tagihan Pembelian"
+          subtitle={`${rows.length} tagihan · vendor PKP → PPN masukan dikreditkan; jasa → potong PPh 23.`}
+          actions={
+            <>
+              <a href={`/proxy/purchase-invoices/export.xlsx${sp.status ? '?status=' + sp.status : ''}`}
+                className={buttonClass('success')}>
+                Export Excel
+              </a>
+              <Link href="/transaksi/pembelian/baru" className={buttonClass('primary')}>
+                + Tagihan Baru
+              </Link>
+            </>
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-2 shadow-sm text-sm">
+        <form className={filterBarClass}>
           {(['', 'DRAFT', 'POSTED', 'PARTIAL', 'PAID', 'CANCELLED'] as const).map((st) => (
             <Link key={st || 'all'}
               href={st ? `/transaksi/pembelian?status=${st}` : '/transaksi/pembelian'}
@@ -121,22 +117,7 @@ export default async function PembelianPage({
             </tbody>
           </table>
         </div>
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function StatusBadge({ status }: { status: Status }) {
-  const m = {
-    DRAFT: 'bg-emas-100 text-emas-700',
-    POSTED: 'bg-padi-100 text-padi-700',
-    PARTIAL: 'bg-sogan-50 text-sogan-500',
-    PAID: 'bg-padi-300 text-padi-700',
-    CANCELLED: 'bg-cream-200 text-tanah-500 line-through',
-  }[status];
-  return (
-    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${m}`}>
-      {status}
-    </span>
   );
 }

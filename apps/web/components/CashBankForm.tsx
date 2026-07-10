@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
+import { Card, Button, FormField, Input, Select, StatusBanner } from './ui';
 
 type Tipe = 'RECEIPT' | 'PAYMENT' | 'TRANSFER';
 
@@ -157,84 +158,62 @@ export function CashBankForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <section className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+      <Card>
         <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tipe</label>
-            <select value={tipe} onChange={(e) => setTipe(e.target.value as Tipe)}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+          <FormField label="Tipe">
+            <Select value={tipe} onChange={(e) => setTipe(e.target.value as Tipe)}>
               <option value="RECEIPT">RECEIPT — kas/bank masuk (BKM/BBM)</option>
               <option value="PAYMENT">PAYMENT — kas/bank keluar (BKK/BBK)</option>
               <option value="TRANSFER">TRANSFER — mutasi antar akun</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tanggal</label>
-            <input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Cabang</label>
+            </Select>
+          </FormField>
+          <FormField label="Tanggal">
+            <Input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} />
+          </FormField>
+          <FormField label="Cabang">
             {cabang.length <= 1 ? (
-              <div className="w-full px-2.5 py-2 bg-cream-100 border border-cream-300 rounded-md text-sm text-tanah-700">
+              <div className="w-full px-3 py-2 bg-cream-100 border border-cream-300 rounded-lg text-sm text-tanah-700">
                 {cabang[0] ? `${cabang[0].kode} — ${cabang[0].nama}` : '—'}
               </div>
             ) : (
-              <select value={cabangId} onChange={(e) => setCabangId(e.target.value)}
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <Select value={cabangId} onChange={(e) => setCabangId(e.target.value)}>
                 {cabang.map((c) => (
                   <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
                 ))}
-              </select>
+              </Select>
             )}
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Akun Kas/Bank {tipe === 'TRANSFER' ? '(dari)' : ''}
-            </label>
-            <select value={akunKasBankId} onChange={(e) => setAkunKasBankId(e.target.value)}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
+          </FormField>
+          <FormField label={`Akun Kas/Bank ${tipe === 'TRANSFER' ? '(dari)' : ''}`}>
+            <Select value={akunKasBankId} onChange={(e) => setAkunKasBankId(e.target.value)} className="font-mono">
               {kasBank.map((a) => (
                 <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
           {tipe === 'TRANSFER' && (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akun Tujuan</label>
-              <select value={akunKasBankLawanId} onChange={(e) => setAkunKasBankLawanId(e.target.value)}
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
+            <FormField label="Akun Tujuan">
+              <Select value={akunKasBankLawanId} onChange={(e) => setAkunKasBankLawanId(e.target.value)} className="font-mono">
                 {kasBank.map((a) => (
                   <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </FormField>
           )}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Total (Rp)</label>
-            <input type="number" min={0} step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} required
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm text-right font-mono tabular-nums" />
-          </div>
-          <div className="col-span-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Kontak (pihak transaksi)</label>
-            <input type="text" value={kontak} onChange={(e) => setKontak(e.target.value)}
-              placeholder="(opsional)"
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Deskripsi</label>
-            <input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)}
-              placeholder="(opsional)"
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-          </div>
-          <div className="col-span-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan slip/foto struk)</span>
-            </label>
-            <input type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)}
-              placeholder="https://drive.google.com/…"
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono" />
-          </div>
+          <FormField label="Total (Rp)">
+            <Input numeric type="number" min={0} step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} required />
+          </FormField>
+          <FormField label="Kontak (pihak transaksi)" className="col-span-2">
+            <Input type="text" value={kontak} onChange={(e) => setKontak(e.target.value)} placeholder="(opsional)" />
+          </FormField>
+          <FormField label="Deskripsi">
+            <Input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} placeholder="(opsional)" />
+          </FormField>
+          <FormField
+            className="col-span-3"
+            label={<>Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan slip/foto struk)</span></>}
+          >
+            <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />
+          </FormField>
         </div>
 
         {(openSales.length > 0 || openPurchases.length > 0) && (
@@ -244,21 +223,19 @@ export function CashBankForm({
             </div>
             <div className="flex flex-wrap gap-1.5">
               {openSales.slice(0, 5).map((inv) => (
-                <button key={inv.id} type="button" onClick={() => applyPelunasanPiutang(inv)}
-                  className="text-xs px-2 py-1 bg-padi-100 border border-padi-300 rounded-md text-padi-700 hover:bg-padi-300 hover:text-padi-700">
+                <Button key={inv.id} type="button" variant="success" size="sm" onClick={() => applyPelunasanPiutang(inv)}>
                   ← {inv.nomor} {inv.vendorOrCustomer}
-                </button>
+                </Button>
               ))}
               {openPurchases.slice(0, 5).map((inv) => (
-                <button key={inv.id} type="button" onClick={() => applyPelunasanUtang(inv)}
-                  className="text-xs px-2 py-1 bg-bata-100 border border-bata-300 rounded-md text-bata-700 hover:bg-bata-300 hover:text-bata-700">
+                <Button key={inv.id} type="button" variant="soft-bata" size="sm" onClick={() => applyPelunasanUtang(inv)}>
                   → {inv.nomor} {inv.vendorOrCustomer}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
         )}
-      </section>
+      </Card>
 
       {tipe !== 'TRANSFER' && (
         <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
@@ -318,10 +295,7 @@ export function CashBankForm({
             <tfoot className="bg-cream-50 font-bold text-tanah-700">
               <tr>
                 <td colSpan={showProjects ? 4 : 3} className="px-3 py-2">
-                  <button type="button" onClick={addLine}
-                    className="text-xs px-2.5 py-1.5 bg-white border border-cream-300 rounded-md text-tanah-700 hover:bg-cream-100">
-                    + Tambah baris
-                  </button>
+                  <Button type="button" variant="secondary" size="sm" onClick={addLine}>+ Tambah baris</Button>
                 </td>
                 <td className="px-3 py-2 text-right font-mono tabular-nums">
                   {sumLines.toLocaleString('id-ID')}
@@ -333,22 +307,21 @@ export function CashBankForm({
         </section>
       )}
 
-      <div className={`rounded-xl px-4 py-3 text-sm font-semibold flex items-center justify-between ${
-        balanced ? 'bg-padi-100 text-padi-700' : 'bg-bata-100 text-bata-700'
-      }`}>
-        <span>
-          {balanced
-            ? '✓ Seimbang — siap diposting'
-            : `Selisih: ${(sumLines - totalNum).toLocaleString('id-ID')}`}
-        </span>
-        <div className="flex gap-2">
-          {error && <span className="text-bata-700 text-xs">{error}</span>}
-          <button type="submit" disabled={submitting || !balanced}
-            className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 disabled:bg-cream-400 text-cream-50 rounded-lg text-sm font-semibold">
-            {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
-          </button>
-        </div>
-      </div>
+      <StatusBanner
+        tone={balanced ? 'success' : 'danger'}
+        right={
+          <div className="flex items-center gap-2">
+            {error && <span className="text-bata-700 text-xs">{error}</span>}
+            <Button type="submit" size="sm" disabled={submitting || !balanced}>
+              {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
+            </Button>
+          </div>
+        }
+      >
+        {balanced
+          ? '✓ Seimbang — siap diposting'
+          : `Selisih: ${(sumLines - totalNum).toLocaleString('id-ID')}`}
+      </StatusBanner>
     </form>
   );
 }

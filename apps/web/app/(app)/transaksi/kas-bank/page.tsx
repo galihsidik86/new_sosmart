@@ -4,6 +4,7 @@ import { LinkBukti } from '@/components/LinkBukti';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, StatusBadge, Badge, buttonClass, filterBarClass, type BadgeVariant } from '@/components/ui';
 
 type Tipe = 'RECEIPT' | 'PAYMENT' | 'TRANSFER';
 type Status = 'DRAFT' | 'POSTED' | 'CANCELLED';
@@ -22,10 +23,10 @@ interface Row {
   cabang: { kode: string };
 }
 
-const TIPE_BADGE: Record<Tipe, string> = {
-  RECEIPT: 'bg-padi-100 text-padi-700',
-  PAYMENT: 'bg-bata-100 text-bata-700',
-  TRANSFER: 'bg-cream-300 text-tanah-700',
+const TIPE_BADGE: Record<Tipe, BadgeVariant> = {
+  RECEIPT: 'success',
+  PAYMENT: 'danger',
+  TRANSFER: 'neutral',
 };
 
 export default async function KasBankPage({
@@ -40,29 +41,24 @@ export default async function KasBankPage({
   return (
     <>
       <Topbar breadcrumb="Kas / Bank" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Bukti Kas & Bank
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              BKM/BKK untuk kas keluar-masuk · BMT untuk mutasi antar akun · pelunasan AR/AP otomatis update status faktur.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a href={`/proxy/cash-bank/export.xlsx${sp.tipe ? '?tipe=' + sp.tipe : ''}`}
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-              Export Excel
-            </a>
-            <Link href="/transaksi/kas-bank/baru"
-              className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-              + Bukti Baru
-            </Link>
-          </div>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Bukti Kas & Bank"
+          subtitle="BKM/BKK untuk kas keluar-masuk · BMT untuk mutasi antar akun · pelunasan AR/AP otomatis update status faktur."
+          actions={
+            <>
+              <a href={`/proxy/cash-bank/export.xlsx${sp.tipe ? '?tipe=' + sp.tipe : ''}`}
+                className={buttonClass('success')}>
+                Export Excel
+              </a>
+              <Link href="/transaksi/kas-bank/baru" className={buttonClass('primary')}>
+                + Bukti Baru
+              </Link>
+            </>
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-2 shadow-sm text-sm">
+        <form className={filterBarClass}>
           {(['', 'RECEIPT', 'PAYMENT', 'TRANSFER'] as const).map((t) => (
             <Link key={t || 'all'}
               href={t ? `/transaksi/kas-bank?tipe=${t}` : '/transaksi/kas-bank'}
@@ -98,9 +94,7 @@ export default async function KasBankPage({
                     <div className="text-xs text-tanah-500">{fmtTanggal(r.tanggal)} · {r.cabang.kode}</div>
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${TIPE_BADGE[r.tipe]}`}>
-                      {r.tipe}
-                    </span>
+                    <Badge variant={TIPE_BADGE[r.tipe]}>{r.tipe}</Badge>
                   </td>
                   <td className="px-4 py-2.5 text-xs font-mono text-tanah-500">
                     {r.akunKasBank.kode} {r.akunKasBank.nama}
@@ -114,12 +108,7 @@ export default async function KasBankPage({
                     <LinkBukti url={r.linkBukti} />
                   </td>
                   <td className="px-4 py-2.5 text-center">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                      r.status === 'POSTED' ? 'bg-padi-100 text-padi-700' :
-                      r.status === 'DRAFT' ? 'bg-emas-100 text-emas-700' : 'bg-cream-200 text-tanah-500'
-                    }`}>
-                      {r.status}
-                    </span>
+                    <StatusBadge status={r.status} />
                   </td>
                 </tr>
               ))}
@@ -129,7 +118,7 @@ export default async function KasBankPage({
             </tbody>
           </table>
         </div>
-      </div>
+      </PageContainer>
     </>
   );
 }
