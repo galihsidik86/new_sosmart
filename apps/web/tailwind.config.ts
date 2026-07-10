@@ -41,6 +41,8 @@ export default {
         emas: { 100: '#FAEFC9', 300: '#ECC979', 500: '#D4A437', 700: '#97751F' },
         bata: { 100: '#FBE3DD', 300: '#E48975', 500: '#C44536', 700: '#8C2C1F' },
         wedel: { 900: '#1F1B16' },
+        // Info (biru) — token semantik "in-progress" dari spec Sembada.
+        info: { DEFAULT: '#2A6FA8', soft: '#DDEAF5', 500: '#2A6FA8', 700: '#1F5480' },
       },
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
@@ -48,11 +50,31 @@ export default {
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
+        // Warm-tinted (sogan/tanah), tidak abu-abu — sesuai spec.
         xs: '0 1px 2px rgba(92, 58, 30, 0.06)',
         sm: '0 2px 6px rgba(92, 58, 30, 0.08)',
         md: '0 6px 16px rgba(92, 58, 30, 0.10)',
         lg: '0 16px 32px rgba(92, 58, 30, 0.12)',
+        xl: '0 32px 64px rgba(92, 58, 30, 0.16)',
         focus: '0 0 0 3px rgba(139, 46, 46, 0.18)',
+        inner: 'inset 0 1px 2px rgba(92, 58, 30, 0.08)',
+      },
+      transitionTimingFunction: {
+        sembada: 'cubic-bezier(0.32, 0.72, 0, 1)',
+      },
+      transitionDuration: {
+        fast: '120ms',
+        base: '240ms',
+        slow: '400ms',
+      },
+      keyframes: {
+        'lent-fade': {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'lent-fade': 'lent-fade 240ms cubic-bezier(0.32, 0.72, 0, 1)',
       },
     },
   },

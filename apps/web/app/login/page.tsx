@@ -62,7 +62,7 @@ export default async function LoginPage({
         <p className="text-sm text-tanah-500 mb-6">Sistem akuntansi & pajak Indonesia.</p>
 
         {sp.session_expired && (
-          <div className="mb-4 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+          <div className="mb-4 px-3 py-2 rounded-lg bg-emas-100 border border-emas-300 text-sm text-emas-700">
             Sesi sudah berakhir. Silakan masuk ulang.
           </div>
         )}

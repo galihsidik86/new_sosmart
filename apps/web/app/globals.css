@@ -1,23 +1,124 @@
+/* Webfonts Sembada — @import wajib di paling atas (aturan CSS). */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Webfonts Sembada */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&display=swap');
-
+/* =============================================================
+   Sembada Design Tokens — di-port dari colors_and_type.css.
+   Palet raw ada di tailwind.config.ts (utility Tailwind); di sini
+   token SEMANTIK + CSS var untuk dipakai komponen non-utility.
+   ============================================================= */
 :root {
-  --bg: #F5F1E8;
-  --surface: #FFFFFF;
-  --border: #ECE5D8;
-  --fg1: #5C3A1E;
-  --fg2: #8C6B4A;
-  --fg3: #B89A7A;
-  --primary: #8B2E2E;
-  --accent: #D4A437;
+  /* Surfaces */
+  --bg: #F5F1E8;          /* cream-100, page bg */
+  --bg-subtle: #FBF9F4;   /* cream-50 */
+  --bg-strong: #ECE5D8;   /* cream-200 */
+  --surface: #FFFFFF;     /* cards */
+  --surface-hover: #FBF9F4;
+
+  /* Foreground */
+  --fg1: #5C3A1E;         /* tanah-700, primary text */
+  --fg2: #8C6B4A;         /* tanah-500, secondary */
+  --fg3: #B89A7A;         /* tanah-300, tertiary/hint */
+
+  /* Brand & status */
+  --primary: #8B2E2E;     /* sogan-500 */
+  --primary-hover: #7A2828;
+  --primary-press: #5E1F1F;
+  --accent: #D4A437;      /* emas-500 */
+  --success: #4A7C3A;     /* padi-500 */
+  --warning: #D4A437;     /* emas-500 */
+  --danger: #C44536;      /* bata-500 */
+  --info: #2A6FA8;
+
+  /* Borders */
+  --border: #ECE5D8;      /* cream-200 */
+  --border-strong: #D6C9B3; /* cream-400 */
+  --border-focus: #8B2E2E;
+
+  /* Typography */
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Fraunces", "Plus Jakarta Sans", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Motion */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 240ms;
+  --dur-slow: 400ms;
 }
 
-html, body { background: var(--bg); color: var(--fg1); }
-body { font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased; }
+html, body {
+  background: var(--bg);
+  color: var(--fg1);
+}
+body {
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
 
+/* Custom scrollbar (dipakai sidebar & area scroll). */
 .lentera-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
-.lentera-scroll::-webkit-scrollbar-thumb { background: #D6C9B3; border-radius: 9999px; border: 2px solid var(--bg); }
+.lentera-scroll::-webkit-scrollbar-thumb {
+  background: #D6C9B3;
+  border-radius: 9999px;
+  border: 2px solid var(--bg);
+}
+
+/* =============================================================
+   SEMANTIC TYPE CLASSES — pakai sebagai className supaya skala
+   tipografi konsisten (tidak lagi hardcode ukuran per halaman).
+   ============================================================= */
+.t-display-1 {
+  font-family: var(--font-display); font-size: 72px; line-height: 1.1;
+  letter-spacing: -0.02em; font-weight: 600;
+  font-variation-settings: "opsz" 96, "SOFT" 30; color: #1F1B16;
+}
+.t-display-2 {
+  font-family: var(--font-display); font-size: 56px; line-height: 1.1;
+  letter-spacing: -0.02em; font-weight: 600;
+  font-variation-settings: "opsz" 72, "SOFT" 30; color: #1F1B16;
+}
+.t-display-3 {
+  font-family: var(--font-display); font-size: 40px; line-height: 1.25;
+  letter-spacing: -0.01em; font-weight: 600;
+  font-variation-settings: "opsz" 48, "SOFT" 30; color: #1F1B16;
+}
+.t-h1 { font-family: var(--font-sans); font-size: 32px; line-height: 1.25; letter-spacing: -0.01em; font-weight: 700; color: var(--fg1); }
+.t-h2 { font-family: var(--font-sans); font-size: 24px; line-height: 1.25; font-weight: 700; color: var(--fg1); }
+.t-h3 { font-family: var(--font-sans); font-size: 20px; line-height: 1.25; font-weight: 600; color: var(--fg1); }
+.t-body-lg { font-family: var(--font-sans); font-size: 18px; line-height: 1.6; color: var(--fg1); }
+.t-body { font-family: var(--font-sans); font-size: 16px; line-height: 1.6; color: var(--fg1); }
+.t-body-sm { font-family: var(--font-sans); font-size: 14px; line-height: 1.45; color: var(--fg2); }
+.t-label { font-family: var(--font-sans); font-size: 14px; font-weight: 600; line-height: 1.25; color: var(--fg1); }
+.t-eyebrow {
+  font-family: var(--font-sans); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary);
+}
+.t-caption { font-family: var(--font-sans); font-size: 12px; line-height: 1.45; color: var(--fg3); }
+.t-mono { font-family: var(--font-mono); font-size: 14px; font-feature-settings: "tnum", "zero"; }
+/* Angka headline (KPI/total) — serif Fraunces dengan optical size. */
+.t-money {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 48, "SOFT" 30;
+  font-weight: 600; letter-spacing: -0.02em; font-feature-settings: "tnum";
+}
+
+/* =============================================================
+   BATIK / KAWUNG OVERLAY — motif signature untuk permukaan gelap/hero.
+   Pakai di elemen ber-`position: relative` + `overflow: hidden`.
+   ============================================================= */
+.batik-overlay { position: relative; }
+.batik-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/assets/patterns/kawung.svg");
+  background-size: 80px 80px;
+  opacity: 0.06;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
