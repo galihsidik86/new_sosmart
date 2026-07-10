@@ -2,6 +2,7 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, FilterLabel, Select, Button, filterBarClass } from '@/components/ui';
 
 interface PeriodYear {
   id: string; kode: string;
@@ -61,34 +62,32 @@ export default async function JejakAuditPage({
   return (
     <>
       <Topbar breadcrumb="Jejak Audit" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">Jejak Audit</h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Daftar transaksi terposting dengan tautan bukti yang bisa diklik — mempermudah pemeriksaan/audit menemukan &amp; menunjukkan bukti.
-          </p>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Jejak Audit"
+          subtitle="Daftar transaksi terposting dengan tautan bukti yang bisa diklik — mempermudah pemeriksaan/audit menemukan & menunjukkan bukti."
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm flex-wrap">
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Periode:</span>
-          <select name="periodId" defaultValue={periodId} className="border border-cream-300 rounded-lg px-3 py-1.5">
+        <form className={filterBarClass}>
+          <FilterLabel>Periode</FilterLabel>
+          <Select name="periodId" defaultValue={periodId} fullWidth={false}>
             {years[0]?.periods.map((p) => (
               <option key={p.id} value={p.id}>{p.label} ({p.status})</option>
             ))}
-          </select>
-          <select name="sumber" defaultValue={sumber} className="border border-cream-300 rounded-lg px-3 py-1.5">
+          </Select>
+          <Select name="sumber" defaultValue={sumber} fullWidth={false}>
             <option value="">— semua jenis —</option>
             {Object.entries(SUMBER).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
+          </Select>
           {projects.length > 0 && (
-            <select name="projectId" defaultValue={projectId} className="border border-cream-300 rounded-lg px-3 py-1.5">
+            <Select name="projectId" defaultValue={projectId} fullWidth={false}>
               <option value="">— semua proyek —</option>
               <option value="none">— tanpa proyek —</option>
               {projects.map((p) => <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>)}
-            </select>
+            </Select>
           )}
           <input name="search" defaultValue={search} placeholder="cari no/keterangan…" className="border border-cream-300 rounded-lg px-3 py-1.5" />
-          <button className="px-4 py-1.5 bg-wedel-900 text-cream-50 rounded-lg font-semibold">Cari</button>
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Cari</Button>
         </form>
 
         {data && (
@@ -145,7 +144,7 @@ export default async function JejakAuditPage({
             </div>
           </div>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

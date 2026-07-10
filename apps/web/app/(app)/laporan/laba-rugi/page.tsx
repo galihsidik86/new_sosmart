@@ -1,7 +1,9 @@
 import { Topbar } from '@/components/Topbar';
+import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal, fmtPlain } from '@/lib/format';
+import { PageContainer, PageHeader, FilterLabel, Select, Button, filterBarClass } from '@/components/ui';
 
 interface PeriodYear {
   id: string; kode: string;
@@ -96,74 +98,53 @@ export default async function LabaRugiPage({
   return (
     <>
       <Topbar breadcrumb="Laba Rugi" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Laporan Laba Rugi
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Format SAK ETAP · vertikal = % dari Total Pendapatan · horizontal = bandingkan periode.
-            </p>
-          </div>
-          {periodId && (
-            <div className="flex items-center gap-2">
-              <a
-                href={`/proxy/reports/laba-rugi.xlsx?periodId=${periodId}${ytd ? '&ytd=true' : ''}${projectQs}`}
-                className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-              >
-                Export Excel
-              </a>
-              <a
-                href={`/proxy/reports/laba-rugi.pdf?periodId=${periodId}${ytd ? '&ytd=true' : ''}${projectQs}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
-              >
-                Preview PDF
-              </a>
-            </div>
-          )}
-        </div>
+      <PageContainer size="form">
+        <PageHeader
+          title="Laporan Laba Rugi"
+          subtitle="Format SAK ETAP · vertikal = % dari Total Pendapatan · horizontal = bandingkan periode."
+          actions={
+            periodId ? (
+              <ReportActions
+                xlsx={`/proxy/reports/laba-rugi.xlsx?periodId=${periodId}${ytd ? '&ytd=true' : ''}${projectQs}`}
+                pdf={`/proxy/reports/laba-rugi.pdf?periodId=${periodId}${ytd ? '&ytd=true' : ''}${projectQs}`}
+              />
+            ) : undefined
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm flex-wrap">
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Periode:</span>
-          <select name="periodId" defaultValue={periodId}
-            className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+        <form className={filterBarClass}>
+          <FilterLabel>Periode</FilterLabel>
+          <Select name="periodId" defaultValue={periodId} fullWidth={false}>
             {years[0]?.periods.map((p) => <option key={p.id} value={p.id}>{p.label} ({p.status})</option>)}
-          </select>
+          </Select>
           {projects.length > 0 && (
             <>
-              <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Project:</span>
-              <select name="projectId" defaultValue={projectId}
-                className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <FilterLabel>Project</FilterLabel>
+              <Select name="projectId" defaultValue={projectId} fullWidth={false}>
                 <option value="">— semua —</option>
                 <option value="none">— tanpa project (overhead) —</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
                 ))}
-              </select>
+              </Select>
             </>
           )}
-          <label className="flex items-center gap-1.5 text-sm">
+          <label className="flex items-center gap-1.5 text-sm text-tanah-700">
             <input type="checkbox" name="ytd" value="true" defaultChecked={ytd} />
             YTD
           </label>
-          <label className="flex items-center gap-1.5 text-sm">
+          <label className="flex items-center gap-1.5 text-sm text-tanah-700">
             <input type="checkbox" name="vertikal" value="true" defaultChecked={vertikal} />
             Vertikal (%)
           </label>
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Bandingkan:</span>
-          <select name="compareToPeriodId" defaultValue={compareToPeriodId}
-            className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+          <FilterLabel>Bandingkan</FilterLabel>
+          <Select name="compareToPeriodId" defaultValue={compareToPeriodId} fullWidth={false}>
             <option value="">— tidak —</option>
             {years[0]?.periods
               .filter((p) => p.id !== periodId)
               .map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-          </select>
-          <button className="ml-auto px-3 py-1.5 bg-cream-200 border border-cream-400 rounded-md text-xs font-semibold text-tanah-700">
-            Tampilkan
-          </button>
+          </Select>
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Tampilkan</Button>
         </form>
 
         {lr && (
@@ -249,7 +230,7 @@ export default async function LabaRugiPage({
             </table>
           </div>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

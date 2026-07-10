@@ -1,7 +1,9 @@
 import { Topbar } from '@/components/Topbar';
+import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, FilterLabel, Select, Button, StatusBanner, filterBarClass } from '@/components/ui';
 
 interface PeriodYear {
   id: string; kode: string;
@@ -45,58 +47,38 @@ export default async function ArusKasPage({
   return (
     <>
       <Topbar breadcrumb="Arus Kas" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-4xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Laporan Arus Kas
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Metode Tidak Langsung — 3 aktivitas: Operasi, Investasi, Pendanaan. YTD dari awal tahun buku.
-            </p>
-          </div>
-          {periodId && (
-            <div className="flex items-center gap-2">
-              <a
-                href={`/proxy/reports/arus-kas.xlsx?periodId=${periodId}${projectQs}`}
-                className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-              >
-                Export Excel
-              </a>
-              <a
-                href={`/proxy/reports/arus-kas.pdf?periodId=${periodId}${projectQs}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
-              >
-                Preview PDF
-              </a>
-            </div>
-          )}
-        </div>
+      <PageContainer size="form">
+        <PageHeader
+          title="Laporan Arus Kas"
+          subtitle="Metode Tidak Langsung — 3 aktivitas: Operasi, Investasi, Pendanaan. YTD dari awal tahun buku."
+          actions={
+            periodId ? (
+              <ReportActions
+                xlsx={`/proxy/reports/arus-kas.xlsx?periodId=${periodId}${projectQs}`}
+                pdf={`/proxy/reports/arus-kas.pdf?periodId=${periodId}${projectQs}`}
+              />
+            ) : undefined
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm flex-wrap">
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">s/d akhir:</span>
-          <select name="periodId" defaultValue={periodId}
-            className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+        <form className={filterBarClass}>
+          <FilterLabel>s/d akhir</FilterLabel>
+          <Select name="periodId" defaultValue={periodId} fullWidth={false}>
             {years[0]?.periods.map((p) => <option key={p.id} value={p.id}>{p.label} ({p.status})</option>)}
-          </select>
+          </Select>
           {projects.length > 0 && (
             <>
-              <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Project:</span>
-              <select name="projectId" defaultValue={projectId}
-                className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <FilterLabel>Project</FilterLabel>
+              <Select name="projectId" defaultValue={projectId} fullWidth={false}>
                 <option value="">— semua —</option>
                 <option value="none">— tanpa project (overhead) —</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
                 ))}
-              </select>
+              </Select>
             </>
           )}
-          <button className="ml-auto px-3 py-1.5 bg-cream-200 border border-cream-400 rounded-md text-xs font-semibold text-tanah-700">
-            Tampilkan
-          </button>
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Tampilkan</Button>
         </form>
 
         {ak && (
@@ -138,25 +120,23 @@ export default async function ArusKasPage({
             </div>
 
             {projectId && projectId !== 'none' ? (
-              <div className="rounded-xl p-4 text-sm font-medium bg-tanah-100 text-tanah-700">
+              <StatusBanner tone="info">
                 ℹ Tampilan per-proyek — Arus Kas metode tidak langsung tidak direkonsiliasi di
                 level proyek karena kas, piutang, dan pajak tidak berdimensi proyek. Angka di atas
                 mencerminkan arus dari baris pendapatan &amp; biaya yang ditandai proyek ini. Untuk
                 analisis proyek, gunakan <span className="font-semibold">Laba Rugi per proyek</span> dan
                 {' '}<span className="font-semibold">Anggaran vs Realisasi</span>.
-              </div>
+              </StatusBanner>
             ) : (
-              <div className={`rounded-xl p-4 text-sm font-semibold ${
-                ak.balanced ? 'bg-padi-100 text-padi-700' : 'bg-bata-100 text-bata-700'
-              }`}>
+              <StatusBanner tone={ak.balanced ? 'success' : 'danger'}>
                 {ak.balanced
                   ? '✓ Konsisten: kas awal + perubahan = kas akhir'
                   : `⚠ Selisih: ${fmtRp(ak.selisih)} — kemungkinan ada transaksi non-jurnal atau jurnal yang belum di-POST`}
-              </div>
+              </StatusBanner>
             )}
           </>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

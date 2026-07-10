@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { Fragment } from 'react';
 import { Topbar } from '@/components/Topbar';
+import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader } from '@/components/ui';
 
 interface Buckets {
   belumJatuh: string;
@@ -64,49 +66,34 @@ export default async function PiutangStatementPage({
   return (
     <>
       <Topbar breadcrumb={`Laporan / Piutang / ${st.customer.kode}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <Link
-              href={`/laporan/piutang?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
-              className="text-sm text-sogan-600 hover:underline"
-            >
-              ← Kembali ke daftar
-            </Link>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900 mt-1">
-              {st.customer.nama}
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Kode {st.customer.kode} · patokan {fmtTanggal(asOf)}
-            </p>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="flex flex-col gap-2">
-              <a
-                href={`/proxy/reports/ar-statement.xlsx?customerId=${customerId}&asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
-                className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700 text-center"
-              >
-                Export Excel
-              </a>
-              <a
-                href={`/proxy/reports/ar-statement.pdf?customerId=${customerId}&asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700 text-center"
-              >
-                Preview PDF
-              </a>
-            </div>
-            <div className="text-right">
-              <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold">
-                Total Saldo
+      <PageContainer size="list">
+        <Link
+          href={`/laporan/piutang?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+          className="text-sm text-sogan-600 hover:underline"
+        >
+          ← Kembali ke daftar
+        </Link>
+        <PageHeader
+          className="mt-1"
+          title={st.customer.nama}
+          subtitle={`Kode ${st.customer.kode} · patokan ${fmtTanggal(asOf)}`}
+          actions={
+            <>
+              <ReportActions
+                xlsx={`/proxy/reports/ar-statement.xlsx?customerId=${customerId}&asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+                pdf={`/proxy/reports/ar-statement.pdf?customerId=${customerId}&asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+              />
+              <div className="text-right">
+                <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold">
+                  Total Saldo
+                </div>
+                <div className="text-2xl font-mono tabular-nums font-bold text-wedel-900">
+                  {fmtRp(st.totalSaldo)}
+                </div>
               </div>
-              <div className="text-2xl font-mono tabular-nums font-bold text-wedel-900">
-                {fmtRp(st.totalSaldo)}
-              </div>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         <section className="bg-white rounded-xl border border-cream-200 shadow-sm mb-6 p-5">
           <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">
@@ -217,7 +204,7 @@ export default async function PiutangStatementPage({
             </tbody>
           </table>
         </section>
-      </div>
+      </PageContainer>
     </>
   );
 }

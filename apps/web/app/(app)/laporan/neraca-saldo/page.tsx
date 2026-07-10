@@ -1,8 +1,10 @@
 import { Fragment } from 'react';
 import { Topbar } from '@/components/Topbar';
+import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtPlain } from '@/lib/format';
+import { PageContainer, PageHeader, FilterLabel, Select, Button, filterBarClass } from '@/components/ui';
 
 type Kind =
   | 'ASET' | 'LIABILITAS' | 'EKUITAS'
@@ -86,59 +88,37 @@ export default async function NeracaSaldoPage({
   return (
     <>
       <Topbar breadcrumb="Neraca Saldo" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-2">
-              Neraca Saldo
-            </h1>
-            <p className="text-sm text-tanah-500">
-              Semua akun postable dengan saldo awal, mutasi, dan saldo akhir periode.
-              Total debit harus = total kredit.
-            </p>
-          </div>
-          {periodId && (
-            <a
-              href={`/proxy/trial-balance.xlsx?${xlsxQs}`}
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-            >
-              Export Excel
-            </a>
-          )}
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Neraca Saldo"
+          subtitle="Semua akun postable dengan saldo awal, mutasi, dan saldo akhir periode. Total debit harus = total kredit."
+          actions={
+            periodId ? (
+              <ReportActions xlsx={`/proxy/trial-balance.xlsx?${xlsxQs}`} />
+            ) : undefined
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-4 mb-6 flex items-end gap-3 shadow-sm">
-          <div className="flex-1">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Periode
-            </label>
-            <select
-              name="periodId" defaultValue={periodId}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-            >
-              {years[0]?.periods.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label} ({p.status})
-                </option>
-              ))}
-            </select>
-          </div>
+        <form className={filterBarClass}>
+          <FilterLabel>Periode</FilterLabel>
+          <Select name="periodId" defaultValue={periodId} fullWidth={false}>
+            {years[0]?.periods.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label} ({p.status})
+              </option>
+            ))}
+          </Select>
           {projects.length > 0 && (
-            <div className="flex-1">
-              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-                Project
-              </label>
-              <select
-                name="projectId" defaultValue={projectId}
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-              >
+            <>
+              <FilterLabel>Project</FilterLabel>
+              <Select name="projectId" defaultValue={projectId} fullWidth={false}>
                 <option value="">— semua —</option>
                 <option value="none">— tanpa project (overhead) —</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </>
           )}
           <label className="flex items-center gap-2 text-sm text-tanah-700">
             <input
@@ -147,9 +127,7 @@ export default async function NeracaSaldoPage({
             />
             Sembunyikan akun nol
           </label>
-          <button className="px-3 py-2 bg-cream-200 border border-cream-400 rounded-md text-sm font-semibold text-tanah-700">
-            Tampilkan
-          </button>
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Tampilkan</Button>
         </form>
 
         {tb && (
@@ -233,7 +211,7 @@ export default async function NeracaSaldoPage({
             </table>
           </div>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

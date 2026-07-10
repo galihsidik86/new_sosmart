@@ -5,7 +5,7 @@ export { FormField, Label, labelClass } from './FormField';
 export { Card, Section, SectionHeader, cardBase } from './Card';
 export { PageHeader } from './PageHeader';
 export { PageContainer } from './PageContainer';
-export { FilterBar, FilterLabel } from './FilterBar';
+export { FilterBar, FilterLabel, filterBarClass } from './FilterBar';
 export { Badge, StatusBadge, statusVariant, type BadgeVariant } from './Badge';
 export { StatusBanner, type BannerTone } from './StatusBanner';
 export { Chip, type ChipTone } from './Chip';

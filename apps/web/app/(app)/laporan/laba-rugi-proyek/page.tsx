@@ -2,6 +2,7 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
+import { PageContainer, PageHeader, FilterLabel, Select, Button, buttonClass, filterBarClass } from '@/components/ui';
 
 interface PeriodYear {
   id: string; kode: string;
@@ -43,37 +44,35 @@ export default async function LabaRugiProyekPage({
   return (
     <>
       <Topbar breadcrumb="Laba Rugi per Proyek" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">Laba Rugi per Proyek</h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Ringkasan laba rugi seluruh proyek + cetak detail per proyek dalam satu file.
-            </p>
-          </div>
-          {periodId && (
-            <a
-              href={`/proxy/reports/laba-rugi-proyek.pdf?periodId=${periodId}${ytd ? '&ytd=true' : ''}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
-            >
-              Cetak Semua Proyek (PDF)
-            </a>
-          )}
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Laba Rugi per Proyek"
+          subtitle="Ringkasan laba rugi seluruh proyek + cetak detail per proyek dalam satu file."
+          actions={
+            periodId ? (
+              <a
+                href={`/proxy/reports/laba-rugi-proyek.pdf?periodId=${periodId}${ytd ? '&ytd=true' : ''}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClass('soft-bata')}
+              >
+                Cetak Semua Proyek (PDF)
+              </a>
+            ) : undefined
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm flex-wrap">
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Periode:</span>
-          <select name="periodId" defaultValue={periodId} className="border border-cream-300 rounded-lg px-3 py-1.5">
+        <form className={filterBarClass}>
+          <FilterLabel>Periode</FilterLabel>
+          <Select name="periodId" defaultValue={periodId} fullWidth={false}>
             {years[0]?.periods.map((p) => (
               <option key={p.id} value={p.id}>{p.label} ({p.status})</option>
             ))}
-          </select>
-          <label className="flex items-center gap-1.5 text-sm">
+          </Select>
+          <label className="flex items-center gap-1.5 text-sm text-tanah-700">
             <input type="checkbox" name="ytd" value="true" defaultChecked={ytd} /> YTD (awal tahun s/d periode)
           </label>
-          <button className="px-4 py-1.5 bg-wedel-900 text-cream-50 rounded-lg font-semibold">Tampilkan</button>
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Tampilkan</Button>
         </form>
 
         {data && (
@@ -124,7 +123,7 @@ export default async function LabaRugiProyekPage({
             </div>
           </div>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

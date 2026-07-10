@@ -1,8 +1,10 @@
 import { Fragment } from 'react';
 import { Topbar } from '@/components/Topbar';
+import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtPlain } from '@/lib/format';
+import { PageContainer, PageHeader, FilterLabel, Select, Button, filterBarClass } from '@/components/ui';
 
 type BudgetStatus = 'OK' | 'WARNING' | 'EXCEEDED';
 
@@ -71,58 +73,42 @@ export default async function BudgetActualPage({
   return (
     <>
       <Topbar breadcrumb="Budget vs Actual" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-2">
-              Budget vs Actual
-            </h1>
-            <p className="text-sm text-tanah-500">
+      <PageContainer size="list">
+        <PageHeader
+          title="Budget vs Actual"
+          subtitle={
+            <>
               Realisasi mutasi POSTED per (Project × Akun) dibanding anggaran{' '}
               {ytd ? <span className="font-semibold text-wedel-900">kumulatif (YTD s/d {periode})</span> : <span className="font-semibold text-wedel-900">bulan {periode}</span>}.
               Utilisasi &gt; 80% = WARNING, &gt; 100% = EXCEEDED.
-            </p>
-          </div>
-          <a
-            href={`/proxy/reports/budget-actual.xlsx?periode=${periode}${ytdQs}${projectQs}`}
-            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-          >
-            Export Excel
-          </a>
-        </div>
+            </>
+          }
+          actions={
+            <ReportActions xlsx={`/proxy/reports/budget-actual.xlsx?periode=${periode}${ytdQs}${projectQs}`} />
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-4 mb-6 flex items-end gap-3 shadow-sm">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Periode (YYYY-MM)
-            </label>
-            <input
-              type="month" name="periode" defaultValue={periode}
-              className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-            />
-          </div>
+        <form className={filterBarClass}>
+          <FilterLabel>Periode (YYYY-MM)</FilterLabel>
+          <input
+            type="month" name="periode" defaultValue={periode}
+            className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+          />
           {projects.length > 0 && (
-            <div className="flex-1">
-              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-                Project
-              </label>
-              <select
-                name="projectId" defaultValue={projectId}
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-              >
+            <>
+              <FilterLabel>Project</FilterLabel>
+              <Select name="projectId" defaultValue={projectId} fullWidth={false}>
                 <option value="">— semua project —</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </>
           )}
-          <label className="flex items-center gap-1.5 text-sm text-tanah-700 pb-2 whitespace-nowrap">
+          <label className="flex items-center gap-1.5 text-sm text-tanah-700 whitespace-nowrap">
             <input type="checkbox" name="ytd" value="true" defaultChecked={ytd} /> YTD (kumulatif)
           </label>
-          <button className="px-3 py-2 bg-cream-200 border border-cream-400 rounded-md text-sm font-semibold text-tanah-700">
-            Tampilkan
-          </button>
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Tampilkan</Button>
         </form>
 
         {data.projects.length === 0 ? (
@@ -218,7 +204,7 @@ export default async function BudgetActualPage({
             </table>
           </div>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

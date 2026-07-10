@@ -1,7 +1,9 @@
 import { Topbar } from '@/components/Topbar';
+import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, FilterLabel, Select, Button, filterBarClass } from '@/components/ui';
 
 interface PeriodYear {
   id: string; kode: string;
@@ -35,45 +37,26 @@ export default async function PerubahanEkuitasPage({
   return (
     <>
       <Topbar breadcrumb="Perubahan Ekuitas" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-4xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Laporan Perubahan Ekuitas
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Rekonsiliasi saldo awal → saldo akhir ekuitas via tambahan modal, laba bersih, & dividen.
-            </p>
-          </div>
-          {periodId && (
-            <div className="flex items-center gap-2">
-              <a
-                href={`/proxy/reports/perubahan-ekuitas.xlsx?periodId=${periodId}`}
-                className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-              >
-                Export Excel
-              </a>
-              <a
-                href={`/proxy/reports/perubahan-ekuitas.pdf?periodId=${periodId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
-              >
-                Preview PDF
-              </a>
-            </div>
-          )}
-        </div>
+      <PageContainer size="form">
+        <PageHeader
+          title="Laporan Perubahan Ekuitas"
+          subtitle="Rekonsiliasi saldo awal → saldo akhir ekuitas via tambahan modal, laba bersih, & dividen."
+          actions={
+            periodId ? (
+              <ReportActions
+                xlsx={`/proxy/reports/perubahan-ekuitas.xlsx?periodId=${periodId}`}
+                pdf={`/proxy/reports/perubahan-ekuitas.pdf?periodId=${periodId}`}
+              />
+            ) : undefined
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm">
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">s/d akhir:</span>
-          <select name="periodId" defaultValue={periodId}
-            className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+        <form className={filterBarClass}>
+          <FilterLabel>s/d akhir</FilterLabel>
+          <Select name="periodId" defaultValue={periodId} fullWidth={false}>
             {years[0]?.periods.map((p) => <option key={p.id} value={p.id}>{p.label} ({p.status})</option>)}
-          </select>
-          <button className="ml-auto px-3 py-1.5 bg-cream-200 border border-cream-400 rounded-md text-xs font-semibold text-tanah-700">
-            Tampilkan
-          </button>
+          </Select>
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Tampilkan</Button>
         </form>
 
         {pe && (
@@ -141,7 +124,7 @@ export default async function PerubahanEkuitasPage({
             </table>
           </div>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

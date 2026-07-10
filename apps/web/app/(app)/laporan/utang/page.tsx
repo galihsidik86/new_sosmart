@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { Topbar } from '@/components/Topbar';
+import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, FilterLabel, Select, Button, filterBarClass } from '@/components/ui';
 
 interface Cabang { id: string; kode: string; nama: string }
 
@@ -63,70 +65,37 @@ export default async function UtangPage({
   return (
     <>
       <Topbar breadcrumb="Laporan / Utang" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Aging Utang Usaha
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Saldo utang per vendor · umur dari jatuh tempo · pembayaran ≤ tanggal patokan · sudah dikurangi PPh 23 dipotong.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href={`/proxy/reports/ap-aging.xlsx?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-            >
-              Export Excel
-            </a>
-            <a
-              href={`/proxy/reports/ap-aging.pdf?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-2 bg-bata-100 hover:bg-bata-200 border border-bata-300 rounded-lg text-sm font-semibold text-bata-700"
-            >
-              Preview PDF
-            </a>
-          </div>
-        </div>
-
-        <form method="GET" className="mb-4 flex items-end gap-3 bg-white p-4 rounded-xl border border-cream-200">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Tanggal patokan (asOf)
-            </label>
-            <input
-              type="date"
-              name="asOf"
-              defaultValue={asOf}
-              required
-              className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+      <PageContainer size="list">
+        <PageHeader
+          title="Aging Utang Usaha"
+          subtitle="Saldo utang per vendor · umur dari jatuh tempo · pembayaran ≤ tanggal patokan · sudah dikurangi PPh 23 dipotong."
+          actions={
+            <ReportActions
+              xlsx={`/proxy/reports/ap-aging.xlsx?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+              pdf={`/proxy/reports/ap-aging.pdf?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Cabang
-            </label>
-            <select
-              name="cabangId"
-              defaultValue={cabangId}
-              className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-            >
-              <option value="">Semua cabang</option>
-              {cabang.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.kode} — {c.nama}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 rounded-lg text-sm font-semibold"
-          >
-            Terapkan
-          </button>
+          }
+        />
+
+        <form method="GET" className={filterBarClass}>
+          <FilterLabel>Tanggal patokan (asOf)</FilterLabel>
+          <input
+            type="date"
+            name="asOf"
+            defaultValue={asOf}
+            required
+            className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+          />
+          <FilterLabel>Cabang</FilterLabel>
+          <Select name="cabangId" defaultValue={cabangId} fullWidth={false}>
+            <option value="">Semua cabang</option>
+            {cabang.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.kode} — {c.nama}
+              </option>
+            ))}
+          </Select>
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Terapkan</Button>
         </form>
 
         <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
@@ -211,7 +180,7 @@ export default async function UtangPage({
             )}
           </table>
         </section>
-      </div>
+      </PageContainer>
     </>
   );
 }
