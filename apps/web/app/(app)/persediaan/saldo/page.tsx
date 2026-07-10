@@ -3,6 +3,10 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtPlain, fmtRp } from '@/lib/format';
+import {
+  PageContainer, PageHeader, FilterLabel, buttonClass, filterBarClass,
+  Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow,
+} from '@/components/ui';
 
 interface SaldoRow {
   item: { id: string; kode: string; nama: string; satuan: string; kategori: string | null };
@@ -31,24 +35,23 @@ export default async function SaldoStokPage({
   return (
     <>
       <Topbar breadcrumb="Saldo Stok" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Saldo Stok
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
+      <PageContainer size="list">
+        <PageHeader
+          title="Saldo Stok"
+          subtitle={
+            <>
               Snapshot terkini per (item × cabang). Total nilai persediaan: <span className="font-semibold text-tanah-700">{fmtRp(totalNilai)}</span>
-            </p>
-          </div>
-          <a href={`/proxy/inventory/saldo/export.xlsx${qs}`}
-            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-            Export Excel
-          </a>
-        </div>
+            </>
+          }
+          actions={
+            <a href={`/proxy/inventory/saldo/export.xlsx${qs}`} className={buttonClass('success')}>
+              Export Excel
+            </a>
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-2 shadow-sm text-sm">
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold mr-2">Cabang:</span>
+        <form className={filterBarClass}>
+          <FilterLabel>Cabang:</FilterLabel>
           <Link href="/persediaan/saldo"
             className={`px-3 py-1.5 rounded-md font-semibold ${!sp.cabangId ? 'bg-sogan-500 text-cream-50' : 'text-tanah-500 hover:bg-cream-50'}`}>
             Semua
@@ -62,53 +65,47 @@ export default async function SaldoStokPage({
           ))}
         </form>
 
-        <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-cream-50 text-left">
-              <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
-                <th className="px-4 py-3 font-bold">Kode</th>
-                <th className="px-4 py-3 font-bold">Nama</th>
-                <th className="px-4 py-3 font-bold">Cabang</th>
-                <th className="px-4 py-3 font-bold text-right">Qty</th>
-                <th className="px-4 py-3 font-bold text-right">Nilai</th>
-                <th className="px-4 py-3 font-bold text-right">Harga Pokok Rata</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-cream-200">
-              {rows.map((r, i) => {
-                const qty = Number(r.qty);
-                const nilai = Number(r.nilai);
-                const rata = qty > 0 ? nilai / qty : 0;
-                return (
-                  <tr key={i} className="hover:bg-cream-50">
-                    <td className="px-4 py-2 font-mono text-tanah-700">{r.item.kode}</td>
-                    <td className="px-4 py-2">
-                      <div className="font-semibold text-tanah-700">{r.item.nama}</div>
-                      <div className="text-xs text-tanah-500">{r.item.kategori ?? '—'} · {r.item.satuan}</div>
-                    </td>
-                    <td className="px-4 py-2 text-xs font-mono text-tanah-500">{r.cabang.kode}</td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums">
-                      {fmtPlain(qty)} <span className="text-tanah-400 text-xs ml-1">{r.item.satuan}</span>
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums">{fmtRp(nilai)}</td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums text-tanah-500">{fmtRp(rata)}</td>
-                    <td className="px-4 py-2 text-right">
-                      <Link href={`/persediaan/kartu-stok?itemId=${r.item.id}&cabangId=${r.cabang.id}`}
-                        className="text-xs text-sogan-500 font-semibold hover:underline">
-                        Kartu stok →
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-              {rows.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-tanah-500">Belum ada movement stok.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <Table>
+          <THead>
+            <TH>Kode</TH>
+            <TH>Nama</TH>
+            <TH>Cabang</TH>
+            <TH numeric>Qty</TH>
+            <TH numeric>Nilai</TH>
+            <TH numeric>Harga Pokok Rata</TH>
+            <TH />
+          </THead>
+          <TBody>
+            {rows.map((r, i) => {
+              const qty = Number(r.qty);
+              const nilai = Number(r.nilai);
+              const rata = qty > 0 ? nilai / qty : 0;
+              return (
+                <TR key={i}>
+                  <TD className="font-mono text-tanah-700">{r.item.kode}</TD>
+                  <TD>
+                    <div className="font-semibold text-tanah-700">{r.item.nama}</div>
+                    <div className="text-xs text-tanah-500">{r.item.kategori ?? '—'} · {r.item.satuan}</div>
+                  </TD>
+                  <TD className="text-xs font-mono text-tanah-500">{r.cabang.kode}</TD>
+                  <MoneyCell>
+                    {fmtPlain(qty)} <span className="text-tanah-400 text-xs ml-1">{r.item.satuan}</span>
+                  </MoneyCell>
+                  <MoneyCell>{fmtRp(nilai)}</MoneyCell>
+                  <MoneyCell className="text-tanah-500">{fmtRp(rata)}</MoneyCell>
+                  <TD className="text-right">
+                    <Link href={`/persediaan/kartu-stok?itemId=${r.item.id}&cabangId=${r.cabang.id}`}
+                      className="text-xs text-sogan-500 font-semibold hover:underline">
+                      Kartu stok →
+                    </Link>
+                  </TD>
+                </TR>
+              );
+            })}
+            {rows.length === 0 && <EmptyRow colSpan={7}>Belum ada movement stok.</EmptyRow>}
+          </TBody>
+        </Table>
+      </PageContainer>
     </>
   );
 }

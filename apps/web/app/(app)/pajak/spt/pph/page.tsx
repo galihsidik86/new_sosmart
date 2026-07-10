@@ -3,6 +3,9 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp, fmtTanggal } from '@/lib/format';
+import {
+  PageContainer, PageHeader, FilterLabel, Select, Button, StatCard, buttonClass, filterBarClass,
+} from '@/components/ui';
 
 type Jenis = 'PPH_21' | 'PPH_23' | 'PPH_4_AYAT_2' | 'PPH_22' | 'PPH_15' | 'PPH_25' | 'PPH_26' | 'PPH_29';
 
@@ -54,45 +57,34 @@ export default async function SptPphPage({
   return (
     <>
       <Topbar breadcrumb={`SPT Masa ${jenisPph.replace('_', ' ')}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              SPT Masa PPh
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Rekap bukti potong PPh per masa pajak — format e-Bupot Unifikasi.
-            </p>
-          </div>
-          {periodId && (
-            <a href={`/proxy/spt/pph/export.xlsx?periodId=${periodId}&jenisPph=${jenisPph}`}
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-              Export Excel
-            </a>
-          )}
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="SPT Masa PPh"
+          subtitle="Rekap bukti potong PPh per masa pajak — format e-Bupot Unifikasi."
+          actions={
+            periodId ? (
+              <a href={`/proxy/spt/pph/export.xlsx?periodId=${periodId}&jenisPph=${jenisPph}`} className={buttonClass('success')}>Export Excel</a>
+            ) : undefined
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm">
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Periode:</span>
-          <select name="periodId" defaultValue={periodId}
-            className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+        <form className={filterBarClass}>
+          <FilterLabel>Periode:</FilterLabel>
+          <Select name="periodId" defaultValue={periodId} fullWidth={false}>
             {years[0]?.periods.map((p) => (
               <option key={p.id} value={p.id}>{p.label} ({p.status})</option>
             ))}
-          </select>
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold ml-2">Jenis:</span>
-          <select name="jenisPph" defaultValue={jenisPph}
-            className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+          </Select>
+          <FilterLabel>Jenis:</FilterLabel>
+          <Select name="jenisPph" defaultValue={jenisPph} fullWidth={false}>
             <option value="PPH_21">PPh 21 (gaji)</option>
             <option value="PPH_23">PPh 23 (jasa)</option>
             <option value="PPH_4_AYAT_2">PPh 4(2) (final)</option>
             <option value="PPH_22">PPh 22</option>
             <option value="PPH_26">PPh 26 (WP LN)</option>
             <option value="PPH_25">PPh 25 (angsuran)</option>
-          </select>
-          <button className="px-3 py-1.5 bg-cream-200 border border-cream-400 rounded-md text-xs font-semibold text-tanah-700">
-            Tampilkan
-          </button>
+          </Select>
+          <Button type="submit" variant="secondary" size="sm">Tampilkan</Button>
           <Link href="/pajak/bukti-potong" className="ml-auto text-xs text-sogan-500 font-semibold hover:underline">
             Kelola bukti potong →
           </Link>
@@ -101,9 +93,9 @@ export default async function SptPphPage({
         {spt && (
           <>
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <Stat label="Total DPP" value={fmtRp(spt.totalDpp)} />
-              <Stat label={`Total ${spt.jenisPph.replace('_', ' ')} terutang`} value={fmtRp(spt.totalPph)} tone="bata" big />
-              <Stat label="Jumlah Bukti Terbit" value={`${spt.countTerbit}`} />
+              <StatCard label="Total DPP" value={fmtRp(spt.totalDpp)} />
+              <StatCard label={`Total ${spt.jenisPph.replace('_', ' ')} terutang`} value={fmtRp(spt.totalPph)} tone="danger" />
+              <StatCard label="Jumlah Bukti Terbit" value={`${spt.countTerbit}`} />
             </div>
 
             <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
@@ -160,19 +152,7 @@ export default async function SptPphPage({
             </section>
           </>
         )}
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function Stat({ label, value, tone, big }: { label: string; value: string; tone?: 'padi' | 'bata'; big?: boolean }) {
-  const cls = tone === 'padi' ? 'text-padi-700' : tone === 'bata' ? 'text-bata-700' : 'text-wedel-900';
-  return (
-    <div className="bg-white border border-cream-200 rounded-xl p-5 shadow-sm">
-      <div className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold">{label}</div>
-      <div className={`font-display font-semibold tabular-nums mt-2 ${cls} ${big ? 'text-3xl' : 'text-xl'}`}>
-        {value}
-      </div>
-    </div>
   );
 }

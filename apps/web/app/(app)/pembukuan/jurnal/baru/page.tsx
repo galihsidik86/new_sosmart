@@ -3,6 +3,7 @@ import { Topbar } from '@/components/Topbar';
 import { JurnalForm } from '@/components/JurnalForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { PageContainer, PageHeader } from '@/components/ui';
 
 interface Account {
   id: string;
@@ -37,12 +38,10 @@ export default async function JurnalBaruPage() {
   return (
     <>
       <Topbar breadcrumb="Jurnal Umum / Baru" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-6">
-          Jurnal Baru
-        </h1>
+      <PageContainer size="form">
+        <PageHeader title="Jurnal Baru" />
         <JurnalForm accounts={accounts} cabang={cabang} projects={projects} submit={submitJurnal} />
-      </div>
+      </PageContainer>
     </>
   );
 }

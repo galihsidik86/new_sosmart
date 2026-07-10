@@ -5,6 +5,7 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, Button, buttonClass, StatusBadge } from '@/components/ui';
 
 type Status = 'DRAFT' | 'POSTED' | 'CANCELLED' | 'PARTIAL' | 'PAID';
 
@@ -75,21 +76,16 @@ export default async function DepresiasiPage({
   return (
     <>
       <Topbar breadcrumb="Penyusutan Aset" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Penyusutan Aset Bulanan
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Hitung & posting otomatis per bulan. 1 run per tenant per periode. Cancel hanya boleh untuk periode terakhir.
-            </p>
-          </div>
-          <a href="/proxy/depresiasi/runs/export.xlsx"
-            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-            Export Excel
-          </a>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Penyusutan Aset Bulanan"
+          subtitle="Hitung & posting otomatis per bulan. 1 run per tenant per periode. Cancel hanya boleh untuk periode terakhir."
+          actions={
+            <a href="/proxy/depresiasi/runs/export.xlsx" className={buttonClass('success')}>
+              Export Excel
+            </a>
+          }
+        />
 
         <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">
           <div className="px-5 py-3 bg-cream-50 border-b border-cream-200 flex items-center justify-between">
@@ -99,9 +95,9 @@ export default async function DepresiasiPage({
             <form className="flex items-center gap-2">
               <input name="preview" defaultValue={previewPeriode} pattern="\d{4}-\d{2}" placeholder="YYYY-MM"
                 className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono w-28" />
-              <button className="px-3 py-1.5 bg-cream-200 border border-cream-400 rounded-md text-xs font-semibold text-tanah-700">
+              <Button type="submit" variant="secondary" size="sm">
                 Lihat
-              </button>
+              </Button>
             </form>
           </div>
           <table className="w-full text-sm">
@@ -152,9 +148,9 @@ export default async function DepresiasiPage({
                 <input type="hidden" name="periode" value={previewPeriode} />
                 <input type="date" name="tanggal"
                   className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-                <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
+                <Button type="submit">
                   Jalankan & Post {previewPeriode}
-                </button>
+                </Button>
               </form>
             </div>
           )}
@@ -194,11 +190,7 @@ export default async function DepresiasiPage({
                     )}
                   </td>
                   <td className="px-4 py-2 text-center">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                      r.status === 'POSTED' ? 'bg-padi-100 text-padi-700' :
-                      r.status === 'DRAFT' ? 'bg-emas-100 text-emas-700' :
-                      'bg-cream-200 text-tanah-500'
-                    }`}>{r.status}</span>
+                    <StatusBadge status={r.status} />
                   </td>
                 </tr>
               ))}
@@ -208,7 +200,7 @@ export default async function DepresiasiPage({
             </tbody>
           </table>
         </section>
-      </div>
+      </PageContainer>
     </>
   );
 }

@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting, canCancelPosted } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, Button, StatusBanner } from '@/components/ui';
 
 interface Preview {
   runId: string;
@@ -224,23 +225,23 @@ export default async function SaldoAwalPage({
   return (
     <>
       <Topbar breadcrumb="Pengaturan › Saldo Awal" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Prosedur Saldo Awal Terintegrasi
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Input saldo awal akun, piutang per pelanggan, utang per vendor, dan
-            persediaan per barang di satu tempat — sistem cross-check otomatis
-            supaya Debit = Kredit sebelum bisa diposting. Tanggal cutover:{' '}
-            <strong>{fmtTanggal(preview.tanggal)}</strong>.
-          </p>
-        </div>
+      <PageContainer size="form">
+        <PageHeader
+          title="Prosedur Saldo Awal Terintegrasi"
+          subtitle={
+            <>
+              Input saldo awal akun, piutang per pelanggan, utang per vendor, dan
+              persediaan per barang di satu tempat — sistem cross-check otomatis
+              supaya Debit = Kredit sebelum bisa diposting. Tanggal cutover:{' '}
+              <strong>{fmtTanggal(preview.tanggal)}</strong>.
+            </>
+          }
+        />
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-6">
-            <strong>Gagal: </strong>{error}
-          </div>
+          <StatusBanner tone="danger" className="mb-6">
+            <span><strong>Gagal: </strong>{error}</span>
+          </StatusBanner>
         )}
 
         {/* Ringkasan cross-check */}
@@ -276,17 +277,9 @@ export default async function SaldoAwalPage({
 
           {isDraft && canPost && (
             <form action={postAction} className="mt-4">
-              <button
-                type="submit"
-                disabled={!preview.balanced}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold ${
-                  preview.balanced
-                    ? 'bg-sogan-500 text-white hover:bg-sogan-600'
-                    : 'bg-tanah-200 text-tanah-400 cursor-not-allowed'
-                }`}
-              >
+              <Button type="submit" disabled={!preview.balanced}>
                 Posting & Kunci Saldo Awal
-              </button>
+              </Button>
               {!preview.balanced && (
                 <p className="text-xs text-red-600 mt-2">
                   Selisihkan dulu Debit dan Kredit sebelum bisa posting.
@@ -304,9 +297,7 @@ export default async function SaldoAwalPage({
                   placeholder="mis. salah input saldo awal, perlu koreksi"
                 />
               </div>
-              <button type="submit" className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-100 text-red-700 hover:bg-red-200">
-                Void & Buka Kunci
-              </button>
+              <Button type="submit" variant="soft-bata">Void & Buka Kunci</Button>
             </form>
           )}
         </div>
@@ -467,7 +458,7 @@ export default async function SaldoAwalPage({
             </form>
           )}
         </Section>
-      </div>
+      </PageContainer>
     </>
   );
 }

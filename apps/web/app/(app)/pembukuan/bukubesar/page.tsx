@@ -2,6 +2,9 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtPlain, fmtTanggal } from '@/lib/format';
+import {
+  PageContainer, PageHeader, buttonClass, FilterLabel, Select, Button, filterBarClass,
+} from '@/components/ui';
 
 interface Account { id: string; kode: string; nama: string; isPostable: boolean }
 interface PeriodYear {
@@ -67,75 +70,49 @@ export default async function BukuBesarPage({
   return (
     <>
       <Topbar breadcrumb="Buku Besar" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-2">
-              Buku Besar
-            </h1>
-            <p className="text-sm text-tanah-500">
-              Saldo berjalan dihitung dari saldo awal akun + jurnal POSTED sebelum periode.
-            </p>
-          </div>
-          {accountId && periodId && (
-            <a href={`/proxy/ledger.xlsx?${xlsxQs}`}
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-              Export Excel
-            </a>
-          )}
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Buku Besar"
+          subtitle="Saldo berjalan dihitung dari saldo awal akun + jurnal POSTED sebelum periode."
+          actions={
+            accountId && periodId ? (
+              <a href={`/proxy/ledger.xlsx?${xlsxQs}`} className={buttonClass('success')}>
+                Export Excel
+              </a>
+            ) : undefined
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-4 mb-6 flex items-end gap-3 shadow-sm">
-          <div className="flex-1">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Akun
-            </label>
-            <select
-              name="accountId" defaultValue={accountId}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono"
-            >
-              {postable.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.kode}  {a.nama}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-              Periode
-            </label>
-            <select
-              name="periodId" defaultValue={periodId}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-            >
-              {years[0]?.periods.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label} ({p.status})
-                </option>
-              ))}
-            </select>
-          </div>
+        <form className={filterBarClass}>
+          <FilterLabel>Akun</FilterLabel>
+          <Select name="accountId" defaultValue={accountId} fullWidth={false} className="font-mono">
+            {postable.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.kode}  {a.nama}
+              </option>
+            ))}
+          </Select>
+          <FilterLabel>Periode</FilterLabel>
+          <Select name="periodId" defaultValue={periodId} fullWidth={false}>
+            {years[0]?.periods.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label} ({p.status})
+              </option>
+            ))}
+          </Select>
           {projects.length > 0 && (
-            <div className="flex-1">
-              <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-                Project
-              </label>
-              <select
-                name="projectId" defaultValue={projectId}
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-              >
+            <>
+              <FilterLabel>Project</FilterLabel>
+              <Select name="projectId" defaultValue={projectId} fullWidth={false}>
                 <option value="">— semua —</option>
                 <option value="none">— tanpa project —</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </>
           )}
-          <button className="px-3 py-2 bg-cream-200 border border-cream-400 rounded-md text-sm font-semibold text-tanah-700">
-            Tampilkan
-          </button>
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Tampilkan</Button>
         </form>
 
         {data && (
@@ -230,7 +207,7 @@ export default async function BukuBesarPage({
             </table>
           </div>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

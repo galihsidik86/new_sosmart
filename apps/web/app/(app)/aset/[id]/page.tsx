@@ -6,8 +6,16 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canCancelPosted, canPostAccounting } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, Card, Button, Badge, type BadgeVariant } from '@/components/ui';
 
 type Status = 'AKTIF' | 'DIJUAL' | 'RUSAK' | 'PENSIUN';
+
+const STATUS_VARIANT: Record<Status, BadgeVariant> = {
+  AKTIF: 'success',
+  DIJUAL: 'neutral',
+  RUSAK: 'danger',
+  PENSIUN: 'neutral',
+};
 
 interface Account { id: string; kode: string; nama: string }
 interface Detail {
@@ -88,27 +96,21 @@ export default async function AsetDetailPage({
   return (
     <>
       <Topbar breadcrumb={`Aset / ${aset.kode}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              {aset.kode} — {aset.nama}
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
+      <PageContainer size="form">
+        <PageHeader
+          title={`${aset.kode} — ${aset.nama}`}
+          actions={<Badge variant={STATUS_VARIANT[aset.status]} size="md">{aset.status}</Badge>}
+          subtitle={
+            <>
               {aset.kelompok.replace(/_/g, ' ')} · {aset.metode === 'GARIS_LURUS' ? 'Garis Lurus' : 'Saldo Menurun'} ·
               masa {aset.masaManfaatBulan} bulan · cabang {aset.cabang.kode}
-            </p>
-            <p className="text-xs text-tanah-500 mt-1">
-              Perolehan {fmtTanggal(aset.tanggalPerolehan)} · Mulai disusutkan {fmtTanggal(aset.mulaiPenyusutan)}
-              {aset.lastDepresiasiPeriode && <span> · Terakhir: {aset.lastDepresiasiPeriode}</span>}
-            </p>
-          </div>
-          <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${
-            aset.status === 'AKTIF' ? 'bg-padi-100 text-padi-700' :
-            aset.status === 'RUSAK' ? 'bg-bata-100 text-bata-700' :
-            'bg-cream-200 text-tanah-500'
-          }`}>{aset.status}</span>
-        </div>
+              <span className="block text-xs mt-1">
+                Perolehan {fmtTanggal(aset.tanggalPerolehan)} · Mulai disusutkan {fmtTanggal(aset.mulaiPenyusutan)}
+                {aset.lastDepresiasiPeriode && <span> · Terakhir: {aset.lastDepresiasiPeriode}</span>}
+              </span>
+            </>
+          }
+        />
 
         <div className="grid grid-cols-4 gap-4 mb-6">
           <Stat label="Harga Perolehan" value={fmtRp(aset.hargaPerolehan)} />
@@ -117,7 +119,7 @@ export default async function AsetDetailPage({
           <Stat label="Nilai Residu" value={fmtRp(aset.nilaiResidu)} />
         </div>
 
-        <div className="bg-white border border-cream-200 rounded-xl p-5 shadow-sm mb-6">
+        <Card className="mb-6">
           <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Akun Jurnal</h2>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div>
@@ -136,7 +138,7 @@ export default async function AsetDetailPage({
               <div className="text-xs text-tanah-500">{aset.akunBeban.nama}</div>
             </div>
           </div>
-        </div>
+        </Card>
 
         {aset.depresiasiLines.length > 0 && (
           <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">
@@ -172,13 +174,13 @@ export default async function AsetDetailPage({
 
         {/* Dispose / undispose */}
         {aset.status === 'AKTIF' && !mayDispose ? (
-          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <span className="px-3 py-2 bg-emas-100 text-emas-700 text-xs rounded-lg border border-emas-300 inline-block">
               Penghentian aset perlu role Akuntan/Admin
             </span>
-          </div>
+          </Card>
         ) : aset.status === 'AKTIF' ? (
-          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Penghentian Aset</h2>
             <form action={disposeAction} className="grid grid-cols-2 gap-3 text-sm">
               <input type="hidden" name="id" value={aset.id} />
@@ -215,14 +217,14 @@ export default async function AsetDetailPage({
                   className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
               </div>
               <div className="col-span-2 flex justify-end">
-                <button className="px-4 py-2 bg-bata-500 hover:bg-bata-700 text-cream-50 font-semibold rounded-lg text-sm">
+                <Button type="submit" variant="danger">
                   Hentikan Aset (auto-jurnal)
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
         ) : (
-          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <div className="text-sm text-tanah-500 mb-2">
               Aset sudah {aset.status} pada {aset.tanggalDihentikan ? fmtTanggal(aset.tanggalDihentikan) : '—'}.
               {aset.disposalJournalId && (
@@ -234,14 +236,14 @@ export default async function AsetDetailPage({
                 <input type="hidden" name="id" value={aset.id} />
                 <input name="alasan" required minLength={5} placeholder="Alasan reverse dispose…"
                   className="px-3 py-2 bg-white border border-cream-300 rounded-md text-sm w-72" />
-                <button className="px-4 py-2 bg-cream-200 hover:bg-cream-300 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-400">
+                <Button type="submit" variant="secondary">
                   Reverse Dispose
-                </button>
+                </Button>
               </form>
             )}
-          </div>
+          </Card>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

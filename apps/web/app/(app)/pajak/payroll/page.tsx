@@ -4,6 +4,7 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, Button, Badge, buttonClass } from '@/components/ui';
 
 interface Run {
   id: string;
@@ -94,22 +95,19 @@ export default async function PayrollListPage({
   return (
     <>
       <Topbar breadcrumb="Payroll" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Payroll Bulanan
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
+      <PageContainer size="list">
+        <PageHeader
+          title="Payroll Bulanan"
+          subtitle={
+            <>
               PPh 21 dihitung dengan TER (Tarif Efektif Rata-rata) bulanan PMK 168/2023.
               Auto-jurnal saat post: D Beban Gaji · K Utang PPh 21 · K Utang BPJS · K Kas/Bank.
-            </p>
-          </div>
-          <a href="/proxy/payroll/runs/export.xlsx"
-            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-            Export Excel
-          </a>
-        </div>
+            </>
+          }
+          actions={
+            <a href="/proxy/payroll/runs/export.xlsx" className={buttonClass('success')}>Export Excel</a>
+          }
+        />
 
         <div className="mb-6 rounded-xl border border-padi-300 bg-padi-50 px-4 py-3 text-xs text-tanah-700">
           Tabel TER (Tarif Efektif Rata-rata) telah di-populate sesuai PMK 168/2023
@@ -131,7 +129,7 @@ export default async function PayrollListPage({
               </select>
               <input name="preview" defaultValue={periode} pattern="\d{4}-\d{2}" placeholder="YYYY-MM"
                 className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono w-28" />
-              <button className="px-3 py-1.5 bg-cream-200 border border-cream-400 rounded-md text-xs font-semibold text-tanah-700">Lihat</button>
+              <Button type="submit" variant="secondary" size="sm">Lihat</Button>
             </form>
           </div>
           <table className="w-full text-sm">
@@ -187,11 +185,9 @@ export default async function PayrollListPage({
                   className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
                   {kasBank.map((a) => <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>)}
                 </select>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
+                <Button type="submit">
                   Jalankan & Post {periode}
-                </button>
+                </Button>
               </form>
             </div>
           )}
@@ -233,11 +229,9 @@ export default async function PayrollListPage({
                   <td className="px-4 py-2 text-right font-mono tabular-nums text-bata-700">{fmtRp(r.totalPph21)}</td>
                   <td className="px-4 py-2 text-right font-mono tabular-nums font-semibold">{fmtRp(r.totalTakeHome)}</td>
                   <td className="px-4 py-2 text-center">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                      r.status === 'POSTED' ? 'bg-padi-100 text-padi-700' :
-                      r.status === 'DRAFT' ? 'bg-emas-100 text-emas-700' :
-                      'bg-cream-200 text-tanah-500'
-                    }`}>{r.status}</span>
+                    <Badge variant={r.status === 'POSTED' ? 'success' : r.status === 'DRAFT' ? 'warning' : 'neutral'}>
+                      {r.status}
+                    </Badge>
                   </td>
                 </tr>
               ))}
@@ -247,7 +241,7 @@ export default async function PayrollListPage({
             </tbody>
           </table>
         </section>
-      </div>
+      </PageContainer>
     </>
   );
 }

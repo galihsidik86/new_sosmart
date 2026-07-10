@@ -2,6 +2,9 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp, fmtTanggal } from '@/lib/format';
+import {
+  PageContainer, PageHeader, FilterLabel, Select, Button, StatCard, buttonClass, filterBarClass,
+} from '@/components/ui';
 
 interface PeriodYear {
   id: string; kode: string;
@@ -45,49 +48,39 @@ export default async function SptPpnPage({
   return (
     <>
       <Topbar breadcrumb="SPT Masa PPN" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              SPT Masa PPN (1111)
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Rekap PPN keluaran (faktur penjualan PKP) − PPN masukan (vendor PKP). Selisih: kurang bayar / lebih bayar.
-            </p>
-          </div>
-          {periodId && (
-            <a href={`/proxy/spt/ppn/export.xlsx?periodId=${periodId}`}
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-              Export Excel
-            </a>
-          )}
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="SPT Masa PPN (1111)"
+          subtitle="Rekap PPN keluaran (faktur penjualan PKP) − PPN masukan (vendor PKP). Selisih: kurang bayar / lebih bayar."
+          actions={
+            periodId ? (
+              <a href={`/proxy/spt/ppn/export.xlsx?periodId=${periodId}`} className={buttonClass('success')}>Export Excel</a>
+            ) : undefined
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-sm text-sm">
-          <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Periode:</span>
-          <select name="periodId" defaultValue={periodId}
-            className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm">
+        <form className={filterBarClass}>
+          <FilterLabel>Periode:</FilterLabel>
+          <Select name="periodId" defaultValue={periodId} fullWidth={false}>
             {years[0]?.periods.map((p) => (
               <option key={p.id} value={p.id}>{p.label} ({p.status})</option>
             ))}
-          </select>
-          <button className="px-3 py-1.5 bg-cream-200 border border-cream-400 rounded-md text-xs font-semibold text-tanah-700">
-            Tampilkan
-          </button>
+          </Select>
+          <Button type="submit" variant="secondary" size="sm">Tampilkan</Button>
         </form>
 
         {spt && (
           <>
             {/* Ringkasan */}
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <Stat label="PPN Keluaran" value={fmtRp(spt.ppnKeluaran.totalPpn)} tone="bata" />
-              <Stat label="PPN Masukan (dikreditkan)" value={fmtRp(spt.ppnMasukan.totalPpn)} tone="padi" />
-              <Stat label={
+              <StatCard label="PPN Keluaran" value={fmtRp(spt.ppnKeluaran.totalPpn)} tone="danger" />
+              <StatCard label="PPN Masukan (dikreditkan)" value={fmtRp(spt.ppnMasukan.totalPpn)} tone="success" />
+              <StatCard label={
                 spt.status === 'KURANG_BAYAR' ? 'Kurang Bayar (setor ke negara)' :
                 spt.status === 'LEBIH_BAYAR' ? 'Lebih Bayar (restitusi/kompensasi)' :
                 'Nihil'
               } value={fmtRp(Math.abs(Number(spt.ppnKurangLebihBayar)))}
-              tone={spt.status === 'KURANG_BAYAR' ? 'bata' : spt.status === 'LEBIH_BAYAR' ? 'padi' : undefined} big />
+              tone={spt.status === 'KURANG_BAYAR' ? 'danger' : spt.status === 'LEBIH_BAYAR' ? 'success' : 'default'} />
             </div>
 
             <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">
@@ -180,19 +173,7 @@ export default async function SptPpnPage({
             </section>
           </>
         )}
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function Stat({ label, value, tone, big }: { label: string; value: string; tone?: 'padi' | 'bata'; big?: boolean }) {
-  const cls = tone === 'padi' ? 'text-padi-700' : tone === 'bata' ? 'text-bata-700' : 'text-wedel-900';
-  return (
-    <div className="bg-white border border-cream-200 rounded-xl p-5 shadow-sm">
-      <div className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold">{label}</div>
-      <div className={`font-display font-semibold tabular-nums mt-2 ${cls} ${big ? 'text-3xl' : 'text-xl'}`}>
-        {value}
-      </div>
-    </div>
   );
 }

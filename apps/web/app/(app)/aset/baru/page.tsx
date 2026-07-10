@@ -3,6 +3,7 @@ import { Topbar } from '@/components/Topbar';
 import { AsetForm } from '@/components/AsetForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { PageContainer, PageHeader } from '@/components/ui';
 
 interface Cabang { id: string; kode: string; nama: string }
 interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
@@ -40,16 +41,14 @@ export default async function AsetBaruPage() {
   return (
     <>
       <Topbar breadcrumb="Aset Tetap / Baru" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-4xl mx-auto w-full">
-        <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-6">
-          Aset Tetap Baru
-        </h1>
+      <PageContainer size="form">
+        <PageHeader title="Aset Tetap Baru" />
         <AsetForm
           cabang={cabang}
           akunAset={akunAset} akunAkumulasi={akunAkum} akunBeban={akunBeban}
           submit={submitAset}
         />
-      </div>
+      </PageContainer>
     </>
   );
 }

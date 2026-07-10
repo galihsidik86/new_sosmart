@@ -4,6 +4,9 @@ import { Topbar } from '@/components/Topbar';
 import { GlConfigRow } from '@/components/GlConfigRow';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import {
+  PageContainer, PageHeader, Table, THead, TH, TBody, TR, TD,
+} from '@/components/ui';
 
 interface ConfigRow {
   key: string;
@@ -73,58 +76,48 @@ export default async function AkunDefaultPage() {
   return (
     <>
       <Topbar breadcrumb="Pengaturan › Akun Default" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-4xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Akun Default (GL Config)
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Pemetaan akun untuk auto-posting jurnal: opname, disposal aset,
-            payroll, dan komponen laporan keuangan.
-            Kalau dibiarkan kosong, system pakai kode default COA Indonesia (kolom kanan).
-          </p>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Akun Default (GL Config)"
+          subtitle="Pemetaan akun untuk auto-posting jurnal: opname, disposal aset, payroll, dan komponen laporan keuangan. Kalau dibiarkan kosong, system pakai kode default COA Indonesia (kolom kanan)."
+        />
 
-        <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-cream-50 text-left">
-              <tr className="text-[11px] uppercase tracking-wider text-tanah-500 border-b border-cream-200">
-                <th className="px-4 py-3 font-bold">Kategori</th>
-                <th className="px-4 py-3 font-bold">Akun terpilih</th>
-                <th className="px-4 py-3 font-bold text-right w-28">Default</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-cream-200">
-              {config.map((row) => (
-                <tr key={row.key} className="hover:bg-cream-50">
-                  <td className="px-4 py-3">
-                    <div className="font-semibold text-tanah-700">{KEY_LABEL[row.key] ?? row.key}</div>
-                    <div className="text-xs text-tanah-500 mt-0.5">{KEY_DESC[row.key]}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <GlConfigRow
-                      configKey={row.key}
-                      defaultKode={row.defaultKode}
-                      serverValue={row.accountId}
-                      options={postable}
-                      action={updateConfigAction}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-right font-mono text-xs text-tanah-500">
-                    {row.defaultKode}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <THead>
+            <TH>Kategori</TH>
+            <TH>Akun terpilih</TH>
+            <TH numeric className="w-28">Default</TH>
+          </THead>
+          <TBody>
+            {config.map((row) => (
+              <TR key={row.key}>
+                <TD className="py-3">
+                  <div className="font-semibold text-tanah-700">{KEY_LABEL[row.key] ?? row.key}</div>
+                  <div className="text-xs text-tanah-500 mt-0.5">{KEY_DESC[row.key]}</div>
+                </TD>
+                <TD className="py-3">
+                  <GlConfigRow
+                    configKey={row.key}
+                    defaultKode={row.defaultKode}
+                    serverValue={row.accountId}
+                    options={postable}
+                    action={updateConfigAction}
+                  />
+                </TD>
+                <TD className="py-3 text-right font-mono text-xs text-tanah-500">
+                  {row.defaultKode}
+                </TD>
+              </TR>
+            ))}
+          </TBody>
+        </Table>
 
         <div className="mt-4 text-xs text-tanah-500">
           <strong>Catatan:</strong> Akun yang dipilih harus <em>postable</em> (leaf, bukan akun induk).
           Pemetaan ini di-resolve setiap kali auto-posting jurnal — perubahan
           berlaku untuk jurnal baru, tidak retroaktif.
         </div>
-      </div>
+      </PageContainer>
     </>
   );
 }

@@ -2,6 +2,9 @@ import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtPlain, fmtRp, fmtTanggal } from '@/lib/format';
+import {
+  PageContainer, PageHeader, FilterLabel, Select, Button, buttonClass, filterBarClass,
+} from '@/components/ui';
 
 interface Item { id: string; kode: string; nama: string; satuan: string; isAktif: boolean }
 interface Cabang { id: string; kode: string; nama: string }
@@ -66,58 +69,41 @@ export default async function KartuStokPage({
   return (
     <>
       <Topbar breadcrumb="Kartu Stok" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-2">
-              Kartu Stok
-            </h1>
-            <p className="text-sm text-tanah-500">
-              Mutasi stok dengan saldo berjalan per item per cabang.
-              Sumber telusur balik ke faktur penjualan/pembelian/opname.
-            </p>
-          </div>
-          {itemId && (
-            <a href={`/proxy/inventory/kartu-stok/export.xlsx?itemId=${itemId}${sp.cabangId ? '&cabangId=' + sp.cabangId : ''}${sp.startDate ? '&startDate=' + sp.startDate : ''}${sp.endDate ? '&endDate=' + sp.endDate : ''}`}
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-              Export Excel
-            </a>
-          )}
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Kartu Stok"
+          subtitle="Mutasi stok dengan saldo berjalan per item per cabang. Sumber telusur balik ke faktur penjualan/pembelian/opname."
+          actions={
+            itemId ? (
+              <a href={`/proxy/inventory/kartu-stok/export.xlsx?itemId=${itemId}${sp.cabangId ? '&cabangId=' + sp.cabangId : ''}${sp.startDate ? '&startDate=' + sp.startDate : ''}${sp.endDate ? '&endDate=' + sp.endDate : ''}`}
+                className={buttonClass('success')}>
+                Export Excel
+              </a>
+            ) : undefined
+          }
+        />
 
-        <form className="bg-white border border-cream-200 rounded-xl p-4 mb-6 flex items-end gap-3 shadow-sm">
-          <div className="flex-1">
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Item</label>
-            <select name="itemId" defaultValue={itemId}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
-              {aktif.map((i) => (
-                <option key={i.id} value={i.id}>{i.kode}  {i.nama}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Cabang</label>
-            <select name="cabangId" defaultValue={sp.cabangId ?? ''}
-              className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
-              <option value="">Semua</option>
-              {cabang.map((c) => (
-                <option key={c.id} value={c.id}>{c.kode}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Dari</label>
-            <input type="date" name="startDate" defaultValue={sp.startDate}
-              className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Sampai</label>
-            <input type="date" name="endDate" defaultValue={sp.endDate}
-              className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-          </div>
-          <button className="px-3 py-2 bg-cream-200 border border-cream-400 rounded-md text-sm font-semibold text-tanah-700">
-            Tampilkan
-          </button>
+        <form className={filterBarClass}>
+          <FilterLabel>Item</FilterLabel>
+          <Select name="itemId" defaultValue={itemId} fullWidth={false} className="font-mono">
+            {aktif.map((i) => (
+              <option key={i.id} value={i.id}>{i.kode}  {i.nama}</option>
+            ))}
+          </Select>
+          <FilterLabel>Cabang</FilterLabel>
+          <Select name="cabangId" defaultValue={sp.cabangId ?? ''} fullWidth={false}>
+            <option value="">Semua</option>
+            {cabang.map((c) => (
+              <option key={c.id} value={c.id}>{c.kode}</option>
+            ))}
+          </Select>
+          <FilterLabel>Dari</FilterLabel>
+          <input type="date" name="startDate" defaultValue={sp.startDate}
+            className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
+          <FilterLabel>Sampai</FilterLabel>
+          <input type="date" name="endDate" defaultValue={sp.endDate}
+            className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
+          <Button type="submit" variant="secondary" size="sm" className="ml-auto">Tampilkan</Button>
         </form>
 
         {kartu && (
@@ -169,7 +155,7 @@ export default async function KartuStokPage({
             </table>
           </div>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

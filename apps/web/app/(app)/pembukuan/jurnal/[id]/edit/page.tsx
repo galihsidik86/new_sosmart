@@ -3,6 +3,7 @@ import { Topbar } from '@/components/Topbar';
 import { JurnalForm } from '@/components/JurnalForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { PageContainer, PageHeader } from '@/components/ui';
 
 interface Account {
   id: string;
@@ -62,10 +63,8 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
   return (
     <>
       <Topbar breadcrumb={`Jurnal / Edit Draft`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-6">
-          Edit Draft Jurnal
-        </h1>
+      <PageContainer size="form">
+        <PageHeader title="Edit Draft Jurnal" />
         <JurnalForm
           accounts={accounts}
           cabang={cabang}
@@ -89,7 +88,7 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
               })),
           }}
         />
-      </div>
+      </PageContainer>
     </>
   );
 }

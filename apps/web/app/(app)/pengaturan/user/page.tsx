@@ -5,8 +5,18 @@ import { redirect } from 'next/navigation';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import {
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
+  Table, THead, TH, TBody, TR, TD, EmptyRow, type BadgeVariant,
+} from '@/components/ui';
 
 type Role = 'OWNER' | 'ADMIN' | 'AKUNTAN' | 'KASIR' | 'AUDITOR';
+
+function roleVariant(role: Role): BadgeVariant {
+  if (role === 'OWNER') return 'danger';
+  if (role === 'ADMIN') return 'brand';
+  return 'neutral';
+}
 
 interface UserRow {
   userId: string;
@@ -62,62 +72,47 @@ export default async function UsersPage() {
   return (
     <>
       <Topbar breadcrumb="Pengaturan › Pengguna" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Manajemen Pengguna
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            {users.length} pengguna · admin cabang hanya melihat & mengatur user di cabang yang sama.
-            Pemilik tenant (OWNER) tidak tampil bagi admin cabang.
-          </p>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Manajemen Pengguna"
+          subtitle={`${users.length} pengguna · admin cabang hanya melihat & mengatur user di cabang yang sama. Pemilik tenant (OWNER) tidak tampil bagi admin cabang.`}
+        />
 
         <div className="grid grid-cols-3 gap-6">
-          <section className="col-span-2 bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-cream-50 text-left">
-                <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
-                  <th className="px-4 py-3 font-bold">Nama / Email</th>
-                  <th className="px-4 py-3 font-bold">Role</th>
-                  <th className="px-4 py-3 font-bold">Akses Cabang</th>
-                  <th className="px-4 py-3 font-bold text-center">Aktif</th>
-                  <th className="px-4 py-3 font-bold text-right w-24"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cream-200">
+          <section className="col-span-2">
+            <Table>
+              <THead>
+                <TH>Nama / Email</TH>
+                <TH>Role</TH>
+                <TH>Akses Cabang</TH>
+                <TH className="text-center">Aktif</TH>
+                <TH numeric className="w-24" />
+              </THead>
+              <TBody>
                 {users.map((u) => (
-                  <tr key={u.userId} className="hover:bg-cream-50">
-                    <td className="px-4 py-2.5">
+                  <TR key={u.userId}>
+                    <TD>
                       <div className="font-semibold text-tanah-700">{u.nama}</div>
                       <div className="text-xs text-tanah-500">{u.email}</div>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                          u.role === 'OWNER' ? 'bg-bata-100 text-bata-700' :
-                          u.role === 'ADMIN' ? 'bg-sogan-100 text-sogan-700' :
-                          'bg-cream-100 text-tanah-700'
-                        }`}
-                      >
-                        {ROLE_LABEL[u.role]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5 text-xs text-tanah-500">
+                    </TD>
+                    <TD>
+                      <Badge variant={roleVariant(u.role)}>{ROLE_LABEL[u.role]}</Badge>
+                    </TD>
+                    <TD className="text-xs text-tanah-500">
                       {u.isUnrestricted ? (
                         <span className="font-semibold text-padi-700">Semua cabang</span>
                       ) : (
                         u.cabang.map((c) => c.kode).join(', ')
                       )}
-                    </td>
-                    <td className="px-4 py-2.5 text-center">
+                    </TD>
+                    <TD className="text-center">
                       {u.isActive ? (
-                        <span className="text-[10px] font-bold uppercase bg-padi-100 text-padi-700 px-1.5 py-0.5 rounded">Ya</span>
+                        <Badge variant="success">Ya</Badge>
                       ) : (
                         <span className="text-[10px] text-tanah-400">tidak</span>
                       )}
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
+                    </TD>
+                    <TD className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/pengaturan/user/${u.userId}/edit` as Route}
@@ -135,35 +130,29 @@ export default async function UsersPage() {
                           </button>
                         </form>
                       </div>
-                    </td>
-                  </tr>
+                    </TD>
+                  </TR>
                 ))}
                 {users.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-tanah-500">
-                      Belum ada pengguna di scope ini.
-                    </td>
-                  </tr>
+                  <EmptyRow colSpan={5}>Belum ada pengguna di scope ini.</EmptyRow>
                 )}
-              </tbody>
-            </table>
+              </TBody>
+            </Table>
           </section>
 
-          <aside className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Pengguna</h2>
             <form action={createUserAction} className="space-y-3 text-sm">
-              <FF label="Email" name="email" type="email" required />
-              <FF label="Nama" name="nama" required />
-              <FF label="Password" name="password" type="password" required />
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Role</label>
-                <select name="role" defaultValue="KASIR"
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+              <FormField label="Email" required><Input name="email" type="email" required /></FormField>
+              <FormField label="Nama" required><Input name="nama" required /></FormField>
+              <FormField label="Password" required><Input name="password" type="password" required /></FormField>
+              <FormField label="Role">
+                <Select name="role" defaultValue="KASIR">
                   {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
                     <option key={r} value={r}>{ROLE_LABEL[r]}</option>
                   ))}
-                </select>
-              </div>
+                </Select>
+              </FormField>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
                   Akses Cabang
@@ -180,28 +169,11 @@ export default async function UsersPage() {
                   ))}
                 </div>
               </div>
-              <button className="w-full py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                Tambahkan
-              </button>
+              <Button type="submit" className="w-full">Tambahkan</Button>
             </form>
-          </aside>
+          </Card>
         </div>
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function FF(props: { label: string; name: string; required?: boolean; type?: string; defaultValue?: string }) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-        {props.label}{props.required && <span className="text-bata-500 ml-0.5">*</span>}
-      </label>
-      <input
-        name={props.name} type={props.type ?? 'text'} required={props.required}
-        defaultValue={props.defaultValue}
-        className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm focus:outline-none focus:border-sogan-500"
-      />
-    </div>
   );
 }

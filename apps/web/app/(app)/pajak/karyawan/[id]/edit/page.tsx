@@ -4,6 +4,9 @@ import { redirect } from 'next/navigation';
 import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import {
+  PageContainer, PageHeader, Card, Button, FormField, Input, Select, buttonClass,
+} from '@/components/ui';
 
 type Ptkp = 'TK_0' | 'TK_1' | 'TK_2' | 'TK_3' | 'K_0' | 'K_1' | 'K_2' | 'K_3' | 'HB_0' | 'HB_1' | 'HB_2' | 'HB_3';
 
@@ -67,70 +70,44 @@ export default async function EditKaryawanPage({ params }: { params: Promise<{ i
   return (
     <>
       <Topbar breadcrumb={`Karyawan › Edit ${k.kode}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-2xl mx-auto w-full">
-        <div className="mb-6">
+      <PageContainer size="form">
+        <div className="mb-2">
           <Link href="/pajak/karyawan" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
-          <h1 className="font-display text-3xl font-semibold text-wedel-900 mt-2">Edit Karyawan</h1>
-          <p className="text-sm text-tanah-500 mt-1">{k.kode} · {k.nama}</p>
         </div>
+        <PageHeader title="Edit Karyawan" subtitle={`${k.kode} · ${k.nama}`} />
 
-        <form action={updateKaryawan} className="bg-white rounded-xl border border-cream-200 shadow-sm p-6 space-y-4">
-          <input type="hidden" name="id" value={k.id} />
-          <FF label="Kode" name="kode" required defaultValue={k.kode} />
-          <FF label="Nama" name="nama" required defaultValue={k.nama} />
-          <FF label="NIK (16 digit)" name="nik" required defaultValue={k.nik} />
-          <FF label="NPWP (15-16 digit)" name="npwp" defaultValue={k.npwp ?? ''} />
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">PTKP</label>
-            <select
-              name="ptkpStatus" required defaultValue={k.ptkpStatus}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono"
-            >
-              {(Object.keys(PTKP_LABEL) as Ptkp[]).map((p) => (
-                <option key={p} value={p}>{PTKP_LABEL[p]}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Cabang</label>
-            <select
-              name="cabangId" defaultValue={k.cabangId ?? ''}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-            >
-              <option value="">—</option>
-              {cabang.map((c) => <option key={c.id} value={c.id}>{c.kode}</option>)}
-            </select>
-          </div>
-          <FF label="Jabatan" name="jabatan" defaultValue={k.jabatan ?? ''} />
-          <FF label="Tanggal masuk" name="tanggalMasuk" type="date" required defaultValue={k.tanggalMasuk.slice(0, 10)} />
-          <FF label="Gaji pokok" name="gajiPokok" type="number" required defaultValue={k.gajiPokok} />
-          <FF label="Tunjangan tetap" name="tunjanganTetap" type="number" defaultValue={k.tunjanganTetap} />
-          <FF label="Iuran BPJS karyawan" name="iuranBpjsKaryawan" type="number" defaultValue={k.iuranBpjsKaryawan} />
-          <div className="flex gap-2 pt-2">
-            <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-              Simpan perubahan
-            </button>
-            <Link href="/pajak/karyawan" className="px-4 py-2 bg-cream-100 hover:bg-cream-200 text-tanah-700 font-semibold rounded-lg text-sm">
-              Batal
-            </Link>
-          </div>
-        </form>
-      </div>
+        <Card padding="lg">
+          <form action={updateKaryawan} className="space-y-4">
+            <input type="hidden" name="id" value={k.id} />
+            <FormField label="Kode" required><Input name="kode" required defaultValue={k.kode} /></FormField>
+            <FormField label="Nama" required><Input name="nama" required defaultValue={k.nama} /></FormField>
+            <FormField label="NIK (16 digit)" required><Input name="nik" required defaultValue={k.nik} /></FormField>
+            <FormField label="NPWP (15-16 digit)"><Input name="npwp" defaultValue={k.npwp ?? ''} /></FormField>
+            <FormField label="PTKP">
+              <Select name="ptkpStatus" required defaultValue={k.ptkpStatus} className="font-mono">
+                {(Object.keys(PTKP_LABEL) as Ptkp[]).map((p) => (
+                  <option key={p} value={p}>{PTKP_LABEL[p]}</option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField label="Cabang">
+              <Select name="cabangId" defaultValue={k.cabangId ?? ''}>
+                <option value="">—</option>
+                {cabang.map((c) => <option key={c.id} value={c.id}>{c.kode}</option>)}
+              </Select>
+            </FormField>
+            <FormField label="Jabatan"><Input name="jabatan" defaultValue={k.jabatan ?? ''} /></FormField>
+            <FormField label="Tanggal masuk"><Input name="tanggalMasuk" type="date" required defaultValue={k.tanggalMasuk.slice(0, 10)} /></FormField>
+            <FormField label="Gaji pokok"><Input name="gajiPokok" type="number" required defaultValue={k.gajiPokok} /></FormField>
+            <FormField label="Tunjangan tetap"><Input name="tunjanganTetap" type="number" defaultValue={k.tunjanganTetap} /></FormField>
+            <FormField label="Iuran BPJS karyawan"><Input name="iuranBpjsKaryawan" type="number" defaultValue={k.iuranBpjsKaryawan} /></FormField>
+            <div className="flex gap-2 pt-2">
+              <Button type="submit">Simpan perubahan</Button>
+              <Link href="/pajak/karyawan" className={buttonClass('secondary')}>Batal</Link>
+            </div>
+          </form>
+        </Card>
+      </PageContainer>
     </>
-  );
-}
-
-function FF(props: { label: string; name: string; required?: boolean; type?: string; defaultValue?: string }) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-        {props.label}{props.required && <span className="text-bata-500 ml-0.5">*</span>}
-      </label>
-      <input
-        name={props.name} type={props.type ?? 'text'} required={props.required}
-        defaultValue={props.defaultValue}
-        className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm focus:outline-none focus:border-sogan-500"
-      />
-    </div>
   );
 }

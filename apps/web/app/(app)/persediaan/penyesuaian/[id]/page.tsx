@@ -9,6 +9,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { canCancelPosted, canPostAccounting } from '@/lib/roles';
 import { runWithApprover } from '@/lib/stepUp';
 import { fmtPlain, fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, Button, buttonClass, StatusBadge } from '@/components/ui';
 
 type Status = 'DRAFT' | 'POSTED' | 'CANCELLED' | 'PARTIAL' | 'PAID';
 
@@ -114,46 +115,40 @@ export default async function PenyesuaianDetailPage({
   return (
     <>
       <Topbar breadcrumb={`Penyesuaian / ${adj.nomor ?? 'Draft'}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              {adj.nomor ?? '— Draft —'}
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
+      <PageContainer size="form">
+        <PageHeader
+          title={adj.nomor ?? '— Draft —'}
+          actions={<StatusBadge status={adj.status} size="md" />}
+          subtitle={
+            <>
               {fmtTanggal(adj.tanggal)} · cabang {adj.cabang.kode} · periode {adj.fiscalPeriod.label}
-            </p>
-            <p className="text-sm text-tanah-700 mt-1 italic">"{adj.alasan}"</p>
-            {adj.journalId && (
-              <p className="text-xs text-tanah-500 mt-1">
-                Jurnal:{' '}
-                <Link href={`/pembukuan/jurnal/${adj.journalId}`}
-                  className="text-sogan-500 font-mono hover:underline">lihat</Link>
-              </p>
-            )}
-            {adj.postedBy && (
-              <p className="text-xs text-tanah-500 mt-1">
-                Diposting oleh <span className="font-semibold text-tanah-700">{adj.postedBy.nama}</span> ({adj.postedBy.email})
-                {adj.postedRequestedBy && (
-                  <> · atas permintaan <span className="font-semibold text-tanah-700">{adj.postedRequestedBy.nama}</span> ({adj.postedRequestedBy.email})</>
-                )}
-              </p>
-            )}
-            {adj.cancelledBy && (
-              <p className="text-xs text-bata-700 mt-1">
-                Dibatalkan oleh <span className="font-semibold">{adj.cancelledBy.nama}</span> ({adj.cancelledBy.email})
-                {adj.cancelledRequestedBy && (
-                  <> · atas permintaan <span className="font-semibold">{adj.cancelledRequestedBy.nama}</span> ({adj.cancelledRequestedBy.email})</>
-                )}
-              </p>
-            )}
-          </div>
-          <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${
-            adj.status === 'POSTED' ? 'bg-padi-100 text-padi-700' :
-            adj.status === 'DRAFT' ? 'bg-emas-100 text-emas-700' :
-            'bg-cream-200 text-tanah-500'
-          }`}>{adj.status}</span>
-        </div>
+              <span className="block text-tanah-700 mt-1 italic">"{adj.alasan}"</span>
+              {adj.journalId && (
+                <span className="block text-xs mt-1">
+                  Jurnal:{' '}
+                  <Link href={`/pembukuan/jurnal/${adj.journalId}`}
+                    className="text-sogan-500 font-mono hover:underline">lihat</Link>
+                </span>
+              )}
+              {adj.postedBy && (
+                <span className="block text-xs mt-1">
+                  Diposting oleh <span className="font-semibold text-tanah-700">{adj.postedBy.nama}</span> ({adj.postedBy.email})
+                  {adj.postedRequestedBy && (
+                    <> · atas permintaan <span className="font-semibold text-tanah-700">{adj.postedRequestedBy.nama}</span> ({adj.postedRequestedBy.email})</>
+                  )}
+                </span>
+              )}
+              {adj.cancelledBy && (
+                <span className="block text-xs text-bata-700 mt-1">
+                  Dibatalkan oleh <span className="font-semibold">{adj.cancelledBy.nama}</span> ({adj.cancelledBy.email})
+                  {adj.cancelledRequestedBy && (
+                    <> · atas permintaan <span className="font-semibold">{adj.cancelledRequestedBy.nama}</span> ({adj.cancelledRequestedBy.email})</>
+                  )}
+                </span>
+              )}
+            </>
+          }
+        />
 
         <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">
           <table className="w-full text-sm">
@@ -215,9 +210,9 @@ export default async function PenyesuaianDetailPage({
               {mayPost ? (
                 <form action={postAction}>
                   <input type="hidden" name="id" value={adj.id} />
-                  <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
+                  <Button type="submit">
                     Post Opname (record stok + jurnal)
-                  </button>
+                  </Button>
                 </form>
               ) : (
                 <StepUpButton
@@ -230,15 +225,15 @@ export default async function PenyesuaianDetailPage({
               )}
               <Link
                 href={`/persediaan/penyesuaian/${adj.id}/edit` as Route}
-                className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"
+                className={buttonClass('secondary')}
               >
                 Edit Draft
               </Link>
               <form action={deleteAction}>
                 <input type="hidden" name="id" value={adj.id} />
-                <button className="px-4 py-2 bg-cream-200 hover:bg-cream-300 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-400">
+                <Button type="submit" variant="secondary">
                   Hapus Draft
-                </button>
+                </Button>
               </form>
             </>
           )}
@@ -258,13 +253,13 @@ export default async function PenyesuaianDetailPage({
               <input type="hidden" name="id" value={adj.id} />
               <input name="alasan" required minLength={5} placeholder="Alasan pembatalan…"
                 className="px-3 py-2 bg-white border border-cream-300 rounded-md text-sm w-72" />
-              <button className="px-4 py-2 bg-bata-500 hover:bg-bata-700 text-cream-50 font-semibold rounded-lg text-sm">
+              <Button type="submit" variant="danger">
                 Batalkan
-              </button>
+              </Button>
             </form>
           )}
         </div>
-      </div>
+      </PageContainer>
     </>
   );
 }

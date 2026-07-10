@@ -5,6 +5,10 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtTanggal } from '@/lib/format';
 import { canAdmin } from '@/lib/roles';
+import {
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input,
+  THead, TH, TBody, TR, TD, StatusBanner, buttonClass, type BadgeVariant,
+} from '@/components/ui';
 
 interface PeriodRow {
   id: string;
@@ -144,68 +148,40 @@ export default async function PeriodePage({
   return (
     <>
       <Topbar breadcrumb="Periode Buku" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Periode Buku
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              Tutup periode untuk mengunci jurnal sebelum tanggal cutoff.
-              Buka kembali hanya boleh untuk periode terakhir yang ditutup.
-            </p>
-          </div>
-          <a href="/proxy/periods/export.xlsx"
-            className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700">
-            Export Excel
-          </a>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Periode Buku"
+          subtitle="Tutup periode untuk mengunci jurnal sebelum tanggal cutoff. Buka kembali hanya boleh untuk periode terakhir yang ditutup."
+          actions={
+            <a href="/proxy/periods/export.xlsx" className={buttonClass('success')}>
+              Export Excel
+            </a>
+          }
+        />
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-6">
-            <strong>Gagal: </strong>{error}
-          </div>
+          <StatusBanner tone="danger" className="mb-6">
+            <span><strong>Gagal: </strong>{error}</span>
+          </StatusBanner>
         )}
 
         {canAdmin(s.role) && (
-          <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-5 mb-6">
+          <Card className="mb-6">
             <div className="text-sm font-bold text-tanah-700 mb-3">Tambah Tahun Buku</div>
             <form action={createFiscalYearAction} className="flex items-end gap-3">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-                  Kode
-                </label>
-                <input
-                  type="text"
-                  name="kode"
-                  required
-                  placeholder="mis. 2027"
-                  className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm w-32"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-                  Bulan Mulai
-                </label>
-                <input
-                  type="month"
-                  name="startDate"
-                  required
-                  className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
-                />
-              </div>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 text-sm font-semibold rounded-lg"
-              >
-                Tambah Tahun Buku
-              </button>
+              <FormField label="Kode">
+                <Input name="kode" required placeholder="mis. 2027" fullWidth={false} className="w-32" />
+              </FormField>
+              <FormField label="Bulan Mulai">
+                <Input type="month" name="startDate" required fullWidth={false} />
+              </FormField>
+              <Button type="submit">Tambah Tahun Buku</Button>
             </form>
             <p className="text-xs text-tanah-400 mt-2">
               12 periode bulanan otomatis dibuat berturut-turut dari bulan mulai — bisa untuk
               tahun mendatang (mis. 2027) atau data historis (mis. 2024/2025).
             </p>
-          </div>
+          </Card>
         )}
 
         {years.map((y) => {
@@ -216,10 +192,7 @@ export default async function PeriodePage({
             last.status === 'OPEN' &&
             y.periods.slice(0, -1).every((p) => p.status === 'CLOSED');
           return (
-          <div
-            key={y.id}
-            className="bg-white rounded-xl border border-cream-200 shadow-sm mb-6 overflow-hidden"
-          >
+          <Card key={y.id} padding="none" className="mb-6 overflow-hidden">
             <div className="px-5 py-3 bg-cream-50 border-b border-cream-200 flex items-center justify-between">
               <div>
                 <div className="font-display text-xl font-semibold text-wedel-900">
@@ -248,12 +221,7 @@ export default async function PeriodePage({
                       placeholder="Catatan tutup tahun (opsional)"
                       className="px-2 py-1 text-xs border border-cream-300 rounded bg-white w-52"
                     />
-                    <button
-                      type="submit"
-                      className="px-3 py-1.5 bg-bata-500 hover:bg-bata-700 text-cream-50 text-xs font-bold rounded"
-                    >
-                      Tutup Tahun Buku
-                    </button>
+                    <Button type="submit" variant="danger" size="sm">Tutup Tahun Buku</Button>
                   </form>
                 )}
                 {y.status === 'CLOSED' && (
@@ -266,46 +234,39 @@ export default async function PeriodePage({
                       placeholder="Alasan buka tahun buku…"
                       className="px-2 py-1 text-xs border border-cream-300 rounded bg-white w-52"
                     />
-                    <button
-                      type="submit"
-                      className="px-3 py-1.5 bg-cream-200 hover:bg-cream-300 text-tanah-700 text-xs font-bold rounded border border-cream-400"
-                    >
-                      Buka Tahun Buku
-                    </button>
+                    <Button type="submit" variant="secondary" size="sm">Buka Tahun Buku</Button>
                   </form>
                 )}
               </div>
             </div>
 
             <table className="w-full text-sm">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-tanah-500 text-left">
-                  <th className="px-4 py-2 font-bold w-8">No</th>
-                  <th className="px-4 py-2 font-bold">Periode</th>
-                  <th className="px-4 py-2 font-bold">Rentang</th>
-                  <th className="px-4 py-2 font-bold">Status</th>
-                  <th className="px-4 py-2 font-bold text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cream-200">
+              <THead>
+                <TH className="w-8">No</TH>
+                <TH>Periode</TH>
+                <TH>Rentang</TH>
+                <TH>Status</TH>
+                <TH numeric>Aksi</TH>
+              </THead>
+              <TBody>
                 {y.periods.map((p) => (
-                  <tr key={p.id} className="hover:bg-cream-50">
-                    <td className="px-4 py-2 font-mono text-tanah-500 tabular-nums">
+                  <TR key={p.id}>
+                    <TD className="font-mono text-tanah-500 tabular-nums">
                       {p.no.toString().padStart(2, '0')}
-                    </td>
-                    <td className="px-4 py-2 font-semibold text-tanah-700">{p.label}</td>
-                    <td className="px-4 py-2 text-xs text-tanah-500">
+                    </TD>
+                    <TD className="font-semibold text-tanah-700">{p.label}</TD>
+                    <TD className="text-xs text-tanah-500">
                       {fmtTanggal(p.startDate)} — {fmtTanggal(p.endDate)}
-                    </td>
-                    <td className="px-4 py-2">
+                    </TD>
+                    <TD>
                       <PeriodStatus status={p.status} />
                       {p.closedAt && (
                         <div className="text-[10px] text-tanah-400 mt-0.5">
                           Ditutup {fmtTanggal(p.closedAt)}
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-2 text-right">
+                    </TD>
+                    <TD className="text-right">
                       {p.status === 'OPEN' && (
                         <form action={closePeriodAction} className="inline-flex items-center gap-1">
                           <input type="hidden" name="periodId" value={p.id} />
@@ -315,12 +276,7 @@ export default async function PeriodePage({
                             placeholder="Catatan tutup (opsional)"
                             className="px-2 py-1 text-xs border border-cream-300 rounded bg-cream-50 w-44"
                           />
-                          <button
-                            type="submit"
-                            className="px-2.5 py-1 bg-bata-500 hover:bg-bata-700 text-cream-50 text-xs font-semibold rounded"
-                          >
-                            Tutup
-                          </button>
+                          <Button type="submit" variant="danger" size="sm">Tutup</Button>
                         </form>
                       )}
                       {p.status === 'CLOSED' && (
@@ -333,38 +289,27 @@ export default async function PeriodePage({
                             placeholder="Alasan reopen…"
                             className="px-2 py-1 text-xs border border-cream-300 rounded bg-cream-50 w-44"
                           />
-                          <button
-                            type="submit"
-                            className="px-2.5 py-1 bg-cream-200 hover:bg-cream-300 text-tanah-700 text-xs font-semibold rounded border border-cream-400"
-                          >
-                            Buka
-                          </button>
+                          <Button type="submit" variant="secondary" size="sm">Buka</Button>
                         </form>
                       )}
-                    </td>
-                  </tr>
+                    </TD>
+                  </TR>
                 ))}
-              </tbody>
+              </TBody>
             </table>
-          </div>
+          </Card>
           );
         })}
-      </div>
+      </PageContainer>
     </>
   );
 }
 
 function PeriodStatus({ status }: { status: PeriodRow['status'] }) {
-  const map = {
-    OPEN: { bg: 'bg-padi-100', text: 'text-padi-700', label: 'OPEN' },
-    CLOSING: { bg: 'bg-emas-100', text: 'text-emas-700', label: 'CLOSING' },
-    CLOSED: { bg: 'bg-cream-200', text: 'text-tanah-500', label: 'CLOSED' },
-  }[status];
-  return (
-    <span
-      className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${map.bg} ${map.text}`}
-    >
-      {map.label}
-    </span>
-  );
+  const variant: BadgeVariant = {
+    OPEN: 'success',
+    CLOSING: 'warning',
+    CLOSED: 'neutral',
+  }[status] as BadgeVariant;
+  return <Badge variant={variant}>{status}</Badge>;
 }

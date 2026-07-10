@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canCancelPosted } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { PageContainer, PageHeader, Card, Button, StatusBadge } from '@/components/ui';
 
 type Status = 'DRAFT' | 'POSTED' | 'CANCELLED' | 'PARTIAL' | 'PAID';
 
@@ -54,30 +55,24 @@ export default async function DepresiasiDetailPage({
   return (
     <>
       <Topbar breadcrumb={`Depresiasi / ${run.periode}`} tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-6xl mx-auto w-full">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Penyusutan {run.periode}
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
+      <PageContainer size="form">
+        <PageHeader
+          title={`Penyusutan ${run.periode}`}
+          actions={<StatusBadge status={run.status} size="md" />}
+          subtitle={
+            <>
               Tanggal posting {fmtTanggal(run.tanggal)} · {run.fiscalPeriod.label} ·
               {run.lines.length} aset
-            </p>
-            {run.journalId && (
-              <p className="text-xs text-tanah-500 mt-1">
-                Jurnal:{' '}
-                <Link href={`/pembukuan/jurnal/${run.journalId}`}
-                  className="text-sogan-500 font-mono hover:underline">lihat</Link>
-              </p>
-            )}
-          </div>
-          <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${
-            run.status === 'POSTED' ? 'bg-padi-100 text-padi-700' :
-            run.status === 'CANCELLED' ? 'bg-cream-200 text-tanah-500 line-through' :
-            'bg-emas-100 text-emas-700'
-          }`}>{run.status}</span>
-        </div>
+              {run.journalId && (
+                <span className="block text-xs mt-1">
+                  Jurnal:{' '}
+                  <Link href={`/pembukuan/jurnal/${run.journalId}`}
+                    className="text-sogan-500 font-mono hover:underline">lihat</Link>
+                </span>
+              )}
+            </>
+          }
+        />
 
         <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mb-6">
           <table className="w-full text-sm">
@@ -121,17 +116,19 @@ export default async function DepresiasiDetailPage({
         </div>
 
         {run.status === 'POSTED' && mayCancel && (
-          <form action={cancelAction} className="bg-white rounded-xl border border-cream-200 shadow-sm p-5 flex items-center gap-3">
-            <input type="hidden" name="id" value={run.id} />
-            <span className="text-sm text-tanah-500">Cancel run akan reverse jurnal & rollback nilai buku semua aset.</span>
-            <input name="alasan" required minLength={5} placeholder="Alasan…"
-              className="ml-auto px-3 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm w-72" />
-            <button className="px-4 py-2 bg-bata-500 hover:bg-bata-700 text-cream-50 font-semibold rounded-lg text-sm">
-              Cancel Run
-            </button>
-          </form>
+          <Card>
+            <form action={cancelAction} className="flex items-center gap-3">
+              <input type="hidden" name="id" value={run.id} />
+              <span className="text-sm text-tanah-500">Cancel run akan reverse jurnal & rollback nilai buku semua aset.</span>
+              <input name="alasan" required minLength={5} placeholder="Alasan…"
+                className="ml-auto px-3 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm w-72" />
+              <Button type="submit" variant="danger">
+                Cancel Run
+              </Button>
+            </form>
+          </Card>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

@@ -3,6 +3,7 @@ import { Topbar } from '@/components/Topbar';
 import { OpnameForm } from '@/components/OpnameForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
+import { PageContainer, PageHeader } from '@/components/ui';
 
 interface Item { id: string; kode: string; nama: string; satuan: string; isAktif: boolean }
 interface Cabang { id: string; kode: string; nama: string }
@@ -55,10 +56,8 @@ export default async function OpnameEditPage({ params }: { params: Promise<{ id:
   return (
     <>
       <Topbar breadcrumb="Penyesuaian Stok / Edit Draft" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <h1 className="font-display text-3xl font-semibold text-wedel-900 mb-6">
-          Edit Draft Opname
-        </h1>
+      <PageContainer size="form">
+        <PageHeader title="Edit Draft Opname" />
         <OpnameForm
           items={items}
           cabang={cabang}
@@ -83,7 +82,7 @@ export default async function OpnameEditPage({ params }: { params: Promise<{ id:
               })),
           }}
         />
-      </div>
+      </PageContainer>
     </>
   );
 }

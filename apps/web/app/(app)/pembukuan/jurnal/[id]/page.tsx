@@ -11,6 +11,9 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting } from '@/lib/roles';
 import { runWithApprover } from '@/lib/stepUp';
 import { fmtPlain, fmtTanggal } from '@/lib/format';
+import {
+  PageContainer, PageHeader, Card, StatusBadge, Button, buttonClass, Input,
+} from '@/components/ui';
 
 type Status = 'DRAFT' | 'POSTED' | 'REVERSED';
 
@@ -123,24 +126,29 @@ export default async function JurnalDetailPage({
         breadcrumb={`Jurnal / ${j.nomor ?? 'Draft'}`}
         tenantNama={s.tenantNama!}
       />
-      <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              {j.nomor ?? '— Draft —'}
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
+      <PageContainer size="form">
+        <PageHeader
+          title={j.nomor ?? '— Draft —'}
+          subtitle={
+            <>
               {j.deskripsi} · {fmtTanggal(j.tanggal)} · cabang {j.cabang.kode} ·
               periode {j.fiscalPeriod.label} ({j.fiscalPeriod.status})
-            </p>
+            </>
+          }
+          actions={<StatusBadge status={j.status} size="md" />}
+          className="mb-2"
+        />
+
+        {(j.linkBukti || j.postedBy || j.reversedFrom || j.reversals.length > 0) && (
+          <Card padding="sm" className="mb-6 space-y-1">
             {j.linkBukti && (
-              <p className="text-xs mt-1">
+              <p className="text-xs">
                 <span className="text-tanah-500 mr-1">Bukti:</span>
                 <LinkBukti url={j.linkBukti} variant="full" />
               </p>
             )}
             {j.postedBy && (
-              <p className="text-xs text-tanah-500 mt-1">
+              <p className="text-xs text-tanah-500">
                 Diposting oleh <span className="font-semibold text-tanah-700">{j.postedBy.nama}</span> ({j.postedBy.email})
                 {j.postedRequestedBy && (
                   <> · atas permintaan <span className="font-semibold text-tanah-700">{j.postedRequestedBy.nama}</span> ({j.postedRequestedBy.email})</>
@@ -148,7 +156,7 @@ export default async function JurnalDetailPage({
               </p>
             )}
             {j.reversedFrom && (
-              <p className="text-xs text-tanah-500 mt-1">
+              <p className="text-xs text-tanah-500">
                 Membalik:{' '}
                 <Link
                   href={`/pembukuan/jurnal/${j.reversedFrom.id}`}
@@ -159,7 +167,7 @@ export default async function JurnalDetailPage({
               </p>
             )}
             {j.reversals.length > 0 && (
-              <p className="text-xs text-bata-700 mt-1">
+              <p className="text-xs text-bata-700">
                 Dibalik oleh:{' '}
                 {j.reversals.map((r, i) => (
                   <span key={r.id}>
@@ -174,9 +182,8 @@ export default async function JurnalDetailPage({
                 ))}
               </p>
             )}
-          </div>
-          <StatusBadge status={j.status} />
-        </div>
+          </Card>
+        )}
 
         <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
@@ -235,7 +242,7 @@ export default async function JurnalDetailPage({
             href={`/proxy/journals/${j.id}/print.pdf`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-bata-100 hover:bg-bata-200 text-bata-700 font-semibold rounded-lg text-sm border border-bata-300"
+            className={buttonClass('soft-bata')}
           >
             Preview PDF
           </a>
@@ -249,29 +256,25 @@ export default async function JurnalDetailPage({
               />
               <Link
                 href={`/pembukuan/jurnal/${j.id}/edit` as Route}
-                className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-300"
+                className={buttonClass('secondary')}
               >
                 Edit Draft
               </Link>
               <form action={deleteDraftAction}>
                 <input type="hidden" name="id" value={j.id} />
-                <button className="px-4 py-2 bg-cream-200 hover:bg-cream-300 text-tanah-700 font-semibold rounded-lg text-sm border border-cream-400">
-                  Hapus Draft
-                </button>
+                <Button type="submit" variant="ghost">Hapus Draft</Button>
               </form>
             </>
           )}
           {j.status === 'POSTED' && mayPost && (
             <form action={reverseAction} className="flex items-center gap-2">
               <input type="hidden" name="id" value={j.id} />
-              <input
+              <Input
                 name="alasan" required minLength={5}
                 placeholder="Alasan pembalik (≥5 huruf)"
-                className="px-3 py-2 bg-white border border-cream-300 rounded-md text-sm w-72"
+                fullWidth={false} className="w-72"
               />
-              <button className="px-4 py-2 bg-bata-500 hover:bg-bata-700 text-cream-50 font-semibold rounded-lg text-sm">
-                Balik (Reverse)
-              </button>
+              <Button type="submit" variant="danger">Balik (Reverse)</Button>
             </form>
           )}
           {j.status === 'REVERSED' && (
@@ -280,20 +283,7 @@ export default async function JurnalDetailPage({
             </div>
           )}
         </div>
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function StatusBadge({ status }: { status: Status }) {
-  const map = {
-    DRAFT: 'bg-emas-100 text-emas-700',
-    POSTED: 'bg-padi-100 text-padi-700',
-    REVERSED: 'bg-cream-200 text-tanah-500 line-through',
-  }[status];
-  return (
-    <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${map}`}>
-      {status}
-    </span>
   );
 }

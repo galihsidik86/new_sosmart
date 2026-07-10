@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
+import { PageContainer, PageHeader, buttonClass } from '@/components/ui';
 
 async function importAccountsAction(formData: FormData) {
   'use server';
@@ -35,27 +36,24 @@ export default async function CoaPage() {
   return (
     <>
       <Topbar breadcrumb="Bagan Akun" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-5xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Bagan Akun (Chart of Accounts)
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
+      <PageContainer size="list">
+        <PageHeader
+          title="Bagan Akun (Chart of Accounts)"
+          subtitle={
+            <>
               Hierarki akun standar perusahaan dagang Indonesia.
               Hanya akun <em>postable</em> (leaf) yang bisa dijurnal.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href="/proxy/accounts/export.xlsx"
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-            >
-              Export Excel
-            </a>
-            <ImportExcelButton importAction={importAccountsAction} />
-          </div>
-        </div>
+            </>
+          }
+          actions={
+            <>
+              <a href="/proxy/accounts/export.xlsx" className={buttonClass('success')}>
+                Export Excel
+              </a>
+              <ImportExcelButton importAction={importAccountsAction} />
+            </>
+          }
+        />
 
         <div className="bg-white rounded-xl border border-cream-200 shadow-sm">
           <table className="w-full text-sm">
@@ -74,7 +72,7 @@ export default async function CoaPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </PageContainer>
     </>
   );
 }

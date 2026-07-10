@@ -6,6 +6,9 @@ import { apiFetch } from '@/lib/api';
 import { uploadLogo, type LogoUploadResult } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canAdmin } from '@/lib/roles';
+import {
+  PageContainer, PageHeader, Card, Button, FormField, Input, StatusBanner,
+} from '@/components/ui';
 
 interface TenantProfile {
   id: string;
@@ -99,23 +102,19 @@ export default async function ProfilPerusahaanPage({
   return (
     <>
       <Topbar breadcrumb="Profil Perusahaan" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-3xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-semibold text-wedel-900">
-            Profil Perusahaan
-          </h1>
-          <p className="text-sm text-tanah-500 mt-1">
-            Identitas badan usaha yang tampil di header faktur, laporan, dan dokumen cetak lainnya.
-          </p>
-        </div>
+      <PageContainer size="form">
+        <PageHeader
+          title="Profil Perusahaan"
+          subtitle="Identitas badan usaha yang tampil di header faktur, laporan, dan dokumen cetak lainnya."
+        />
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-6">
-            <strong>Gagal: </strong>{error}
-          </div>
+          <StatusBanner tone="danger" className="mb-6">
+            <span><strong>Gagal: </strong>{error}</span>
+          </StatusBanner>
         )}
 
-        <div className="bg-white rounded-xl border border-cream-200 shadow-sm p-6 mb-6">
+        <Card padding="lg" className="mb-6">
           <div className="text-xs font-bold uppercase tracking-wider text-tanah-500 mb-3">
             Logo Perusahaan
           </div>
@@ -133,62 +132,53 @@ export default async function ProfilPerusahaanPage({
                 <LogoUploader uploadAction={uploadLogoAction} label={t.logoUrl ? 'Ganti Logo' : 'Unggah Logo'} />
                 {t.logoUrl && (
                   <form action={removeLogoAction}>
-                    <button className="px-3 py-2 bg-cream-100 hover:bg-cream-200 border border-cream-300 rounded-lg text-sm font-semibold text-tanah-700">
-                      Hapus Logo
-                    </button>
+                    <Button type="submit" variant="secondary">Hapus Logo</Button>
                   </form>
                 )}
               </div>
             )}
           </div>
           <p className="text-[11px] text-tanah-400 mt-3">PNG, JPEG, atau WEBP. Maksimal 2 MB.</p>
-        </div>
+        </Card>
 
-        <form action={updateProfileAction} className="bg-white rounded-xl border border-cream-200 shadow-sm p-6 space-y-4">
-          <fieldset disabled={!editable} className="space-y-4 disabled:opacity-70">
-            <FF label="Nama Badan Usaha" name="nama" required defaultValue={t.nama} placeholder="PT Sinar Niaga Sentosa" />
-            <div className="grid grid-cols-2 gap-4">
-              <FF label="NPWP Pusat" name="npwp" defaultValue={t.npwp ?? ''} placeholder="012345678901000" />
-              <FF label="No. Pengukuhan PKP" name="pkpNo" defaultValue={t.pkpNo ?? ''} placeholder="PEM-00001/WPJ.01/2025" />
-            </div>
-            <label className="flex items-center gap-2 text-sm text-tanah-700">
-              <input type="checkbox" name="isPkp" defaultChecked={t.isPkp} />
-              Perusahaan berstatus PKP (Pengusaha Kena Pajak)
-            </label>
-            <FF label="Alamat" name="alamat" defaultValue={t.alamat ?? ''} placeholder="Jl. Industri No. 10, Jakarta" />
-            <div className="grid grid-cols-2 gap-4">
-              <FF label="Email" name="email" type="email" defaultValue={t.email ?? ''} placeholder="info@perusahaan.id" />
-              <FF label="Telepon" name="telp" defaultValue={t.telp ?? ''} placeholder="021-5551234" />
-            </div>
-            {editable && (
-              <div className="pt-2">
-                <button className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                  Simpan Perubahan
-                </button>
+        <Card padding="lg">
+          <form action={updateProfileAction} className="space-y-4">
+            <fieldset disabled={!editable} className="space-y-4 disabled:opacity-70">
+              <FormField label="Nama Badan Usaha" required>
+                <Input name="nama" required defaultValue={t.nama} placeholder="PT Sinar Niaga Sentosa" />
+              </FormField>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="NPWP Pusat">
+                  <Input name="npwp" defaultValue={t.npwp ?? ''} placeholder="012345678901000" />
+                </FormField>
+                <FormField label="No. Pengukuhan PKP">
+                  <Input name="pkpNo" defaultValue={t.pkpNo ?? ''} placeholder="PEM-00001/WPJ.01/2025" />
+                </FormField>
               </div>
-            )}
-          </fieldset>
-        </form>
-      </div>
+              <label className="flex items-center gap-2 text-sm text-tanah-700">
+                <input type="checkbox" name="isPkp" defaultChecked={t.isPkp} />
+                Perusahaan berstatus PKP (Pengusaha Kena Pajak)
+              </label>
+              <FormField label="Alamat">
+                <Input name="alamat" defaultValue={t.alamat ?? ''} placeholder="Jl. Industri No. 10, Jakarta" />
+              </FormField>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Email">
+                  <Input name="email" type="email" defaultValue={t.email ?? ''} placeholder="info@perusahaan.id" />
+                </FormField>
+                <FormField label="Telepon">
+                  <Input name="telp" defaultValue={t.telp ?? ''} placeholder="021-5551234" />
+                </FormField>
+              </div>
+              {editable && (
+                <div className="pt-2">
+                  <Button type="submit">Simpan Perubahan</Button>
+                </div>
+              )}
+            </fieldset>
+          </form>
+        </Card>
+      </PageContainer>
     </>
-  );
-}
-
-function FF(props: {
-  label: string; name: string; required?: boolean;
-  type?: string; placeholder?: string; defaultValue?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-        {props.label}
-        {props.required && <span className="text-bata-500 ml-0.5">*</span>}
-      </label>
-      <input
-        name={props.name} type={props.type ?? 'text'} required={props.required}
-        placeholder={props.placeholder} defaultValue={props.defaultValue}
-        className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm focus:outline-none focus:border-sogan-500"
-      />
-    </div>
   );
 }

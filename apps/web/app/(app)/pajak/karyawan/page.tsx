@@ -7,6 +7,10 @@ import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp } from '@/lib/format';
+import {
+  PageContainer, PageHeader, Card, Button, FormField, Input, Select,
+  Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow, buttonClass,
+} from '@/components/ui';
 
 async function importKaryawanAction(formData: FormData) {
   'use server';
@@ -77,120 +81,88 @@ export default async function KaryawanPage() {
   return (
     <>
       <Topbar breadcrumb="Karyawan" tenantNama={s.tenantNama!} />
-      <div className="px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-wedel-900">
-              Master Karyawan
-            </h1>
-            <p className="text-sm text-tanah-500 mt-1">
-              {rows.length} karyawan · PTKP menentukan kategori TER PMK 168/2023 untuk PPh 21 bulanan.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href="/proxy/karyawan/export.xlsx"
-              className="px-3 py-2 bg-padi-100 hover:bg-padi-200 border border-padi-300 rounded-lg text-sm font-semibold text-padi-700"
-            >
-              Export Excel
-            </a>
-            <ImportExcelButton importAction={importKaryawanAction} />
-          </div>
-        </div>
+      <PageContainer size="list">
+        <PageHeader
+          title="Master Karyawan"
+          subtitle={`${rows.length} karyawan · PTKP menentukan kategori TER PMK 168/2023 untuk PPh 21 bulanan.`}
+          actions={
+            <>
+              <a href="/proxy/karyawan/export.xlsx" className={buttonClass('success')}>Export Excel</a>
+              <ImportExcelButton importAction={importKaryawanAction} />
+            </>
+          }
+        />
 
         <div className="grid grid-cols-3 gap-6">
-          <section className="col-span-2 bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-cream-50 text-left">
-                <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
-                  <th className="px-4 py-3 font-bold">Kode</th>
-                  <th className="px-4 py-3 font-bold">Nama / Jabatan</th>
-                  <th className="px-4 py-3 font-bold">PTKP</th>
-                  <th className="px-4 py-3 font-bold">NPWP</th>
-                  <th className="px-4 py-3 font-bold text-right">Gaji Pokok</th>
-                  <th className="px-4 py-3 font-bold text-right w-16"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cream-200">
+          <section className="col-span-2">
+            <Table>
+              <THead>
+                <TH>Kode</TH>
+                <TH>Nama / Jabatan</TH>
+                <TH>PTKP</TH>
+                <TH>NPWP</TH>
+                <TH numeric>Gaji Pokok</TH>
+                <TH numeric className="w-16" />
+              </THead>
+              <TBody>
                 {rows.map((k) => (
-                  <tr key={k.id} className="hover:bg-cream-50">
-                    <td className="px-4 py-2.5 font-mono text-tanah-700">{k.kode}</td>
-                    <td className="px-4 py-2.5">
+                  <TR key={k.id}>
+                    <TD className="font-mono text-tanah-700">{k.kode}</TD>
+                    <TD>
                       <div className="font-semibold text-tanah-700">{k.nama}</div>
                       <div className="text-xs text-tanah-500">{k.jabatan ?? '—'}</div>
-                    </td>
-                    <td className="px-4 py-2.5">
+                    </TD>
+                    <TD>
                       <span className="font-mono text-xs bg-cream-100 text-tanah-700 px-2 py-0.5 rounded">
                         {PTKP_LABEL[k.ptkpStatus]}
                       </span>
-                    </td>
-                    <td className="px-4 py-2.5 font-mono text-xs text-tanah-500">
+                    </TD>
+                    <TD className="font-mono text-xs text-tanah-500">
                       {k.npwp ? fmtNpwp(k.npwp) : <span className="text-bata-500">tanpa NPWP (+20%)</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-mono tabular-nums">{fmtRp(k.gajiPokok)}</td>
-                    <td className="px-4 py-2.5 text-right">
+                    </TD>
+                    <MoneyCell>{fmtRp(k.gajiPokok)}</MoneyCell>
+                    <TD className="text-right">
                       <Link href={`/pajak/karyawan/${k.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
                         Edit
                       </Link>
-                    </td>
-                  </tr>
+                    </TD>
+                  </TR>
                 ))}
-                {rows.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-10 text-center text-tanah-500">Belum ada karyawan.</td></tr>
-                )}
-              </tbody>
-            </table>
+                {rows.length === 0 && <EmptyRow colSpan={6}>Belum ada karyawan.</EmptyRow>}
+              </TBody>
+            </Table>
           </section>
 
-          <aside className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
+          <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Karyawan</h2>
             <form action={createKaryawan} className="space-y-3 text-sm">
-              <FF label="Kode" name="kode" required placeholder="KAR-006" />
-              <FF label="Nama" name="nama" required />
-              <FF label="NIK (16 digit)" name="nik" required />
-              <FF label="NPWP (15-16 digit)" name="npwp" />
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">PTKP</label>
-                <select name="ptkpStatus" required defaultValue="TK_0"
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
+              <FormField label="Kode" required><Input name="kode" required placeholder="KAR-006" /></FormField>
+              <FormField label="Nama" required><Input name="nama" required /></FormField>
+              <FormField label="NIK (16 digit)" required><Input name="nik" required /></FormField>
+              <FormField label="NPWP (15-16 digit)"><Input name="npwp" /></FormField>
+              <FormField label="PTKP">
+                <Select name="ptkpStatus" required defaultValue="TK_0" className="font-mono">
                   {(Object.keys(PTKP_LABEL) as Ptkp[]).map((p) => (
                     <option key={p} value={p}>{PTKP_LABEL[p]}</option>
                   ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Cabang</label>
-                <select name="cabangId"
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
+                </Select>
+              </FormField>
+              <FormField label="Cabang">
+                <Select name="cabangId">
                   <option value="">—</option>
                   {cabang.map((c) => <option key={c.id} value={c.id}>{c.kode}</option>)}
-                </select>
-              </div>
-              <FF label="Jabatan" name="jabatan" placeholder="Staf …" />
-              <FF label="Tanggal masuk" name="tanggalMasuk" type="date" required defaultValue="2024-01-01" />
-              <FF label="Gaji pokok" name="gajiPokok" type="number" required defaultValue="0" />
-              <FF label="Tunjangan tetap" name="tunjanganTetap" type="number" defaultValue="0" />
-              <FF label="Iuran BPJS karyawan" name="iuranBpjsKaryawan" type="number" defaultValue="0" />
-              <button className="w-full py-2 bg-sogan-500 hover:bg-sogan-600 text-cream-50 font-semibold rounded-lg text-sm">
-                Simpan
-              </button>
+                </Select>
+              </FormField>
+              <FormField label="Jabatan"><Input name="jabatan" placeholder="Staf …" /></FormField>
+              <FormField label="Tanggal masuk"><Input name="tanggalMasuk" type="date" required defaultValue="2024-01-01" /></FormField>
+              <FormField label="Gaji pokok"><Input name="gajiPokok" type="number" required defaultValue="0" /></FormField>
+              <FormField label="Tunjangan tetap"><Input name="tunjanganTetap" type="number" defaultValue="0" /></FormField>
+              <FormField label="Iuran BPJS karyawan"><Input name="iuranBpjsKaryawan" type="number" defaultValue="0" /></FormField>
+              <Button type="submit" className="w-full">Simpan</Button>
             </form>
-          </aside>
+          </Card>
         </div>
-      </div>
+      </PageContainer>
     </>
-  );
-}
-
-function FF(props: { label: string; name: string; required?: boolean; type?: string; placeholder?: string; defaultValue?: string }) {
-  return (
-    <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">
-        {props.label}{props.required && <span className="text-bata-500 ml-0.5">*</span>}
-      </label>
-      <input name={props.name} type={props.type ?? 'text'} required={props.required}
-        placeholder={props.placeholder} defaultValue={props.defaultValue}
-        className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-    </div>
   );
 }
