@@ -74,7 +74,7 @@ export default async function CabangPage() {
                     <TD className="font-mono text-xs text-tanah-500">
                       {fmtNpwp(c.npwpCabang)}
                       {c.kodeCabangNpwp && (
-                        <span className="ml-2 text-[10px] text-tanah-400">
+                        <span className="ml-2 text-[10px] text-tanah-500">
                           kode: {c.kodeCabangNpwp}
                         </span>
                       )}

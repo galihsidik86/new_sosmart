@@ -124,7 +124,7 @@ export default async function PiutangPage({
             <tbody className="divide-y divide-cream-200">
               {ar.rows.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-3 py-6 text-center text-tanah-400">
+                  <td colSpan={8} className="px-3 py-6 text-center text-tanah-500">
                     Tidak ada saldo piutang pada tanggal ini.
                   </td>
                 </tr>

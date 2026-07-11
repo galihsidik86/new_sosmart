@@ -151,7 +151,7 @@ function LineRow({ l }: { l: Line }) {
   return (
     <tr>
       <td className="px-4 py-1 text-tanah-700 text-sm pl-8">{l.label}</td>
-      <td className={`px-4 py-1 text-right font-mono tabular-nums text-sm whitespace-nowrap ${n < 0 ? 'text-bata-700' : n > 0 ? '' : 'text-tanah-400'}`}>
+      <td className={`px-4 py-1 text-right font-mono tabular-nums text-sm whitespace-nowrap ${n < 0 ? 'text-bata-700' : n > 0 ? '' : 'text-tanah-500'}`}>
         {n === 0 ? '—' : fmtRp(Math.abs(n)).replace('Rp ', n < 0 ? '(' : '') + (n < 0 ? ')' : '')}
       </td>
     </tr>

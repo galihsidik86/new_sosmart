@@ -161,7 +161,7 @@ export default async function LabaRugiPage({
                   {lr.filter.project && (
                     <span>Proyek: {lr.filter.project.kode !== '-' ? `${lr.filter.project.kode} — ` : ''}{lr.filter.project.nama}</span>
                   )}
-                  {lr.filter.project && lr.filter.cabang && <span className="mx-2 text-tanah-400">|</span>}
+                  {lr.filter.project && lr.filter.cabang && <span className="mx-2 text-tanah-500">|</span>}
                   {lr.filter.cabang && (
                     <span>Cabang: {lr.filter.cabang.kode} — {lr.filter.cabang.nama}</span>
                   )}
@@ -251,7 +251,7 @@ function SectionRow({
         <td colSpan={cols} className="px-4 py-2 text-[11px] uppercase tracking-wider font-bold text-tanah-700">{title}</td>
       </tr>
       {rows.length === 0 ? (
-        <tr><td colSpan={cols} className="px-4 py-1.5 text-tanah-400 text-xs italic pl-8">— tidak ada —</td></tr>
+        <tr><td colSpan={cols} className="px-4 py-1.5 text-tanah-500 text-xs italic pl-8">— tidak ada —</td></tr>
       ) : rows.map((r) => (
         <tr key={r.id}>
           <td className="px-4 py-1 font-mono text-xs text-tanah-500 pl-8 whitespace-nowrap">{r.kode}</td>
@@ -262,7 +262,7 @@ function SectionRow({
           {showVertikal && <td className="px-2 py-1 text-right font-mono text-xs text-tanah-500">{r.persenBase}%</td>}
           {showCompare && <>
             <td className="px-4 py-1 text-right font-mono tabular-nums text-xs text-tanah-500">{fmtRp(r.previous ?? '0')}</td>
-            <td className={`px-3 py-1 text-right font-mono text-xs ${Number(r.deltaAbs) < 0 ? 'text-bata-700' : Number(r.deltaAbs) > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>{fmtDelta(r.deltaAbs)}</td>
+            <td className={`px-3 py-1 text-right font-mono text-xs ${Number(r.deltaAbs) < 0 ? 'text-bata-700' : Number(r.deltaAbs) > 0 ? 'text-padi-700' : 'text-tanah-500'}`}>{fmtDelta(r.deltaAbs)}</td>
             <td className="px-2 py-1 text-right font-mono text-xs text-tanah-500">{r.deltaPersen}%</td>
           </>}
         </tr>
@@ -288,7 +288,7 @@ function TotalRow({
       {showVertikal && <td className="px-2 py-1.5 text-right font-mono text-xs text-tanah-500">{sect.persenBase}%</td>}
       {showCompare && <>
         <td className="px-4 py-1.5 text-right font-mono tabular-nums text-xs text-tanah-500">{fmtRp(sect.previous ?? '0')}</td>
-        <td className={`px-3 py-1.5 text-right font-mono text-xs ${Number(sect.deltaAbs) < 0 ? 'text-bata-700' : Number(sect.deltaAbs) > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>{fmtDelta(sect.deltaAbs)}</td>
+        <td className={`px-3 py-1.5 text-right font-mono text-xs ${Number(sect.deltaAbs) < 0 ? 'text-bata-700' : Number(sect.deltaAbs) > 0 ? 'text-padi-700' : 'text-tanah-500'}`}>{fmtDelta(sect.deltaAbs)}</td>
         <td className="px-2 py-1.5 text-right font-mono text-xs text-tanah-500">{sect.deltaPersen}%</td>
       </>}
     </tr>
@@ -308,7 +308,7 @@ function SubRow({
       {showVertikal && <td className="px-2 py-2 text-right font-mono text-sm text-wedel-900">{sub.persenBase}%</td>}
       {showCompare && <>
         <td className="px-4 py-2 text-right font-mono tabular-nums text-sm text-tanah-500">{fmtRp(sub.previous ?? '0')}</td>
-        <td className={`px-3 py-2 text-right font-mono text-sm ${Number(sub.deltaAbs) < 0 ? 'text-bata-700' : Number(sub.deltaAbs) > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>{fmtDelta(sub.deltaAbs)}</td>
+        <td className={`px-3 py-2 text-right font-mono text-sm ${Number(sub.deltaAbs) < 0 ? 'text-bata-700' : Number(sub.deltaAbs) > 0 ? 'text-padi-700' : 'text-tanah-500'}`}>{fmtDelta(sub.deltaAbs)}</td>
         <td className="px-2 py-2 text-right font-mono text-sm text-tanah-500">{sub.deltaPersen}%</td>
       </>}
     </tr>

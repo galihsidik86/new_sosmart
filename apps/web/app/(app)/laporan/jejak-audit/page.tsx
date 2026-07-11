@@ -119,7 +119,7 @@ export default async function JejakAuditPage({
                         </td>
                         <td className="px-3 py-1.5 font-mono text-xs text-sogan-500">
                           {href ? <a href={href} className="hover:underline text-wedel-800">{r.noDokumen}</a> : r.noDokumen}
-                          {r.noJurnal && r.noJurnal !== r.noDokumen && <div className="text-tanah-400 text-[10px]">{r.noJurnal}</div>}
+                          {r.noJurnal && r.noJurnal !== r.noDokumen && <div className="text-tanah-500 text-[10px]">{r.noJurnal}</div>}
                         </td>
                         <td className="px-3 py-1.5 text-xs text-tanah-700">{r.pihak ?? '—'}</td>
                         <td className="px-3 py-1.5 text-xs text-tanah-600 max-w-xs">{r.deskripsi}</td>

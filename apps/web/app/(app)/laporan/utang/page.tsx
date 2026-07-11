@@ -124,7 +124,7 @@ export default async function UtangPage({
             <tbody className="divide-y divide-cream-200">
               {ap.rows.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-3 py-6 text-center text-tanah-400">
+                  <td colSpan={8} className="px-3 py-6 text-center text-tanah-500">
                     Tidak ada saldo utang pada tanggal ini.
                   </td>
                 </tr>

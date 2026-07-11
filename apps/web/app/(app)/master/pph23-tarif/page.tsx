@@ -89,7 +89,7 @@ export default async function Pph23TarifPage() {
               </THead>
               <TBody>
                 {list.map((t) => (
-                  <TR key={t.id} className={t.isAktif ? '' : 'text-tanah-400 bg-cream-50/40'}>
+                  <TR key={t.id} className={t.isAktif ? '' : 'text-tanah-500 bg-cream-50/40'}>
                     <TD className="font-mono text-xs text-tanah-700">{t.kode}</TD>
                     <TD>
                       <details className="cursor-pointer">

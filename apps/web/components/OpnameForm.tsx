@@ -139,7 +139,7 @@ export function OpnameForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <section className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tanggal Opname</label>
             <input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} required
@@ -199,10 +199,10 @@ export function OpnameForm({
                       onChange={(e) => updLine(i, { qtyFisik: e.target.value })}
                       className="w-full px-2 py-1 bg-cream-50 border border-cream-300 rounded text-xs text-right font-mono" />
                   </td>
-                  <td className={`px-3 py-1.5 text-right font-mono tabular-nums text-xs ${dQty < 0 ? 'text-bata-700' : dQty > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>
+                  <td className={`px-3 py-1.5 text-right font-mono tabular-nums text-xs ${dQty < 0 ? 'text-bata-700' : dQty > 0 ? 'text-padi-700' : 'text-tanah-500'}`}>
                     {dQty !== 0 && (dQty > 0 ? '+' : '')}{dQty.toLocaleString('id-ID')}
                   </td>
-                  <td className={`px-3 py-1.5 text-right font-mono tabular-nums text-xs ${dNilai < 0 ? 'text-bata-700' : dNilai > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>
+                  <td className={`px-3 py-1.5 text-right font-mono tabular-nums text-xs ${dNilai < 0 ? 'text-bata-700' : dNilai > 0 ? 'text-padi-700' : 'text-tanah-500'}`}>
                     {dNilai !== 0 && (dNilai > 0 ? '+' : '')}{dNilai.toLocaleString('id-ID')}
                   </td>
                   <td className="px-3 py-1.5">

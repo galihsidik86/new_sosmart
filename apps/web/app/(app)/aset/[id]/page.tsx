@@ -156,7 +156,7 @@ export default async function AsetDetailPage({
               </thead>
               <tbody className="divide-y divide-cream-200">
                 {aset.depresiasiLines.map((l, i) => (
-                  <tr key={i} className={l.run.status !== 'POSTED' ? 'text-tanah-400' : ''}>
+                  <tr key={i} className={l.run.status !== 'POSTED' ? 'text-tanah-500' : ''}>
                     <td className="px-3 py-1.5 font-mono">{l.run.periode}</td>
                     <td className="px-3 py-1.5 text-xs text-tanah-500">{fmtTanggal(l.run.tanggal)}</td>
                     <td className="px-3 py-1.5 text-right font-mono tabular-nums">{fmtRp(l.nilaiBukuSebelum)}</td>

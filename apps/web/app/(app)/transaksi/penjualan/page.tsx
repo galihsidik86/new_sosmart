@@ -59,7 +59,7 @@ export default async function PenjualanPage({
                 <Link
                   key={st || 'all'}
                   href={st ? `/transaksi/penjualan?status=${st}` : '/transaksi/penjualan'}
-                  className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+                  className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sogan-400 ${
                     active ? 'bg-white text-sogan-500 shadow-xs' : 'text-tanah-500 hover:text-tanah-700'
                   }`}
                 >

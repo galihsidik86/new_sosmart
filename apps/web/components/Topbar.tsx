@@ -110,7 +110,7 @@ export function Topbar({ tenantNama, periodeLabel, user, role }: TopbarProps) {
         {periodeLabel && (
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white border border-cream-300 rounded-lg text-xs font-semibold text-tanah-700 shadow-xs">
             <Icon name="calendar" size={14} className="text-sogan-500" />
-            <span className="text-tanah-400 font-medium">Periode</span>
+            <span className="text-tanah-500 font-medium">Periode</span>
             {periodeLabel}
           </div>
         )}
@@ -128,7 +128,7 @@ export function Topbar({ tenantNama, periodeLabel, user, role }: TopbarProps) {
             <Icon
               name="chevron-down"
               size={14}
-              className={cn('text-tanah-400 transition-transform hidden sm:block', menuOpen && 'rotate-180')}
+              className={cn('text-tanah-500 transition-transform hidden sm:block', menuOpen && 'rotate-180')}
             />
           </button>
 

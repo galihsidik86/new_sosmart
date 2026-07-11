@@ -175,7 +175,7 @@ export default async function PeriodePage({
               </FormField>
               <Button type="submit">Tambah Tahun Buku</Button>
             </form>
-            <p className="text-xs text-tanah-400 mt-2">
+            <p className="text-xs text-tanah-500 mt-2">
               12 periode bulanan otomatis dibuat berturut-turut dari bulan mulai — bisa untuk
               tahun mendatang (mis. 2027) atau data historis (mis. 2024/2025).
             </p>
@@ -259,7 +259,7 @@ export default async function PeriodePage({
                     <TD>
                       <PeriodStatus status={p.status} />
                       {p.closedAt && (
-                        <div className="text-[10px] text-tanah-400 mt-0.5">
+                        <div className="text-[10px] text-tanah-500 mt-0.5">
                           Ditutup {fmtTanggal(p.closedAt)}
                         </div>
                       )}

@@ -285,7 +285,7 @@ export function InvoiceForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <SectionHeader className="mb-4">1 · Informasi {mode === 'sales' ? 'Faktur' : 'Tagihan'}</SectionHeader>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <FormField label="Tanggal">
             <Input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} required />
           </FormField>
@@ -337,7 +337,7 @@ export function InvoiceForm({
               onChange={(e) => setHargaTermasukPajak(e.target.checked)} />
             <span>
               Harga termasuk PPN
-              <span className="block text-[10px] text-tanah-400 normal-case">
+              <span className="block text-[10px] text-tanah-500 normal-case">
                 (harga tag/POS — DPP di-reverse-calc dari gross)
               </span>
             </span>
@@ -362,7 +362,7 @@ export function InvoiceForm({
           </FormField>
           <FormField
             className="col-span-3"
-            label={<>Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span></>}
+            label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span></>}
           >
             <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />
           </FormField>
@@ -372,7 +372,7 @@ export function InvoiceForm({
       <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
         <div className="px-4 py-3 border-b border-cream-200 flex items-center justify-between">
           <SectionHeader className="mb-0">2 · Baris Item</SectionHeader>
-          <span className="text-xs text-tanah-400">{lines.length} baris</span>
+          <span className="text-xs text-tanah-500">{lines.length} baris</span>
         </div>
         <div className="overflow-x-auto lentera-scroll">
         <table className="w-full text-xs">

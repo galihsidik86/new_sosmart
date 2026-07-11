@@ -179,13 +179,13 @@ export default async function PenyesuaianDetailPage({
                     <td className="px-3 py-1.5 text-right font-mono tabular-nums">
                       {fmtPlain(Number(l.qtyFisik))} {l.item.satuan}
                     </td>
-                    <td className={`px-3 py-1.5 text-right font-mono tabular-nums ${dQty < 0 ? 'text-bata-700' : dQty > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>
+                    <td className={`px-3 py-1.5 text-right font-mono tabular-nums ${dQty < 0 ? 'text-bata-700' : dQty > 0 ? 'text-padi-700' : 'text-tanah-500'}`}>
                       {dQty > 0 && '+'}{fmtPlain(dQty)}
                     </td>
                     <td className="px-3 py-1.5 text-right font-mono tabular-nums text-xs text-tanah-500">
                       {fmtRp(l.hargaPokok)}
                     </td>
-                    <td className={`px-3 py-1.5 text-right font-mono tabular-nums ${dNilai < 0 ? 'text-bata-700' : dNilai > 0 ? 'text-padi-700' : 'text-tanah-400'}`}>
+                    <td className={`px-3 py-1.5 text-right font-mono tabular-nums ${dNilai < 0 ? 'text-bata-700' : dNilai > 0 ? 'text-padi-700' : 'text-tanah-500'}`}>
                       {dNilai > 0 && '+'}{fmtRp(dNilai)}
                     </td>
                     <td className="px-3 py-1.5 text-xs text-tanah-500">{l.keterangan ?? '—'}</td>

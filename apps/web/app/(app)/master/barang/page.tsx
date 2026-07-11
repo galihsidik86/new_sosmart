@@ -204,7 +204,7 @@ export default async function MasterBarangPage({
               <FormField
                 label={
                   <>
-                    Tarif PPh 23 <span className="text-tanah-400 normal-case font-normal">(hanya jika jasa)</span>
+                    Tarif PPh 23 <span className="text-tanah-500 normal-case font-normal">(hanya jika jasa)</span>
                   </>
                 }
               >

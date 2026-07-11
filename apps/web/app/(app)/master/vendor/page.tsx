@@ -97,7 +97,7 @@ export default async function VendorPage() {
                       {v.isPkp ? (
                         <Badge variant="success" size="sm">PKP</Badge>
                       ) : (
-                        <span className="text-[10px] text-tanah-400">non-PKP</span>
+                        <span className="text-[10px] text-tanah-500">non-PKP</span>
                       )}
                     </TD>
                     <TD className="text-right text-tanah-700 tabular-nums">{v.terminHari} hari</TD>

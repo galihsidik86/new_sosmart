@@ -87,14 +87,14 @@ export default async function PerubahanEkuitasPage({
                   <td className="px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-padi-700">
                     {Number(pe.tambahanModal) > 0 ? `+${fmtRp(pe.tambahanModal)}` : '—'}
                   </td>
-                  <td className="px-4 py-1.5 text-right text-tanah-400">—</td>
+                  <td className="px-4 py-1.5 text-right text-tanah-500">—</td>
                   <td className="px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-padi-700">
                     {Number(pe.tambahanModal) > 0 ? `+${fmtRp(pe.tambahanModal)}` : '—'}
                   </td>
                 </tr>
                 <tr>
                   <td className="px-4 py-1.5 text-tanah-700 pl-8">Laba Bersih Periode</td>
-                  <td className="px-4 py-1.5 text-right text-tanah-400">—</td>
+                  <td className="px-4 py-1.5 text-right text-tanah-500">—</td>
                   <td className={`px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap ${Number(pe.labaBersih) >= 0 ? 'text-padi-700' : 'text-bata-700'}`}>
                     {Number(pe.labaBersih) >= 0 ? '+' : ''}{fmtRp(pe.labaBersih)}
                   </td>
@@ -104,7 +104,7 @@ export default async function PerubahanEkuitasPage({
                 </tr>
                 <tr>
                   <td className="px-4 py-1.5 text-tanah-700 pl-8">(Dividen / Prive)</td>
-                  <td className="px-4 py-1.5 text-right text-tanah-400">—</td>
+                  <td className="px-4 py-1.5 text-right text-tanah-500">—</td>
                   <td className="px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-bata-700">
                     {Number(pe.dividen) > 0 ? `(${fmtRp(pe.dividen).replace('Rp ', '')})` : '—'}
                   </td>

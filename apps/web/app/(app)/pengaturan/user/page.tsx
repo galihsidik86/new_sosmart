@@ -107,7 +107,7 @@ export default async function UsersPage() {
                       {u.isActive ? (
                         <Badge variant="success">Ya</Badge>
                       ) : (
-                        <span className="text-[10px] text-tanah-400">tidak</span>
+                        <span className="text-[10px] text-tanah-500">tidak</span>
                       )}
                     </TD>
                     <TD className="text-right">

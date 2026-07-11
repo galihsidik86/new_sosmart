@@ -205,6 +205,7 @@ export function Sidebar({ user, tenantNama, role, logoUrl }: SidebarProps) {
                     title={collapsed ? n.label : undefined}
                     className={cn(
                       'relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm mb-0.5 transition-colors duration-fast',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emas-300/70',
                       collapsed && 'md:justify-center md:px-0',
                       active
                         ? 'bg-white/[0.10] text-cream-50 font-semibold'

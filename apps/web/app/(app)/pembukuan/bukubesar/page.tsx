@@ -165,7 +165,7 @@ export default async function BukuBesarPage({
                     <td className="px-3 py-1.5">
                       <div className="text-tanah-700 text-xs">{r.deskripsi}</div>
                       {r.lineDeskripsi && (
-                        <div className="text-tanah-400 text-[10px]">{r.lineDeskripsi}</div>
+                        <div className="text-tanah-500 text-[10px]">{r.lineDeskripsi}</div>
                       )}
                     </td>
                     <td className="px-3 py-1.5 text-xs text-tanah-500 font-mono">{r.cabangKode}</td>

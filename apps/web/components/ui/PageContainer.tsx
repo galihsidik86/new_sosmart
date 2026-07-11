@@ -26,7 +26,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        'px-8 py-6 mx-auto w-full animate-lent-fade',
+        'px-4 sm:px-6 lg:px-8 py-6 mx-auto w-full animate-lent-fade',
         MAXW[size],
         className,
       )}

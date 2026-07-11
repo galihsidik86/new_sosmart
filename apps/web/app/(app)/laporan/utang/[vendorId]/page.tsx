@@ -135,7 +135,7 @@ export default async function UtangStatementPage({
             <tbody className="divide-y divide-cream-200">
               {st.invoices.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-3 py-6 text-center text-tanah-400">
+                  <td colSpan={8} className="px-3 py-6 text-center text-tanah-500">
                     Tidak ada tagihan outstanding.
                   </td>
                 </tr>
@@ -188,7 +188,7 @@ export default async function UtangStatementPage({
                           ↳ {p.nomor ?? '—'}
                         </td>
                         <td className="px-3 py-1 text-tanah-500">{fmtTanggal(p.tanggal)}</td>
-                        <td colSpan={3} className="px-3 py-1 text-tanah-400 italic">
+                        <td colSpan={3} className="px-3 py-1 text-tanah-500 italic">
                           pelunasan
                         </td>
                         <td className="px-3 py-1 text-right font-mono tabular-nums whitespace-nowrap text-tanah-500">

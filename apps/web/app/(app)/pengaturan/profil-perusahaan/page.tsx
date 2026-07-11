@@ -122,7 +122,7 @@ export default async function ProfilPerusahaanPage({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={t.logoUrl} alt="Logo perusahaan" className="w-full h-full object-contain" />
               ) : (
-                <span className="text-[10px] text-tanah-400 text-center px-2">Belum ada logo</span>
+                <span className="text-[10px] text-tanah-500 text-center px-2">Belum ada logo</span>
               )}
             </div>
             {editable && (
@@ -136,7 +136,7 @@ export default async function ProfilPerusahaanPage({
               </div>
             )}
           </div>
-          <p className="text-[11px] text-tanah-400 mt-3">PNG, JPEG, atau WEBP. Maksimal 2 MB.</p>
+          <p className="text-[11px] text-tanah-500 mt-3">PNG, JPEG, atau WEBP. Maksimal 2 MB.</p>
         </Card>
 
         <Card padding="lg">

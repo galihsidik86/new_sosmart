@@ -76,7 +76,7 @@ export default async function CoaEditPage({ params }: { params: Promise<{ id: st
           }
           className="mt-2 mb-2"
         />
-        <p className="text-xs text-tanah-400 mb-6">
+        <p className="text-xs text-tanah-500 mb-6">
           Jenis akun &amp; saldo normal tidak dapat diubah lewat form ini —
           mengubahnya akan mengganggu interpretasi historis buku besar.
         </p>

@@ -89,7 +89,7 @@ function renderRow(n: AccountNode, depth: number): React.ReactNode[] {
           {n.nama}
         </span>
         {!n.isPostable && (
-          <span className="ml-2 text-[10px] text-tanah-400 uppercase">induk</span>
+          <span className="ml-2 text-[10px] text-tanah-500 uppercase">induk</span>
         )}
       </td>
       <td className="px-4 py-2 text-xs text-tanah-500">{n.kind}</td>

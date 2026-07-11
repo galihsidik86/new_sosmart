@@ -160,7 +160,7 @@ export function CashBankForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <SectionHeader className="mb-4">1 · Informasi Transaksi</SectionHeader>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <FormField label="Tipe">
             <Select value={tipe} onChange={(e) => setTipe(e.target.value as Tipe)}>
               <option value="RECEIPT">RECEIPT — kas/bank masuk (BKM/BBM)</option>
@@ -211,7 +211,7 @@ export function CashBankForm({
           </FormField>
           <FormField
             className="col-span-3"
-            label={<>Link Bukti Transaksi <span className="text-tanah-400 normal-case">(opsional — URL scan slip/foto struk)</span></>}
+            label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — URL scan slip/foto struk)</span></>}
           >
             <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />
           </FormField>

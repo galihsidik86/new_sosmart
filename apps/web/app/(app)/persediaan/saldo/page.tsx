@@ -87,7 +87,7 @@ export default async function SaldoStokPage({
                   </TD>
                   <TD className="text-xs font-mono text-tanah-500">{r.cabang.kode}</TD>
                   <MoneyCell>
-                    {fmtPlain(qty)} <span className="text-tanah-400 text-xs ml-1">{r.item.satuan}</span>
+                    {fmtPlain(qty)} <span className="text-tanah-500 text-xs ml-1">{r.item.satuan}</span>
                   </MoneyCell>
                   <MoneyCell>{fmtRp(nilai)}</MoneyCell>
                   <MoneyCell className="text-tanah-500">{fmtRp(rata)}</MoneyCell>

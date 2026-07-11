@@ -236,6 +236,30 @@ Saat **INSERT** baris baru: RLS hanya **filter**, tidak inject kolom. Kolom `ten
 - **Cookie session di web**: `httpOnly` access + refresh; cookie `lentera_user` & `lentera_tenant` non-httpOnly untuk dipakai komponen client kalau perlu (lihat `apps/web/lib/session.ts`).
 - **TenantContext + ALS**: jangan bikin singleton baru untuk konteks request — pakai `TenantContext.require()` di service.
 
+## UI / Frontend (apps/web) — design system Sembada
+
+Referensi visual: `Akuntansi.dc.html` + `colors_and_type.css` (**Sembada**).
+Perubahan visual didokumentasikan di `docs/UI-AUDIT.md` (changelog).
+
+**WAJIB pakai primitives di `apps/web/components/ui/` — jangan tulis ulang UI inline.**
+Impor dari barrel `@/components/ui`. Primitives inti:
+- Layout: `PageContainer` (size `list|form|report|wide`, padding responsive), `PageHeader` (title/subtitle/actions), `Card`/`Section`/`SectionHeader`.
+- Form: `FormField`+`Label`, `Input`/`Select`/`Textarea` (prop `numeric`/`mono`/`fullWidth`), `Button` (variant `primary|secondary|ghost|danger|soft-sogan|soft-emas|success|soft-bata|dashed`, `buttonClass()` untuk `<a>`/`<Link>`).
+- Data: `Table`/`THead`/`TH`/`TBody`/`TR`/`TD`/`MoneyCell`/`EmptyRow`, dan **`DataTable`** deklaratif (`columns` + `rows` + `empty`) untuk halaman list.
+- Status/feedback: `Badge`/`StatusBadge`/`statusVariant`, `StatusBanner`, `Chip`, `StatusBanner`, `EmptyState`, `Skeleton`, `StatCard`, `Money`, `Modal`, `Segmented`, `Icon`.
+- Filter: `FilterBar`/`filterBarClass` + `FilterLabel`; toggle status/tipe pakai segmented control (link) atau `Segmented`.
+
+**Konvensi:**
+- **Angka uang**: di tabel → `font-mono tabular-nums` (atau `MoneyCell`); headline/KPI/total → serif Fraunces via `Money`/`.t-money`. Format `id-ID` (helper `fmtRp`/`fmtPlain` di `lib/format`). Desimal hanya bila ada sen.
+- **Palet Sembada saja**: `sogan/cream/tanah/padi/emas/bata/wedel/info`. JANGAN pakai warna Tailwind default (`amber`, `gray`, dll) atau shade tak terdefinisi (mis. `tanah-400`, `wedel-700` → tak ter-generate, tak berwarna). Shade tanah valid: 100/300/500/700/900.
+- **Kontras WCAG AA**: teks di atas cream pakai `tanah-500`/`tanah-700`; `tanah-300` hanya placeholder/dekoratif.
+- **Shell**: sidebar (`components/Sidebar.tsx`) gelap + ber-ikon + grouping domain; Topbar (`components/Topbar.tsx`) dirender oleh `app/(app)/layout.tsx` (breadcrumb dari pathname — tiap halaman TIDAK render Topbar sendiri). Halaman auth pakai split-layout brand.
+- **Responsive**: grid form `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`; tabel dibungkus `overflow-x-auto`.
+- **Motion/a11y**: transisi `duration-fast ease-sembada`; `focus-visible` ring pada elemen interaktif; entrance `animate-lent-fade`.
+- Loading: `app/(app)/loading.tsx` (skeleton global). Empty: `DataTable` prop `empty` / `EmptyState`.
+
+Katalog komponen hidup di rute `/ui-kit`. Kalau butuh pola baru yang berulang, **buat primitive di `components/ui/` dulu**, jangan inline.
+
 ## Coretax
 
 Adapter akan ditulis di Fase 9. Pendekatan: kontrak XML/JSON sesuai spec DJP public 2025, default mode `mock` (in-memory sandbox), switch ke `production` setelah Sertifikat Elektronik PKP tersedia.

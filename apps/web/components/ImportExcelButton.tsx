@@ -93,7 +93,7 @@ export function ImportExcelButton({ importAction, label = 'Import Excel' }: Prop
             </div>
             <button
               onClick={() => setResult(null)}
-              className="text-tanah-400 hover:text-tanah-700"
+              className="text-tanah-500 hover:text-tanah-700"
             >
               ×
             </button>
