@@ -1,6 +1,6 @@
 import { getSession, getActiveTenantId } from '@/lib/session';
 import { apiFetch } from '@/lib/api';
-import { PageHeader, PageContainer, StatCard, Card, Badge } from '@/components/ui';
+import { PageHeader, PageContainer, StatCard, Card, Badge, Icon } from '@/components/ui';
 
 interface CabangRow { id: string; kode: string; nama: string; isPusat: boolean; npwpCabang: string | null }
 interface PeriodYear {
@@ -9,7 +9,9 @@ interface PeriodYear {
 }
 interface Sub { nilai: string }
 interface Section { total: string }
-interface Neraca { totalAset: Sub; totalLiabilitas: Sub; totalEkuitas: Sub; labaBerjalan: Sub }
+interface NeracaRow { kode: string; nilai: string }
+interface NeracaSection { rows: NeracaRow[]; total: string }
+interface Neraca { asetLancar: NeracaSection; totalAset: Sub; totalLiabilitas: Sub; totalEkuitas: Sub; labaBerjalan: Sub }
 interface LabaRugi { pendapatan: Section; bebanPokok: Section; labaKotor: Sub; bebanOperasi: Section; labaBersih: Sub }
 interface Aging { totalSaldo: string }
 
@@ -69,13 +71,23 @@ export default async function Dashboard() {
   const labaYtd = lrYtd ? Number(lrYtd.labaBersih.nilai) : 0;
   const margin = pendapatanYtd > 0 ? (labaYtd / pendapatanYtd) * 100 : 0;
   const totalAset = neraca ? Number(neraca.totalAset.nilai) : 0;
+  const totalLiabilitas = neraca ? Number(neraca.totalLiabilitas.nilai) : 0;
+  const totalEkuitas = neraca ? Number(neraca.totalEkuitas.nilai) : 0;
   const piutang = arAging ? Number(arAging.totalSaldo) : 0;
   const utang = apAging ? Number(apAging.totalSaldo) : 0;
+  // Kas & Bank = aset lancar berkode 1-101 (kas) + 1-102x (bank). Diturunkan dari
+  // respons neraca yang sudah di-fetch (tidak menambah panggilan API).
+  const kasBank = neraca
+    ? neraca.asetLancar.rows
+        .filter((r) => r.kode.startsWith('1-101') || r.kode.startsWith('1-102'))
+        .reduce((a, r) => a + Number(r.nilai), 0)
+    : 0;
+  const labaBulan = monthly.length ? monthly[monthly.length - 1].laba : 0;
   const chartMax = Math.max(1, ...monthly.map((m) => Math.max(m.pendapatan, m.laba)));
   const hasFinance = !!refPeriod && pendapatanYtd + totalAset > 0;
 
   return (
-    <>
+    <>
       <PageContainer>
         <PageHeader
           title={`Halo, ${s.user.nama.split(' ')[0]}`}
@@ -90,49 +102,90 @@ export default async function Dashboard() {
 
         {hasFinance && (
           <>
-            <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-              <StatCard label="Pendapatan YTD" value={compactRp(pendapatanYtd)} />
-              <StatCard label="Laba Bersih YTD" value={compactRp(labaYtd)} tone={labaYtd < 0 ? 'danger' : 'success'} />
-              <StatCard label="Margin Bersih" value={`${margin.toLocaleString('id-ID', { maximumFractionDigits: 1 })}%`} tone="warning" />
-              <StatCard label="Total Aset" value={compactRp(totalAset)} />
-              <StatCard label="Piutang Usaha" value={compactRp(piutang)} tone="muted" />
-              <StatCard label="Utang Usaha" value={compactRp(utang)} tone="muted" />
+            {/* KPI operasional utama */}
+            <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <StatCard label="Kas & Bank" value={compactRp(kasBank)} icon={<Icon name="wallet" size={18} />} />
+              <StatCard label="Piutang Usaha" value={compactRp(piutang)} tone="muted" icon={<Icon name="coins" size={18} />} />
+              <StatCard label="Utang Usaha" value={compactRp(utang)} tone="muted" icon={<Icon name="coins" size={18} />} />
+              <StatCard
+                label="Laba Bulan Berjalan"
+                value={compactRp(labaBulan)}
+                tone={labaBulan < 0 ? 'danger' : 'success'}
+                delta={refPeriod?.label}
+                deltaTone={labaBulan < 0 ? 'down' : 'up'}
+                icon={<Icon name="trending-up" size={18} />}
+              />
             </section>
 
-            <Card padding="lg" className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold">
-                  Pendapatan &amp; Laba Bersih per Bulan
-                </div>
-                <div className="flex items-center gap-4 text-xs text-tanah-600">
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-wedel-900 inline-block" /> Pendapatan</span>
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-padi-500 inline-block" /> Laba Bersih</span>
-                </div>
-              </div>
-              <div className="flex items-end gap-2 sm:gap-4 h-52 border-b border-cream-200">
-                {monthly.map((m, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                    <div className="w-full flex items-end justify-center gap-1 h-full">
-                      <div
-                        style={{ height: `${(m.pendapatan / chartMax) * 100}%` }}
-                        className="w-4 sm:w-5 bg-wedel-900 rounded-t hover:opacity-80 transition-opacity"
-                        title={`Pendapatan: ${compactRp(m.pendapatan)}`}
-                      />
-                      <div
-                        style={{ height: `${(Math.max(0, m.laba) / chartMax) * 100}%` }}
-                        className={`w-4 sm:w-5 rounded-t transition-opacity hover:opacity-80 ${m.laba < 0 ? 'bg-bata-500' : 'bg-padi-500'}`}
-                        title={`Laba Bersih: ${compactRp(m.laba)}`}
-                      />
-                    </div>
+            {/* Grafik + panel ringkasan (angka mono) */}
+            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <Card padding="lg" className="lg:col-span-2">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold">
+                    Pendapatan &amp; Laba Bersih per Bulan
                   </div>
-                ))}
-              </div>
-              <div className="flex gap-2 sm:gap-4 mt-1.5">
-                {monthly.map((m, i) => (
-                  <div key={i} className="flex-1 text-center text-[11px] font-semibold text-tanah-500">{m.label}</div>
-                ))}
-              </div>
-            </Card>
+                  <div className="flex items-center gap-4 text-xs text-tanah-600">
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-wedel-900 inline-block" /> Pendapatan</span>
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-padi-500 inline-block" /> Laba Bersih</span>
+                  </div>
+                </div>
+                <div className="flex items-end gap-2 sm:gap-4 h-52 border-b border-cream-200">
+                  {monthly.map((m, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                      <div className="w-full flex items-end justify-center gap-1 h-full">
+                        <div
+                          style={{ height: `${(m.pendapatan / chartMax) * 100}%` }}
+                          className="w-4 sm:w-5 bg-wedel-900 rounded-t hover:opacity-80 transition-opacity"
+                          title={`Pendapatan: ${compactRp(m.pendapatan)}`}
+                        />
+                        <div
+                          style={{ height: `${(Math.max(0, m.laba) / chartMax) * 100}%` }}
+                          className={`w-4 sm:w-5 rounded-t transition-opacity hover:opacity-80 ${m.laba < 0 ? 'bg-bata-500' : 'bg-padi-500'}`}
+                          title={`Laba Bersih: ${compactRp(m.laba)}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 sm:gap-4 mt-1.5">
+                  {monthly.map((m, i) => (
+                    <div key={i} className="flex-1 text-center text-[11px] font-semibold text-tanah-500">{m.label}</div>
+                  ))}
+                </div>
+              </Card>
+
+              <Card padding="lg">
+                <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-4">
+                  Ringkasan Keuangan · YTD
+                </div>
+                <dl className="space-y-3 text-sm">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="text-tanah-500">Pendapatan</dt>
+                    <dd className="font-mono tabular-nums font-semibold text-tanah-700 whitespace-nowrap">{compactRp(pendapatanYtd)}</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="text-tanah-500">Laba Bersih</dt>
+                    <dd className={`font-mono tabular-nums font-semibold whitespace-nowrap ${labaYtd < 0 ? 'text-bata-700' : 'text-padi-700'}`}>{compactRp(labaYtd)}</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="text-tanah-500">Margin Bersih</dt>
+                    <dd className="font-mono tabular-nums font-semibold text-emas-700 whitespace-nowrap">{margin.toLocaleString('id-ID', { maximumFractionDigits: 1 })}%</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3 border-t border-cream-200 pt-3">
+                    <dt className="text-tanah-700 font-semibold">Total Aset</dt>
+                    <dd className="font-mono tabular-nums font-bold text-wedel-900 whitespace-nowrap">{compactRp(totalAset)}</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="text-tanah-500">Total Liabilitas</dt>
+                    <dd className="font-mono tabular-nums font-semibold text-tanah-700 whitespace-nowrap">{compactRp(totalLiabilitas)}</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="text-tanah-500">Total Ekuitas</dt>
+                    <dd className="font-mono tabular-nums font-semibold text-tanah-700 whitespace-nowrap">{compactRp(totalEkuitas)}</dd>
+                  </div>
+                </dl>
+              </Card>
+            </section>
           </>
         )}
 
