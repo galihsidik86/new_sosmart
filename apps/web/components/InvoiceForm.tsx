@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, Select } from './ui';
+import { Card, Button, FormField, Input, Select, SectionHeader } from './ui';
 
 type Klasifikasi = 'BKP' | 'JKP' | 'NON_BKP' | 'BKP_STRATEGIS' | 'BEBAS_PPN';
 
@@ -284,6 +284,7 @@ export function InvoiceForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
+        <SectionHeader className="mb-4">1 · Informasi {mode === 'sales' ? 'Faktur' : 'Tagihan'}</SectionHeader>
         <div className="grid grid-cols-3 gap-4">
           <FormField label="Tanggal">
             <Input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} required />
@@ -369,6 +370,11 @@ export function InvoiceForm({
       </Card>
 
       <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-cream-200 flex items-center justify-between">
+          <SectionHeader className="mb-0">2 · Baris Item</SectionHeader>
+          <span className="text-xs text-tanah-400">{lines.length} baris</span>
+        </div>
+        <div className="overflow-x-auto lentera-scroll">
         <table className="w-full text-xs">
           <thead className="bg-cream-50 text-left">
             <tr className="text-[10px] uppercase tracking-wider text-tanah-500">
@@ -475,36 +481,46 @@ export function InvoiceForm({
             })}
           </tbody>
         </table>
+        </div>
         <div className="bg-cream-50 px-3 py-2 border-t border-cream-200">
           <Button type="button" variant="secondary" size="sm" onClick={addLine}>+ Tambah baris</Button>
         </div>
       </section>
 
-      <Card className="grid grid-cols-2 gap-6">
-        <div>
-          <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-2">Ringkasan</div>
-          <dl className="text-sm space-y-1.5">
-            <div className="flex justify-between"><dt className="text-tanah-500">Total DPP</dt>
-              <dd className="font-mono tabular-nums">{totals.totDpp.toLocaleString('id-ID')}</dd></div>
-            <div className="flex justify-between"><dt className="text-tanah-500">
-              PPN ({tarifPpn}%){hargaTermasukPajak ? ' — incl.' : ''}
-            </dt>
-              <dd className="font-mono tabular-nums">{totals.totPpn.toLocaleString('id-ID')}</dd></div>
-            {mode === 'purchase' && (
-              <div className="flex justify-between"><dt className="text-tanah-500">PPh 23 dipotong</dt>
-                <dd className="font-mono tabular-nums text-bata-700">{totals.totPph23.toLocaleString('id-ID')}</dd></div>
-            )}
-            <div className="flex justify-between pt-2 border-t border-cream-200 font-bold text-tanah-700">
-              <dt>{mode === 'sales' ? 'Total Faktur' : 'Yang dibayar ke vendor'}</dt>
-              <dd className="font-mono tabular-nums text-base">Rp {totals.totNetto.toLocaleString('id-ID')}</dd>
+      <Card>
+        <SectionHeader className="mb-4">3 · Ringkasan &amp; Simpan</SectionHeader>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+          <dl className="text-sm space-y-2">
+            <div className="flex justify-between gap-4">
+              <dt className="text-tanah-500">Total DPP</dt>
+              <dd className="font-mono tabular-nums text-tanah-700">{totals.totDpp.toLocaleString('id-ID')}</dd>
             </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-tanah-500">PPN ({tarifPpn}%){hargaTermasukPajak ? ' — incl.' : ''}</dt>
+              <dd className="font-mono tabular-nums text-tanah-700">{totals.totPpn.toLocaleString('id-ID')}</dd>
+            </div>
+            {mode === 'purchase' && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-tanah-500">PPh 23 dipotong</dt>
+                <dd className="font-mono tabular-nums text-bata-700">({totals.totPph23.toLocaleString('id-ID')})</dd>
+              </div>
+            )}
           </dl>
-        </div>
-        <div className="flex flex-col justify-end items-end">
-          {error && <div className="text-bata-700 text-xs mb-2 max-w-sm text-right">{error}</div>}
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
-          </Button>
+
+          <div>
+            <div className="rounded-xl bg-sogan-50 border border-sogan-100 px-4 py-3 mb-3">
+              <div className="text-[11px] uppercase tracking-wider text-sogan-500 font-bold">
+                {mode === 'sales' ? 'Total Faktur' : 'Yang dibayar ke vendor'}
+              </div>
+              <div className="font-mono tabular-nums text-2xl font-bold text-sogan-700 mt-0.5 whitespace-nowrap">
+                Rp {totals.totNetto.toLocaleString('id-ID')}
+              </div>
+            </div>
+            {error && <div className="text-bata-700 text-xs mb-2">{error}</div>}
+            <Button type="submit" disabled={submitting} className="w-full">
+              {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
+            </Button>
+          </div>
         </div>
       </Card>
     </form>

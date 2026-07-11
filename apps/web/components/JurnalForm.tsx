@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, Select, StatusBanner } from './ui';
+import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader } from './ui';
 
 interface Account {
   id: string;
@@ -171,6 +171,7 @@ export function JurnalForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
+        <SectionHeader className="mb-4">1 · Informasi Jurnal</SectionHeader>
         <div className="grid grid-cols-3 gap-4">
           <FormField label="Tanggal">
             <Input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)} required />
@@ -209,6 +210,11 @@ export function JurnalForm({
       </Card>
 
       <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-cream-200 flex items-center justify-between">
+          <SectionHeader className="mb-0">2 · Baris Jurnal</SectionHeader>
+          <span className="text-xs text-tanah-400">debit = kredit</span>
+        </div>
+        <div className="overflow-x-auto lentera-scroll">
         <table className="w-full text-sm">
           <thead className="bg-cream-50 text-left">
             <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
@@ -306,6 +312,7 @@ export function JurnalForm({
             </tr>
           </tfoot>
         </table>
+        </div>
       </section>
 
       <StatusBanner

@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, Select, StatusBanner } from './ui';
+import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader } from './ui';
 
 type Tipe = 'RECEIPT' | 'PAYMENT' | 'TRANSFER';
 
@@ -159,6 +159,7 @@ export function CashBankForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
+        <SectionHeader className="mb-4">1 · Informasi Transaksi</SectionHeader>
         <div className="grid grid-cols-3 gap-4">
           <FormField label="Tipe">
             <Select value={tipe} onChange={(e) => setTipe(e.target.value as Tipe)}>
@@ -239,6 +240,10 @@ export function CashBankForm({
 
       {tipe !== 'TRANSFER' && (
         <section className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-cream-200">
+            <SectionHeader className="mb-0">2 · Baris Alokasi</SectionHeader>
+          </div>
+          <div className="overflow-x-auto lentera-scroll">
           <table className="w-full text-sm">
             <thead className="bg-cream-50 text-left">
               <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
@@ -304,6 +309,7 @@ export function CashBankForm({
               </tr>
             </tfoot>
           </table>
+          </div>
         </section>
       )}
 
