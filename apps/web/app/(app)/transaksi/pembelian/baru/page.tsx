@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { InvoiceForm } from '@/components/InvoiceForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -48,8 +47,7 @@ export default async function PembelianBaruPage() {
     (a) => a.isPostable && (a.kode === '1-101' || a.kode.startsWith('1-102')),
   );
   return (
-    <>
-      <Topbar breadcrumb="Pembelian / Baru" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader title="Tagihan Pembelian Baru" />
         <InvoiceForm

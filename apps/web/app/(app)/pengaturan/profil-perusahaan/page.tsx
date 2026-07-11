@@ -1,6 +1,5 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { LogoUploader } from '@/components/LogoUploader';
 import { apiFetch } from '@/lib/api';
 import { uploadLogo, type LogoUploadResult } from '@/lib/upload';
@@ -100,8 +99,7 @@ export default async function ProfilPerusahaanPage({
   const editable = canAdmin(s.role);
 
   return (
-    <>
-      <Topbar breadcrumb="Profil Perusahaan" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader
           title="Profil Perusahaan"

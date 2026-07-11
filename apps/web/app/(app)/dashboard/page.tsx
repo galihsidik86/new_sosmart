@@ -1,6 +1,5 @@
 import { getSession, getActiveTenantId } from '@/lib/session';
 import { apiFetch } from '@/lib/api';
-import { Topbar } from '@/components/Topbar';
 import { PageHeader, PageContainer, StatCard, Card, Badge } from '@/components/ui';
 
 interface CabangRow { id: string; kode: string; nama: string; isPusat: boolean; npwpCabang: string | null }
@@ -76,8 +75,7 @@ export default async function Dashboard() {
   const hasFinance = !!refPeriod && pendapatanYtd + totalAset > 0;
 
   return (
-    <>
-      <Topbar breadcrumb="Dashboard" tenantNama={s.tenantNama!} periodeLabel={periodAktif?.label} />
+    <>
       <PageContainer>
         <PageHeader
           title={`Halo, ${s.user.nama.split(' ')[0]}`}

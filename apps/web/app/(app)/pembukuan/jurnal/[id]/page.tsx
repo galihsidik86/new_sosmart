@@ -2,7 +2,6 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Topbar } from '@/components/Topbar';
 import { PostButton } from '@/components/PostButton';
 import { LinkBukti } from '@/components/LinkBukti';
 import { parseBudgetViolations, type PostResult } from '@/lib/budgetGuard';
@@ -121,11 +120,7 @@ export default async function JurnalDetailPage({
   const mayPost = canPostAccounting(s.role);
 
   return (
-    <>
-      <Topbar
-        breadcrumb={`Jurnal / ${j.nomor ?? 'Draft'}`}
-        tenantNama={s.tenantNama!}
-      />
+    <>
       <PageContainer size="form">
         <PageHeader
           title={j.nomor ?? '— Draft —'}

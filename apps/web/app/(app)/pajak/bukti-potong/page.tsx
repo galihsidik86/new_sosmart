@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp, fmtTanggal } from '@/lib/format';
@@ -60,8 +59,7 @@ export default async function BuktiPotongPage({
     .reduce((a, r) => a + Number(r.pph), 0);
 
   return (
-    <>
-      <Topbar breadcrumb="Bukti Potong" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Bukti Potong (e-Bupot Unifikasi)"

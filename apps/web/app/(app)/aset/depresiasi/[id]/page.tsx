@@ -1,7 +1,6 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canCancelPosted } from '@/lib/roles';
@@ -53,8 +52,7 @@ export default async function DepresiasiDetailPage({
   const mayCancel = canCancelPosted(s.role);
 
   return (
-    <>
-      <Topbar breadcrumb={`Depresiasi / ${run.periode}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader
           title={`Penyusutan ${run.periode}`}

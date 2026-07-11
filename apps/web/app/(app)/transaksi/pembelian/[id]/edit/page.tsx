@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { InvoiceForm } from '@/components/InvoiceForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -68,8 +67,7 @@ export default async function PembelianEditPage({ params }: { params: Promise<{ 
   }
 
   return (
-    <>
-      <Topbar breadcrumb="Pembelian / Edit Draft" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader title="Edit Draft Tagihan" />
         <InvoiceForm

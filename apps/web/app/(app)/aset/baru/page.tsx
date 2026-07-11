@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { AsetForm } from '@/components/AsetForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -39,8 +38,7 @@ export default async function AsetBaruPage() {
   );
 
   return (
-    <>
-      <Topbar breadcrumb="Aset Tetap / Baru" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader title="Aset Tetap Baru" />
         <AsetForm

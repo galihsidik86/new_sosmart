@@ -1,6 +1,5 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting, canCancelPosted } from '@/lib/roles';
@@ -223,8 +222,7 @@ export default async function SaldoAwalPage({
   const akunNonZero = akun.filter((a) => Number(a.saldoAwal) !== 0);
 
   return (
-    <>
-      <Topbar breadcrumb="Pengaturan › Saldo Awal" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader
           title="Prosedur Saldo Awal Terintegrasi"

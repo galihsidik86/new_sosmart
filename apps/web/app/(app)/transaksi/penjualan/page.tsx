@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { LinkBukti } from '@/components/LinkBukti';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -33,8 +32,7 @@ export default async function PenjualanPage({
   const rows = await apiFetch<Row[]>(`/sales-invoices${qs}`, { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb="Penjualan" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Faktur Penjualan"

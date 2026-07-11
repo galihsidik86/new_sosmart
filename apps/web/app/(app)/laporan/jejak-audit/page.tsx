@@ -1,4 +1,3 @@
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
@@ -60,8 +59,7 @@ export default async function JejakAuditPage({
   if (periodId) data = await apiFetch<Resp>(`/reports/jejak-audit?${qs.toString()}`, { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb="Jejak Audit" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Jejak Audit"

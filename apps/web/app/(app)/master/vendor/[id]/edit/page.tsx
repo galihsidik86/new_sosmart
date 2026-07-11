@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
@@ -50,8 +49,7 @@ export default async function EditVendorPage({ params }: { params: Promise<{ id:
   const v = await apiFetch<Vendor>(`/vendors/${id}`, { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb={`Data Vendor › Edit ${v.kode}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <Link href="/master/vendor" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader title="Edit Vendor" subtitle={`${v.kode} · ${v.nama}`} className="mt-2" />

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
@@ -63,8 +62,7 @@ export default async function EditPelangganPage({ params }: { params: Promise<{ 
   const c = await apiFetch<Customer>(`/customers/${id}`, { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb={`Data Pelanggan › Edit ${c.kode}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <Link href="/master/pelanggan" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader title="Edit Pelanggan" subtitle={`${c.kode} · ${c.nama}`} className="mt-2" />

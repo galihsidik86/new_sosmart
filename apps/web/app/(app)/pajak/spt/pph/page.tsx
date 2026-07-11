@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp, fmtTanggal } from '@/lib/format';
@@ -55,8 +54,7 @@ export default async function SptPphPage({
   }
 
   return (
-    <>
-      <Topbar breadcrumb={`SPT Masa ${jenisPph.replace('_', ' ')}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="SPT Masa PPh"

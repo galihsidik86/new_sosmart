@@ -1,4 +1,3 @@
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp, fmtTanggal } from '@/lib/format';
@@ -46,8 +45,7 @@ export default async function SptPpnPage({
   }
 
   return (
-    <>
-      <Topbar breadcrumb="SPT Masa PPN" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="SPT Masa PPN (1111)"

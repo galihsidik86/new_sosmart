@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
@@ -70,8 +69,7 @@ export default async function UsersPage() {
   ]);
 
   return (
-    <>
-      <Topbar breadcrumb="Pengaturan › Pengguna" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Manajemen Pengguna"

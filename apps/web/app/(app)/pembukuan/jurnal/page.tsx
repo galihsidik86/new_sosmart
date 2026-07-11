@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { LinkBukti } from '@/components/LinkBukti';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -56,8 +55,7 @@ export default async function JurnalPage({
   );
 
   return (
-    <>
-      <Topbar breadcrumb="Jurnal Umum" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Jurnal Umum"

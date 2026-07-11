@@ -1,4 +1,3 @@
-import { Topbar } from '@/components/Topbar';
 import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -35,8 +34,7 @@ export default async function PerubahanEkuitasPage({
   }
 
   return (
-    <>
-      <Topbar breadcrumb="Perubahan Ekuitas" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader
           title="Laporan Perubahan Ekuitas"

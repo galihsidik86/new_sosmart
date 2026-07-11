@@ -1,6 +1,5 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { GlConfigRow } from '@/components/GlConfigRow';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -74,8 +73,7 @@ export default async function AkunDefaultPage() {
   const postable = accounts.filter((a) => a.isPostable);
 
   return (
-    <>
-      <Topbar breadcrumb="Pengaturan › Akun Default" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Akun Default (GL Config)"

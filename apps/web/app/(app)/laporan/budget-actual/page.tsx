@@ -1,5 +1,4 @@
 import { Fragment } from 'react';
-import { Topbar } from '@/components/Topbar';
 import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -71,8 +70,7 @@ export default async function BudgetActualPage({
   ]);
 
   return (
-    <>
-      <Topbar breadcrumb="Budget vs Actual" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Budget vs Actual"

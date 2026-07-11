@@ -1,7 +1,6 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canCancelPosted, canPostAccounting } from '@/lib/roles';
@@ -94,8 +93,7 @@ export default async function AsetDetailPage({
   const mayUndispose = canCancelPosted(s.role);
 
   return (
-    <>
-      <Topbar breadcrumb={`Aset / ${aset.kode}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader
           title={`${aset.kode} — ${aset.nama}`}

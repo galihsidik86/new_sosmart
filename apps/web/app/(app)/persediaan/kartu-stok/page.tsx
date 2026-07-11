@@ -1,4 +1,3 @@
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtPlain, fmtRp, fmtTanggal } from '@/lib/format';
@@ -67,8 +66,7 @@ export default async function KartuStokPage({
   }
 
   return (
-    <>
-      <Topbar breadcrumb="Kartu Stok" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Kartu Stok"

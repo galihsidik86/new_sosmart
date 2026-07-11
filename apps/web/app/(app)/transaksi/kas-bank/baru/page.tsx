@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { CashBankForm } from '@/components/CashBankForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -57,8 +56,7 @@ export default async function KasBankBaruPage() {
   }));
 
   return (
-    <>
-      <Topbar breadcrumb="Kas/Bank / Baru" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader title="Bukti Kas / Bank Baru" />
         <CashBankForm

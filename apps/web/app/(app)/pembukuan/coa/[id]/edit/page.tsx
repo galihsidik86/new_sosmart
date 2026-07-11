@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
@@ -65,8 +64,7 @@ export default async function CoaEditPage({ params }: { params: Promise<{ id: st
   const parentOptions = all.filter((x) => x.id !== id);
 
   return (
-    <>
-      <Topbar breadcrumb={`Bagan Akun › Edit ${a.kode}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <Link href="/pembukuan/coa" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader

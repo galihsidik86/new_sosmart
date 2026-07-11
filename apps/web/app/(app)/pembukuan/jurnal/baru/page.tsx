@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { JurnalForm } from '@/components/JurnalForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -36,8 +35,7 @@ export default async function JurnalBaruPage() {
     apiFetch<Project[]>('/projects', { tenantId }),
   ]);
   return (
-    <>
-      <Topbar breadcrumb="Jurnal Umum / Baru" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader title="Jurnal Baru" />
         <JurnalForm accounts={accounts} cabang={cabang} projects={projects} submit={submitJurnal} />

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
@@ -68,8 +67,7 @@ export default async function EditKaryawanPage({ params }: { params: Promise<{ i
   ]);
 
   return (
-    <>
-      <Topbar breadcrumb={`Karyawan › Edit ${k.kode}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <div className="mb-2">
           <Link href="/pajak/karyawan" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>

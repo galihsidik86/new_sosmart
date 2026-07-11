@@ -1,4 +1,3 @@
-import { Topbar } from '@/components/Topbar';
 import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -96,8 +95,7 @@ export default async function LabaRugiPage({
   const cols = 3 + (showVertikal ? 1 : 0) + (showCompare ? 3 : 0);
 
   return (
-    <>
-      <Topbar breadcrumb="Laba Rugi" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader
           title="Laporan Laba Rugi"

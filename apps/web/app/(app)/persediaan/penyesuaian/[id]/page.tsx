@@ -2,7 +2,6 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Topbar } from '@/components/Topbar';
 import { StepUpButton } from '@/components/StepUpButton';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -113,8 +112,7 @@ export default async function PenyesuaianDetailPage({
   const mayCancel = canCancelPosted(s.role);
 
   return (
-    <>
-      <Topbar breadcrumb={`Penyesuaian / ${adj.nomor ?? 'Draft'}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader
           title={adj.nomor ?? '— Draft —'}

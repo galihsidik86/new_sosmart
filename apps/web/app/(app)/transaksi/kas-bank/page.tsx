@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { LinkBukti } from '@/components/LinkBukti';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -39,8 +38,7 @@ export default async function KasBankPage({
   const rows = await apiFetch<Row[]>(`/cash-bank${qs}`, { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb="Kas / Bank" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Bukti Kas & Bank"

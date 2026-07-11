@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
-import { Topbar } from '@/components/Topbar';
 import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
@@ -72,8 +71,7 @@ export default async function PelangganPage() {
   const customers = await apiFetch<CustomerRow[]>('/customers', { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb="Data Pelanggan" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Data Pelanggan"

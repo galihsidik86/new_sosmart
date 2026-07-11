@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { OpnameForm } from '@/components/OpnameForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -39,8 +38,7 @@ export default async function OpnameBaruPage() {
     (saldoMap[r.cabang.id] ??= []).push(r);
   }
   return (
-    <>
-      <Topbar breadcrumb="Penyesuaian Stok / Baru" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader title="Opname Stok Baru" />
         <OpnameForm

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
@@ -58,8 +57,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
   const checked = new Set(u.cabang.map((c) => c.id));
 
   return (
-    <>
-      <Topbar breadcrumb={`Pengguna › Edit ${u.email}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <Link href="/pengaturan/user" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader title="Edit Pengguna" subtitle={`${u.nama} · ${u.email}`} className="mt-2" />

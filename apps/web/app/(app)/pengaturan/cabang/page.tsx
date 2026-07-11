@@ -1,5 +1,4 @@
 import { revalidatePath } from 'next/cache';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp } from '@/lib/format';
@@ -43,8 +42,7 @@ export default async function CabangPage() {
   const cabang = await apiFetch<CabangRow[]>('/cabang', { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb="Cabang" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Cabang"

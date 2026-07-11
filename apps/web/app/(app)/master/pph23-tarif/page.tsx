@@ -1,6 +1,5 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
@@ -65,8 +64,7 @@ export default async function Pph23TarifPage() {
   const list = await apiFetch<Tarif[]>('/pph23-tarif?includeInactive=true', { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb="Master Tarif PPh 23" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Tarif PPh 23 (jenis jasa)"

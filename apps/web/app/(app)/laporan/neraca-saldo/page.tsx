@@ -1,5 +1,4 @@
 import { Fragment } from 'react';
-import { Topbar } from '@/components/Topbar';
 import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -86,8 +85,7 @@ export default async function NeracaSaldoPage({
   if (projectId) xlsxQs.set('projectId', projectId);
 
   return (
-    <>
-      <Topbar breadcrumb="Neraca Saldo" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Neraca Saldo"

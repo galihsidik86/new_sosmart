@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
@@ -65,8 +64,7 @@ export default async function ProjectsPage({
   );
 
   return (
-    <>
-      <Topbar breadcrumb="Master Data › Project" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Project"

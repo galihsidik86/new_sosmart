@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Fragment } from 'react';
-import { Topbar } from '@/components/Topbar';
 import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -64,8 +63,7 @@ export default async function UtangStatementPage({
   const bucketKeys = Object.keys(BUCKET_LABEL) as (keyof Buckets)[];
 
   return (
-    <>
-      <Topbar breadcrumb={`Laporan / Utang / ${st.vendor.kode}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <Link
           href={`/laporan/utang?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}

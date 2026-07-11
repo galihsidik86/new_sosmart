@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
@@ -74,8 +73,7 @@ export default async function DepresiasiPage({
   const totalPreview = preview.reduce((a, r) => a + Number(r.nilai), 0);
 
   return (
-    <>
-      <Topbar breadcrumb="Penyusutan Aset" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Penyusutan Aset Bulanan"

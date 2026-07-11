@@ -1,4 +1,3 @@
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtPlain, fmtTanggal } from '@/lib/format';
@@ -68,8 +67,7 @@ export default async function BukuBesarPage({
   if (projectId) xlsxQs.set('projectId', projectId);
 
   return (
-    <>
-      <Topbar breadcrumb="Buku Besar" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Buku Besar"

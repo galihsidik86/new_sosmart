@@ -1,4 +1,3 @@
-import { Topbar } from '@/components/Topbar';
 import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -45,8 +44,7 @@ export default async function ArusKasPage({
   }
 
   return (
-    <>
-      <Topbar breadcrumb="Arus Kas" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader
           title="Laporan Arus Kas"

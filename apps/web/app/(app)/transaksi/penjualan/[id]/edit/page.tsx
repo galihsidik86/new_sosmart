@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { InvoiceForm } from '@/components/InvoiceForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -69,8 +68,7 @@ export default async function PenjualanEditPage({ params }: { params: Promise<{ 
   }
 
   return (
-    <>
-      <Topbar breadcrumb="Penjualan / Edit Draft" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader title="Edit Draft Faktur" />
         <InvoiceForm

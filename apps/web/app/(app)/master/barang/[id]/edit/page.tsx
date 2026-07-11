@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
@@ -66,8 +65,7 @@ export default async function EditBarangPage({ params }: { params: Promise<{ id:
   ]);
 
   return (
-    <>
-      <Topbar breadcrumb={`Master Barang › Edit ${item.kode}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <Link href="/master/barang" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader title="Edit Barang" subtitle={`${item.kode} · ${item.nama}`} className="mt-2" />

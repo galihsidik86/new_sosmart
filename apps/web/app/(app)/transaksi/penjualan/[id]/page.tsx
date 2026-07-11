@@ -2,7 +2,6 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Topbar } from '@/components/Topbar';
 import { StepUpButton } from '@/components/StepUpButton';
 import { PostButton } from '@/components/PostButton';
 import { LinkBukti } from '@/components/LinkBukti';
@@ -137,8 +136,7 @@ export default async function PenjualanDetailPage({
   const mayCancel = canCancelPosted(s.role);
 
   return (
-    <>
-      <Topbar breadcrumb={`Penjualan / ${inv.nomor ?? 'Draft'}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <PageHeader
           title={inv.nomor ?? '— Draft —'}

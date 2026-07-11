@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
@@ -136,8 +135,7 @@ export default async function ProjectDetailPage({
   const postableAccounts = accounts.filter((a) => a.isPostable);
 
   return (
-    <>
-      <Topbar breadcrumb={`Project › ${p.kode}`} tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="form">
         <Link href="/master/project" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader

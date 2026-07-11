@@ -1,4 +1,3 @@
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
@@ -42,8 +41,7 @@ export default async function LabaRugiProyekPage({
   }
 
   return (
-    <>
-      <Topbar breadcrumb="Laba Rugi per Proyek" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Laba Rugi per Proyek"

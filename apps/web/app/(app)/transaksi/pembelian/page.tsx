@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { LinkBukti } from '@/components/LinkBukti';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -33,8 +32,7 @@ export default async function PembelianPage({
   const rows = await apiFetch<Row[]>(`/purchase-invoices${qs}`, { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb="Pembelian" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Tagihan Pembelian"

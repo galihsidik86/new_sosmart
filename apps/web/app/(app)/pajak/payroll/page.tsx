@@ -1,6 +1,5 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
@@ -93,8 +92,7 @@ export default async function PayrollListPage({
   const totalPreviewTakeHome = preview.reduce((a, r) => a + Number(r.takeHome), 0);
 
   return (
-    <>
-      <Topbar breadcrumb="Payroll" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Payroll Bulanan"

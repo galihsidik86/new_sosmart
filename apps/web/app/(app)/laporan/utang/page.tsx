@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -63,8 +62,7 @@ export default async function UtangPage({
   const bucketKeys = Object.keys(BUCKET_LABEL) as (keyof Buckets)[];
 
   return (
-    <>
-      <Topbar breadcrumb="Laporan / Utang" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Aging Utang Usaha"

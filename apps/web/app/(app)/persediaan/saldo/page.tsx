@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtPlain, fmtRp } from '@/lib/format';
@@ -33,8 +32,7 @@ export default async function SaldoStokPage({
   const totalNilai = rows.reduce((a, r) => a + Number(r.nilai), 0);
 
   return (
-    <>
-      <Topbar breadcrumb="Saldo Stok" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Saldo Stok"

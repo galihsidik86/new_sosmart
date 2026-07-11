@@ -2,6 +2,11 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
 import { apiFetch } from '@/lib/api';
 import { Sidebar } from '@/components/Sidebar';
+import { Topbar } from '@/components/Topbar';
+
+interface PeriodYear {
+  periods: Array<{ label: string; status: string }>;
+}
 
 export default async function AppLayout({
   children,
@@ -13,10 +18,15 @@ export default async function AppLayout({
   if (!s.tenantId) redirect('/pilih-tenant');
 
   let logoUrl: string | null = null;
+  let periodeLabel: string | undefined;
   try {
-    const prof = await apiFetch<{ logoUrl: string | null }>('/tenants/current', { tenantId: s.tenantId });
+    const [prof, years] = await Promise.all([
+      apiFetch<{ logoUrl: string | null }>('/tenants/current', { tenantId: s.tenantId }),
+      apiFetch<PeriodYear[]>('/periods/years', { tenantId: s.tenantId }).catch(() => [] as PeriodYear[]),
+    ]);
     logoUrl = prof.logoUrl;
-  } catch { /* logo opsional */ }
+    periodeLabel = years[0]?.periods.find((p) => p.status === 'OPEN')?.label;
+  } catch { /* logo & periode opsional */ }
 
   return (
     <div className="flex min-h-screen bg-cream-100">
@@ -26,7 +36,10 @@ export default async function AppLayout({
         role={s.role}
         logoUrl={logoUrl}
       />
-      <main className="flex-1 min-w-0 flex flex-col">{children}</main>
+      <main className="flex-1 min-w-0 flex flex-col">
+        <Topbar tenantNama={s.tenantNama ?? 'Lentera'} periodeLabel={periodeLabel} />
+        {children}
+      </main>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Topbar } from '@/components/Topbar';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
@@ -28,8 +27,7 @@ export default async function PenyesuaianListPage() {
   const rows = await apiFetch<Row[]>('/stok-adjustments', { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb="Penyesuaian Stok" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Penyesuaian Stok (Opname)"

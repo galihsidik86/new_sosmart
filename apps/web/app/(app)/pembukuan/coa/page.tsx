@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { revalidatePath } from 'next/cache';
-import { Topbar } from '@/components/Topbar';
 import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
@@ -34,8 +33,7 @@ export default async function CoaPage() {
   const tree = await apiFetch<AccountNode[]>('/accounts?view=tree', { tenantId });
 
   return (
-    <>
-      <Topbar breadcrumb="Bagan Akun" tenantNama={s.tenantNama!} />
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Bagan Akun (Chart of Accounts)"
