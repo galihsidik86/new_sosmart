@@ -10,14 +10,11 @@
  *      kolom "Sebelumnya" + "Δ" + "Δ %" muncul.
  */
 import { test, expect, request as pwRequest } from '@playwright/test';
+import { loadRefs } from './refs';
 
 const API_BASE = 'http://localhost:4000';
 const OWNER_EMAIL = 'owner@lentera.id';
 const OWNER_PASSWORD = 'lentera123';
-
-const ACCOUNT_ID_PENJUALAN = '34d11cea-33d9-4cfb-bdf1-1fea0655e1f5'; // 4-101
-const ACCOUNT_ID_KAS = '19262ed4-6bcc-4adf-96d3-44a902bc62c9';       // 1-101
-const CABANG_SMG = 'b2ae94f8-5610-4d6e-97f5-ade6e49b0681';
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 
@@ -33,6 +30,11 @@ test('Laba Rugi vertikal + horizontal — tampilkan %, previous, delta', async (
     'x-tenant-id': tenantId,
     'content-type': 'application/json',
   };
+
+  const refs = await loadRefs(ctx, authHeaders);
+  const ACCOUNT_ID_PENJUALAN = refs.account('4-101');
+  const ACCOUNT_ID_KAS = refs.account('1-101');
+  const CABANG_SMG = refs.cabang('SMG');
 
   // Buat + post jurnal penjualan Rp 1.000.000
   const draft = await ctx.post('/api/v1/journals', {

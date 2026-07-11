@@ -13,14 +13,25 @@
  */
 import { test, expect, request as pwRequest } from '@playwright/test';
 import type { APIRequestContext } from '@playwright/test';
+import { loadRefs } from './refs';
 
 const API_BASE = 'http://localhost:4000';
 const OWNER_EMAIL = 'owner@lentera.id';
 const OWNER_PASSWORD = 'lentera123';
 
-const ACCOUNT_ID_6104 = '81ccfeb0-f4b5-481f-b0ee-0b0e67202bfb'; // 6-104 Beban Pemasaran
-const ACCOUNT_ID_KAS = '19262ed4-6bcc-4adf-96d3-44a902bc62c9';  // 1-101 Kas
-const CABANG_SMG = 'b2ae94f8-5610-4d6e-97f5-ade6e49b0681';
+// Diisi di test.beforeAll — resolusi by kode supaya tahan re-seed (lihat refs.ts).
+let ACCOUNT_ID_6104: string; // 6-104 Beban Pemasaran
+let ACCOUNT_ID_KAS: string; // 1-101 Kas
+let CABANG_SMG: string;
+
+test.beforeAll(async () => {
+  const c = await apiLogin();
+  const refs = await loadRefs(c.ctx, c.auth);
+  ACCOUNT_ID_6104 = refs.account('6-104');
+  ACCOUNT_ID_KAS = refs.account('1-101');
+  CABANG_SMG = refs.cabang('SMG');
+  await c.ctx.dispose();
+});
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 function periodeNow() {
