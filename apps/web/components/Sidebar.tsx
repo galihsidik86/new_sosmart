@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from './ui/icons';
@@ -13,7 +13,6 @@ interface NavItem {
   label: string;
   group: string;
   icon: IconName;
-  /** Kosong/undefined = semua role bisa lihat. */
   roles?: Role[];
 }
 
@@ -24,17 +23,12 @@ const ADMIN_ONLY: Role[] = ['OWNER', 'ADMIN'];
 
 const NAV: NavItem[] = [
   { group: 'Ringkasan', href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { group: 'Master Data', href: '/master/barang', label: 'Master Barang', icon: 'package', roles: FULL },
-  { group: 'Master Data', href: '/master/vendor', label: 'Data Vendor', icon: 'truck', roles: FULL },
-  { group: 'Master Data', href: '/master/pelanggan', label: 'Data Pelanggan', icon: 'users', roles: TX_KASIR },
-  { group: 'Master Data', href: '/master/project', label: 'Project', icon: 'folder', roles: FULL },
-  { group: 'Master Data', href: '/master/pph23-tarif', label: 'Tarif PPh 23', icon: 'percent', roles: FULL },
-  { group: 'Pembukuan', href: '/pembukuan/coa', label: 'Bagan Akun', icon: 'book-open', roles: ACCOUNTING },
-  { group: 'Pembukuan', href: '/pembukuan/jurnal', label: 'Jurnal Umum', icon: 'notebook', roles: ACCOUNTING },
-  { group: 'Pembukuan', href: '/pembukuan/bukubesar', label: 'Buku Besar', icon: 'book', roles: ACCOUNTING },
   { group: 'Transaksi', href: '/transaksi/penjualan', label: 'Penjualan', icon: 'cart', roles: TX_KASIR },
   { group: 'Transaksi', href: '/transaksi/pembelian', label: 'Pembelian', icon: 'bag', roles: FULL },
   { group: 'Transaksi', href: '/transaksi/kas-bank', label: 'Kas / Bank', icon: 'wallet', roles: TX_KASIR },
+  { group: 'Pembukuan', href: '/pembukuan/coa', label: 'Bagan Akun', icon: 'book-open', roles: ACCOUNTING },
+  { group: 'Pembukuan', href: '/pembukuan/jurnal', label: 'Jurnal Umum', icon: 'notebook', roles: ACCOUNTING },
+  { group: 'Pembukuan', href: '/pembukuan/bukubesar', label: 'Buku Besar', icon: 'book', roles: ACCOUNTING },
   { group: 'Persediaan', href: '/persediaan/saldo', label: 'Saldo Stok', icon: 'boxes', roles: ACCOUNTING },
   { group: 'Persediaan', href: '/persediaan/kartu-stok', label: 'Kartu Stok', icon: 'list', roles: ACCOUNTING },
   { group: 'Persediaan', href: '/persediaan/penyesuaian', label: 'Penyesuaian Stok', icon: 'clipboard', roles: FULL },
@@ -55,12 +49,22 @@ const NAV: NavItem[] = [
   { group: 'Laporan', href: '/laporan/utang', label: 'Aging Utang', icon: 'coins', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/budget-actual', label: 'Budget vs Actual', icon: 'target', roles: FULL },
   { group: 'Laporan', href: '/laporan/jejak-audit', label: 'Jejak Audit', icon: 'search', roles: ACCOUNTING },
+  { group: 'Master Data', href: '/master/barang', label: 'Master Barang', icon: 'package', roles: FULL },
+  { group: 'Master Data', href: '/master/vendor', label: 'Data Vendor', icon: 'truck', roles: FULL },
+  { group: 'Master Data', href: '/master/pelanggan', label: 'Data Pelanggan', icon: 'users', roles: TX_KASIR },
+  { group: 'Master Data', href: '/master/project', label: 'Project', icon: 'folder', roles: FULL },
+  { group: 'Master Data', href: '/master/pph23-tarif', label: 'Tarif PPh 23', icon: 'percent', roles: FULL },
   { group: 'Pengaturan', href: '/pengaturan/profil-perusahaan', label: 'Profil Perusahaan', icon: 'building', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/periode', label: 'Periode Buku', icon: 'calendar', roles: FULL },
   { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang', icon: 'network', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/user', label: 'Pengguna', icon: 'user-cog', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/akun-default', label: 'Akun Default', icon: 'sliders', roles: FULL },
   { group: 'Pengaturan', href: '/pengaturan/saldo-awal', label: 'Saldo Awal', icon: 'layers', roles: FULL },
+];
+
+const GROUP_ORDER = [
+  'Ringkasan', 'Transaksi', 'Pembukuan', 'Persediaan',
+  'Aset Tetap', 'Pajak', 'Laporan', 'Master Data', 'Pengaturan',
 ];
 
 interface SidebarProps {
@@ -70,24 +74,34 @@ interface SidebarProps {
   logoUrl?: string | null;
 }
 
+const initialsOf = (s: string) =>
+  s.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+
 export function Sidebar({ user, tenantNama, role, logoUrl }: SidebarProps) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // mobile drawer
+  const [collapsed, setCollapsed] = useState(false); // desktop rail
+
+  useEffect(() => {
+    if (localStorage.getItem('lentera-sidebar-collapsed') === '1') setCollapsed(true);
+  }, []);
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      const next = !c;
+      localStorage.setItem('lentera-sidebar-collapsed', next ? '1' : '0');
+      return next;
+    });
+
   const userRole = role as Role | undefined;
   const visibleNav = NAV.filter(
     (n) => !n.roles || (userRole !== undefined && n.roles.includes(userRole)),
   );
-  const groups = Array.from(new Set(visibleNav.map((n) => n.group)));
+  const groups = GROUP_ORDER.filter((g) => visibleNav.some((n) => n.group === g));
 
-  // Aktif = persis atau anak rute (hindari over-match antar rute berprefix sama).
   const isActive = (href: string) =>
     pathname === href || pathname?.startsWith(href + '/');
 
-  const initials = user.nama
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('');
+  const hide = collapsed ? 'md:hidden' : '';
 
   return (
     <>
@@ -101,10 +115,9 @@ export function Sidebar({ user, tenantNama, role, logoUrl }: SidebarProps) {
         <Icon name="menu" />
       </button>
 
-      {/* Backdrop (mobile) */}
       {open && (
         <div
-          className="md:hidden fixed inset-0 bg-black/40 z-40 animate-lent-fade"
+          className="md:hidden fixed inset-0 bg-black/50 z-40 animate-lent-fade"
           onClick={() => setOpen(false)}
           role="presentation"
         />
@@ -112,44 +125,74 @@ export function Sidebar({ user, tenantNama, role, logoUrl }: SidebarProps) {
 
       <aside
         className={cn(
-          'w-60 flex-shrink-0 bg-white border-r border-cream-200 flex flex-col py-5 px-3',
-          'fixed inset-y-0 left-0 z-50 transition-transform duration-base ease-sembada',
+          'flex flex-col text-cream-100 bg-gradient-to-b from-sogan-800 to-sogan-900',
+          'fixed inset-y-0 left-0 z-50 w-64 transition-all duration-300 ease-sembada',
           'md:sticky md:top-0 md:h-screen md:z-auto md:translate-x-0',
-          open ? 'translate-x-0 shadow-xl' : '-translate-x-full',
+          collapsed ? 'md:w-[74px]' : 'md:w-64',
+          open ? 'translate-x-0 shadow-2xl' : '-translate-x-full',
         )}
       >
-        <div className="flex items-center gap-3 px-2 pb-4 border-b border-cream-200 mb-2">
+        {/* Brand */}
+        <div
+          className={cn(
+            'flex items-center gap-3 h-16 px-4 border-b border-white/10 flex-shrink-0',
+            collapsed && 'md:px-0 md:justify-center',
+          )}
+        >
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt="Logo perusahaan" className="w-10 h-10 rounded-xl object-contain bg-white border border-cream-200 shadow-sm" />
+            <img src={logoUrl} alt="Logo" className="w-9 h-9 rounded-lg object-contain bg-white/95 flex-shrink-0" />
           ) : (
-            <div className="w-10 h-10 rounded-xl bg-sogan-500 grid place-items-center text-cream-50 font-bold shadow-sm">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emas-300 to-emas-500 grid place-items-center text-sogan-900 font-bold flex-shrink-0 shadow-sm">
               L
             </div>
           )}
-          <div className="min-w-0">
-            <div className="font-display text-lg font-semibold text-tanah-700 truncate">
-              {tenantNama ?? 'Lentera'}
-            </div>
-            <div className="text-[8.5px] tracking-[0.14em] uppercase text-sogan-500 font-bold">
-              Lentera · Akuntansi
+          <div className={cn('min-w-0', hide)}>
+            <div className="font-display text-lg font-semibold text-cream-50 leading-none truncate">Lentera</div>
+            <div className="text-[8.5px] tracking-[0.16em] uppercase text-emas-300 font-bold mt-1">
+              Akuntansi · Pajak
             </div>
           </div>
-          {/* Tutup (mobile) */}
           <button
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Tutup menu"
-            className="md:hidden ml-auto text-tanah-400 hover:text-tanah-700"
+            className={cn('md:hidden ml-auto text-cream-300 hover:text-cream-50', collapsed && 'hidden')}
           >
             <Icon name="close" size={20} />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto lentera-scroll -mx-1.5 px-1.5">
+        {/* Workspace / tenant switcher */}
+        <div className={cn('px-3 pt-3 pb-1 flex-shrink-0', collapsed && 'md:px-2')}>
+          <Link
+            href={'/pilih-tenant' as never}
+            onClick={() => setOpen(false)}
+            title={collapsed ? tenantNama ?? 'Lentera' : undefined}
+            className={cn(
+              'flex items-center gap-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 transition-colors',
+              collapsed ? 'md:justify-center md:p-2' : 'px-2.5 py-2',
+            )}
+          >
+            <div className="w-8 h-8 rounded-lg bg-sogan-600 border border-white/10 grid place-items-center text-cream-50 font-bold text-xs flex-shrink-0">
+              {initialsOf(tenantNama ?? 'L')}
+            </div>
+            <div className={cn('min-w-0 flex-1', hide)}>
+              <div className="text-sm font-semibold text-cream-50 truncate">{tenantNama ?? 'Lentera'}</div>
+              <div className="text-[10px] uppercase tracking-wider text-cream-300/70">{role ?? 'workspace'}</div>
+            </div>
+            <Icon name="swap" size={15} className={cn('text-cream-300/70', hide)} />
+          </Link>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden lentera-scroll px-2 py-2">
           {groups.map((g) => (
-            <div key={g}>
-              <div className="text-[10px] tracking-[0.12em] uppercase text-tanah-300 font-bold px-3 pt-3 pb-1.5">
+            <div key={g} className="mb-0.5">
+              {collapsed ? (
+                <div className="h-px bg-white/10 mx-2 my-2.5 hidden md:block" />
+              ) : null}
+              <div className={cn('text-[10px] tracking-[0.12em] uppercase text-sogan-200/50 font-bold px-3 pt-3 pb-1.5', hide)}>
                 {g}
               </div>
               {visibleNav.filter((n) => n.group === g).map((n) => {
@@ -159,18 +202,23 @@ export function Sidebar({ user, tenantNama, role, logoUrl }: SidebarProps) {
                     key={n.href}
                     href={n.href as never}
                     onClick={() => setOpen(false)}
+                    title={collapsed ? n.label : undefined}
                     className={cn(
-                      'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm mb-0.5 transition-colors duration-fast',
+                      'relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm mb-0.5 transition-colors duration-fast',
+                      collapsed && 'md:justify-center md:px-0',
                       active
-                        ? 'bg-sogan-50 text-sogan-500 font-bold'
-                        : 'text-tanah-500 hover:bg-cream-50 hover:text-tanah-700 font-medium',
+                        ? 'bg-white/[0.10] text-cream-50 font-semibold'
+                        : 'text-cream-200/70 hover:bg-white/[0.06] hover:text-cream-50 font-medium',
                     )}
                   >
+                    {active && (
+                      <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-emas-300" />
+                    )}
                     <Icon
                       name={n.icon}
-                      className={cn('flex-shrink-0', active ? 'text-sogan-500' : 'text-tanah-300')}
+                      className={cn('flex-shrink-0', active ? 'text-emas-300' : 'text-cream-300/50')}
                     />
-                    <span className="truncate">{n.label}</span>
+                    <span className={cn('truncate', hide)}>{n.label}</span>
                   </Link>
                 );
               })}
@@ -178,15 +226,32 @@ export function Sidebar({ user, tenantNama, role, logoUrl }: SidebarProps) {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2.5 px-2 pt-3 border-t border-cream-200 mt-2">
-          <div className="w-8 h-8 rounded-full bg-sogan-500 text-cream-50 grid place-items-center font-bold text-xs">
-            {initials}
+        {/* User footer */}
+        <div
+          className={cn(
+            'flex items-center gap-2.5 px-3 py-3 border-t border-white/10 flex-shrink-0',
+            collapsed && 'md:justify-center md:px-0',
+          )}
+        >
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sogan-400 to-sogan-600 grid place-items-center text-cream-50 font-bold text-xs flex-shrink-0">
+            {initialsOf(user.nama)}
           </div>
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-tanah-700 truncate">{user.nama}</div>
-            <div className="text-[11px] text-tanah-500 truncate">{role ?? user.email}</div>
+          <div className={cn('min-w-0 flex-1', hide)}>
+            <div className="text-sm font-semibold text-cream-50 truncate">{user.nama}</div>
+            <div className="text-[11px] text-cream-300/60 truncate">{role ?? user.email}</div>
           </div>
         </div>
+
+        {/* Collapse toggle (desktop) */}
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? 'Lebarkan menu' : 'Ciutkan menu'}
+          className="hidden md:flex items-center justify-center gap-2 h-9 border-t border-white/10 text-cream-300/60 hover:text-cream-50 hover:bg-white/5 transition-colors text-[11px] font-semibold uppercase tracking-wider flex-shrink-0"
+        >
+          <Icon name="chevron-down" size={16} className={cn('transition-transform', collapsed ? '-rotate-90' : 'rotate-90')} />
+          <span className={hide}>Ciutkan</span>
+        </button>
       </aside>
     </>
   );

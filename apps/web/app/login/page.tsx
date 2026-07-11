@@ -67,9 +67,13 @@ export default async function LoginPage({
   return (
     <main className="min-h-screen flex bg-cream-100">
       {/* Panel brand (batik) — desktop */}
-      <aside className="hidden lg:flex lg:w-[44%] flex-col justify-between p-12 bg-sogan-500 text-cream-50 batik-overlay overflow-hidden">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-white/10 border border-cream-50/20 grid place-items-center font-display text-2xl font-semibold">
+      <aside className="hidden lg:flex lg:w-[44%] flex-col justify-between p-12 bg-gradient-to-br from-sogan-600 via-sogan-800 to-sogan-900 text-cream-50 batik-overlay overflow-hidden relative">
+        {/* aksen cahaya emas */}
+        <div className="pointer-events-none absolute -top-24 -right-24 w-80 h-80 rounded-full bg-emas-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-16 w-72 h-72 rounded-full bg-sogan-400/25 blur-3xl" />
+
+        <div className="relative flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emas-300 to-emas-500 grid place-items-center font-display text-2xl font-semibold text-sogan-900 shadow-lg">
             L
           </div>
           <div>
@@ -80,14 +84,14 @@ export default async function LoginPage({
           </div>
         </div>
 
-        <div>
-          <h2 className="font-display text-4xl font-semibold leading-tight">
+        <div className="relative">
+          <h2 className="font-display text-4xl font-semibold leading-tight max-w-md">
             Akuntansi &amp; pajak Indonesia, dalam satu sistem yang rapi.
           </h2>
           <ul className="mt-8 space-y-3">
             {FITUR.map((f) => (
               <li key={f} className="flex items-center gap-3">
-                <span className="w-5 h-5 rounded-full bg-cream-50/15 grid place-items-center text-emas-300">
+                <span className="w-5 h-5 rounded-full bg-emas-500/20 border border-emas-300/30 grid place-items-center text-emas-300">
                   <Icon name="check" size={14} />
                 </span>
                 <span className="text-cream-100 text-sm">{f}</span>
@@ -96,7 +100,7 @@ export default async function LoginPage({
           </ul>
         </div>
 
-        <div className="text-[11px] text-cream-100/70">
+        <div className="relative text-[11px] text-cream-100/70">
           © 2026 Lentera · Sistem akuntansi &amp; pajak multi-tenant.
         </div>
       </aside>

@@ -36,8 +36,13 @@ export default async function AppLayout({
         role={s.role}
         logoUrl={logoUrl}
       />
-      <main className="flex-1 min-w-0 flex flex-col">
-        <Topbar tenantNama={s.tenantNama ?? 'Lentera'} periodeLabel={periodeLabel} />
+      <main className="flex-1 min-w-0 flex flex-col bg-cream-100">
+        <Topbar
+          tenantNama={s.tenantNama ?? 'Lentera'}
+          periodeLabel={periodeLabel}
+          user={s.user}
+          role={s.role}
+        />
         {children}
       </main>
     </div>
