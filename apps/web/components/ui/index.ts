@@ -13,6 +13,7 @@ export { EmptyState } from './EmptyState';
 export { Skeleton, SkeletonText } from './Skeleton';
 export { Money } from './Money';
 export { Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow } from './Table';
+export { DataTable, type Column } from './DataTable';
 export { StatCard } from './StatCard';
 export { Modal } from './Modal';
 export { Segmented, type SegmentedOption } from './Segmented';
