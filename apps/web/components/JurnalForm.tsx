@@ -189,11 +189,11 @@ export function JurnalForm({
               </Select>
             )}
           </FormField>
-          <FormField label="Deskripsi" className="col-start-1 col-span-3">
+          <FormField label="Deskripsi" className="col-start-1 col-span-full">
             <Input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} placeholder="Penjualan tunai barang dagang" required />
           </FormField>
           <FormField
-            className="col-span-3"
+            className="col-span-full"
             label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span></>}
           >
             <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />

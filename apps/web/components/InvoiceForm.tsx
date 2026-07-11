@@ -357,11 +357,11 @@ export function InvoiceForm({
               </label>
             </>
           )}
-          <FormField label="Deskripsi" className="col-span-3">
+          <FormField label="Deskripsi" className="col-span-full">
             <Input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} placeholder="(opsional)" />
           </FormField>
           <FormField
-            className="col-span-3"
+            className="col-span-full"
             label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span></>}
           >
             <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />
