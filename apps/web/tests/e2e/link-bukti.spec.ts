@@ -4,14 +4,11 @@
  * daftar, verifikasi hyperlink tampil dan href-nya sama.
  */
 import { test, expect, request as pwRequest } from '@playwright/test';
+import { loadRefs } from './refs';
 
 const API_BASE = 'http://localhost:4000';
 const OWNER_EMAIL = 'owner@lentera.id';
 const OWNER_PASSWORD = 'lentera123';
-
-const ACCOUNT_ID_6104 = '81ccfeb0-f4b5-481f-b0ee-0b0e67202bfb';
-const ACCOUNT_ID_KAS = '19262ed4-6bcc-4adf-96d3-44a902bc62c9';
-const CABANG_SMG = 'b2ae94f8-5610-4d6e-97f5-ade6e49b0681';
 
 const BUKTI_URL = `https://drive.google.com/file/d/AUDIT-BUKTI-${Date.now()}/view`;
 
@@ -30,6 +27,11 @@ test('Jurnal — field linkBukti tersimpan + tampil sebagai hyperlink', async ({
     'x-tenant-id': tenantId,
     'content-type': 'application/json',
   };
+
+  const refs = await loadRefs(ctx, authHeaders);
+  const ACCOUNT_ID_6104 = refs.account('6-104');
+  const ACCOUNT_ID_KAS = refs.account('1-101');
+  const CABANG_SMG = refs.cabang('SMG');
 
   const jurnalRes = await ctx.post('/api/v1/journals', {
     headers: authHeaders,

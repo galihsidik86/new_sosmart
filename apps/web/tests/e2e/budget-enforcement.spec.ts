@@ -13,19 +13,35 @@
  */
 import { test, expect, request as pwRequest } from '@playwright/test';
 import type { APIRequestContext } from '@playwright/test';
+import { loadRefs } from './refs';
 
 const API_BASE = 'http://localhost:4000';
 const OWNER_EMAIL = 'owner@lentera.id';
 const OWNER_PASSWORD = 'lentera123';
 
-const ACCOUNT_ID_6104 = '81ccfeb0-f4b5-481f-b0ee-0b0e67202bfb'; // 6-104 Beban Pemasaran (BEBAN, debit-normal)
-const ACCOUNT_ID_KAS = '19262ed4-6bcc-4adf-96d3-44a902bc62c9'; // 1-101 Kas
-const ACCOUNT_ID_AR = 'b2706a87-88fc-4716-9480-cd86b6f55911'; // 1-103 Piutang Usaha
-const ACCOUNT_ID_PENJUALAN = '34d11cea-33d9-4cfb-bdf1-1fea0655e1f5'; // 4-101 Penjualan Barang Dagang (PENDAPATAN, kredit-normal)
-const ACCOUNT_ID_AP = 'bf0862e0-ba37-4f73-8357-df67bf957b3d'; // 2-101 Utang Usaha
-const CABANG_SMG = 'b2ae94f8-5610-4d6e-97f5-ade6e49b0681';
-const CUSTOMER_ID = '07950cdd-c384-4d2a-a7ba-641edb4eb3ed'; // PLG-001 CV Berkah Jaya Mandiri
-const VENDOR_ID = 'bae60450-237c-4be3-a127-bdf3cefed83e';   // VEN-003 CV Kemasan Prima
+// Diisi di test.beforeAll — resolusi by kode supaya tahan re-seed (lihat refs.ts).
+let ACCOUNT_ID_6104: string; // 6-104 Beban Pemasaran (BEBAN, debit-normal)
+let ACCOUNT_ID_KAS: string; // 1-101 Kas
+let ACCOUNT_ID_AR: string; // 1-103 Piutang Usaha
+let ACCOUNT_ID_PENJUALAN: string; // 4-101 Penjualan Barang Dagang (PENDAPATAN, kredit-normal)
+let ACCOUNT_ID_AP: string; // 2-101 Utang Usaha
+let CABANG_SMG: string;
+let CUSTOMER_ID: string; // PLG-001 CV Berkah Jaya Mandiri
+let VENDOR_ID: string; // VEN-003 CV Kemasan Prima
+
+test.beforeAll(async () => {
+  const c = await apiLogin();
+  const refs = await loadRefs(c.ctx, c.auth);
+  ACCOUNT_ID_6104 = refs.account('6-104');
+  ACCOUNT_ID_KAS = refs.account('1-101');
+  ACCOUNT_ID_AR = refs.account('1-103');
+  ACCOUNT_ID_PENJUALAN = refs.account('4-101');
+  ACCOUNT_ID_AP = refs.account('2-101');
+  CABANG_SMG = refs.cabang('SMG');
+  CUSTOMER_ID = refs.customer('PLG-001');
+  VENDOR_ID = refs.vendor('VEN-003');
+  await c.ctx.dispose();
+});
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
