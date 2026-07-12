@@ -1,20 +1,23 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Children, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from './cn';
 
 /**
  * Aksi baris tabel yang responsif:
- * - ≥640px (sm): tampil inline seperti biasa (Edit · Hapus · dst).
- * - <640px: kolom aksi di-pin sticky-kanan (lihat `stickyEnd` di TD/TH) dan
- *   isinya diringkas jadi tombol kebab (⋯). Menu dibuka lewat portal ke
- *   document.body supaya tidak terpotong `overflow` tabel.
+ * - 1 aksi (mis. cuma "Edit"): selalu tampil inline (kolom aksi di-pin
+ *   sticky-kanan di mobile lewat `stickyEnd`, jadi tetap terjangkau).
+ * - 2+ aksi: ≥640px tampil inline; <640px diringkas jadi tombol kebab (⋯) yang
+ *   membuka menu lewat portal ke document.body (biar tidak terpotong `overflow`
+ *   tabel).
  *
- * `children` = elemen aksi apa adanya (Link / <form><button>). Dirender dua kali
- * (inline desktop + menu mobile); form server-action aman dirender ganda.
+ * `children` = elemen aksi apa adanya (Link / <form><button>). Untuk mode kebab
+ * dirender dua kali (inline desktop + menu mobile); form server-action aman
+ * dirender ganda.
  */
 export function RowActions({ children }: { children: ReactNode }) {
+  const single = Children.toArray(children).length <= 1;
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -47,6 +50,11 @@ export function RowActions({ children }: { children: ReactNode }) {
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  // Satu aksi: cukup tampil inline di semua ukuran (sudah sticky-kanan di mobile).
+  if (single) {
+    return <div className="flex items-center justify-end gap-3">{children}</div>;
+  }
 
   return (
     <>
