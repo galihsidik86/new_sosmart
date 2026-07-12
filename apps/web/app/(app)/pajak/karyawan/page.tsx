@@ -8,7 +8,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp } from '@/lib/format';
 import {
   PageContainer, PageHeader, Card, Button, FormField, Input, Select,
-  Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow, buttonClass,
+  Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, buttonClass,
 } from '@/components/ui';
 
 async function importKaryawanAction(formData: FormData) {
@@ -78,7 +78,7 @@ export default async function KaryawanPage() {
   ]);
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Master Karyawan"
@@ -100,7 +100,7 @@ export default async function KaryawanPage() {
                 <TH>PTKP</TH>
                 <TH>NPWP</TH>
                 <TH numeric>Gaji Pokok</TH>
-                <TH numeric className="w-16" />
+                <TH numeric stickyEnd className="w-16" />
               </THead>
               <TBody>
                 {rows.map((k) => (
@@ -119,10 +119,12 @@ export default async function KaryawanPage() {
                       {k.npwp ? fmtNpwp(k.npwp) : <span className="text-bata-500">tanpa NPWP (+20%)</span>}
                     </TD>
                     <MoneyCell>{fmtRp(k.gajiPokok)}</MoneyCell>
-                    <TD className="text-right">
-                      <Link href={`/pajak/karyawan/${k.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
-                        Edit
-                      </Link>
+                    <TD stickyEnd className="text-right">
+                      <RowActions>
+                        <Link href={`/pajak/karyawan/${k.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
+                          Edit
+                        </Link>
+                      </RowActions>
                     </TD>
                   </TR>
                 ))}

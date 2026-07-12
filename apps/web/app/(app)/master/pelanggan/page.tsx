@@ -7,7 +7,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp } from '@/lib/format';
 import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
-  Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow, buttonClass,
+  Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, buttonClass,
 } from '@/components/ui';
 
 async function importCustomersAction(formData: FormData) {
@@ -71,7 +71,7 @@ export default async function PelangganPage() {
   const customers = await apiFetch<CustomerRow[]>('/customers', { tenantId });
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Data Pelanggan"
@@ -93,7 +93,7 @@ export default async function PelangganPage() {
                 <TH>NPWP</TH>
                 <TH numeric>Termin</TH>
                 <TH numeric>Limit Kredit</TH>
-                <TH numeric className="w-16" />
+                <TH numeric stickyEnd className="w-16" />
               </THead>
               <TBody>
                 {customers.map((c) => (
@@ -110,10 +110,12 @@ export default async function PelangganPage() {
                     <TD className="font-mono text-xs text-tanah-500">{fmtNpwp(c.npwp)}</TD>
                     <TD className="text-right text-tanah-700 tabular-nums">{c.terminHari} hari</TD>
                     <MoneyCell className="text-tanah-700">{fmtRp(c.kreditLimit)}</MoneyCell>
-                    <TD className="text-right">
-                      <Link href={`/master/pelanggan/${c.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
-                        Edit
-                      </Link>
+                    <TD stickyEnd className="text-right">
+                      <RowActions>
+                        <Link href={`/master/pelanggan/${c.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
+                          Edit
+                        </Link>
+                      </RowActions>
                     </TD>
                   </TR>
                 ))}

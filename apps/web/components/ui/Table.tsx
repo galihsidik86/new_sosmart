@@ -28,11 +28,18 @@ export function THead({ children }: { children: ReactNode }) {
 
 interface THProps extends ThHTMLAttributes<HTMLTableCellElement> {
   numeric?: boolean;
+  /** Pin kolom ke kanan saat tabel di-scroll di mobile (kolom aksi). */
+  stickyEnd?: boolean;
 }
-export function TH({ numeric, className, children, ...rest }: THProps) {
+export function TH({ numeric, stickyEnd, className, children, ...rest }: THProps) {
   return (
     <th
-      className={cn('px-4 py-3 font-bold', numeric && 'text-right', className)}
+      className={cn(
+        'px-4 py-3 font-bold',
+        numeric && 'text-right',
+        stickyEnd && 'sticky right-0 z-20 bg-cream-50 sm:static sm:z-auto sm:bg-transparent',
+        className,
+      )}
       {...rest}
     >
       {children}
@@ -59,9 +66,21 @@ export function TR({ noHover, className, children, ...rest }: TRProps) {
   );
 }
 
-export function TD({ className, children, ...rest }: TdHTMLAttributes<HTMLTableCellElement>) {
+interface TDProps extends TdHTMLAttributes<HTMLTableCellElement> {
+  /** Pin kolom ke kanan saat tabel di-scroll di mobile (kolom aksi). */
+  stickyEnd?: boolean;
+}
+export function TD({ stickyEnd, className, children, ...rest }: TDProps) {
   return (
-    <td className={cn('px-4 py-2.5', className)} {...rest}>
+    <td
+      className={cn(
+        'px-4 py-2.5',
+        stickyEnd &&
+          'sticky right-0 z-10 bg-white shadow-[-8px_0_8px_-8px_rgba(15,23,42,0.15)] sm:static sm:z-auto sm:bg-transparent sm:shadow-none',
+        className,
+      )}
+      {...rest}
+    >
       {children}
     </td>
   );

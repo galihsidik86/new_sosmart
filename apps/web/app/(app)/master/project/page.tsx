@@ -7,7 +7,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Textarea,
-  Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow, type BadgeVariant,
+  Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, type BadgeVariant,
 } from '@/components/ui';
 
 type Status = 'AKTIF' | 'SELESAI' | 'DIBATALKAN';
@@ -64,7 +64,7 @@ export default async function ProjectsPage({
   );
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Project"
@@ -88,7 +88,7 @@ export default async function ProjectsPage({
                 <TH numeric>Budget Total</TH>
                 <TH className="text-center">Status</TH>
                 <TH className="text-center">Member</TH>
-                <TH numeric className="w-24" />
+                <TH numeric stickyEnd className="w-24" />
               </THead>
               <TBody>
                 {projects.map((p) => (
@@ -116,13 +116,15 @@ export default async function ProjectsPage({
                     <TD className="text-center text-xs text-tanah-500">
                       {p._count.members}
                     </TD>
-                    <TD className="text-right">
-                      <Link
-                        href={`/master/project/${p.id}` as Route}
-                        className="text-xs text-sogan-500 font-semibold hover:underline"
-                      >
-                        Detail
-                      </Link>
+                    <TD stickyEnd className="text-right">
+                      <RowActions>
+                        <Link
+                          href={`/master/project/${p.id}` as Route}
+                          className="text-xs text-sogan-500 font-semibold hover:underline"
+                        >
+                          Detail
+                        </Link>
+                      </RowActions>
                     </TD>
                   </TR>
                 ))}

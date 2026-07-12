@@ -7,7 +7,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
 import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
-  Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow, buttonClass,
+  Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, buttonClass,
 } from '@/components/ui';
 
 async function importItemsAction(formData: FormData) {
@@ -118,7 +118,7 @@ export default async function MasterBarangPage({
                 <TH>Klasifikasi PPN</TH>
                 <TH numeric>Harga Jual</TH>
                 <TH numeric>Stok Awal</TH>
-                <TH numeric className="w-16" />
+                <TH numeric stickyEnd className="w-16" />
               </THead>
               <TBody>
                 {items.map((it) => (
@@ -166,10 +166,12 @@ export default async function MasterBarangPage({
                         ? `${Number(it.stokAwal[0].qty).toLocaleString('id-ID')} · ${it.stokAwal[0].cabang.kode}`
                         : '—'}
                     </TD>
-                    <TD className="text-right">
-                      <Link href={`/master/barang/${it.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
-                        Edit
-                      </Link>
+                    <TD stickyEnd className="text-right">
+                      <RowActions>
+                        <Link href={`/master/barang/${it.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
+                          Edit
+                        </Link>
+                      </RowActions>
                     </TD>
                   </TR>
                 ))}

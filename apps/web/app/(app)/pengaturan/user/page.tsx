@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
-  Table, THead, TH, TBody, TR, TD, EmptyRow, type BadgeVariant,
+  Table, THead, TH, TBody, TR, TD, RowActions, EmptyRow, type BadgeVariant,
 } from '@/components/ui';
 
 type Role = 'OWNER' | 'ADMIN' | 'AKUNTAN' | 'KASIR' | 'AUDITOR';
@@ -69,7 +69,7 @@ export default async function UsersPage() {
   ]);
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Manajemen Pengguna"
@@ -84,7 +84,7 @@ export default async function UsersPage() {
                 <TH>Role</TH>
                 <TH>Akses Cabang</TH>
                 <TH className="text-center">Aktif</TH>
-                <TH numeric className="w-24" />
+                <TH numeric stickyEnd className="w-24" />
               </THead>
               <TBody>
                 {users.map((u) => (
@@ -110,8 +110,8 @@ export default async function UsersPage() {
                         <span className="text-[10px] text-tanah-500">tidak</span>
                       )}
                     </TD>
-                    <TD className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <TD stickyEnd className="text-right">
+                      <RowActions>
                         <Link
                           href={`/pengaturan/user/${u.userId}/edit` as Route}
                           className="text-xs text-sogan-500 font-semibold hover:underline"
@@ -127,7 +127,7 @@ export default async function UsersPage() {
                             Hapus
                           </button>
                         </form>
-                      </div>
+                      </RowActions>
                     </TD>
                   </TR>
                 ))}

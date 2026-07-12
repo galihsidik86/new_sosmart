@@ -7,7 +7,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp } from '@/lib/format';
 import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input,
-  Table, THead, TH, TBody, TR, TD, EmptyRow, buttonClass,
+  Table, THead, TH, TBody, TR, TD, RowActions, EmptyRow, buttonClass,
 } from '@/components/ui';
 
 async function importVendorsAction(formData: FormData) {
@@ -58,7 +58,7 @@ export default async function VendorPage() {
   const vendors = await apiFetch<VendorRow[]>('/vendors', { tenantId });
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Data Vendor"
@@ -80,7 +80,7 @@ export default async function VendorPage() {
                 <TH>NPWP</TH>
                 <TH className="text-center">PKP</TH>
                 <TH numeric>Termin</TH>
-                <TH numeric className="w-16" />
+                <TH numeric stickyEnd className="w-16" />
               </THead>
               <TBody>
                 {vendors.map((v) => (
@@ -101,10 +101,12 @@ export default async function VendorPage() {
                       )}
                     </TD>
                     <TD className="text-right text-tanah-700 tabular-nums">{v.terminHari} hari</TD>
-                    <TD className="text-right">
-                      <Link href={`/master/vendor/${v.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
-                        Edit
-                      </Link>
+                    <TD stickyEnd className="text-right">
+                      <RowActions>
+                        <Link href={`/master/vendor/${v.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">
+                          Edit
+                        </Link>
+                      </RowActions>
                     </TD>
                   </TR>
                 ))}
