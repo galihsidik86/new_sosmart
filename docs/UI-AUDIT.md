@@ -71,6 +71,16 @@ split-layout brand gradien + emas + batik.
 - **Responsive** (375/768/1280): sidebar drawer di mobile, form grid
   `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`, `PageContainer` padding
   `px-4 sm:px-6 lg:px-8`, DataTable scroll horizontal (`overflow-x-auto`).
+- **Responsive (sweep lanjutan)**: hilangkan sisa grid kolom-tetap yang jebol di
+  375px — halaman list+form (`grid grid-cols-3` → `grid-cols-1 lg:grid-cols-3`,
+  section → `lg:col-span-2`) di Master (barang/pelanggan/vendor/project/pph23-tarif)
+  + Pajak Karyawan + Pengaturan Cabang/User; baris KPI umur piutang/utang
+  (`grid-cols-5` → `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`); StatCard SPT
+  PPh/PPN + ringkasan Saldo Awal (`grid-cols-3` → `grid-cols-1 sm:grid-cols-3`);
+  form Aset (`grid-cols-2/3/4` → base 1 kolom + `sm:col-span-2` untuk field lebar).
+  Aturan: **jangan** pakai `col-span-2/3` di grid yang base-nya 1 kolom (paksa kolom
+  implisit → overflow); pakai `col-span-full`/`sm:col-span-2`.
+- **Micro-interaction**: `Segmented` kini punya `focus-visible:ring` (keyboard a11y).
 - **Kontras WCAG AA**: `text-tanah-400` (shade tak valid — tak ter-generate)
   diganti `text-tanah-500` (≥4.5:1 di atas cream). Teks muted memakai
   `tanah-500`; `tanah-300` hanya untuk placeholder/dekoratif (exempt).

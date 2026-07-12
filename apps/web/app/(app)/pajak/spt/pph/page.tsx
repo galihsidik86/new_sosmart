@@ -90,7 +90,7 @@ export default async function SptPphPage({
 
         {spt && (
           <>
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <StatCard label="Total DPP" value={fmtRp(spt.totalDpp)} />
               <StatCard label={`Total ${spt.jenisPph.replace('_', ' ')} terutang`} value={fmtRp(spt.totalPph)} tone="danger" />
               <StatCard label="Jumlah Bukti Terbit" value={`${spt.countTerbit}`} />

@@ -97,7 +97,7 @@ export default async function PiutangStatementPage({
           <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">
             Distribusi umur
           </div>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {bucketKeys.map((k) => (
               <div key={k} className="bg-cream-50 rounded-lg p-3 border border-cream-200">
                 <div className="text-[10px] uppercase tracking-wider text-tanah-500 font-bold">

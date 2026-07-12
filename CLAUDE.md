@@ -254,7 +254,7 @@ Impor dari barrel `@/components/ui`. Primitives inti:
 - **Palet Sembada saja**: `sogan/cream/tanah/padi/emas/bata/wedel/info`. JANGAN pakai warna Tailwind default (`amber`, `gray`, dll) atau shade tak terdefinisi (mis. `tanah-400`, `wedel-700` → tak ter-generate, tak berwarna). Shade tanah valid: 100/300/500/700/900.
 - **Kontras WCAG AA**: teks di atas cream pakai `tanah-500`/`tanah-700`; `tanah-300` hanya placeholder/dekoratif.
 - **Shell**: sidebar (`components/Sidebar.tsx`) gelap + ber-ikon + grouping domain; Topbar (`components/Topbar.tsx`) dirender oleh `app/(app)/layout.tsx` (breadcrumb dari pathname — tiap halaman TIDAK render Topbar sendiri). Halaman auth pakai split-layout brand.
-- **Responsive**: grid form `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`; tabel dibungkus `overflow-x-auto`.
+- **Responsive**: grid form `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`; halaman list+form `grid-cols-1 lg:grid-cols-3` (list `lg:col-span-2`); tabel dibungkus `overflow-x-auto`. JANGAN pakai `grid grid-cols-2/3/N` kolom-tetap tanpa base 1 kolom (jebol di 375px), dan JANGAN taruh anak `col-span-2/3` di grid yang base-nya 1 kolom → paksa kolom implisit + overflow; pakai `col-span-full` atau `sm:col-span-2`.
 - **Motion/a11y**: transisi `duration-fast ease-sembada`; `focus-visible` ring pada elemen interaktif; entrance `animate-lent-fade`.
 - Loading: `app/(app)/loading.tsx` (skeleton global). Empty: `DataTable` prop `empty` / `EmptyState`.
 

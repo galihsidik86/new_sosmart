@@ -110,7 +110,7 @@ export default async function AsetDetailPage({
           }
         />
 
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <Stat label="Harga Perolehan" value={fmtRp(aset.hargaPerolehan)} />
           <Stat label="Akumulasi" value={fmtRp(aset.akumulasiPenyusutan)} tone="bata" />
           <Stat label="Nilai Buku" value={fmtRp(aset.nilaiBuku)} tone="padi" big />
@@ -119,7 +119,7 @@ export default async function AsetDetailPage({
 
         <Card className="mb-6">
           <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Akun Jurnal</h2>
-          <div className="grid grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
             <div>
               <div className="text-xs text-tanah-500">Aset</div>
               <div className="font-mono text-tanah-700">{aset.akunAset.kode}</div>
@@ -180,7 +180,7 @@ export default async function AsetDetailPage({
         ) : aset.status === 'AKTIF' ? (
           <Card>
             <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Penghentian Aset</h2>
-            <form action={disposeAction} className="grid grid-cols-2 gap-3 text-sm">
+            <form action={disposeAction} className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <input type="hidden" name="id" value={aset.id} />
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tanggal</label>
@@ -209,12 +209,12 @@ export default async function AsetDetailPage({
                   {kasBank.map((a) => <option key={a.id} value={a.id}>{a.kode}  {a.nama}</option>)}
                 </select>
               </div>
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Catatan</label>
                 <input type="text" name="catatan" placeholder="(opsional)"
                   className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
               </div>
-              <div className="col-span-2 flex justify-end">
+              <div className="sm:col-span-2 flex justify-end">
                 <Button type="submit" variant="danger">
                   Hentikan Aset (auto-jurnal)
                 </Button>

@@ -70,7 +70,7 @@ export default async function SptPpnPage({
         {spt && (
           <>
             {/* Ringkasan */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <StatCard label="PPN Keluaran" value={fmtRp(spt.ppnKeluaran.totalPpn)} tone="danger" />
               <StatCard label="PPN Masukan (dikreditkan)" value={fmtRp(spt.ppnMasukan.totalPpn)} tone="success" />
               <StatCard label={

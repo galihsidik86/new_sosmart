@@ -76,8 +76,8 @@ export default async function UsersPage() {
           subtitle={`${users.length} pengguna · admin cabang hanya melihat & mengatur user di cabang yang sama. Pemilik tenant (OWNER) tidak tampil bagi admin cabang.`}
         />
 
-        <div className="grid grid-cols-3 gap-6">
-          <section className="col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <section className="lg:col-span-2">
             <Table>
               <THead>
                 <TH>Nama / Email</TH>

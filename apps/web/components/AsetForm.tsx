@@ -116,7 +116,7 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
     <form onSubmit={handleSubmit} className="space-y-6">
       <section className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
         <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Identitas</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Kode <span className="text-bata-500">*</span></label>
             <input value={kode} onChange={(e) => setKode(e.target.value)} required placeholder="AT-006"
@@ -135,7 +135,7 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
               </select>
             )}
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Nama Aset <span className="text-bata-500">*</span></label>
             <input value={nama} onChange={(e) => setNama(e.target.value)} required placeholder="Komputer laptop produksi 5 unit"
               className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
@@ -145,7 +145,7 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
 
       <section className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
         <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Klasifikasi UU PPh</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Kelompok</label>
             <select value={kelompok} onChange={(e) => onKelompokChange(e.target.value as Kelompok)}
@@ -182,7 +182,7 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
 
       <section className="bg-white rounded-xl border border-cream-200 shadow-sm p-5">
         <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Nilai</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Harga Perolehan (Rp) <span className="text-bata-500">*</span></label>
             <input type="number" min={0} step="0.01" value={hargaPerolehan}
