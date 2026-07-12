@@ -85,7 +85,7 @@ export default async function MasterBarangPage({
   ]);
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Master Barang & Jasa"
@@ -94,12 +94,12 @@ export default async function MasterBarangPage({
             <>
               <a href="/proxy/items/export.xlsx" className={buttonClass('success')}>Export Excel</a>
               <ImportExcelButton importAction={importItemsAction} />
-              <form className="flex items-center gap-2">
+              <form className="flex items-center gap-2 w-full sm:w-auto">
                 <input
                   name="search"
                   defaultValue={sp.search ?? ''}
                   placeholder="Cari kode / nama…"
-                  className="px-3 py-2 bg-white border border-cream-300 rounded-lg text-sm w-64 focus:outline-none focus:border-sogan-500"
+                  className="px-3 py-2 bg-white border border-cream-300 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:border-sogan-500"
                 />
                 <button className="px-3 py-2 bg-cream-100 border border-cream-300 rounded-lg text-sm font-semibold text-tanah-700">
                   Cari
