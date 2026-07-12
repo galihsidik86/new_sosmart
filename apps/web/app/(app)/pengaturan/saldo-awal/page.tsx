@@ -251,7 +251,7 @@ export default async function SaldoAwalPage({
           }`}
         >
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="grid grid-cols-3 gap-6 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
               <div>
                 <div className="text-tanah-500 text-xs uppercase tracking-wide">Total Debit</div>
                 <div className="font-mono font-semibold text-lg">{fmtRp(preview.totalDebit)}</div>

@@ -54,8 +54,8 @@ export default async function CabangPage() {
           }
         />
 
-        <div className="grid grid-cols-3 gap-6">
-          <section className="col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <section className="lg:col-span-2">
             <Table>
               <THead>
                 <TH>Kode</TH>
