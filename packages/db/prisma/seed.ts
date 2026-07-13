@@ -63,7 +63,7 @@ const COA: CoaNode[] = [
           { kode: '1-104', nama: 'Persediaan Barang Dagang', kind: AccountKind.ASET, normal: NormalBalance.DEBIT, saldoAwal: '540000000' },
           { kode: '1-105', nama: 'PPN Masukan', kind: AccountKind.ASET, normal: NormalBalance.DEBIT, saldoAwal: '24000000' },
           { kode: '1-106', nama: 'Beban Dibayar Dimuka', kind: AccountKind.ASET, normal: NormalBalance.DEBIT, saldoAwal: '36000000' },
-          { kode: '1-107', nama: 'PPh 25 Dibayar Dimuka', kind: AccountKind.ASET, normal: NormalBalance.DEBIT },
+          { kode: '1-107', nama: 'PPh 23/25 Dibayar Dimuka', kind: AccountKind.ASET, normal: NormalBalance.DEBIT },
         ],
       },
       {
