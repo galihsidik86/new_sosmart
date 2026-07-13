@@ -102,6 +102,21 @@ export class ReportsController {
     });
   }
 
+  @Get('arus-kas-detail')
+  arusKasDetail(
+    @Query('periodId') periodId: string,
+    @Query('granularity') granularity?: string,
+    @Query('cabangId') cabangId?: string,
+    @Query('projectId') projectId?: string,
+  ) {
+    return this.ak.buildDetail({
+      periodId,
+      granularity: granularity === 'harian' ? 'harian' : 'bulanan',
+      cabangId,
+      projectId: normalizeProjectFilter(projectId),
+    });
+  }
+
   @Get('perubahan-ekuitas')
   perubahanEkuitas(
     @Query('periodId') periodId: string,

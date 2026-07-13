@@ -5,11 +5,31 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 import { aggregateAllAccounts, mutasiSigned, plKindContribution, saldoAkhirSigned } from './helpers.js';
+import { JOURNAL_BALANCE_STATUSES } from '../../common/gl/journal-balance-statuses.js';
 
 export interface ArusKasLine {
   label: string;
   /// + masuk kas, - keluar kas (perspektif kas masuk positif).
   nilai: string;
+}
+
+export type ArusKasDetailGranularity = 'harian' | 'bulanan';
+export interface ArusKasDetailBucket {
+  /// Kunci bucket: 'YYYY-MM-DD' (harian) atau 'YYYY-MM' (bulanan).
+  bucket: string;
+  masuk: string;
+  keluar: string;
+  bersih: string;
+  saldoAkhir: string;
+}
+export interface ArusKasDetailResponse {
+  granularity: ArusKasDetailGranularity;
+  periode: { id: string; label: string; startDate: Date; endDate: Date };
+  kasAwal: string;
+  totalMasuk: string;
+  totalKeluar: string;
+  kasAkhir: string;
+  buckets: ArusKasDetailBucket[];
 }
 
 export interface ArusKasResponse {
@@ -245,6 +265,125 @@ export class ArusKasService {
         kasAkhir: kasAkhir.toFixed(2),
         balanced,
         selisih: selisih.toFixed(2),
+      };
+    });
+  }
+
+  /**
+   * Detail arus kas (metode langsung) — pergerakan kas & bank aktual
+   * dikelompokkan per HARI (dalam periode) atau per BULAN (YTD tahun buku),
+   * lengkap dengan saldo kas berjalan.
+   */
+  async buildDetail(opts: {
+    periodId: string;
+    granularity: ArusKasDetailGranularity;
+    cabangId?: string;
+    projectId?: string | null;
+  }): Promise<ArusKasDetailResponse> {
+    return this.tenancy.run(async (tx) => {
+      const period = await tx.fiscalPeriod.findUnique({
+        where: { id: opts.periodId },
+        select: { id: true, label: true, startDate: true, endDate: true, fiscalYearId: true },
+      });
+      if (!period) throw new NotFoundException('Periode tidak ditemukan');
+
+      const granularity: ArusKasDetailGranularity =
+        opts.granularity === 'bulanan' ? 'bulanan' : 'harian';
+
+      // Harian → hanya bulan periode; Bulanan → sejak awal tahun buku (YTD).
+      let rangeStart = period.startDate;
+      const rangeEnd = period.endDate;
+      if (granularity === 'bulanan') {
+        const fy = await tx.fiscalYear.findUnique({
+          where: { id: period.fiscalYearId },
+          select: { startDate: true },
+        });
+        if (fy) rangeStart = fy.startDate;
+      }
+
+      if (opts.cabangId) this.cabangScope.assertAccess(opts.cabangId);
+      const scope = this.cabangScope.cabangIdsForWhere();
+
+      // Kas awal (di awal rentang) — pakai infrastruktur yang sama dgn statement.
+      const result = await aggregateAllAccounts(tx, {
+        startDate: rangeStart,
+        endDate: rangeEnd,
+        cabangId: opts.cabangId,
+        allowedCabangIds: scope,
+        projectId: opts.projectId,
+      });
+      const kasAccounts = [...result.accounts.values()].filter(
+        (a) => a.kode.startsWith('1-101') || a.kode.startsWith('1-102'),
+      );
+      const kasIds = kasAccounts.map((a) => a.id);
+      let kasAwal = new Decimal(0);
+      for (const acc of kasAccounts) {
+        kasAwal = kasAwal.plus(result.signedSaldoAwalByAcc.get(acc.id) ?? new Decimal(0));
+      }
+
+      // Mutasi kas dalam rentang → dikelompokkan per hari/bulan.
+      const cabangFilter = opts.cabangId
+        ? { cabangId: opts.cabangId }
+        : scope
+          ? { cabangId: { in: scope } }
+          : {};
+      const projectFilter =
+        opts.projectId === null
+          ? { projectId: null }
+          : opts.projectId
+            ? { projectId: opts.projectId }
+            : {};
+      const lines = kasIds.length
+        ? await tx.journalLine.findMany({
+            where: {
+              accountId: { in: kasIds },
+              ...projectFilter,
+              journal: {
+                status: { in: JOURNAL_BALANCE_STATUSES },
+                tanggal: { gte: rangeStart, lte: rangeEnd },
+                ...cabangFilter,
+              },
+            },
+            select: { debit: true, kredit: true, journal: { select: { tanggal: true } } },
+          })
+        : [];
+
+      const bucketMap = new Map<string, { masuk: Decimal; keluar: Decimal }>();
+      for (const l of lines) {
+        const iso = l.journal.tanggal.toISOString().slice(0, 10);
+        const key = granularity === 'bulanan' ? iso.slice(0, 7) : iso;
+        const cur = bucketMap.get(key) ?? { masuk: new Decimal(0), keluar: new Decimal(0) };
+        cur.masuk = cur.masuk.plus(l.debit);
+        cur.keluar = cur.keluar.plus(l.kredit);
+        bucketMap.set(key, cur);
+      }
+
+      let running = kasAwal;
+      let totalMasuk = new Decimal(0);
+      let totalKeluar = new Decimal(0);
+      const buckets: ArusKasDetailBucket[] = [...bucketMap.keys()].sort().map((key) => {
+        const { masuk, keluar } = bucketMap.get(key)!;
+        const bersih = masuk.minus(keluar);
+        running = running.plus(bersih);
+        totalMasuk = totalMasuk.plus(masuk);
+        totalKeluar = totalKeluar.plus(keluar);
+        return {
+          bucket: key,
+          masuk: masuk.toFixed(2),
+          keluar: keluar.toFixed(2),
+          bersih: bersih.toFixed(2),
+          saldoAkhir: running.toFixed(2),
+        };
+      });
+
+      return {
+        granularity,
+        periode: { id: period.id, label: period.label, startDate: rangeStart, endDate: rangeEnd },
+        kasAwal: kasAwal.toFixed(2),
+        totalMasuk: totalMasuk.toFixed(2),
+        totalKeluar: totalKeluar.toFixed(2),
+        kasAkhir: running.toFixed(2),
+        buckets,
       };
     });
   }

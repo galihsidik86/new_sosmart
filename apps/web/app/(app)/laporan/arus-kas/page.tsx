@@ -1,8 +1,19 @@
+import Link from 'next/link';
 import { ReportActions } from '@/components/ReportActions';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { buildListHref } from '@/lib/list-query';
 import { PageContainer, PageHeader, FilterLabel, Select, Button, StatusBanner, filterBarClass } from '@/components/ui';
+
+const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+function bucketLabel(bucket: string, gran: 'harian' | 'bulanan'): string {
+  if (gran === 'bulanan') {
+    const [y, m] = bucket.split('-');
+    return `${BULAN_ID[Number(m) - 1] ?? m} ${y}`;
+  }
+  return fmtTanggal(bucket);
+}
 
 interface PeriodYear {
   id: string; kode: string;
@@ -21,10 +32,17 @@ interface AK {
   balanced: boolean;
   selisih: string;
 }
+interface AKDBucket { bucket: string; masuk: string; keluar: string; bersih: string; saldoAkhir: string }
+interface AKD {
+  granularity: 'harian' | 'bulanan';
+  periode: { id: string; label: string; startDate: string; endDate: string };
+  kasAwal: string; totalMasuk: string; totalKeluar: string; kasAkhir: string;
+  buckets: AKDBucket[];
+}
 
 export default async function ArusKasPage({
   searchParams,
-}: { searchParams: Promise<{ periodId?: string; projectId?: string }> }) {
+}: { searchParams: Promise<{ periodId?: string; projectId?: string; detail?: string }> }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
@@ -37,14 +55,19 @@ export default async function ArusKasPage({
     sp.periodId ?? years[0]?.periods.find((p) => p.status === 'OPEN')?.id ?? years[0]?.periods[0]?.id;
   const projectId = sp.projectId ?? '';
   const projectQs = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
+  const detailGran: 'harian' | 'bulanan' = sp.detail === 'harian' ? 'harian' : 'bulanan';
 
   let ak: AK | null = null;
+  let akd: AKD | null = null;
   if (periodId) {
-    ak = await apiFetch<AK>(`/reports/arus-kas?periodId=${periodId}${projectQs}`, { tenantId });
+    [ak, akd] = await Promise.all([
+      apiFetch<AK>(`/reports/arus-kas?periodId=${periodId}${projectQs}`, { tenantId }),
+      apiFetch<AKD>(`/reports/arus-kas-detail?periodId=${periodId}&granularity=${detailGran}${projectQs}`, { tenantId }).catch(() => null),
+    ]);
   }
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader
           title="Laporan Arus Kas"
@@ -60,6 +83,7 @@ export default async function ArusKasPage({
         />
 
         <form className={filterBarClass}>
+          <input type="hidden" name="detail" value={detailGran} />
           <FilterLabel>s/d akhir</FilterLabel>
           <Select name="periodId" defaultValue={periodId} fullWidth={false}>
             {years[0]?.periods.map((p) => <option key={p.id} value={p.id}>{p.label} ({p.status})</option>)}
@@ -133,6 +157,77 @@ export default async function ArusKasPage({
               </StatusBanner>
             )}
           </>
+        )}
+
+        {akd && (
+          <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mt-6">
+            <div className="px-5 py-3 bg-cream-50 border-b border-cream-200 flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <div className="font-display text-lg font-semibold text-wedel-900">Detail Arus Kas (Metode Langsung)</div>
+                <div className="text-xs text-tanah-500">
+                  Pergerakan kas &amp; bank aktual · {detailGran === 'bulanan' ? 'per bulan (YTD tahun buku)' : `per hari · ${akd.periode.label}`}
+                </div>
+              </div>
+              <div className="inline-flex p-1 bg-cream-200 rounded-lg gap-1">
+                {(['bulanan', 'harian'] as const).map((v) => {
+                  const active = detailGran === v;
+                  return (
+                    <Link
+                      key={v}
+                      href={buildListHref('/laporan/arus-kas', { periodId, projectId: sp.projectId, detail: v })}
+                      className={`px-3 py-1 rounded-md text-sm font-semibold capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sogan-400 ${active ? 'bg-white text-sogan-500 shadow-xs' : 'text-tanah-500 hover:text-tanah-700'}`}
+                    >
+                      {v}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-cream-50">
+                  <tr className="text-[10px] uppercase tracking-wider text-tanah-500">
+                    <th className="px-4 py-2 text-left">{detailGran === 'bulanan' ? 'Bulan' : 'Tanggal'}</th>
+                    <th className="px-4 py-2 text-right">Kas Masuk</th>
+                    <th className="px-4 py-2 text-right">Kas Keluar</th>
+                    <th className="px-4 py-2 text-right">Arus Bersih</th>
+                    <th className="px-4 py-2 text-right">Saldo Akhir</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-cream-100">
+                  <tr className="text-tanah-500">
+                    <td className="px-4 py-1.5 italic">Saldo Awal</td>
+                    <td /><td /><td />
+                    <td className="px-4 py-1.5 text-right font-mono tabular-nums">{fmtRp(akd.kasAwal)}</td>
+                  </tr>
+                  {akd.buckets.map((b) => {
+                    const bersih = Number(b.bersih);
+                    return (
+                      <tr key={b.bucket} className="hover:bg-cream-50">
+                        <td className="px-4 py-1.5 text-tanah-700 whitespace-nowrap">{bucketLabel(b.bucket, akd!.granularity)}</td>
+                        <td className="px-4 py-1.5 text-right font-mono tabular-nums text-padi-700 whitespace-nowrap">{Number(b.masuk) ? fmtRp(b.masuk) : '—'}</td>
+                        <td className="px-4 py-1.5 text-right font-mono tabular-nums text-bata-600 whitespace-nowrap">{Number(b.keluar) ? fmtRp(b.keluar) : '—'}</td>
+                        <td className={`px-4 py-1.5 text-right font-mono tabular-nums font-semibold whitespace-nowrap ${bersih < 0 ? 'text-bata-700' : 'text-tanah-700'}`}>{fmtRp(b.bersih)}</td>
+                        <td className="px-4 py-1.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(b.saldoAkhir)}</td>
+                      </tr>
+                    );
+                  })}
+                  {akd.buckets.length === 0 && (
+                    <tr><td colSpan={5} className="px-4 py-6 text-center text-tanah-500">Tidak ada pergerakan kas pada rentang ini.</td></tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-wedel-900 text-cream-50 font-bold">
+                    <td className="px-4 py-2.5">TOTAL</td>
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(akd.totalMasuk)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(akd.totalKeluar)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(Number(akd.totalMasuk) - Number(akd.totalKeluar))}</td>
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(akd.kasAkhir)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
         )}
       </PageContainer>
     </>
