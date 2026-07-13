@@ -176,7 +176,7 @@ export class ArusKasService {
         { label: '(Kenaikan) / Penurunan Persediaan', nilai: dPersediaan.negated().toFixed(2) },
         { label: '(Kenaikan) / Penurunan PPN Masukan', nilai: dPpnMasukan.negated().toFixed(2) },
         { label: '(Kenaikan) / Penurunan Beban Dibayar Dimuka', nilai: dBebanDimuka.negated().toFixed(2) },
-        { label: '(Kenaikan) / Penurunan PPh 25 Dibayar Dimuka', nilai: dPph25.negated().toFixed(2) },
+        { label: '(Kenaikan) / Penurunan PPh 23/25 Dibayar Dimuka', nilai: dPph25.negated().toFixed(2) },
         { label: 'Kenaikan / (Penurunan) Utang Usaha', nilai: dUtangUsaha.toFixed(2) },
         { label: 'Kenaikan / (Penurunan) Utang Pajak', nilai: dUtangPajak.toFixed(2) },
         { label: 'Kenaikan / (Penurunan) Utang BPJS', nilai: dBpjs.toFixed(2) },
