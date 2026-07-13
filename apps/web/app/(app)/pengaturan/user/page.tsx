@@ -8,6 +8,7 @@ import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
   Table, THead, TH, TBody, TR, TD, RowActions, EmptyRow, type BadgeVariant,
 } from '@/components/ui';
+import { ResetPasswordAction } from './ResetPasswordAction';
 
 type Role = 'OWNER' | 'ADMIN' | 'AKUNTAN' | 'KASIR' | 'AUDITOR';
 
@@ -60,6 +61,30 @@ async function deleteUserAction(formData: FormData) {
   revalidatePath('/pengaturan/user');
 }
 
+function generateTempPassword(): string {
+  // Tanpa karakter ambigu (0/O, 1/l/I) supaya mudah dibacakan ke user.
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const bytes = new Uint8Array(10);
+  crypto.getRandomValues(bytes);
+  let out = '';
+  for (const b of bytes) out += alphabet[b % alphabet.length];
+  return out;
+}
+
+async function resetPasswordAction(userId: string): Promise<string> {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  const password = generateTempPassword();
+  await apiFetch(`/users/${userId}`, {
+    method: 'PATCH',
+    tenantId,
+    body: JSON.stringify({ password }),
+  });
+  revalidatePath('/pengaturan/user');
+  return password;
+}
+
 export default async function UsersPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
@@ -92,6 +117,9 @@ export default async function UsersPage() {
                     <TD>
                       <div className="font-semibold text-tanah-700">{u.nama}</div>
                       <div className="text-xs text-tanah-500">{u.email}</div>
+                      <div>
+                        <ResetPasswordAction userId={u.userId} action={resetPasswordAction} />
+                      </div>
                     </TD>
                     <TD>
                       <Badge variant={roleVariant(u.role)}>{ROLE_LABEL[u.role]}</Badge>

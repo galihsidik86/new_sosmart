@@ -138,6 +138,10 @@ export default async function LoginPage({
               Masuk
             </Button>
           </form>
+
+          <p className="text-xs text-tanah-500 mt-6 text-center">
+            Lupa password? Hubungi admin / pemilik akun perusahaan Anda untuk mengatur ulang.
+          </p>
         </div>
       </div>
     </main>
