@@ -26,6 +26,7 @@ export interface CreateProjectInput {
   tanggalSelesai?: string;
   budgetTotal?: string;
   catatan?: string;
+  industriId?: string | null;
 }
 
 export interface UpdateProjectInput {
@@ -35,6 +36,7 @@ export interface UpdateProjectInput {
   status?: ProjectStatus;
   budgetTotal?: string | null;
   catatan?: string | null;
+  industriId?: string | null;
 }
 
 @Injectable()
@@ -79,6 +81,7 @@ export class ProjectsService {
         where,
         orderBy: [{ status: 'asc' }, { kode: 'asc' }],
         include: {
+          industri: { select: { id: true, kode: true, nama: true } },
           _count: { select: { members: true, budgets: true } },
         },
       });
@@ -92,6 +95,7 @@ export class ProjectsService {
       const p = await tx.project.findUnique({
         where: { id },
         include: {
+          industri: { select: { id: true, kode: true, nama: true } },
           members: {
             include: { user: { select: { id: true, email: true, nama: true } } },
           },
@@ -141,6 +145,7 @@ export class ProjectsService {
             status: ProjectStatus.AKTIF,
             budgetTotal: input.budgetTotal ?? null,
             catatan: input.catatan ?? null,
+            industriId: input.industriId ?? null,
             createdById: userId,
           },
         });
@@ -168,6 +173,11 @@ export class ProjectsService {
       if (input.status !== undefined) data.status = input.status;
       if (input.budgetTotal !== undefined) data.budgetTotal = input.budgetTotal;
       if (input.catatan !== undefined) data.catatan = input.catatan;
+      if (input.industriId !== undefined) {
+        data.industri = input.industriId
+          ? { connect: { id: input.industriId } }
+          : { disconnect: true };
+      }
       return tx.project.update({ where: { id }, data });
     });
   }

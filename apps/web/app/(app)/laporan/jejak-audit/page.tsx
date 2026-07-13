@@ -33,16 +33,17 @@ function docHref(sumber: string, sourceId: string | null): string | null {
 export default async function JejakAuditPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periodId?: string; sumber?: string; projectId?: string; search?: string; cabangId?: string }>;
+  searchParams: Promise<{ periodId?: string; sumber?: string; projectId?: string; search?: string; cabangId?: string; industriId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
 
-  const [years, projects, cabang] = await Promise.all([
+  const [years, projects, cabang, industri] = await Promise.all([
     apiFetch<PeriodYear[]>('/periods/years', { tenantId }),
     apiFetch<Project[]>('/projects', { tenantId }).catch(() => [] as Project[]),
     apiFetch<Project[]>('/cabang', { tenantId }).catch(() => [] as Project[]),
+    apiFetch<Project[]>('/industri', { tenantId }).catch(() => [] as Project[]),
   ]);
   const isPusat = ['OWNER', 'ADMIN', 'AKUNTAN'].includes(s.role ?? '');
   const periodId =
@@ -51,6 +52,7 @@ export default async function JejakAuditPage({
   const projectId = sp.projectId ?? '';
   const search = sp.search ?? '';
   const cabangId = sp.cabangId ?? '';
+  const industriId = sp.industriId ?? '';
 
   const qs = new URLSearchParams();
   if (periodId) qs.set('periodId', periodId);
@@ -58,6 +60,7 @@ export default async function JejakAuditPage({
   if (projectId) qs.set('projectId', projectId);
   if (search) qs.set('search', search);
   if (cabangId) qs.set('cabangId', cabangId);
+  if (industriId) qs.set('industriId', industriId);
 
   let data: Resp | null = null;
   if (periodId) data = await apiFetch<Resp>(`/reports/jejak-audit?${qs.toString()}`, { tenantId });
@@ -85,6 +88,12 @@ export default async function JejakAuditPage({
             <Select name="cabangId" defaultValue={cabangId} fullWidth={false}>
               <option value="">— semua cabang —</option>
               {cabang.map((c) => <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>)}
+            </Select>
+          )}
+          {industri.length > 0 && (
+            <Select name="industriId" defaultValue={industriId} fullWidth={false}>
+              <option value="">— semua industri —</option>
+              {industri.map((i) => <option key={i.id} value={i.id}>{i.nama}</option>)}
             </Select>
           )}
           {projects.length > 0 && (

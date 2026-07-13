@@ -41,8 +41,9 @@ export class CashBankController {
     @Query('cabangId') cabangId?: string,
     @Query('projectId') projectId?: string,
     @Query('search') search?: string,
+    @Query('industriId') industriId?: string,
   ) {
-    sendXlsx(reply, 'kas-bank.xlsx', await this.cb.exportXlsx({ status, tipe, periodId, cabangId, projectId, search }));
+    sendXlsx(reply, 'kas-bank.xlsx', await this.cb.exportXlsx({ status, tipe, periodId, cabangId, projectId, search, industriId }));
   }
 
   @Get()
@@ -53,8 +54,9 @@ export class CashBankController {
     @Query('cabangId') cabangId?: string,
     @Query('projectId') projectId?: string,
     @Query('search') search?: string,
+    @Query('industriId') industriId?: string,
   ) {
-    return this.cb.list({ status, tipe, periodId, cabangId, projectId, search });
+    return this.cb.list({ status, tipe, periodId, cabangId, projectId, search, industriId });
   }
 
   @Get(':id')

@@ -33,16 +33,17 @@ const TIPE_BADGE: Record<Tipe, BadgeVariant> = {
 export default async function KasBankPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tipe?: Tipe; search?: string; cabangId?: string; projectId?: string }>;
+  searchParams: Promise<{ tipe?: Tipe; search?: string; cabangId?: string; projectId?: string; industriId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
-  const apiParams = { tipe: sp.tipe, search: sp.search, cabangId: sp.cabangId, projectId: sp.projectId };
-  const [rows, cabang, projects] = await Promise.all([
+  const apiParams = { tipe: sp.tipe, search: sp.search, cabangId: sp.cabangId, projectId: sp.projectId, industriId: sp.industriId };
+  const [rows, cabang, projects, industri] = await Promise.all([
     apiFetch<Row[]>(buildListHref('/cash-bank', apiParams), { tenantId }),
     apiFetch<FilterOption[]>('/cabang', { tenantId }).catch(() => [] as FilterOption[]),
     apiFetch<FilterOption[]>('/projects', { tenantId }).catch(() => [] as FilterOption[]),
+    apiFetch<FilterOption[]>('/industri', { tenantId }).catch(() => [] as FilterOption[]),
   ]);
   const isPusat = ['OWNER', 'ADMIN', 'AKUNTAN'].includes(s.role ?? '');
 
@@ -70,6 +71,7 @@ export default async function KasBankPage({
           params={sp}
           cabang={isPusat && cabang.length > 1 ? cabang : undefined}
           projects={projects}
+          industri={industri}
           searchPlaceholder="Cari no. bukti / kontak / deskripsi…"
         />
 

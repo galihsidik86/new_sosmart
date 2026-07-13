@@ -54,6 +54,7 @@ export class JejakAuditService {
     sampai?: string;
     sumber?: JournalSource;
     projectId?: string | null;
+    industriId?: string;
     cabangId?: string;
     search?: string;
   }): Promise<JejakAuditResponse> {
@@ -87,7 +88,14 @@ export class JejakAuditService {
         ];
       }
       if (opts.projectId === null) where.lines = { some: { projectId: null } };
-      else if (opts.projectId) where.lines = { some: { projectId: opts.projectId } };
+      else if (opts.projectId || opts.industriId) {
+        where.lines = {
+          some: {
+            ...(opts.projectId ? { projectId: opts.projectId } : {}),
+            ...(opts.industriId ? { project: { industriId: opts.industriId } } : {}),
+          },
+        };
+      }
 
       const journals = await tx.journal.findMany({
         where,

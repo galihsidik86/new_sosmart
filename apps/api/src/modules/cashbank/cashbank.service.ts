@@ -95,7 +95,14 @@ export class CashBankService {
       const scope = this.cabangScope.cabangIdsForWhere();
       if (scope) where.cabangId = { in: scope };
     }
-    if (filter.projectId) where.lines = { some: { projectId: filter.projectId } };
+    if (filter.projectId || filter.industriId) {
+      where.lines = {
+        some: {
+          ...(filter.projectId ? { projectId: filter.projectId } : {}),
+          ...(filter.industriId ? { project: { industriId: filter.industriId } } : {}),
+        },
+      };
+    }
     if (filter.search) {
       const q = filter.search;
       where.OR = [

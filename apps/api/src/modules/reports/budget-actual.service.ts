@@ -62,6 +62,7 @@ export class BudgetActualService {
     periode: string; // YYYY-MM
     ytd?: boolean;
     projectId?: string;
+    industriId?: string;
     cabangId?: string;
   }): Promise<BudgetActualResponse> {
     if (!/^\d{4}-\d{2}$/.test(opts.periode)) {
@@ -87,6 +88,7 @@ export class BudgetActualService {
             ? { periode: { gte: `${y}-01`, lte: opts.periode } }
             : { periode: opts.periode }),
           ...(opts.projectId ? { projectId: opts.projectId } : {}),
+          ...(opts.industriId ? { project: { industriId: opts.industriId } } : {}),
         },
         include: {
           project: { select: { id: true, kode: true, nama: true } },

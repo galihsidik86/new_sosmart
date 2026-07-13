@@ -117,8 +117,9 @@ export class ReportsController {
     @Query('ytd') ytd?: string,
     @Query('projectId') projectId?: string,
     @Query('cabangId') cabangId?: string,
+    @Query('industriId') industriId?: string,
   ) {
-    return this.ba.build({ periode, ytd: ytd === 'true', projectId, cabangId });
+    return this.ba.build({ periode, ytd: ytd === 'true', projectId, cabangId, industriId });
   }
 
   // --------------- Laba Rugi per Proyek (batch semua proyek) ---------------
@@ -128,8 +129,9 @@ export class ReportsController {
     @Query('periodId') periodId: string,
     @Query('ytd') ytd?: string,
     @Query('cabangId') cabangId?: string,
+    @Query('industriId') industriId?: string,
   ) {
-    return this.lrp.build({ periodId, ytd: ytd === 'true', cabangId });
+    return this.lrp.build({ periodId, ytd: ytd === 'true', cabangId, industriId });
   }
 
   @Get('laba-rugi-proyek.pdf')
@@ -138,9 +140,10 @@ export class ReportsController {
     @Query('periodId') periodId: string,
     @Query('ytd') ytd?: string,
     @Query('cabangId') cabangId?: string,
+    @Query('industriId') industriId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.lrp.build({ periodId, ytd: ytd === 'true', cabangId }),
+      this.lrp.build({ periodId, ytd: ytd === 'true', cabangId, industriId }),
       this.brand(),
     ]);
     sendPdf(reply, 'laba-rugi-proyek.pdf', await this.pdf.buildLabaRugiProyek(data, nama.nama, nama.logo));
@@ -157,6 +160,7 @@ export class ReportsController {
     @Query('projectId') projectId?: string,
     @Query('cabangId') cabangId?: string,
     @Query('search') search?: string,
+    @Query('industriId') industriId?: string,
   ) {
     return this.audit.build({
       periodId,
@@ -164,6 +168,7 @@ export class ReportsController {
       sampai,
       sumber: (sumber || undefined) as JournalSource | undefined,
       projectId: normalizeProjectFilter(projectId),
+      industriId,
       cabangId,
       search,
     });

@@ -5,7 +5,7 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { LabaRugiService, type LabaRugiResponse } from './laba-rugi.service.js';
 
 export interface LabaRugiProyekRow {
-  project: { id: string; kode: string; nama: string; status: string };
+  project: { id: string; kode: string; nama: string; status: string; industri: { kode: string; nama: string } | null };
   pendapatan: string;
   bebanPokok: string;
   bebanOperasi: string;
@@ -43,12 +43,19 @@ export class LabaRugiProyekService {
     periodId: string;
     ytd?: boolean;
     cabangId?: string;
+    industriId?: string;
   }): Promise<LabaRugiProyekResponse> {
     const projects = await this.tenancy.run((tx) =>
       tx.project.findMany({
-        where: { status: { in: [ProjectStatus.AKTIF, ProjectStatus.SELESAI] } },
+        where: {
+          status: { in: [ProjectStatus.AKTIF, ProjectStatus.SELESAI] },
+          ...(opts.industriId ? { industriId: opts.industriId } : {}),
+        },
         orderBy: { kode: 'asc' },
-        select: { id: true, kode: true, nama: true, status: true },
+        select: {
+          id: true, kode: true, nama: true, status: true,
+          industri: { select: { kode: true, nama: true } },
+        },
       }),
     );
 

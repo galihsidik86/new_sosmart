@@ -25,20 +25,24 @@ export function ListFilters({
   params,
   cabang,
   projects,
+  industri,
   searchPlaceholder = 'Cari nomor / keterangan…',
-  ownKeys = ['search', 'cabangId', 'projectId'],
+  ownKeys = ['search', 'cabangId', 'projectId', 'industriId'],
 }: {
   action: string;
   params: Record<string, string | undefined>;
   cabang?: FilterOption[];
   projects?: FilterOption[];
+  industri?: FilterOption[];
   searchPlaceholder?: string;
   ownKeys?: string[];
 }) {
   const preserve = Object.entries(params).filter(
     ([k, v]) => v && !ownKeys.includes(k),
   ) as [string, string][];
-  const hasActive = !!(params.search || params.cabangId || params.projectId);
+  const hasActive = !!(
+    params.search || params.cabangId || params.projectId || params.industriId
+  );
 
   return (
     <form method="GET" action={action} className={filterBarClass}>
@@ -87,6 +91,25 @@ export function ListFilters({
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.kode} — {p.nama}
+              </option>
+            ))}
+          </Select>
+        </label>
+      )}
+
+      {industri && industri.length > 0 && (
+        <label className="flex items-center gap-2">
+          <FilterLabel>Industri</FilterLabel>
+          <Select
+            name="industriId"
+            defaultValue={params.industriId ?? ''}
+            fullWidth={false}
+            className="min-w-[150px]"
+          >
+            <option value="">Semua industri</option>
+            {industri.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.nama}
               </option>
             ))}
           </Select>

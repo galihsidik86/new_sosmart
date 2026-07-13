@@ -44,6 +44,7 @@ export default async function JurnalPage({
     search?: string;
     cabangId?: string;
     projectId?: string;
+    industriId?: string;
   }>;
 }) {
   const s = (await getSession())!;
@@ -60,11 +61,13 @@ export default async function JurnalPage({
     search: sp.search,
     cabangId: sp.cabangId,
     projectId: sp.projectId,
+    industriId: sp.industriId,
   };
-  const [jurnals, cabang, projects] = await Promise.all([
+  const [jurnals, cabang, projects, industri] = await Promise.all([
     apiFetch<JurnalRow[]>(buildListHref('/journals', apiParams), { tenantId }),
     apiFetch<FilterOption[]>('/cabang', { tenantId }).catch(() => [] as FilterOption[]),
     apiFetch<FilterOption[]>('/projects', { tenantId }).catch(() => [] as FilterOption[]),
+    apiFetch<FilterOption[]>('/industri', { tenantId }).catch(() => [] as FilterOption[]),
   ]);
   const isPusat = ['OWNER', 'ADMIN', 'AKUNTAN'].includes(s.role ?? '');
 
@@ -126,6 +129,17 @@ export default async function JurnalPage({
                 <option value="">Semua proyek</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </Select>
+            </>
+          )}
+          {industri.length > 0 && (
+            <>
+              <FilterLabel>Industri</FilterLabel>
+              <Select name="industriId" defaultValue={sp.industriId ?? ''} fullWidth={false} className="min-w-[150px]">
+                <option value="">Semua industri</option>
+                {industri.map((i) => (
+                  <option key={i.id} value={i.id}>{i.nama}</option>
                 ))}
               </Select>
             </>

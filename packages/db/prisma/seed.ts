@@ -287,6 +287,34 @@ async function seedTaxRates(tenantId: string, coa: Map<string, string>) {
 // ===============================================================
 // Master tarif PPh 23 — referensi jenis jasa (UU PPh Pasal 23 + PMK 141/2015)
 // ===============================================================
+async function seedIndustri(tenantId: string) {
+  const rows = [
+    { kode: 'AUTOMOTIVE', nama: 'Otomotif' },
+    { kode: 'FMCG', nama: 'Barang Konsumen (FMCG)' },
+    { kode: 'BANKING', nama: 'Perbankan' },
+    { kode: 'FINANCE', nama: 'Jasa Keuangan & Asuransi' },
+    { kode: 'TELCO', nama: 'Telekomunikasi' },
+    { kode: 'RETAIL', nama: 'Ritel & E-commerce' },
+    { kode: 'MANUFACTURING', nama: 'Manufaktur' },
+    { kode: 'TECH', nama: 'Teknologi & Digital' },
+    { kode: 'ENERGY', nama: 'Energi & Pertambangan' },
+    { kode: 'HEALTHCARE', nama: 'Kesehatan & Farmasi' },
+    { kode: 'PROPERTY', nama: 'Properti & Konstruksi' },
+    { kode: 'FNB', nama: 'Makanan & Minuman' },
+    { kode: 'MEDIA', nama: 'Media & Hiburan' },
+    { kode: 'LOGISTICS', nama: 'Transportasi & Logistik' },
+    { kode: 'GOVERNMENT', nama: 'Pemerintah & BUMN' },
+    { kode: 'EDUCATION', nama: 'Pendidikan' },
+  ];
+  for (const r of rows) {
+    await prisma.industri.upsert({
+      where: { tenantId_kode: { tenantId, kode: r.kode } },
+      create: { tenantId, kode: r.kode, nama: r.nama },
+      update: { nama: r.nama },
+    });
+  }
+}
+
 async function seedPph23Tarif(tenantId: string) {
   const rows = [
     // 15% — pasif income (UU PPh Pasal 23 ayat 1a)
@@ -844,6 +872,8 @@ async function main() {
   console.log(`  ✓ Tarif pajak`);
   await seedPph23Tarif(tenant.id);
   console.log(`  ✓ Tarif PPh 23 (jenis jasa PMK 141/2015)`);
+  await seedIndustri(tenant.id);
+  console.log(`  ✓ Master jenis industri`);
 
   // ---------- Master barang + stok awal di Cabang Pusat
   const nItem = await seedItems(tenant.id, coaMap);

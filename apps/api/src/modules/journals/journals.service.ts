@@ -32,6 +32,7 @@ interface ListFilter {
   sumber?: JournalSourceInput;
   search?: string;
   projectId?: string;
+  industriId?: string;
 }
 
 /**
@@ -96,7 +97,14 @@ export class JournalsService {
     }
     if (f.status) where.status = f.status;
     if (f.sumber) where.sumber = f.sumber;
-    if (f.projectId) where.lines = { some: { projectId: f.projectId } };
+    if (f.projectId || f.industriId) {
+      where.lines = {
+        some: {
+          ...(f.projectId ? { projectId: f.projectId } : {}),
+          ...(f.industriId ? { project: { industriId: f.industriId } } : {}),
+        },
+      };
+    }
     if (f.search) {
       where.OR = [
         { nomor: { contains: f.search, mode: 'insensitive' } },

@@ -26,6 +26,7 @@ const createSchema = z.object({
   tanggalSelesai: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   budgetTotal: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
   catatan: z.string().max(1000).optional(),
+  industriId: z.string().uuid().nullable().optional(),
 });
 type CreateInput = z.infer<typeof createSchema>;
 
@@ -36,6 +37,7 @@ const updateSchema = z.object({
   status: z.nativeEnum(ProjectStatus).optional(),
   budgetTotal: z.string().regex(/^\d+(\.\d{1,2})?$/).nullable().optional(),
   catatan: z.string().max(1000).nullable().optional(),
+  industriId: z.string().uuid().nullable().optional(),
 });
 type UpdateInput = z.infer<typeof updateSchema>;
 

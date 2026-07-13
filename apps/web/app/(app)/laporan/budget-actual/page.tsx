@@ -52,7 +52,7 @@ function statusClass(s: BudgetStatus): string {
 export default async function BudgetActualPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periode?: string; projectId?: string; ytd?: string }>;
+  searchParams: Promise<{ periode?: string; projectId?: string; ytd?: string; industriId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
@@ -60,17 +60,20 @@ export default async function BudgetActualPage({
 
   const periode = sp.periode ?? periodeNow();
   const projectId = sp.projectId ?? '';
+  const industriId = sp.industriId ?? '';
   const ytd = sp.ytd === 'true';
   const projectQs = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
+  const industriQs = industriId ? `&industriId=${encodeURIComponent(industriId)}` : '';
   const ytdQs = ytd ? '&ytd=true' : '';
 
-  const [projects, data] = await Promise.all([
+  const [projects, industri, data] = await Promise.all([
     apiFetch<Project[]>('/projects', { tenantId }).catch(() => [] as Project[]),
-    apiFetch<Resp>(`/reports/budget-actual?periode=${periode}${ytdQs}${projectQs}`, { tenantId }),
+    apiFetch<Project[]>('/industri', { tenantId }).catch(() => [] as Project[]),
+    apiFetch<Resp>(`/reports/budget-actual?periode=${periode}${ytdQs}${projectQs}${industriQs}`, { tenantId }),
   ]);
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Budget vs Actual"
@@ -82,7 +85,7 @@ export default async function BudgetActualPage({
             </>
           }
           actions={
-            <ReportActions xlsx={`/proxy/reports/budget-actual.xlsx?periode=${periode}${ytdQs}${projectQs}`} />
+            <ReportActions xlsx={`/proxy/reports/budget-actual.xlsx?periode=${periode}${ytdQs}${projectQs}${industriQs}`} />
           }
         />
 
@@ -99,6 +102,17 @@ export default async function BudgetActualPage({
                 <option value="">— semua project —</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </Select>
+            </>
+          )}
+          {industri.length > 0 && (
+            <>
+              <FilterLabel>Industri</FilterLabel>
+              <Select name="industriId" defaultValue={industriId} fullWidth={false}>
+                <option value="">— semua industri —</option>
+                {industri.map((i) => (
+                  <option key={i.id} value={i.id}>{i.nama}</option>
                 ))}
               </Select>
             </>

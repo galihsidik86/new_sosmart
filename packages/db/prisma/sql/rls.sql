@@ -385,6 +385,14 @@ CREATE POLICY saldo_awal_akun_lines_isolation ON saldo_awal_akun_lines
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- MASTER JENIS INDUSTRI
+ALTER TABLE industri ENABLE ROW LEVEL SECURITY;
+ALTER TABLE industri FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS industri_isolation ON industri;
+CREATE POLICY industri_isolation ON industri
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity

@@ -7,8 +7,9 @@ interface PeriodYear {
   id: string; kode: string;
   periods: Array<{ id: string; label: string; status: string }>;
 }
+interface IndustriOpt { id: string; kode: string; nama: string }
 interface Row {
-  project: { id: string; kode: string; nama: string; status: string };
+  project: { id: string; kode: string; nama: string; status: string; industri: { kode: string; nama: string } | null };
   pendapatan: string; bebanPokok: string; bebanOperasi: string; labaBersih: string; marginPersen: string;
 }
 interface Resp {
@@ -21,27 +22,32 @@ interface Resp {
 export default async function LabaRugiProyekPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periodId?: string; ytd?: string }>;
+  searchParams: Promise<{ periodId?: string; ytd?: string; industriId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
 
-  const years = await apiFetch<PeriodYear[]>('/periods/years', { tenantId });
+  const [years, industri] = await Promise.all([
+    apiFetch<PeriodYear[]>('/periods/years', { tenantId }),
+    apiFetch<IndustriOpt[]>('/industri', { tenantId }).catch(() => [] as IndustriOpt[]),
+  ]);
   const periodId =
     sp.periodId ?? years[0]?.periods.find((p) => p.status === 'OPEN')?.id ?? years[0]?.periods[0]?.id;
   const ytd = sp.ytd === 'true';
+  const industriId = sp.industriId ?? '';
+  const qsExtra = `${ytd ? '&ytd=true' : ''}${industriId ? '&industriId=' + industriId : ''}`;
 
   let data: Resp | null = null;
   if (periodId) {
     data = await apiFetch<Resp>(
-      `/reports/laba-rugi-proyek?periodId=${periodId}${ytd ? '&ytd=true' : ''}`,
+      `/reports/laba-rugi-proyek?periodId=${periodId}${qsExtra}`,
       { tenantId },
     );
   }
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Laba Rugi per Proyek"
@@ -49,7 +55,7 @@ export default async function LabaRugiProyekPage({
           actions={
             periodId ? (
               <a
-                href={`/proxy/reports/laba-rugi-proyek.pdf?periodId=${periodId}${ytd ? '&ytd=true' : ''}`}
+                href={`/proxy/reports/laba-rugi-proyek.pdf?periodId=${periodId}${qsExtra}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonClass('soft-bata')}
@@ -67,6 +73,17 @@ export default async function LabaRugiProyekPage({
               <option key={p.id} value={p.id}>{p.label} ({p.status})</option>
             ))}
           </Select>
+          {industri.length > 0 && (
+            <>
+              <FilterLabel>Industri</FilterLabel>
+              <Select name="industriId" defaultValue={industriId} fullWidth={false} className="min-w-[150px]">
+                <option value="">Semua industri</option>
+                {industri.map((i) => (
+                  <option key={i.id} value={i.id}>{i.nama}</option>
+                ))}
+              </Select>
+            </>
+          )}
           <label className="flex items-center gap-1.5 text-sm text-tanah-700">
             <input type="checkbox" name="ytd" value="true" defaultChecked={ytd} /> YTD (awal tahun s/d periode)
           </label>
@@ -98,6 +115,11 @@ export default async function LabaRugiProyekPage({
                       <td className="px-4 py-2">
                         <span className="font-mono text-xs text-sogan-500">{r.project.kode}</span>{' '}
                         <span className="text-tanah-700">{r.project.nama}</span>
+                        {r.project.industri && (
+                          <span className="ml-2 text-[10px] text-wedel-700 bg-cream-100 border border-cream-200 rounded px-1.5 py-0.5">
+                            {r.project.industri.nama}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(r.pendapatan)}</td>
                       <td className="px-4 py-2 text-right font-mono tabular-nums whitespace-nowrap">{fmtRp(r.bebanPokok)}</td>

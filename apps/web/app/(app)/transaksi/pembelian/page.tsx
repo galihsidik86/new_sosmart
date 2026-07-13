@@ -27,16 +27,17 @@ interface Row {
 export default async function PembelianPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: Status; search?: string; cabangId?: string; projectId?: string }>;
+  searchParams: Promise<{ status?: Status; search?: string; cabangId?: string; projectId?: string; industriId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
-  const apiParams = { status: sp.status, search: sp.search, cabangId: sp.cabangId, projectId: sp.projectId };
-  const [rows, cabang, projects] = await Promise.all([
+  const apiParams = { status: sp.status, search: sp.search, cabangId: sp.cabangId, projectId: sp.projectId, industriId: sp.industriId };
+  const [rows, cabang, projects, industri] = await Promise.all([
     apiFetch<Row[]>(buildListHref('/purchase-invoices', apiParams), { tenantId }),
     apiFetch<FilterOption[]>('/cabang', { tenantId }).catch(() => [] as FilterOption[]),
     apiFetch<FilterOption[]>('/projects', { tenantId }).catch(() => [] as FilterOption[]),
+    apiFetch<FilterOption[]>('/industri', { tenantId }).catch(() => [] as FilterOption[]),
   ]);
   const isPusat = ['OWNER', 'ADMIN', 'AKUNTAN'].includes(s.role ?? '');
 
@@ -64,6 +65,7 @@ export default async function PembelianPage({
           params={sp}
           cabang={isPusat && cabang.length > 1 ? cabang : undefined}
           projects={projects}
+          industri={industri}
           searchPlaceholder="Cari no. tagihan / faktur vendor / vendor…"
         />
 

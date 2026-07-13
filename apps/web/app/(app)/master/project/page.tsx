@@ -6,11 +6,12 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Textarea,
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select, Textarea,
   Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, type BadgeVariant,
 } from '@/components/ui';
 
 type Status = 'AKTIF' | 'SELESAI' | 'DIBATALKAN';
+interface IndustriOpt { id: string; kode: string; nama: string }
 
 const STATUS_VARIANT: Record<Status, BadgeVariant> = {
   AKTIF: 'success',
@@ -27,6 +28,7 @@ interface ProjectRow {
   tanggalSelesai: string | null;
   status: Status;
   budgetTotal: string | null;
+  industri: IndustriOpt | null;
   _count: { members: number; budgets: number };
 }
 
@@ -44,6 +46,7 @@ async function createProjectAction(formData: FormData) {
       tanggalMulai: String(formData.get('tanggalMulai') ?? ''),
       tanggalSelesai: String(formData.get('tanggalSelesai') ?? '') || undefined,
       budgetTotal: String(formData.get('budgetTotal') ?? '') || undefined,
+      industriId: String(formData.get('industriId') ?? '') || undefined,
     }),
   });
   revalidatePath('/master/project');
@@ -58,10 +61,13 @@ export default async function ProjectsPage({
   const includeSelesai = sp.semua === '1';
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const projects = await apiFetch<ProjectRow[]>(
-    `/projects${includeSelesai ? '?includeSelesai=true' : ''}`,
-    { tenantId },
-  );
+  const [projects, industri] = await Promise.all([
+    apiFetch<ProjectRow[]>(
+      `/projects${includeSelesai ? '?includeSelesai=true' : ''}`,
+      { tenantId },
+    ),
+    apiFetch<IndustriOpt[]>('/industri', { tenantId }).catch(() => [] as IndustriOpt[]),
+  ]);
 
   return (
     <>
@@ -96,6 +102,9 @@ export default async function ProjectsPage({
                     <TD>
                       <div className="font-semibold text-tanah-700">{p.nama}</div>
                       <div className="text-xs text-tanah-500 font-mono">{p.kode}</div>
+                      {p.industri && (
+                        <Badge variant="neutral" size="sm" className="mt-1">{p.industri.nama}</Badge>
+                      )}
                     </TD>
                     <TD className="text-xs text-tanah-500">
                       {fmtTanggal(p.tanggalMulai)}
@@ -142,6 +151,14 @@ export default async function ProjectsPage({
               <FormField label="Tanggal Mulai" required><Input name="tanggalMulai" type="date" required /></FormField>
               <FormField label="Tanggal Selesai"><Input name="tanggalSelesai" type="date" /></FormField>
               <FormField label="Budget Total (opsional)"><Input name="budgetTotal" type="number" placeholder="0" /></FormField>
+              <FormField label="Jenis Industri (opsional)">
+                <Select name="industriId" defaultValue="">
+                  <option value="">— pilih industri —</option>
+                  {industri.map((i) => (
+                    <option key={i.id} value={i.id}>{i.nama}</option>
+                  ))}
+                </Select>
+              </FormField>
               <Button type="submit" className="w-full">Tambah Project</Button>
             </form>
           </Card>

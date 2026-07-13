@@ -363,6 +363,7 @@ model Tenant {
   auditLogs          AuditLog[]
   glConfig           GlConfig[]
   projects           Project[]
+  industri           Industri[]
   budgets            Budget[]
   pph23Tarif         Pph23Tarif[]
   saldoAwal          SaldoAwal[]
@@ -1738,12 +1739,15 @@ model Project {
   /// Budget total tingkat project (opsional). Detail per akun × bulan ada di Budget.
   budgetTotal    Decimal?      @map("budget_total") @db.Decimal(20, 2)
   catatan        String?
+  /// Klasifikasi jenis industri klien project (mis. Automotive utk project di Toyota).
+  industriId     String?       @map("industri_id") @db.Uuid
 
   createdById String?  @map("created_by_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   tenant               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  industri             Industri?             @relation(fields: [industriId], references: [id], onDelete: SetNull)
   members              ProjectMember[]
   budgets              Budget[]
   journalLines         JournalLine[]
@@ -1753,7 +1757,26 @@ model Project {
 
   @@unique([tenantId, kode])
   @@index([tenantId, status])
+  @@index([industriId])
   @@map("projects")
+}
+
+/// Master jenis/klasifikasi industri klien project (mis. Automotive, FMCG,
+/// Perbankan). Dipakai untuk mengelompokkan & memfilter laporan per industri.
+model Industri {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  kode      String
+  nama      String
+  isAktif   Boolean  @default(true) @map("is_aktif")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  projects Project[]
+
+  @@unique([tenantId, kode])
+  @@map("industri")
 }
 
 /// Membership user pada project — kontrol siapa boleh input/approve.
