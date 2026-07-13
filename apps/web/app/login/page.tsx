@@ -23,7 +23,7 @@ async function loginAction(formData: FormData) {
 }
 
 const FITUR = [
-  'Laporan keuangan SAK ETAP otomatis',
+  'Laporan Keuangan sesuai dengan SAK',
   'PPN & PPh sesuai regulasi terbaru',
   'Multi-cabang, multi-proyek & jejak audit',
 ];
@@ -129,20 +129,15 @@ export default async function LoginPage({
 
           <form action={loginAction} className="space-y-4">
             <FormField label="Email" htmlFor="email">
-              <Input id="email" name="email" type="email" required defaultValue="owner@lentera.id" />
+              <Input id="email" name="email" type="email" required placeholder="nama@perusahaan.co.id" />
             </FormField>
             <FormField label="Password" htmlFor="password">
-              <Input id="password" name="password" type="password" required defaultValue="lentera123" />
+              <Input id="password" name="password" type="password" required placeholder="••••••••" />
             </FormField>
             <Button type="submit" className="w-full" size="md">
               Masuk
             </Button>
           </form>
-
-          <p className="text-xs text-tanah-300 mt-6 text-center">
-            Demo: <code className="font-mono text-tanah-500">owner@lentera.id</code> /{' '}
-            <code className="font-mono text-tanah-500">lentera123</code>
-          </p>
         </div>
       </div>
     </main>
