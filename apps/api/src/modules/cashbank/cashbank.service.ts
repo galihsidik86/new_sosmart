@@ -45,7 +45,14 @@ export class CashBankService {
     private readonly cabangScope: CabangScopeService,
   ) {}
 
-  async exportXlsx(filter: { status?: InvoiceStatus; tipe?: CashBankType; periodId?: string }): Promise<Buffer> {
+  async exportXlsx(filter: {
+    status?: InvoiceStatus;
+    tipe?: CashBankType;
+    periodId?: string;
+    cabangId?: string;
+    projectId?: string;
+    search?: string;
+  }): Promise<Buffer> {
     const rows = await this.list(filter);
     return this.excel.buildBuffer(
       'Kas-Bank',
@@ -66,13 +73,34 @@ export class CashBankService {
     );
   }
 
-  list(filter: { status?: InvoiceStatus; tipe?: CashBankType; periodId?: string }) {
+  list(filter: {
+    status?: InvoiceStatus;
+    tipe?: CashBankType;
+    periodId?: string;
+    cabangId?: string;
+    projectId?: string;
+    search?: string;
+  }) {
     const where: Prisma.CashBankEntryWhereInput = {};
     if (filter.status) where.status = filter.status;
     if (filter.tipe) where.tipe = filter.tipe;
     if (filter.periodId) where.fiscalPeriodId = filter.periodId;
-    const scope = this.cabangScope.cabangIdsForWhere();
-    if (scope) where.cabangId = { in: scope };
+    if (filter.cabangId) {
+      this.cabangScope.assertAccess(filter.cabangId);
+      where.cabangId = filter.cabangId;
+    } else {
+      const scope = this.cabangScope.cabangIdsForWhere();
+      if (scope) where.cabangId = { in: scope };
+    }
+    if (filter.projectId) where.lines = { some: { projectId: filter.projectId } };
+    if (filter.search) {
+      const q = filter.search;
+      where.OR = [
+        { nomor: { contains: q, mode: 'insensitive' } },
+        { deskripsi: { contains: q, mode: 'insensitive' } },
+        { kontak: { contains: q, mode: 'insensitive' } },
+      ];
+    }
     return this.tenancy.run((tx) =>
       tx.cashBankEntry.findMany({
         where,

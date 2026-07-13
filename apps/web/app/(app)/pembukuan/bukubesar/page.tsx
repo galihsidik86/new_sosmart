@@ -38,36 +38,41 @@ interface LedgerResp {
 export default async function BukuBesarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ accountId?: string; periodId?: string; projectId?: string }>;
+  searchParams: Promise<{ accountId?: string; periodId?: string; projectId?: string; cabangId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
 
-  const [accounts, years, projects] = await Promise.all([
+  const [accounts, years, projects, cabang] = await Promise.all([
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<PeriodYear[]>('/periods/years', { tenantId }),
     apiFetch<Project[]>('/projects', { tenantId }).catch(() => [] as Project[]),
+    apiFetch<Project[]>('/cabang', { tenantId }).catch(() => [] as Project[]),
   ]);
+  const isPusat = ['OWNER', 'ADMIN', 'AKUNTAN'].includes(s.role ?? '');
   const postable = accounts.filter((a) => a.isPostable);
   const accountId = sp.accountId ?? postable[0]?.id;
   const periodId =
     sp.periodId ?? years[0]?.periods.find((p) => p.status === 'OPEN')?.id;
   const projectId = sp.projectId ?? '';
+  const cabangId = sp.cabangId ?? '';
 
   let data: LedgerResp | null = null;
   if (accountId && periodId) {
     const qs = new URLSearchParams({ accountId, periodId });
     if (projectId) qs.set('projectId', projectId);
+    if (cabangId) qs.set('cabangId', cabangId);
     data = await apiFetch<LedgerResp>(`/ledger?${qs}`, { tenantId });
   }
   const xlsxQs = new URLSearchParams();
   if (accountId) xlsxQs.set('accountId', accountId);
   if (periodId) xlsxQs.set('periodId', periodId);
   if (projectId) xlsxQs.set('projectId', projectId);
+  if (cabangId) xlsxQs.set('cabangId', cabangId);
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Buku Besar"
@@ -98,6 +103,17 @@ export default async function BukuBesarPage({
               </option>
             ))}
           </Select>
+          {isPusat && cabang.length > 1 && (
+            <>
+              <FilterLabel>Cabang</FilterLabel>
+              <Select name="cabangId" defaultValue={cabangId} fullWidth={false}>
+                <option value="">— semua cabang —</option>
+                {cabang.map((c) => (
+                  <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
+                ))}
+              </Select>
+            </>
+          )}
           {projects.length > 0 && (
             <>
               <FilterLabel>Project</FilterLabel>

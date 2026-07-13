@@ -41,7 +41,7 @@ const BUCKET_LABEL: Record<keyof Buckets, string> = {
 export default async function PiutangPage({
   searchParams,
 }: {
-  searchParams: Promise<{ asOf?: string; cabangId?: string }>;
+  searchParams: Promise<{ asOf?: string; cabangId?: string; search?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
@@ -50,6 +50,7 @@ export default async function PiutangPage({
   const today = new Date().toISOString().slice(0, 10);
   const asOf = sp.asOf ?? today;
   const cabangId = sp.cabangId ?? '';
+  const search = (sp.search ?? '').trim();
 
   const [cabang, ar] = await Promise.all([
     apiFetch<Cabang[]>('/cabang', { tenantId }),
@@ -60,9 +61,20 @@ export default async function PiutangPage({
   ]);
 
   const bucketKeys = Object.keys(BUCKET_LABEL) as (keyof Buckets)[];
+  const rows = search
+    ? ar.rows.filter((r) => `${r.kode} ${r.nama}`.toLowerCase().includes(search.toLowerCase()))
+    : ar.rows;
+  const totalSaldo = search
+    ? rows.reduce((a, r) => a + Number(r.saldo), 0)
+    : ar.totalSaldo;
+  const totalBuckets: Record<keyof Buckets, number | string> = search
+    ? (Object.fromEntries(
+        bucketKeys.map((k) => [k, rows.reduce((a, r) => a + Number(r.buckets[k]), 0)]),
+      ) as Record<keyof Buckets, number>)
+    : ar.totalBuckets;
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Aging Piutang Usaha"
@@ -93,6 +105,12 @@ export default async function PiutangPage({
               </option>
             ))}
           </Select>
+          <input
+            name="search"
+            defaultValue={search}
+            placeholder="Cari pelanggan…"
+            className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+          />
           <Button type="submit" variant="secondary" size="sm" className="ml-auto">Terapkan</Button>
         </form>
 
@@ -104,7 +122,7 @@ export default async function PiutangPage({
             <div className="text-sm text-tanah-700">
               Total saldo:{' '}
               <span className="font-mono tabular-nums font-bold text-base">
-                {fmtRp(ar.totalSaldo)}
+                {fmtRp(totalSaldo)}
               </span>
             </div>
           </div>
@@ -122,14 +140,14 @@ export default async function PiutangPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-cream-200">
-              {ar.rows.length === 0 && (
+              {rows.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-3 py-6 text-center text-tanah-500">
                     Tidak ada saldo piutang pada tanggal ini.
                   </td>
                 </tr>
               )}
-              {ar.rows.map((r) => (
+              {rows.map((r) => (
                 <tr key={r.customerId} className="hover:bg-cream-50">
                   <td className="px-3 py-2">
                     <Link
@@ -160,18 +178,18 @@ export default async function PiutangPage({
                 </tr>
               ))}
             </tbody>
-            {ar.rows.length > 0 && (
+            {rows.length > 0 && (
               <tfoot className="bg-cream-50 font-bold">
                 <tr>
                   <td className="px-3 py-2 text-tanah-700">TOTAL</td>
                   <td />
                   {bucketKeys.map((k) => (
                     <td key={k} className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">
-                      {fmtRp(ar.totalBuckets[k])}
+                      {fmtRp(totalBuckets[k])}
                     </td>
                   ))}
                   <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">
-                    {fmtRp(ar.totalSaldo)}
+                    {fmtRp(totalSaldo)}
                   </td>
                 </tr>
               </tfoot>

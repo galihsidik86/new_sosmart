@@ -41,7 +41,7 @@ const BUCKET_LABEL: Record<keyof Buckets, string> = {
 export default async function UtangPage({
   searchParams,
 }: {
-  searchParams: Promise<{ asOf?: string; cabangId?: string }>;
+  searchParams: Promise<{ asOf?: string; cabangId?: string; search?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
@@ -50,6 +50,7 @@ export default async function UtangPage({
   const today = new Date().toISOString().slice(0, 10);
   const asOf = sp.asOf ?? today;
   const cabangId = sp.cabangId ?? '';
+  const search = (sp.search ?? '').trim();
 
   const [cabang, ap] = await Promise.all([
     apiFetch<Cabang[]>('/cabang', { tenantId }),
@@ -60,9 +61,20 @@ export default async function UtangPage({
   ]);
 
   const bucketKeys = Object.keys(BUCKET_LABEL) as (keyof Buckets)[];
+  const rows = search
+    ? ap.rows.filter((r) => `${r.kode} ${r.nama}`.toLowerCase().includes(search.toLowerCase()))
+    : ap.rows;
+  const totalSaldo = search
+    ? rows.reduce((a, r) => a + Number(r.saldo), 0)
+    : ap.totalSaldo;
+  const totalBuckets: Record<keyof Buckets, number | string> = search
+    ? (Object.fromEntries(
+        bucketKeys.map((k) => [k, rows.reduce((a, r) => a + Number(r.buckets[k]), 0)]),
+      ) as Record<keyof Buckets, number>)
+    : ap.totalBuckets;
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Aging Utang Usaha"
@@ -93,6 +105,12 @@ export default async function UtangPage({
               </option>
             ))}
           </Select>
+          <input
+            name="search"
+            defaultValue={search}
+            placeholder="Cari vendor…"
+            className="px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm"
+          />
           <Button type="submit" variant="secondary" size="sm" className="ml-auto">Terapkan</Button>
         </form>
 
@@ -104,7 +122,7 @@ export default async function UtangPage({
             <div className="text-sm text-tanah-700">
               Total saldo:{' '}
               <span className="font-mono tabular-nums font-bold text-base">
-                {fmtRp(ap.totalSaldo)}
+                {fmtRp(totalSaldo)}
               </span>
             </div>
           </div>
@@ -122,14 +140,14 @@ export default async function UtangPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-cream-200">
-              {ap.rows.length === 0 && (
+              {rows.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-3 py-6 text-center text-tanah-500">
                     Tidak ada saldo utang pada tanggal ini.
                   </td>
                 </tr>
               )}
-              {ap.rows.map((r) => (
+              {rows.map((r) => (
                 <tr key={r.vendorId} className="hover:bg-cream-50">
                   <td className="px-3 py-2">
                     <Link
@@ -160,18 +178,18 @@ export default async function UtangPage({
                 </tr>
               ))}
             </tbody>
-            {ap.rows.length > 0 && (
+            {rows.length > 0 && (
               <tfoot className="bg-cream-50 font-bold">
                 <tr>
                   <td className="px-3 py-2 text-tanah-700">TOTAL</td>
                   <td />
                   {bucketKeys.map((k) => (
                     <td key={k} className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">
-                      {fmtRp(ap.totalBuckets[k])}
+                      {fmtRp(totalBuckets[k])}
                     </td>
                   ))}
                   <td className="px-3 py-2 text-right font-mono tabular-nums whitespace-nowrap">
-                    {fmtRp(ap.totalSaldo)}
+                    {fmtRp(totalSaldo)}
                   </td>
                 </tr>
               </tfoot>

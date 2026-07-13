@@ -5,8 +5,10 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
   PageContainer, PageHeader, Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow,
-  StatusBadge, Button, buttonClass, FilterLabel, Select, filterBarClass,
+  StatusBadge, Button, buttonClass, FilterLabel, Input, Select, filterBarClass,
 } from '@/components/ui';
+import { type FilterOption } from '@/components/ListFilters';
+import { buildListHref } from '@/lib/list-query';
 
 type Status = 'DRAFT' | 'POSTED' | 'REVERSED';
 type Sumber =
@@ -36,7 +38,13 @@ interface PeriodYear {
 export default async function JurnalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periodId?: string; status?: Status }>;
+  searchParams: Promise<{
+    periodId?: string;
+    status?: Status;
+    search?: string;
+    cabangId?: string;
+    projectId?: string;
+  }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
@@ -46,16 +54,22 @@ export default async function JurnalPage({
   const currentPeriod =
     sp.periodId ?? years[0]?.periods.find((p) => p.status === 'OPEN')?.id;
 
-  const qs = new URLSearchParams();
-  if (currentPeriod) qs.set('periodId', currentPeriod);
-  if (sp.status) qs.set('status', sp.status);
-  const jurnals = await apiFetch<JurnalRow[]>(
-    `/journals${qs.toString() ? '?' + qs : ''}`,
-    { tenantId },
-  );
+  const apiParams = {
+    periodId: currentPeriod,
+    status: sp.status,
+    search: sp.search,
+    cabangId: sp.cabangId,
+    projectId: sp.projectId,
+  };
+  const [jurnals, cabang, projects] = await Promise.all([
+    apiFetch<JurnalRow[]>(buildListHref('/journals', apiParams), { tenantId }),
+    apiFetch<FilterOption[]>('/cabang', { tenantId }).catch(() => [] as FilterOption[]),
+    apiFetch<FilterOption[]>('/projects', { tenantId }).catch(() => [] as FilterOption[]),
+  ]);
+  const isPusat = ['OWNER', 'ADMIN', 'AKUNTAN'].includes(s.role ?? '');
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Jurnal Umum"
@@ -63,7 +77,7 @@ export default async function JurnalPage({
           actions={
             <>
               <a
-                href={`/proxy/journals/export.xlsx${qs.toString() ? '?' + qs : ''}`}
+                href={buildListHref('/proxy/journals/export.xlsx', apiParams)}
                 className={buttonClass('success')}
               >
                 Export Excel
@@ -76,6 +90,9 @@ export default async function JurnalPage({
         />
 
         <form className={filterBarClass}>
+          <div className="flex-1 min-w-[170px]">
+            <Input name="search" defaultValue={sp.search ?? ''} placeholder="Cari no. jurnal / deskripsi…" aria-label="Cari" />
+          </div>
           <FilterLabel>Periode</FilterLabel>
           <Select name="periodId" defaultValue={currentPeriod} fullWidth={false}>
             {years[0]?.periods.map((p) => (
@@ -91,6 +108,28 @@ export default async function JurnalPage({
             <option value="POSTED">POSTED</option>
             <option value="REVERSED">REVERSED</option>
           </Select>
+          {isPusat && cabang.length > 1 && (
+            <>
+              <FilterLabel>Cabang</FilterLabel>
+              <Select name="cabangId" defaultValue={sp.cabangId ?? ''} fullWidth={false} className="min-w-[140px]">
+                <option value="">Semua cabang</option>
+                {cabang.map((c) => (
+                  <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
+                ))}
+              </Select>
+            </>
+          )}
+          {projects.length > 0 && (
+            <>
+              <FilterLabel>Proyek</FilterLabel>
+              <Select name="projectId" defaultValue={sp.projectId ?? ''} fullWidth={false} className="min-w-[150px]">
+                <option value="">Semua proyek</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </Select>
+            </>
+          )}
           <Button type="submit" variant="secondary" size="sm" className="ml-auto">Terapkan</Button>
         </form>
 

@@ -31,6 +31,7 @@ interface ListFilter {
   status?: JournalStatus;
   sumber?: JournalSourceInput;
   search?: string;
+  projectId?: string;
 }
 
 /**
@@ -95,6 +96,7 @@ export class JournalsService {
     }
     if (f.status) where.status = f.status;
     if (f.sumber) where.sumber = f.sumber;
+    if (f.projectId) where.lines = { some: { projectId: f.projectId } };
     if (f.search) {
       where.OR = [
         { nomor: { contains: f.search, mode: 'insensitive' } },

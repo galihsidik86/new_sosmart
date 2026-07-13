@@ -52,8 +52,11 @@ export class SalesController {
     @Query('status') status?: InvoiceStatus,
     @Query('customerId') customerId?: string,
     @Query('periodId') periodId?: string,
+    @Query('cabangId') cabangId?: string,
+    @Query('projectId') projectId?: string,
+    @Query('search') search?: string,
   ) {
-    return this.sales.list({ status, customerId, periodId });
+    return this.sales.list({ status, customerId, periodId, cabangId, projectId, search });
   }
 
   @Get('export.xlsx')
@@ -62,9 +65,12 @@ export class SalesController {
     @Query('status') status?: InvoiceStatus,
     @Query('customerId') customerId?: string,
     @Query('periodId') periodId?: string,
+    @Query('cabangId') cabangId?: string,
+    @Query('projectId') projectId?: string,
+    @Query('search') search?: string,
   ) {
     sendXlsx(reply, 'penjualan.xlsx',
-      await this.sales.exportXlsx({ status, customerId, periodId }));
+      await this.sales.exportXlsx({ status, customerId, periodId, cabangId, projectId, search }));
   }
 
   @Get(':id/print.pdf')

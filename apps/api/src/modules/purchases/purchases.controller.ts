@@ -52,8 +52,11 @@ export class PurchasesController {
     @Query('status') status?: InvoiceStatus,
     @Query('vendorId') vendorId?: string,
     @Query('periodId') periodId?: string,
+    @Query('cabangId') cabangId?: string,
+    @Query('projectId') projectId?: string,
+    @Query('search') search?: string,
   ) {
-    return this.purchases.list({ status, vendorId, periodId });
+    return this.purchases.list({ status, vendorId, periodId, cabangId, projectId, search });
   }
 
   @Get('export.xlsx')
@@ -62,9 +65,12 @@ export class PurchasesController {
     @Query('status') status?: InvoiceStatus,
     @Query('vendorId') vendorId?: string,
     @Query('periodId') periodId?: string,
+    @Query('cabangId') cabangId?: string,
+    @Query('projectId') projectId?: string,
+    @Query('search') search?: string,
   ) {
     sendXlsx(reply, 'pembelian.xlsx',
-      await this.purchases.exportXlsx({ status, vendorId, periodId }));
+      await this.purchases.exportXlsx({ status, vendorId, periodId, cabangId, projectId, search }));
   }
 
   @Get(':id/print.pdf')

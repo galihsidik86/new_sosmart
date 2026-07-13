@@ -53,8 +53,9 @@ export class JournalsController {
     @Query('status') status?: JournalStatus,
     @Query('sumber') sumber?: JournalSource,
     @Query('search') search?: string,
+    @Query('projectId') projectId?: string,
   ) {
-    return this.journals.list({ periodId, cabangId, status, sumber, search });
+    return this.journals.list({ periodId, cabangId, status, sumber, search, projectId });
   }
 
   @Get('export.xlsx')
@@ -65,9 +66,10 @@ export class JournalsController {
     @Query('status') status?: JournalStatus,
     @Query('sumber') sumber?: JournalSource,
     @Query('search') search?: string,
+    @Query('projectId') projectId?: string,
   ) {
     sendXlsx(reply, 'jurnal.xlsx',
-      await this.journals.exportXlsx({ periodId, cabangId, status, sumber, search }));
+      await this.journals.exportXlsx({ periodId, cabangId, status, sumber, search, projectId }));
   }
 
   @Get(':id/print.pdf')

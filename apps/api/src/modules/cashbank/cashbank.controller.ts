@@ -38,8 +38,11 @@ export class CashBankController {
     @Query('status') status?: InvoiceStatus,
     @Query('tipe') tipe?: CashBankType,
     @Query('periodId') periodId?: string,
+    @Query('cabangId') cabangId?: string,
+    @Query('projectId') projectId?: string,
+    @Query('search') search?: string,
   ) {
-    sendXlsx(reply, 'kas-bank.xlsx', await this.cb.exportXlsx({ status, tipe, periodId }));
+    sendXlsx(reply, 'kas-bank.xlsx', await this.cb.exportXlsx({ status, tipe, periodId, cabangId, projectId, search }));
   }
 
   @Get()
@@ -47,8 +50,11 @@ export class CashBankController {
     @Query('status') status?: InvoiceStatus,
     @Query('tipe') tipe?: CashBankType,
     @Query('periodId') periodId?: string,
+    @Query('cabangId') cabangId?: string,
+    @Query('projectId') projectId?: string,
+    @Query('search') search?: string,
   ) {
-    return this.cb.list({ status, tipe, periodId });
+    return this.cb.list({ status, tipe, periodId, cabangId, projectId, search });
   }
 
   @Get(':id')

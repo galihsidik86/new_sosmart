@@ -4,6 +4,8 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import { PageContainer, PageHeader, StatusBadge, buttonClass, FilterLabel, DataTable } from '@/components/ui';
+import { ListFilters, type FilterOption } from '@/components/ListFilters';
+import { buildListHref } from '@/lib/list-query';
 
 type Status = 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
 
@@ -24,12 +26,19 @@ interface Row {
 
 export default async function PembelianPage({
   searchParams,
-}: { searchParams: Promise<{ status?: Status }> }) {
+}: {
+  searchParams: Promise<{ status?: Status; search?: string; cabangId?: string; projectId?: string }>;
+}) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
-  const qs = sp.status ? `?status=${sp.status}` : '';
-  const rows = await apiFetch<Row[]>(`/purchase-invoices${qs}`, { tenantId });
+  const apiParams = { status: sp.status, search: sp.search, cabangId: sp.cabangId, projectId: sp.projectId };
+  const [rows, cabang, projects] = await Promise.all([
+    apiFetch<Row[]>(buildListHref('/purchase-invoices', apiParams), { tenantId }),
+    apiFetch<FilterOption[]>('/cabang', { tenantId }).catch(() => [] as FilterOption[]),
+    apiFetch<FilterOption[]>('/projects', { tenantId }).catch(() => [] as FilterOption[]),
+  ]);
+  const isPusat = ['OWNER', 'ADMIN', 'AKUNTAN'].includes(s.role ?? '');
 
   return (
     <>
@@ -39,7 +48,7 @@ export default async function PembelianPage({
           subtitle={`${rows.length} tagihan · vendor PKP → PPN masukan dikreditkan; jasa → potong PPh 23.`}
           actions={
             <>
-              <a href={`/proxy/purchase-invoices/export.xlsx${sp.status ? '?status=' + sp.status : ''}`}
+              <a href={buildListHref('/proxy/purchase-invoices/export.xlsx', apiParams)}
                 className={buttonClass('success')}>
                 Export Excel
               </a>
@@ -50,6 +59,14 @@ export default async function PembelianPage({
           }
         />
 
+        <ListFilters
+          action="/transaksi/pembelian"
+          params={sp}
+          cabang={isPusat && cabang.length > 1 ? cabang : undefined}
+          projects={projects}
+          searchPlaceholder="Cari no. tagihan / faktur vendor / vendor…"
+        />
+
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <FilterLabel>Status</FilterLabel>
           <div className="inline-flex p-1 bg-cream-200 rounded-lg gap-1 flex-wrap">
@@ -58,7 +75,7 @@ export default async function PembelianPage({
               return (
                 <Link
                   key={st || 'all'}
-                  href={st ? `/transaksi/pembelian?status=${st}` : '/transaksi/pembelian'}
+                  href={buildListHref('/transaksi/pembelian', sp, { status: st || undefined })}
                   className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sogan-400 ${
                     active ? 'bg-white text-sogan-500 shadow-xs' : 'text-tanah-500 hover:text-tanah-700'
                   }`}

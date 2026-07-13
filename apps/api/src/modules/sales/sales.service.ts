@@ -52,7 +52,14 @@ export class SalesService {
     private readonly glConfig: GlConfigService,
   ) {}
 
-  async exportXlsx(filter: { status?: InvoiceStatus; customerId?: string; periodId?: string }): Promise<Buffer> {
+  async exportXlsx(filter: {
+    status?: InvoiceStatus;
+    customerId?: string;
+    periodId?: string;
+    cabangId?: string;
+    projectId?: string;
+    search?: string;
+  }): Promise<Buffer> {
     const rows = await this.list(filter);
     return this.excel.buildBuffer(
       'Penjualan',
@@ -80,13 +87,35 @@ export class SalesService {
   // LIST / DETAIL
   // ----------------------------------------------------
 
-  list(filter: { status?: InvoiceStatus; customerId?: string; periodId?: string }) {
+  list(filter: {
+    status?: InvoiceStatus;
+    customerId?: string;
+    periodId?: string;
+    cabangId?: string;
+    projectId?: string;
+    search?: string;
+  }) {
     const where: Prisma.SalesInvoiceWhereInput = {};
     if (filter.status) where.status = filter.status;
     if (filter.customerId) where.customerId = filter.customerId;
     if (filter.periodId) where.fiscalPeriodId = filter.periodId;
-    const scope = this.cabangScope.cabangIdsForWhere();
-    if (scope) where.cabangId = { in: scope };
+    if (filter.cabangId) {
+      this.cabangScope.assertAccess(filter.cabangId);
+      where.cabangId = filter.cabangId;
+    } else {
+      const scope = this.cabangScope.cabangIdsForWhere();
+      if (scope) where.cabangId = { in: scope };
+    }
+    if (filter.projectId) where.lines = { some: { projectId: filter.projectId } };
+    if (filter.search) {
+      const q = filter.search;
+      where.OR = [
+        { nomor: { contains: q, mode: 'insensitive' } },
+        { deskripsi: { contains: q, mode: 'insensitive' } },
+        { customer: { nama: { contains: q, mode: 'insensitive' } } },
+        { customer: { kode: { contains: q, mode: 'insensitive' } } },
+      ];
+    }
     return this.tenancy.run((tx) =>
       tx.salesInvoice.findMany({
         where,
