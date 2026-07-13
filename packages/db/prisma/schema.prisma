@@ -1210,6 +1210,11 @@ model CashBankEntry {
   /// Link optional untuk pelunasan AR/AP.
   salesInvoiceId     String?       @map("sales_invoice_id") @db.Uuid
   purchaseInvoiceId  String?       @map("purchase_invoice_id") @db.Uuid
+  /// PPh 23 yang dipotong pelanggan saat pelunasan piutang JKP (hanya RECEIPT).
+  /// Kas masuk = total − pph23Dipotong; sisanya dibukukan ke PPh 23 Dibayar Dimuka.
+  pph23Dipotong      Decimal       @default(0) @map("pph23_dipotong") @db.Decimal(20, 2)
+  /// Nomor bukti potong PPh 23 yang diterima dari pelanggan (arsip pajak).
+  noBuktiPotong      String?       @map("no_bukti_potong")
 
   journalId              String?   @unique @map("journal_id") @db.Uuid
   postedAt               DateTime? @map("posted_at")

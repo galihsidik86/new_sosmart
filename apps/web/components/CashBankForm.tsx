@@ -34,6 +34,8 @@ export interface CashBankDefaultValues {
   linkBukti?: string;
   salesInvoiceId?: string;
   purchaseInvoiceId?: string;
+  pph23Dipotong?: string;
+  noBuktiPotong?: string;
   lines: Line[];
 }
 
@@ -67,6 +69,8 @@ export function CashBankForm({
   const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
   const [salesInvoiceId, setSalesInvoiceId] = useState(defaultValues?.salesInvoiceId ?? '');
   const [purchaseInvoiceId, setPurchaseInvoiceId] = useState(defaultValues?.purchaseInvoiceId ?? '');
+  const [pph23Dipotong, setPph23Dipotong] = useState(defaultValues?.pph23Dipotong ?? '0');
+  const [noBuktiPotong, setNoBuktiPotong] = useState(defaultValues?.noBuktiPotong ?? '');
   const [lines, setLines] = useState<Line[]>(
     defaultValues?.lines ?? [{ accountId: '', projectId: '', nilai: '0', deskripsi: '' }],
   );
@@ -143,6 +147,15 @@ export function CashBankForm({
     if (tipe === 'TRANSFER') payload.akunKasBankLawanId = akunKasBankLawanId;
     if (salesInvoiceId) payload.salesInvoiceId = salesInvoiceId;
     if (purchaseInvoiceId) payload.purchaseInvoiceId = purchaseInvoiceId;
+    const pph = Number(pph23Dipotong || 0);
+    if (tipe === 'RECEIPT' && pph > 0) {
+      if (pph >= totalNum) {
+        setError('PPh 23 dipotong harus lebih kecil dari total.');
+        return;
+      }
+      payload.pph23Dipotong = String(pph);
+      payload.noBuktiPotong = noBuktiPotong || undefined;
+    }
 
     const fd = new FormData();
     fd.append('payload', JSON.stringify(payload));
@@ -203,6 +216,29 @@ export function CashBankForm({
           <FormField label="Total (Rp)">
             <Input numeric type="number" min={0} step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} required />
           </FormField>
+          {tipe === 'RECEIPT' && (
+            <>
+              <FormField label="PPh 23 dipotong pelanggan (Rp)">
+                <Input numeric type="number" min={0} step="0.01" value={pph23Dipotong}
+                  onChange={(e) => setPph23Dipotong(e.target.value)} />
+              </FormField>
+              {Number(pph23Dipotong) > 0 && (
+                <FormField label="No. Bukti Potong">
+                  <Input type="text" value={noBuktiPotong}
+                    onChange={(e) => setNoBuktiPotong(e.target.value)} placeholder="No. bukti potong dari pelanggan" />
+                </FormField>
+              )}
+              {Number(pph23Dipotong) > 0 && (
+                <div className="col-span-full text-xs text-tanah-600 bg-cream-100 border border-cream-200 rounded-lg px-3 py-2">
+                  Kas masuk bersih:{' '}
+                  <b className="font-mono tabular-nums">Rp {(totalNum - Number(pph23Dipotong || 0)).toLocaleString('id-ID')}</b>
+                  {' '}· PPh 23{' '}
+                  <b className="font-mono tabular-nums">Rp {Number(pph23Dipotong || 0).toLocaleString('id-ID')}</b>
+                  {' '}dibukukan ke <b>PPh 23 Dibayar Dimuka</b> (kredit pajak). Piutang tetap lunas penuh.
+                </div>
+              )}
+            </>
+          )}
           <FormField label="Kontak (pihak transaksi)" className="col-span-full sm:col-span-2">
             <Input type="text" value={kontak} onChange={(e) => setKontak(e.target.value)} placeholder="(opsional)" />
           </FormField>

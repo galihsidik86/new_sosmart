@@ -31,6 +31,8 @@ interface Detail {
   linkBukti: string | null;
   salesInvoiceId: string | null;
   purchaseInvoiceId: string | null;
+  pph23Dipotong: string | null;
+  noBuktiPotong: string | null;
   status: 'DRAFT' | 'POSTED' | 'CANCELLED';
   lines: Array<{
     no: number; accountId: string; projectId: string | null; nilai: string; deskripsi: string | null;
@@ -79,7 +81,7 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
   }
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader title="Edit Draft Bukti Kas/Bank" />
         <CashBankForm
@@ -101,6 +103,8 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
             linkBukti: e.linkBukti ?? '',
             salesInvoiceId: e.salesInvoiceId ?? '',
             purchaseInvoiceId: e.purchaseInvoiceId ?? '',
+            pph23Dipotong: e.pph23Dipotong ?? '0',
+            noBuktiPotong: e.noBuktiPotong ?? '',
             lines: e.lines
               .sort((a, b) => a.no - b.no)
               .map((l) => ({

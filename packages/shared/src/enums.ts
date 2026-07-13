@@ -164,6 +164,12 @@ export const GlConfigKey = {
   /** Persediaan Barang Dagang (default 1-104) — dipakai prosedur Saldo Awal Terintegrasi. */
   PERSEDIAAN: 'PERSEDIAAN',
   /**
+   * PPh 23 Dibayar Dimuka / Kredit Pajak (default 1-107) — aset. Dipakai saat
+   * penerimaan kas/bank melunasi piutang JKP yang PPh 23-nya dipotong pelanggan:
+   * Dr Kas (net) + Dr akun ini (PPh 23) · Cr Piutang (penuh).
+   */
+  PPH23_DIBAYAR_DIMUKA: 'PPH23_DIBAYAR_DIMUKA',
+  /**
    * Akun kliring "Saldo Awal — Ekuitas Kliring" (default 3-105, kode BARU —
    * tidak ada di template COA lama). Lawan-transaksi untuk SEMUA entri
    * prosedur Saldo Awal Terintegrasi; saldonya harus nol kalau input lengkap
@@ -189,5 +195,6 @@ export const GL_CONFIG_DEFAULTS: Record<GlConfigKey, string> = {
   PIUTANG_USAHA: '1-103',
   UTANG_USAHA: '2-101',
   PERSEDIAAN: '1-104',
+  PPH23_DIBAYAR_DIMUKA: '1-107',
   SALDO_AWAL_KLIRING: '3-105',
 };

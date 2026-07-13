@@ -18,6 +18,8 @@ import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { validateRequestedBy } from '../../common/tenancy/step-up.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
+import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
+import { GlConfigKey } from '@lentera/shared/enums';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 
@@ -43,6 +45,7 @@ export class CashBankService {
     private readonly journals: JournalsService,
     private readonly excel: ExcelService,
     private readonly cabangScope: CabangScopeService,
+    private readonly glConfig: GlConfigService,
   ) {}
 
   async exportXlsx(filter: {
@@ -183,6 +186,8 @@ export class CashBankService {
           linkBukti: input.linkBukti ?? null,
           salesInvoiceId: input.salesInvoiceId,
           purchaseInvoiceId: input.purchaseInvoiceId,
+          pph23Dipotong: new Decimal(input.pph23Dipotong ?? '0').toFixed(2),
+          noBuktiPotong: input.noBuktiPotong ?? null,
           status: InvoiceStatus.DRAFT,
           createdById: userId,
           lines: {
@@ -249,6 +254,8 @@ export class CashBankService {
           linkBukti: input.linkBukti ?? null,
           salesInvoiceId: input.salesInvoiceId,
           purchaseInvoiceId: input.purchaseInvoiceId,
+          pph23Dipotong: new Decimal(input.pph23Dipotong ?? '0').toFixed(2),
+          noBuktiPotong: input.noBuktiPotong ?? null,
           lines: {
             create: input.lines.map((l, i) => ({
               tenantId,
@@ -300,13 +307,29 @@ export class CashBankService {
       }> = [];
 
       if (e.tipe === CashBankType.RECEIPT) {
-        // Debit kas/bank, kredit per akun lawan
+        // Debit kas/bank (= total − PPh 23 dipotong pelanggan), kredit per akun lawan.
+        const pph23 = new Decimal(e.pph23Dipotong);
         lines.push({
           accountId: e.akunKasBankId,
-          debit: total.toFixed(2),
+          debit: total.minus(pph23).toFixed(2),
           kredit: '0',
           deskripsi: e.kontak ?? 'Penerimaan kas/bank',
         });
+        // PPh 23 dipotong pelanggan pada pelunasan piutang JKP → dibukukan
+        // sebagai kredit pajak (aset "PPh 23 Dibayar Dimuka"), bukan mengurangi
+        // pelunasan piutang. Piutang tetap lunas penuh (Cr sebesar total).
+        if (pph23.gt(0)) {
+          const akunPph23Id = await this.glConfig.getAccountIdInTx(
+            tx,
+            GlConfigKey.PPH23_DIBAYAR_DIMUKA,
+          );
+          lines.push({
+            accountId: akunPph23Id,
+            debit: pph23.toFixed(2),
+            kredit: '0',
+            deskripsi: `PPh 23 dipotong pelanggan${e.noBuktiPotong ? ` — ${e.noBuktiPotong}` : ''}`,
+          });
+        }
         for (const l of e.lines) {
           lines.push({
             accountId: l.accountId,

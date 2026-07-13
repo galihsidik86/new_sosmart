@@ -436,9 +436,21 @@ export const createCashBankInputSchema = z.object({
   /// Optional: link pelunasan ke faktur.
   salesInvoiceId: z.string().uuid().optional(),
   purchaseInvoiceId: z.string().uuid().optional(),
+  /// PPh 23 dipotong pelanggan saat pelunasan piutang JKP (hanya RECEIPT).
+  /// Kas masuk = total − pph23Dipotong; sisanya ke PPh 23 Dibayar Dimuka.
+  pph23Dipotong: lineMoney.optional(),
+  /// Nomor bukti potong PPh 23 dari pelanggan (arsip).
+  noBuktiPotong: z.string().max(100).optional(),
 }).refine(
   (v) => v.tipe === 'TRANSFER' ? !!v.akunKasBankLawanId : v.lines.length > 0,
   'TRANSFER butuh akunKasBankLawanId; RECEIPT/PAYMENT butuh ≥1 baris.',
+).refine(
+  (v) => {
+    const pph = Number(v.pph23Dipotong ?? 0);
+    if (pph <= 0) return true;
+    return v.tipe === 'RECEIPT' && pph < Number(v.total);
+  },
+  'PPh 23 dipotong hanya untuk penerimaan (RECEIPT) dan harus lebih kecil dari total.',
 );
 export type CreateCashBankInput = z.infer<typeof createCashBankInputSchema>;
 
