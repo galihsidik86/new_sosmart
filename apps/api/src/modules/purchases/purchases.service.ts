@@ -53,6 +53,7 @@ export class PurchasesService {
     periodId?: string;
     cabangId?: string;
     projectId?: string;
+    industriId?: string;
     search?: string;
   }): Promise<Buffer> {
     const rows = await this.list(filter);
@@ -86,6 +87,7 @@ export class PurchasesService {
     periodId?: string;
     cabangId?: string;
     projectId?: string;
+    industriId?: string;
     search?: string;
   }) {
     const where: Prisma.PurchaseInvoiceWhereInput = {};

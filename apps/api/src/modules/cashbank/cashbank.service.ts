@@ -54,6 +54,7 @@ export class CashBankService {
     periodId?: string;
     cabangId?: string;
     projectId?: string;
+    industriId?: string;
     search?: string;
   }): Promise<Buffer> {
     const rows = await this.list(filter);
@@ -82,6 +83,7 @@ export class CashBankService {
     periodId?: string;
     cabangId?: string;
     projectId?: string;
+    industriId?: string;
     search?: string;
   }) {
     const where: Prisma.CashBankEntryWhereInput = {};
