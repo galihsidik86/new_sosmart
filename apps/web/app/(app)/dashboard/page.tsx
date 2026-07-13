@@ -134,7 +134,7 @@ export default async function Dashboard() {
                     <Card className="h-full transition duration-fast ease-sembada group-hover:shadow-md group-hover:border-sogan-200">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="font-display text-lg font-semibold text-wedel-900 leading-tight truncate">{ind.nama}</div>
+                          <div className="font-display text-lg font-semibold text-wedel-900 leading-tight line-clamp-2">{ind.nama}</div>
                           <div className="text-xs text-tanah-500 mt-0.5">{ind.count} project</div>
                         </div>
                         <Badge variant={ind.laba < 0 ? 'danger' : 'success'} size="sm">
