@@ -25,6 +25,7 @@ import {
   PtkpStatus,
   JenisKaryawan,
 } from '@prisma/client';
+import { deriveKlasifikasiNeraca, deriveIsKasSetara } from '@lentera/shared/enums';
 import argon2 from 'argon2';
 
 const prisma = new PrismaClient();
@@ -181,6 +182,8 @@ async function seedCoa(tenantId: string) {
 
   const insertNode = async (node: CoaNode, parentKode?: string): Promise<void> => {
     const isPostable = node.postable ?? !node.children;
+    const klasifikasiNeraca = deriveKlasifikasiNeraca(node.kind, node.kode);
+    const isKasSetara = deriveIsKasSetara(node.kode);
     const acct = await prisma.account.upsert({
       where: { tenantId_kode: { tenantId, kode: node.kode } },
       create: {
@@ -192,6 +195,8 @@ async function seedCoa(tenantId: string) {
         normalBalance: node.normal,
         isPostable,
         saldoAwal: node.saldoAwal ?? '0',
+        klasifikasiNeraca,
+        isKasSetara,
       },
       update: {
         nama: node.nama,
@@ -199,6 +204,8 @@ async function seedCoa(tenantId: string) {
         normalBalance: node.normal,
         isPostable,
         parentId: parentKode ? map.get(parentKode) : null,
+        klasifikasiNeraca,
+        isKasSetara,
       },
     });
     map.set(node.kode, acct.id);

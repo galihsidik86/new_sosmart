@@ -23,6 +23,10 @@ interface Account {
   parentId: string | null;
   saldoAwal: string;
   catatan: string | null;
+  klasifikasiNeraca:
+    | 'ASET_LANCAR' | 'ASET_TETAP' | 'LIABILITAS_PENDEK' | 'LIABILITAS_PANJANG'
+    | null;
+  isKasSetara: boolean;
 }
 interface FlatAccount {
   id: string; kode: string; nama: string; parentId: string | null;
@@ -44,6 +48,8 @@ async function updateAccount(formData: FormData) {
       isActive: formData.get('isActive') === 'on',
       saldoAwal: String(formData.get('saldoAwal') ?? '0'),
       catatan: (formData.get('catatan') as string) || null,
+      klasifikasiNeraca: (formData.get('klasifikasiNeraca') as string) || null,
+      isKasSetara: formData.get('isKasSetara') === 'on',
     }),
   });
   revalidatePath('/pembukuan/coa');
@@ -64,7 +70,7 @@ export default async function CoaEditPage({ params }: { params: Promise<{ id: st
   const parentOptions = all.filter((x) => x.id !== id);
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <Link href="/pembukuan/coa" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader
@@ -97,11 +103,38 @@ export default async function CoaEditPage({ params }: { params: Promise<{ id: st
                 ))}
               </Select>
             </FormField>
+            {(a.kind === 'ASET' || a.kind === 'LIABILITAS') && (
+              <FormField
+                label="Klasifikasi Neraca"
+                hint="Menentukan pengelompokan di laporan Neraca & Arus Kas — bukan lagi dari kode akun."
+              >
+                <Select name="klasifikasiNeraca" defaultValue={a.klasifikasiNeraca ?? ''}>
+                  <option value="">— (ikuti konvensi kode)</option>
+                  {a.kind === 'ASET' ? (
+                    <>
+                      <option value="ASET_LANCAR">Aset Lancar</option>
+                      <option value="ASET_TETAP">Aset Tetap</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="LIABILITAS_PENDEK">Liabilitas Jangka Pendek</option>
+                      <option value="LIABILITAS_PANJANG">Liabilitas Jangka Panjang</option>
+                    </>
+                  )}
+                </Select>
+              </FormField>
+            )}
             <div className="flex gap-6 pt-1">
               <label className="flex items-center gap-2 text-sm text-tanah-700">
                 <input type="checkbox" name="isPostable" defaultChecked={a.isPostable} />
                 Postable (bisa dijurnal)
               </label>
+              {a.kind === 'ASET' && (
+                <label className="flex items-center gap-2 text-sm text-tanah-700">
+                  <input type="checkbox" name="isKasSetara" defaultChecked={a.isKasSetara} />
+                  Kas &amp; setara kas
+                </label>
+              )}
               <label className="flex items-center gap-2 text-sm text-tanah-700">
                 <input type="checkbox" name="isActive" defaultChecked={a.isActive} />
                 Aktif

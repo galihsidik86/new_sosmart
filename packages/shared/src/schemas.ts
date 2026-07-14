@@ -302,6 +302,13 @@ export const updateAccountInputSchema = z.object({
   isActive: z.boolean(),
   saldoAwal: z.union([z.number(), z.string()]).transform((v) => String(v)),
   catatan: z.string().max(500).nullable().optional(),
+  /** Klasifikasi Neraca (lancar/tetap, pendek/panjang). null → laporan fallback prefix. */
+  klasifikasiNeraca: z
+    .enum(['ASET_LANCAR', 'ASET_TETAP', 'LIABILITAS_PENDEK', 'LIABILITAS_PANJANG'])
+    .nullable()
+    .optional(),
+  /** Kas & setara kas (untuk laporan Arus Kas). */
+  isKasSetara: z.boolean().optional(),
 });
 export type UpdateAccountInput = z.infer<typeof updateAccountInputSchema>;
 

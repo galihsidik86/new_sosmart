@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import type { UpdateAccountInput } from '@lentera/shared/schemas';
+import { deriveKlasifikasiNeraca, deriveIsKasSetara } from '@lentera/shared/enums';
 import { Prisma, AccountKind, NormalBalance } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
@@ -93,6 +94,10 @@ export class AccountsService {
                 String(row['Aktif'] ?? 'Ya').toLowerCase().trim()),
               saldoAwal: String(Number(row['Saldo Awal'] ?? 0)),
               catatan: String(row['Catatan'] ?? '').trim() || null,
+              // Bootstrap klasifikasi dari konvensi prefix (bisa disunting nanti
+              // di edit akun). Supaya akun impor baru tidak null di laporan.
+              klasifikasiNeraca: deriveKlasifikasiNeraca(kindRaw, kode),
+              isKasSetara: deriveIsKasSetara(kode),
             },
             select: { id: true, kode: true },
           });
@@ -286,6 +291,12 @@ export class AccountsService {
           isActive: input.isActive,
           saldoAwal: input.saldoAwal,
           catatan: input.catatan ?? null,
+          ...(input.klasifikasiNeraca !== undefined
+            ? { klasifikasiNeraca: input.klasifikasiNeraca }
+            : {}),
+          ...(input.isKasSetara !== undefined
+            ? { isKasSetara: input.isKasSetara }
+            : {}),
         },
       });
     });

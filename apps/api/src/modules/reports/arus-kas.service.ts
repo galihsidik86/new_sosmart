@@ -4,6 +4,7 @@ import { AccountKind, JournalStatus } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
+import { deriveIsKasSetara } from '@lentera/shared/enums';
 import { aggregateAllAccounts, mutasiSigned, plKindContribution, saldoAkhirSigned } from './helpers.js';
 import { JOURNAL_BALANCE_STATUSES } from '../../common/gl/journal-balance-statuses.js';
 
@@ -128,6 +129,12 @@ export class ArusKasService {
       const idModal = await this.glConfig.getAccountIdInTx(tx, 'MODAL_DISETOR');
       const idLabaDitahan = await this.glConfig.getAccountIdInTx(tx, 'LABA_DITAHAN');
       const idDividen = await this.glConfig.getAccountIdInTx(tx, 'DIVIDEN');
+      // Utang Bank: pakai key config kalau ada; kalau akun-nya memang tidak ada,
+      // pertahankan perilaku lama (delta 0) alih-alih throw.
+      let idUtangBank: string | null = null;
+      try {
+        idUtangBank = await this.glConfig.getAccountIdInTx(tx, 'UTANG_BANK');
+      } catch { /* akun utang bank belum ada → kontribusi 0 */ }
 
       // === Helper: nilai mutasi akun signed (saldo normal positif) ===
       const mut = (kode: string) => {
@@ -221,7 +228,7 @@ export class ArusKasService {
       const totalInvestasi = investasi.reduce((a, r) => a.plus(new Decimal(r.nilai)), new Decimal(0));
 
       // === Pendanaan ===
-      const dUtangBank = mut('2-201');
+      const dUtangBank = idUtangBank ? mutById(idUtangBank) : new Decimal(0);
       const dModal = mutById(idModal);
       const dSaldoLaba = mutById(idLabaDitahan); // biasanya dari closing entry — bisa diabaikan untuk YTD
       const dDividen = mutById(idDividen).negated(); // saldo normal debit → mutasi positif = pembagian dividen (keluar kas)
@@ -235,11 +242,13 @@ export class ArusKasService {
 
       const kenaikanKas = totalOperasi.plus(totalInvestasi).plus(totalPendanaan);
 
-      // === Kas Awal & Kas Akhir (gabungan Kas + Bank: 1-101 + 1-102*) ===
-      // Saldo akhir periode untuk Kas (1-101) dan Bank (1-102x).
-      const kasAccounts = [...result.accounts.values()].filter(
-        (a) => a.kode === '1-101' || a.kode.startsWith('1-102'),
-      );
+      // === Kas Awal & Kas Akhir (semua akun kas & setara kas) ===
+      // Sumber: field Account.isKasSetara. Fallback ke konvensi prefix HANYA
+      // kalau belum ada satupun akun ditandai (data lama belum ter-backfill).
+      let kasAccounts = [...result.accounts.values()].filter((a) => a.isKasSetara);
+      if (kasAccounts.length === 0) {
+        kasAccounts = [...result.accounts.values()].filter((a) => deriveIsKasSetara(a.kode));
+      }
       let kasAwal = new Decimal(0);
       let kasAkhir = new Decimal(0);
       for (const acc of kasAccounts) {
@@ -312,9 +321,10 @@ export class ArusKasService {
         allowedCabangIds: scope,
         projectId: opts.projectId,
       });
-      const kasAccounts = [...result.accounts.values()].filter(
-        (a) => a.kode.startsWith('1-101') || a.kode.startsWith('1-102'),
-      );
+      let kasAccounts = [...result.accounts.values()].filter((a) => a.isKasSetara);
+      if (kasAccounts.length === 0) {
+        kasAccounts = [...result.accounts.values()].filter((a) => deriveIsKasSetara(a.kode));
+      }
       const kasIds = kasAccounts.map((a) => a.id);
       let kasAwal = new Decimal(0);
       for (const acc of kasAccounts) {

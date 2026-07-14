@@ -157,6 +157,8 @@ export const GlConfigKey = {
   DIVIDEN: 'DIVIDEN',
   /** Beban Penyusutan (default 6-103) — untuk add-back arus kas. */
   BEBAN_PENYUSUTAN: 'BEBAN_PENYUSUTAN',
+  /** Utang Bank / pinjaman jangka panjang (default 2-201) — arus kas pendanaan. */
+  UTANG_BANK: 'UTANG_BANK',
   /** Piutang Usaha (default 1-103) — dipakai prosedur Saldo Awal Terintegrasi. */
   PIUTANG_USAHA: 'PIUTANG_USAHA',
   /** Utang Usaha (default 2-101) — dipakai prosedur Saldo Awal Terintegrasi. */
@@ -192,9 +194,51 @@ export const GL_CONFIG_DEFAULTS: Record<GlConfigKey, string> = {
   LABA_DITAHAN: '3-102',
   DIVIDEN: '3-104',
   BEBAN_PENYUSUTAN: '6-103',
+  UTANG_BANK: '2-201',
   PIUTANG_USAHA: '1-103',
   UTANG_USAHA: '2-101',
   PERSEDIAAN: '1-104',
+  UTANG_BANK: '2-201',
   PPH23_DIBAYAR_DIMUKA: '1-107',
   SALDO_AWAL_KLIRING: '3-105',
 };
+
+/**
+ * Klasifikasi akun di Neraca (current vs non-current). Disimpan sebagai field
+ * di `Account` supaya laporan TIDAK lagi menebak dari prefix kode COA — kalau
+ * tenant menata ulang kode, klasifikasi ikut akun (data), bukan diam-diam salah.
+ * Hanya relevan untuk kind ASET & LIABILITAS; EKUITAS/PENDAPATAN/BEBAN
+ * dikelompokkan langsung dari `kind`.
+ */
+export const KlasifikasiNeraca = {
+  ASET_LANCAR: 'ASET_LANCAR',
+  ASET_TETAP: 'ASET_TETAP',
+  LIABILITAS_PENDEK: 'LIABILITAS_PENDEK',
+  LIABILITAS_PANJANG: 'LIABILITAS_PANJANG',
+} as const;
+export type KlasifikasiNeraca =
+  (typeof KlasifikasiNeraca)[keyof typeof KlasifikasiNeraca];
+
+/**
+ * Bootstrap klasifikasi dari konvensi prefix seed (1-2x = tetap, 2-2x = panjang).
+ * Dipakai SATU KALI saat migrasi/seed/import untuk mengisi field; laporan
+ * setelah itu membaca field-nya. Juga dipakai sebagai fallback defensif di
+ * laporan bila field masih null (mis. data lama belum ter-backfill).
+ */
+export function deriveKlasifikasiNeraca(
+  kind: string,
+  kode: string,
+): KlasifikasiNeraca | null {
+  if (kind === 'ASET') {
+    return kode.startsWith('1-2') ? 'ASET_TETAP' : 'ASET_LANCAR';
+  }
+  if (kind === 'LIABILITAS') {
+    return kode.startsWith('2-2') ? 'LIABILITAS_PANJANG' : 'LIABILITAS_PENDEK';
+  }
+  return null;
+}
+
+/** Bootstrap flag kas & setara kas dari konvensi seed (Kas 1-101, Bank 1-102x). */
+export function deriveIsKasSetara(kode: string): boolean {
+  return kode === '1-101' || kode.startsWith('1-102');
+}

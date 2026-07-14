@@ -7,9 +7,11 @@
 import { Decimal } from 'decimal.js';
 import {
   AccountKind,
+  KlasifikasiNeraca,
   NormalBalance,
   Prisma,
 } from '@lentera/db';
+import { deriveKlasifikasiNeraca } from '@lentera/shared/enums';
 import { JOURNAL_BALANCE_STATUSES } from '../../common/gl/journal-balance-statuses.js';
 
 export interface AggregatedAccount {
@@ -20,6 +22,8 @@ export interface AggregatedAccount {
   normalBalance: NormalBalance;
   parentId: string | null;
   saldoAwalAkun: Decimal;
+  klasifikasiNeraca: KlasifikasiNeraca | null;
+  isKasSetara: boolean;
   sumDebit: Decimal;
   sumKredit: Decimal;
 }
@@ -61,6 +65,7 @@ export async function aggregateAllAccounts(
     select: {
       id: true, kode: true, nama: true, kind: true,
       normalBalance: true, parentId: true, saldoAwal: true,
+      klasifikasiNeraca: true, isKasSetara: true,
     },
     orderBy: { kode: 'asc' },
   });
@@ -71,6 +76,8 @@ export async function aggregateAllAccounts(
       id: a.id, kode: a.kode, nama: a.nama, kind: a.kind,
       normalBalance: a.normalBalance, parentId: a.parentId,
       saldoAwalAkun: new Decimal(a.saldoAwal),
+      klasifikasiNeraca: a.klasifikasiNeraca,
+      isKasSetara: a.isKasSetara,
       sumDebit: new Decimal(0),
       sumKredit: new Decimal(0),
     });
@@ -176,16 +183,25 @@ export function saldoAkhirSigned(
 }
 
 /**
- * Klasifikasi neraca (lancar/tetap, jangka pendek/panjang) berbasis kode COA.
- * Konvensi seed: 1-1xx = lancar, 1-2xx = tetap; 2-1xx = pendek, 2-2xx = panjang.
- * Kalau tenant kustom COA-nya di luar konvensi ini, laporan Neraca akan salah
- * kelompok — pertimbangkan tambah field `klasifikasiNeraca` di Account (roadmap).
+ * Klasifikasi neraca (lancar/tetap, jangka pendek/panjang).
+ * Sumber utama: field `Account.klasifikasiNeraca` (data, ikut akun walau kode
+ * ditata ulang). Fallback ke konvensi prefix HANYA kalau field masih null
+ * (mis. data lama belum ter-backfill) — defensif, bukan jalur normal.
  */
-export function klasifikasiAset(kode: string): 'LANCAR' | 'TETAP' {
-  return kode.startsWith('1-2') ? 'TETAP' : 'LANCAR';
+export function klasifikasiAset(acc: {
+  kode: string;
+  klasifikasiNeraca: KlasifikasiNeraca | null;
+}): 'LANCAR' | 'TETAP' {
+  const k = acc.klasifikasiNeraca ?? deriveKlasifikasiNeraca('ASET', acc.kode);
+  return k === 'ASET_TETAP' ? 'TETAP' : 'LANCAR';
 }
-export function klasifikasiLiabilitas(kode: string): 'PENDEK' | 'PANJANG' {
-  return kode.startsWith('2-2') ? 'PANJANG' : 'PENDEK';
+export function klasifikasiLiabilitas(acc: {
+  kode: string;
+  klasifikasiNeraca: KlasifikasiNeraca | null;
+}): 'PENDEK' | 'PANJANG' {
+  const k =
+    acc.klasifikasiNeraca ?? deriveKlasifikasiNeraca('LIABILITAS', acc.kode);
+  return k === 'LIABILITAS_PANJANG' ? 'PANJANG' : 'PENDEK';
 }
 
 /**

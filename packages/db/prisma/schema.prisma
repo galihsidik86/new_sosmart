@@ -46,6 +46,13 @@ enum NormalBalance {
   KREDIT
 }
 
+enum KlasifikasiNeraca {
+  ASET_LANCAR
+  ASET_TETAP
+  LIABILITAS_PENDEK
+  LIABILITAS_PANJANG
+}
+
 enum PpnSkema {
   EFEKTIF_11
   EFEKTIF_12
@@ -453,6 +460,12 @@ model Account {
   /// Akun postable (hanya leaf yang boleh dijurnal); parent = false.
   isPostable    Boolean       @default(true) @map("is_postable")
   isActive      Boolean       @default(true) @map("is_active")
+  /// Klasifikasi Neraca (lancar/tetap, pendek/panjang). Dibaca laporan Neraca
+  /// & Arus Kas — bukan lagi ditebak dari prefix kode. Null → laporan fallback
+  /// ke konvensi prefix. Hanya relevan untuk kind ASET & LIABILITAS.
+  klasifikasiNeraca KlasifikasiNeraca? @map("klasifikasi_neraca")
+  /// Kas & setara kas. Dipakai laporan Arus Kas untuk menentukan saldo kas.
+  isKasSetara   Boolean       @default(false) @map("is_kas_setara")
   /// Saldo awal periode pertama (opsional, dipakai saat onboarding).
   saldoAwal     Decimal       @default(0) @map("saldo_awal") @db.Decimal(20, 2)
   catatan       String?

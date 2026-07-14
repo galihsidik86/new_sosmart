@@ -181,7 +181,7 @@ export class NeracaService {
         id: acc.id, kode: acc.kode, nama: acc.nama, nilai: saldo.toFixed(2),
       };
       if (acc.kind === AccountKind.ASET) {
-        if (klasifikasiAset(acc.kode) === 'TETAP') {
+        if (klasifikasiAset(acc) === 'TETAP') {
           rows.asetTetap.push(row);
           totals.asetTetap = totals.asetTetap.plus(saldo);
         } else {
@@ -189,7 +189,7 @@ export class NeracaService {
           totals.asetLancar = totals.asetLancar.plus(saldo);
         }
       } else if (acc.kind === AccountKind.LIABILITAS) {
-        if (klasifikasiLiabilitas(acc.kode) === 'PANJANG') {
+        if (klasifikasiLiabilitas(acc) === 'PANJANG') {
           rows.liabPanjang.push(row);
           totals.liabPanjang = totals.liabPanjang.plus(saldo);
         } else {
