@@ -71,6 +71,8 @@ export function CashBankForm({
   const [purchaseInvoiceId, setPurchaseInvoiceId] = useState(defaultValues?.purchaseInvoiceId ?? '');
   const [pph23Dipotong, setPph23Dipotong] = useState(defaultValues?.pph23Dipotong ?? '0');
   const [noBuktiPotong, setNoBuktiPotong] = useState(defaultValues?.noBuktiPotong ?? '');
+  // Project di level header — berlaku untuk seluruh baris alokasi.
+  const [projectId, setProjectId] = useState(defaultValues?.lines?.[0]?.projectId ?? '');
   const [lines, setLines] = useState<Line[]>(
     defaultValues?.lines ?? [{ accountId: '', projectId: '', nilai: '0', deskripsi: '' }],
   );
@@ -139,7 +141,7 @@ export function CashBankForm({
       linkBukti: linkBukti.trim() || null,
       lines: tipe === 'TRANSFER' ? [] : lines.map((l) => ({
         accountId: l.accountId,
-        projectId: l.projectId || null,
+        projectId: projectId || null,
         nilai: l.nilai,
         deskripsi: l.deskripsi || undefined,
       })),
@@ -239,6 +241,16 @@ export function CashBankForm({
               )}
             </>
           )}
+          {showProjects && tipe !== 'TRANSFER' && (
+            <FormField label="Project">
+              <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+                <option value="">— tanpa project —</option>
+                {projects!.map((p) => (
+                  <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </Select>
+            </FormField>
+          )}
           <FormField label="Kontak (pihak transaksi)" className="col-span-full sm:col-span-2">
             <Input type="text" value={kontak} onChange={(e) => setKontak(e.target.value)} placeholder="(opsional)" />
           </FormField>
@@ -285,7 +297,6 @@ export function CashBankForm({
               <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
                 <th className="px-3 py-2 font-bold w-8">#</th>
                 <th className="px-3 py-2 font-bold">Akun Lawan</th>
-                {showProjects && <th className="px-3 py-2 font-bold w-36">Project</th>}
                 <th className="px-3 py-2 font-bold">Keterangan</th>
                 <th className="px-3 py-2 font-bold text-right w-44">Nilai</th>
                 <th className="w-6" />
@@ -305,17 +316,6 @@ export function CashBankForm({
                       ))}
                     </select>
                   </td>
-                  {showProjects && (
-                    <td className="px-3 py-1.5">
-                      <select value={l.projectId} onChange={(e) => updLine(i, { projectId: e.target.value })}
-                        className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded text-sm">
-                        <option value="">—</option>
-                        {projects!.map((p) => (
-                          <option key={p.id} value={p.id}>{p.kode}</option>
-                        ))}
-                      </select>
-                    </td>
-                  )}
                   <td className="px-3 py-1.5">
                     <input type="text" value={l.deskripsi} onChange={(e) => updLine(i, { deskripsi: e.target.value })}
                       className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded text-sm" />
@@ -335,7 +335,7 @@ export function CashBankForm({
             </tbody>
             <tfoot className="bg-cream-50 font-bold text-tanah-700">
               <tr>
-                <td colSpan={showProjects ? 4 : 3} className="px-3 py-2">
+                <td colSpan={3} className="px-3 py-2">
                   <Button type="button" variant="secondary" size="sm" onClick={addLine}>+ Tambah baris</Button>
                 </td>
                 <td className="px-3 py-2 text-right font-mono tabular-nums">

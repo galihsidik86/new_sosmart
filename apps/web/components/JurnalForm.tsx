@@ -84,6 +84,9 @@ export function JurnalForm({
   const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
   const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
   const [cabangId, setCabangId] = useState(defaultValues?.cabangId ?? cabang[0]?.id ?? '');
+  // Project di header = default untuk semua baris. Jurnal (mis. alokasi lintas
+  // project) tetap boleh override per baris di kolom Project.
+  const [projectId, setProjectId] = useState(defaultValues?.lines?.[0]?.projectId ?? '');
   const [lines, setLines] = useState<Line[]>(
     defaultValues?.lines ?? [
       { accountId: '', projectId: '', debit: '0', kredit: '0', deskripsi: '' },
@@ -110,7 +113,14 @@ export function JurnalForm({
     setLines((prev) => prev.map((l, k) => (k === i ? { ...l, ...patch } : l)));
 
   const addLine = () =>
-    setLines((p) => [...p, { accountId: '', projectId: '', debit: '0', kredit: '0', deskripsi: '' }]);
+    setLines((p) => [...p, { accountId: '', projectId, debit: '0', kredit: '0', deskripsi: '' }]);
+
+  // Set project header → terapkan ke semua baris (bulk). Per-baris tetap bisa
+  // diubah setelahnya.
+  const setHeaderProject = (v: string) => {
+    setProjectId(v);
+    setLines((prev) => prev.map((l) => ({ ...l, projectId: v })));
+  };
 
   const removeLine = (i: number) =>
     setLines((p) => (p.length <= 2 ? p : p.filter((_, k) => k !== i)));
@@ -122,7 +132,7 @@ export function JurnalForm({
         const acc = postable.find((a) => a.kode === l.kode);
         return {
           accountId: acc?.id ?? '',
-          projectId: '',
+          projectId,
           debit: l.d ? String(l.d) : '0',
           kredit: l.k ? String(l.k) : '0',
           deskripsi: l.ket,
@@ -189,6 +199,16 @@ export function JurnalForm({
               </Select>
             )}
           </FormField>
+          {showProjects && (
+            <FormField label={<>Project <span className="text-tanah-500 normal-case">(default semua baris)</span></>}>
+              <Select value={projectId} onChange={(e) => setHeaderProject(e.target.value)}>
+                <option value="">— tanpa project —</option>
+                {projects!.map((p) => (
+                  <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </Select>
+            </FormField>
+          )}
           <FormField label="Deskripsi" className="col-start-1 col-span-full">
             <Input type="text" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} placeholder="Penjualan tunai barang dagang" required />
           </FormField>

@@ -108,6 +108,9 @@ export function InvoiceForm({
   const [kasBankId, setKasBankId] = useState(defaultValues?.kasBankId ?? kasBankAccounts[0]?.id ?? '');
   const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
   const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
+  // Project di level header — berlaku untuk seluruh baris faktur (1 faktur = 1
+  // project). Saat edit, ambil dari baris pertama (semua baris seharusnya sama).
+  const [projectId, setProjectId] = useState(defaultValues?.lines?.[0]?.projectId ?? '');
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -244,7 +247,7 @@ export function InvoiceForm({
         hargaSatuan: l.hargaSatuan, diskonPersen: l.diskonPersen,
         klasifikasiPpn: l.klasifikasiPpn, isJasa: l.isJasa,
         akunPendapatanId: l.accountId,
-        projectId: l.projectId || null,
+        projectId: projectId || null,
       })),
     } : {
       cabangId,
@@ -264,7 +267,7 @@ export function InvoiceForm({
         hargaSatuan: l.hargaSatuan, diskonPersen: l.diskonPersen,
         klasifikasiPpn: l.klasifikasiPpn, isJasa: l.isJasa,
         akunDebitId: l.accountId,
-        projectId: l.projectId || null,
+        projectId: projectId || null,
       })),
     };
     const fd = new FormData();
@@ -311,6 +314,16 @@ export function InvoiceForm({
               ))}
             </Select>
           </FormField>
+          {showProjects && (
+            <FormField label="Project">
+              <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+                <option value="">— tanpa project —</option>
+                {projects!.map((p) => (
+                  <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </Select>
+            </FormField>
+          )}
           <FormField label="Termin">
             <Select value={termin} onChange={(e) => setTermin(e.target.value as 'TUNAI' | 'KREDIT')}>
               <option value="KREDIT">KREDIT (termin {party?.terminHari ?? 0} hari)</option>
@@ -387,7 +400,6 @@ export function InvoiceForm({
               <th className="px-2 py-2 font-bold w-16 text-right">Disk%</th>
               <th className="px-2 py-2 font-bold w-32">Klasifikasi</th>
               <th className="px-2 py-2 font-bold w-44">Akun {mode === 'sales' ? 'Pendapatan' : 'Debit'}</th>
-              {showProjects && <th className="px-2 py-2 font-bold w-32">Project</th>}
               <th className="px-2 py-2 font-bold w-28 text-right">DPP</th>
               <th className="w-6" />
             </tr>
@@ -457,17 +469,6 @@ export function InvoiceForm({
                       ))}
                     </select>
                   </td>
-                  {showProjects && (
-                    <td className="px-2 py-1">
-                      <select value={l.projectId} onChange={(e) => updLine(i, { projectId: e.target.value })}
-                        className="w-full px-1.5 py-1 bg-cream-50 border border-cream-300 rounded text-xs">
-                        <option value="">—</option>
-                        {projects!.map((p) => (
-                          <option key={p.id} value={p.id}>{p.kode}</option>
-                        ))}
-                      </select>
-                    </td>
-                  )}
                   <td className="px-2 py-1 text-right font-mono tabular-nums text-xs">
                     {dpp.toLocaleString('id-ID')}
                   </td>
