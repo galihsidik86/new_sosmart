@@ -15,6 +15,7 @@ export {
   Role,
   AccountKind,
   NormalBalance,
+  KlasifikasiNeraca,
   PpnSkema,
   KlasifikasiPpn,
   TipeCustomer,
