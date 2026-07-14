@@ -23,7 +23,7 @@ import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 import { JournalsService } from '../journals/journals.service.js';
-import { lookupTer } from './ter-table.js';
+import { lookupTerDetail, TER_UNVERIFIED_BRUTO_MIN } from './ter-table.js';
 
 /**
  * Mapping PTKP status → kategori TER PMK 168/2023.
@@ -155,7 +155,8 @@ export class PayrollService {
     const bruto = gajiPokok.plus(tunjangan);
 
     const kategori = PTKP_TO_KATEGORI[k.ptkpStatus];
-    let tarif = lookupTer(kategori, bruto.toNumber());
+    const ter = lookupTerDetail(kategori, bruto.toNumber());
+    let tarif = ter.tarif;
     // Tanpa NPWP → surcharge 20% (PPh 21 tarif jadi 1.2× tarif normal).
     if (!k.npwp) tarif = tarif * 1.2;
     const pph21 = bruto.mul(tarif).div(100).toDecimalPlaces(0, Decimal.ROUND_HALF_EVEN);
@@ -176,6 +177,8 @@ export class PayrollService {
       iuranBpjs: iuranBpjs.toFixed(2),
       potonganLain: potonganLain.toFixed(2),
       takeHome: takeHome.toFixed(2),
+      /** Tarif dari bracket TER teratas yang belum terverifikasi (bruto tinggi). */
+      terUnverified: ter.unverified,
     };
   }
 
@@ -290,7 +293,7 @@ export class PayrollService {
     });
   }
 
-  async post(id: string) {
+  async post(id: string, opts?: { konfirmasiTerTinggi?: boolean }) {
     const userId = this.ctx.require().userId;
     return this.tenancy.run(async (tx) => {
       const run = await tx.payrollRun.findUnique({
@@ -313,6 +316,24 @@ export class PayrollService {
       });
       if (period?.status === PeriodStatus.CLOSED) {
         throw new ForbiddenException('Periode sudah ditutup');
+      }
+
+      // Gate TER: tarif PPh 21 untuk penghasilan bruto > ambang berasal dari
+      // bracket yang belum diverifikasi ke Lampiran PMK 168/2023. Blokir posting
+      // (tarif bisa salah secara hukum) kecuali user eksplisit konfirmasi sudah
+      // verifikasi manual. Kasus <99% pegawai (bruto normal) tidak terpengaruh.
+      const terTinggi = run.lines.filter((l) =>
+        new Decimal(l.bruto).gt(TER_UNVERIFIED_BRUTO_MIN),
+      );
+      if (terTinggi.length > 0 && !opts?.konfirmasiTerTinggi) {
+        const names = terTinggi.map((l) => l.karyawan.nama).join(', ');
+        throw new ForbiddenException(
+          `Tarif TER PPh 21 untuk penghasilan bruto di atas ` +
+          `Rp${TER_UNVERIFIED_BRUTO_MIN.toLocaleString('id-ID')}/bulan (${names}) ` +
+          `berasal dari bracket yang belum diverifikasi ke Lampiran PMK 168/2023. ` +
+          `Verifikasi tarif tersebut, lalu centang konfirmasi verifikasi TER ` +
+          `penghasilan tinggi untuk melanjutkan posting.`,
+        );
       }
 
       const nomor = run.nomor ?? (await this.seq.next(tx, 'PR', run.tanggal));

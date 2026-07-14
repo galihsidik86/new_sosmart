@@ -201,3 +201,29 @@ export function lookupTer(kategori: PtkpKategori, brutoBulanan: number): number 
   // tapi defensive fallback.
   return table[table.length - 1]!.tarif;
 }
+
+/**
+ * Ambang bruto bulanan. DI ATAS ini, tarif TER jatuh ke bracket teratas yang
+ * masih DIREKONSTRUKSI dari pola progresif (belum diverifikasi ke Lampiran PDF
+ * resmi PMK 168/2023 — lihat ⚠ QA CATATAN di atas). Payroll MEM-BLOKIR posting
+ * untuk penghasilan di zona ini kecuali user eksplisit konfirmasi sudah
+ * verifikasi manual. Bracket bawah–menengah (>99% pegawai) tidak terpengaruh.
+ */
+export const TER_UNVERIFIED_BRUTO_MIN = 700_000_000;
+
+export interface TerLookup {
+  tarif: number;
+  /** true = tarif dari bracket teratas yang belum terverifikasi (bruto > ambang). */
+  unverified: boolean;
+}
+
+/** Seperti lookupTer, plus penanda apakah hasil dari zona bracket belum terverifikasi. */
+export function lookupTerDetail(
+  kategori: PtkpKategori,
+  brutoBulanan: number,
+): TerLookup {
+  return {
+    tarif: lookupTer(kategori, brutoBulanan),
+    unverified: brutoBulanan > TER_UNVERIFIED_BRUTO_MIN,
+  };
+}

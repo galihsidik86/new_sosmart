@@ -16,8 +16,10 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   cancelInvoiceInputSchema,
   createPayrollRunInputSchema,
+  postPayrollRunInputSchema,
   type CancelInvoiceInput,
   type CreatePayrollRunInput,
+  type PostPayrollRunInput,
 } from '@lentera/shared/schemas';
 import { TenantGuard } from '../../common/guards/tenant.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
@@ -73,8 +75,12 @@ export class PayrollController {
 
   @Post('runs/:id/post')
   @Roles('OWNER', 'ADMIN', 'AKUNTAN')
-  post(@Param('id') id: string) {
-    return this.payroll.post(id);
+  post(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(postPayrollRunInputSchema))
+    body: PostPayrollRunInput,
+  ) {
+    return this.payroll.post(id, { konfirmasiTerTinggi: body.konfirmasiTerTinggi });
   }
 
   @Post('runs/:id/cancel')

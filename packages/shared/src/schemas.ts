@@ -602,6 +602,14 @@ export const createPayrollRunInputSchema = z.object({
 });
 export type CreatePayrollRunInput = z.infer<typeof createPayrollRunInputSchema>;
 
+/** Body posting payroll — konfirmasi verifikasi TER penghasilan tinggi (gate PMK 168/2023). */
+export const postPayrollRunInputSchema = z
+  .object({
+    konfirmasiTerTinggi: z.boolean().optional(),
+  })
+  .default({});
+export type PostPayrollRunInput = z.infer<typeof postPayrollRunInputSchema>;
+
 // ---------- BUKTI POTONG ----------
 
 export const createBuktiPotongManualInputSchema = z.object({

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
-import { PageContainer, PageHeader, Button, Badge, buttonClass } from '@/components/ui';
+import { PageContainer, PageHeader, Button, Badge, StatusBanner, buttonClass } from '@/components/ui';
 
 interface Run {
   id: string;
@@ -26,6 +26,7 @@ interface PreviewLine {
   bruto: string; tarifTerPersen: string;
   pph21: string; iuranBpjs: string; takeHome: string;
   npwp: string | null;
+  terUnverified: boolean;
 }
 
 /**
@@ -45,7 +46,10 @@ async function runAndPostPayroll(formData: FormData) {
   const r = await apiFetch<{ id: string }>('/payroll/runs', {
     method: 'POST', tenantId, body: JSON.stringify(payload),
   });
-  await apiFetch(`/payroll/runs/${r.id}/post`, { method: 'POST', tenantId });
+  await apiFetch(`/payroll/runs/${r.id}/post`, {
+    method: 'POST', tenantId,
+    body: JSON.stringify({ konfirmasiTerTinggi: formData.get('konfirmasiTerTinggi') === 'on' }),
+  });
   revalidatePath('/pajak/payroll');
 }
 
@@ -90,9 +94,10 @@ export default async function PayrollListPage({
   }
   const totalPreviewPph21 = preview.reduce((a, r) => a + Number(r.pph21), 0);
   const totalPreviewTakeHome = preview.reduce((a, r) => a + Number(r.takeHome), 0);
+  const adaTerTinggi = preview.some((l) => l.terUnverified);
 
   return (
-    <>
+    <>
       <PageContainer size="list">
         <PageHeader
           title="Payroll Bulanan"
@@ -155,7 +160,15 @@ export default async function PayrollListPage({
                   </td>
                   <td className="px-3 py-1.5 text-xs text-tanah-500">{l.npwp ? '✓' : <span className="text-bata-500">tanpa NPWP</span>}</td>
                   <td className="px-3 py-1.5 text-right font-mono tabular-nums">{fmtRp(l.bruto)}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-xs text-tanah-500">{l.tarifTerPersen}%</td>
+                  <td className="px-3 py-1.5 text-right font-mono text-xs text-tanah-500">
+                    {l.terUnverified ? (
+                      <span className="inline-flex items-center gap-1 text-bata-700" title="Bruto tinggi — tarif TER belum diverifikasi ke PMK 168/2023">
+                        <span aria-hidden>⚠</span>{l.tarifTerPersen}%
+                      </span>
+                    ) : (
+                      <>{l.tarifTerPersen}%</>
+                    )}
+                  </td>
                   <td className="px-3 py-1.5 text-right font-mono tabular-nums text-bata-700">{fmtRp(l.pph21)}</td>
                   <td className="px-3 py-1.5 text-right font-mono tabular-nums text-tanah-500">{fmtRp(l.iuranBpjs)}</td>
                   <td className="px-3 py-1.5 text-right font-mono tabular-nums font-semibold">{fmtRp(l.takeHome)}</td>
@@ -171,14 +184,31 @@ export default async function PayrollListPage({
                 <td /><td className="px-3 py-2 text-right font-mono tabular-nums">{fmtRp(totalPreviewTakeHome)}</td></tr>
             </tfoot>
           </table>
+          {adaTerTinggi && (
+            <div className="px-5 pt-3 bg-white border-t border-cream-200">
+              <StatusBanner tone="danger">
+                Ada karyawan dengan penghasilan bruto di atas Rp700.000.000/bulan. Tarif
+                TER PPh 21 di zona itu masih <b>direkonstruksi</b> dan belum diverifikasi
+                ke Lampiran PMK 168/2023 — <b>bisa salah secara hukum</b>. Verifikasi tarif
+                (baris bertanda ⚠) ke sumber resmi DJP dulu, lalu centang konfirmasi
+                untuk melanjutkan posting.
+              </StatusBanner>
+            </div>
+          )}
           {preview.length > 0 && (
-            <div className="px-5 py-3 bg-white border-t border-cream-200 flex items-center justify-between">
-              <p className="text-xs text-tanah-500">
+            <div className="px-5 py-3 bg-white border-t border-cream-200 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-tanah-500 max-w-md">
                 Klik "Jalankan & Post" untuk simpan & post jurnal payroll + auto-generate bukti potong PPh 21 per karyawan.
               </p>
-              <form action={runAndPostPayroll} className="flex items-center gap-2">
+              <form action={runAndPostPayroll} className="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="cabangId" value={cabangId} />
                 <input type="hidden" name="periode" value={periode} />
+                {adaTerTinggi && (
+                  <label className="flex items-center gap-2 text-xs text-bata-700 font-semibold max-w-xs">
+                    <input type="checkbox" name="konfirmasiTerTinggi" required />
+                    Saya sudah verifikasi tarif TER penghasilan tinggi terhadap PMK 168/2023
+                  </label>
+                )}
                 <select name="akunKasBankId" required
                   className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
                   {kasBank.map((a) => <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>)}
