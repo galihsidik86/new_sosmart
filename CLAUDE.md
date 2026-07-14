@@ -212,7 +212,11 @@ Saat **INSERT** baris baru: RLS hanya **filter**, tidak inject kolom. Kolom `ten
   - **Pendanaan**: + Δ Utang Bank (2-201) + Tambahan Modal (3-101) − Dividen (3-104).
   - Validasi: `kasAwal + kenaikanBersih ≈ kasAkhir` (toleransi 0.5 rupiah).
 - **`PerubahanEkuitasService.build({ periodId })`**: saldo awal Modal (3-101) + Saldo Laba (3-102), + tambahan modal periode, + laba bersih periode, − dividen (3-104) = saldo akhir.
-- **Convention akun kode**: laporan ASET LANCAR/TETAP, LIAB PENDEK/PANJANG, dan arus kas mengandalkan **prefix kode COA**. Kalau seed COA diubah (mis. tanah dipindah dari 1-201 ke 1-301), laporan harus di-update juga.
+- **Klasifikasi laporan = DATA di Account, bukan prefix kode** (sejak migrasi `add_klasifikasi_neraca`):
+  - Neraca (lancar/tetap, pendek/panjang) baca `Account.klasifikasiNeraca`; Arus Kas menentukan saldo kas dari `Account.isKasSetara`. Kedua field di-bootstrap dari konvensi prefix seed saat migrasi/seed/import, lalu **bisa disunting** di Bagan Akun › Edit Akun. Menata ulang kode COA tidak lagi memecah laporan diam-diam.
+  - Helper `klasifikasiAset/klasifikasiLiabilitas` (helpers.ts) menerima akun & baca field; fallback ke prefix HANYA kalau field null (defensif).
+  - Akun tunggal bernama yang dirujuk laporan pakai `gl_config` (`GlConfigKey`): Arus Kas pendanaan/investasi & Perubahan Ekuitas → `MODAL_DISETOR`, `LABA_DITAHAN`, `DIVIDEN`, `BEBAN_PENYUSUTAN`, `UTANG_BANK`. Ubah di Pengaturan › Akun Default.
+  - Masih berbasis kode (belum digeneralisasi): line-item modal kerja seksi operasi Arus Kas (Δ Piutang 1-103, Persediaan 1-104, dst.). Tapi di sini kesalahan bersifat LOUD — balance check `kasAwal + kenaikan ≈ kasAkhir` akan gagal, bukan diam-diam. Neraca-lah yang dulu senyap, dan itu sudah ditutup.
 - **Sign convention**: helper `mutasiSigned` & `saldoAkhirSigned` selalu return **signed saldo normal positif** (debit-normal: +D −K, kredit-normal: +K −D). Negative berarti abnormal balance (mis. saldo kredit di akun aset = overdraft).
 - **Tidak ada caching** — kalau jurnal jumlahnya jutaan, perlu materialized view per (tenant, periode, account). Untuk SME demo cukup recompute on-demand.
 
