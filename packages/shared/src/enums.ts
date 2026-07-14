@@ -198,7 +198,6 @@ export const GL_CONFIG_DEFAULTS: Record<GlConfigKey, string> = {
   PIUTANG_USAHA: '1-103',
   UTANG_USAHA: '2-101',
   PERSEDIAAN: '1-104',
-  UTANG_BANK: '2-201',
   PPH23_DIBAYAR_DIMUKA: '1-107',
   SALDO_AWAL_KLIRING: '3-105',
 };
