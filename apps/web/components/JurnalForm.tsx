@@ -240,7 +240,7 @@ export function JurnalForm({
             <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
               <th className="px-3 py-2.5 font-bold w-8">#</th>
               <th className="px-3 py-2.5 font-bold">Akun</th>
-              {showProjects && <th className="px-3 py-2.5 font-bold w-36">Project</th>}
+              {showProjects && <th className="hidden sm:table-cell px-3 py-2.5 font-bold w-36">Project</th>}
               <th className="px-3 py-2.5 font-bold">Keterangan baris</th>
               <th className="px-3 py-2.5 font-bold text-right w-40">Debit</th>
               <th className="px-3 py-2.5 font-bold text-right w-40">Kredit</th>
@@ -267,7 +267,7 @@ export function JurnalForm({
                   </select>
                 </td>
                 {showProjects && (
-                  <td className="px-3 py-1.5">
+                  <td className="hidden sm:table-cell px-3 py-1.5">
                     <select
                       value={l.projectId}
                       onChange={(e) => updateLine(i, { projectId: e.target.value })}
