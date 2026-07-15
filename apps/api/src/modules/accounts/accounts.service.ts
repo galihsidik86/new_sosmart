@@ -297,6 +297,9 @@ export class AccountsService {
           ...(input.isKasSetara !== undefined
             ? { isKasSetara: input.isKasSetara }
             : {}),
+          ...(input.isIntercompany !== undefined
+            ? { isIntercompany: input.isIntercompany }
+            : {}),
         },
       });
     });

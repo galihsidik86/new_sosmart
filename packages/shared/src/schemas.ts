@@ -309,6 +309,8 @@ export const updateAccountInputSchema = z.object({
     .optional(),
   /** Kas & setara kas (untuk laporan Arus Kas). */
   isKasSetara: z.boolean().optional(),
+  /** Akun intercompany (dieliminasi saat konsolidasi grup). */
+  isIntercompany: z.boolean().optional(),
 });
 export type UpdateAccountInput = z.infer<typeof updateAccountInputSchema>;
 

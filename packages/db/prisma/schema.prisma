@@ -489,6 +489,9 @@ model Account {
   klasifikasiNeraca KlasifikasiNeraca? @map("klasifikasi_neraca")
   /// Kas & setara kas. Dipakai laporan Arus Kas untuk menentukan saldo kas.
   isKasSetara   Boolean       @default(false) @map("is_kas_setara")
+  /// Akun transaksi antar-perusahaan (intercompany). Dieliminasi otomatis saat
+  /// konsolidasi grup — saldonya saling hapus lintas entitas dalam grup.
+  isIntercompany Boolean      @default(false) @map("is_intercompany")
   /// Saldo awal periode pertama (opsional, dipakai saat onboarding).
   saldoAwal     Decimal       @default(0) @map("saldo_awal") @db.Decimal(20, 2)
   catatan       String?
@@ -1087,6 +1090,39 @@ model ApprovalAction {
 
   @@index([requestId])
   @@map("approval_actions")
+}
+
+/// Grup usaha (holding) untuk konsolidasi. Dimiliki oleh satu tenant induk;
+/// anggotanya tenant lain (anak). Konsolidasi hanya dijalankan oleh tenant induk.
+model Group {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  nama      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members GroupMember[]
+
+  @@map("groups")
+}
+
+/// Anggota grup: menunjuk tenant anak + persentase kepemilikan induk.
+model GroupMember {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Tenant induk (untuk RLS — sama dengan Group.tenantId).
+  tenantId       String   @map("tenant_id") @db.Uuid
+  groupId        String   @map("group_id") @db.Uuid
+  /// Tenant anak yang dikonsolidasi.
+  memberTenantId String   @map("member_tenant_id") @db.Uuid
+  /// Kepemilikan induk atas anak, persen (0–100). Sisanya = kepentingan minoritas.
+  ownershipPct   Decimal  @default(100) @map("ownership_pct") @db.Decimal(7, 4)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, memberTenantId])
+  @@index([tenantId])
+  @@map("group_members")
 }
 
 /// Generator nomor dokumen (per tenant per kode periodik).

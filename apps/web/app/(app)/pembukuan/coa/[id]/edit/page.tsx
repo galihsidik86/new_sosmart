@@ -27,6 +27,7 @@ interface Account {
     | 'ASET_LANCAR' | 'ASET_TETAP' | 'LIABILITAS_PENDEK' | 'LIABILITAS_PANJANG'
     | null;
   isKasSetara: boolean;
+  isIntercompany: boolean;
 }
 interface FlatAccount {
   id: string; kode: string; nama: string; parentId: string | null;
@@ -50,6 +51,7 @@ async function updateAccount(formData: FormData) {
       catatan: (formData.get('catatan') as string) || null,
       klasifikasiNeraca: (formData.get('klasifikasiNeraca') as string) || null,
       isKasSetara: formData.get('isKasSetara') === 'on',
+      isIntercompany: formData.get('isIntercompany') === 'on',
     }),
   });
   revalidatePath('/pembukuan/coa');
@@ -135,6 +137,10 @@ export default async function CoaEditPage({ params }: { params: Promise<{ id: st
                   Kas &amp; setara kas
                 </label>
               )}
+              <label className="flex items-center gap-2 text-sm text-tanah-700">
+                <input type="checkbox" name="isIntercompany" defaultChecked={a.isIntercompany} />
+                Intercompany (eliminasi konsolidasi)
+              </label>
               <label className="flex items-center gap-2 text-sm text-tanah-700">
                 <input type="checkbox" name="isActive" defaultChecked={a.isActive} />
                 Aktif

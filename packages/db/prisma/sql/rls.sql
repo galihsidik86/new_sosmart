@@ -437,6 +437,21 @@ CREATE POLICY approval_actions_isolation ON approval_actions
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- KONSOLIDASI GRUP (dimiliki tenant induk)
+ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE groups FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS groups_isolation ON groups;
+CREATE POLICY groups_isolation ON groups
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
+ALTER TABLE group_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE group_members FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS group_members_isolation ON group_members;
+CREATE POLICY group_members_isolation ON group_members
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity
