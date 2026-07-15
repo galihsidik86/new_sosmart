@@ -11,6 +11,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting, canPostCashBank } from '@/lib/roles';
 import { fmtPlain, fmtRp, fmtTanggal } from '@/lib/format';
 import { PageContainer, PageHeader, Card, StatusBadge, Button, buttonClass } from '@/components/ui';
+import { ApprovalPanel } from '@/components/ApprovalPanel';
 
 interface Detail {
   id: string;
@@ -98,7 +99,7 @@ export default async function KasBankDetailPage({
   const mayCancel = canPostAccounting(s.role);
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader
           title={e.nomor ?? '— Draft —'}
@@ -193,6 +194,12 @@ export default async function KasBankDetailPage({
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {e.status === 'DRAFT' && (
+          <div className="mb-3">
+            <ApprovalPanel docType="KAS_BANK" docId={e.id} path={`/transaksi/kas-bank/${e.id}`} />
           </div>
         )}
 

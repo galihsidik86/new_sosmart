@@ -12,6 +12,7 @@ import { canCancelPosted, canPostAccounting } from '@/lib/roles';
 import { runWithApprover } from '@/lib/stepUp';
 import { fmtPlain, fmtRp, fmtTanggal, fmtNpwp } from '@/lib/format';
 import { PageContainer, PageHeader, Card, StatusBadge, Button, buttonClass } from '@/components/ui';
+import { ApprovalPanel } from '@/components/ApprovalPanel';
 
 type Status = 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
 
@@ -136,7 +137,7 @@ export default async function PenjualanDetailPage({
   const mayCancel = canCancelPosted(s.role);
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader
           title={inv.nomor ?? '— Draft —'}
@@ -258,6 +259,12 @@ export default async function PenjualanDetailPage({
             </tfoot>
           </table>
         </div>
+
+        {inv.status === 'DRAFT' && (
+          <div className="mb-3">
+            <ApprovalPanel docType="PENJUALAN" docId={inv.id} path={`/transaksi/penjualan/${inv.id}`} />
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           <a

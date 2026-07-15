@@ -60,6 +60,11 @@ export class ApprovalController {
     return this.svc.statusForDoc(DOC.parse(docType), docId);
   }
 
+  @Get('doc')
+  doc(@Query('docType') docType: string, @Query('docId') docId: string) {
+    return this.svc.docContext(DOC.parse(docType), docId);
+  }
+
   @Post('rules')
   @Roles('OWNER', 'ADMIN')
   create(@Body(new ZodValidationPipe(upsertRuleSchema)) body: UpsertRuleInput) {

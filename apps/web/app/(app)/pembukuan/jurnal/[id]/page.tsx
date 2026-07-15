@@ -13,6 +13,7 @@ import { fmtPlain, fmtTanggal } from '@/lib/format';
 import {
   PageContainer, PageHeader, Card, StatusBadge, Button, buttonClass, Input,
 } from '@/components/ui';
+import { ApprovalPanel } from '@/components/ApprovalPanel';
 
 type Status = 'DRAFT' | 'POSTED' | 'REVERSED';
 
@@ -120,7 +121,7 @@ export default async function JurnalDetailPage({
   const mayPost = canPostAccounting(s.role);
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader
           title={j.nomor ?? '— Draft —'}
@@ -231,6 +232,12 @@ export default async function JurnalDetailPage({
             </tfoot>
           </table>
         </div>
+
+        {j.status === 'DRAFT' && (
+          <div className="mt-6">
+            <ApprovalPanel docType="JURNAL" docId={j.id} path={`/pembukuan/jurnal/${j.id}`} />
+          </div>
+        )}
 
         <div className="mt-6 flex items-center gap-3">
           <a

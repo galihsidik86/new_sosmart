@@ -103,7 +103,7 @@ export class ApprovalService {
     tx: Prisma.TransactionClient,
     docType: DocType,
     docId: string,
-  ): Promise<{ amount: Decimal; cabangId: string | null; posted: boolean }> {
+  ): Promise<{ amount: Decimal; cabangId: string | null; posted: boolean; eligible: boolean }> {
     switch (docType) {
       case 'PENJUALAN': {
         const d = await tx.salesInvoice.findUnique({
@@ -111,7 +111,7 @@ export class ApprovalService {
           select: { totalNetto: true, cabangId: true, status: true },
         });
         if (!d) throw new NotFoundException('Faktur penjualan tidak ditemukan');
-        return { amount: new Decimal(d.totalNetto), cabangId: d.cabangId, posted: d.status !== 'DRAFT' };
+        return { amount: new Decimal(d.totalNetto), cabangId: d.cabangId, posted: d.status !== 'DRAFT', eligible: true };
       }
       case 'PEMBELIAN': {
         const d = await tx.purchaseInvoice.findUnique({
@@ -119,23 +119,25 @@ export class ApprovalService {
           select: { totalNetto: true, cabangId: true, status: true },
         });
         if (!d) throw new NotFoundException('Tagihan pembelian tidak ditemukan');
-        return { amount: new Decimal(d.totalNetto), cabangId: d.cabangId, posted: d.status !== 'DRAFT' };
+        return { amount: new Decimal(d.totalNetto), cabangId: d.cabangId, posted: d.status !== 'DRAFT', eligible: true };
       }
       case 'KAS_BANK': {
         const d = await tx.cashBankEntry.findUnique({
           where: { id: docId },
-          select: { total: true, cabangId: true, status: true },
+          select: { total: true, cabangId: true, status: true, tipe: true },
         });
         if (!d) throw new NotFoundException('Bukti kas/bank tidak ditemukan');
-        return { amount: new Decimal(d.total), cabangId: d.cabangId, posted: d.status !== 'DRAFT' };
+        // Approval kas/bank hanya untuk uang KELUAR (PAYMENT).
+        return { amount: new Decimal(d.total), cabangId: d.cabangId, posted: d.status !== 'DRAFT', eligible: d.tipe === 'PAYMENT' };
       }
       case 'JURNAL': {
         const d = await tx.journal.findUnique({
           where: { id: docId },
-          select: { totalDebit: true, cabangId: true, status: true },
+          select: { totalDebit: true, cabangId: true, status: true, sumber: true },
         });
         if (!d) throw new NotFoundException('Jurnal tidak ditemukan');
-        return { amount: new Decimal(d.totalDebit), cabangId: d.cabangId, posted: d.status !== JournalStatus.DRAFT };
+        // Approval jurnal hanya untuk jurnal MANUAL.
+        return { amount: new Decimal(d.totalDebit), cabangId: d.cabangId, posted: d.status !== JournalStatus.DRAFT, eligible: d.sumber === 'MANUAL' };
       }
       default:
         throw new BadRequestException('Jenis dokumen tidak dikenal');
@@ -151,6 +153,7 @@ export class ApprovalService {
     return this.tenancy.run(async (tx) => {
       const meta = await this.docMeta(tx, docType, docId);
       if (meta.posted) throw new BadRequestException('Dokumen sudah diposting, tidak perlu approval');
+      if (!meta.eligible) throw new BadRequestException('Dokumen ini tidak memerlukan approval');
 
       const rule = await this.matchedRule(tx, docType, meta.amount);
       if (!rule) {
@@ -287,6 +290,41 @@ export class ApprovalService {
           urutan: a.urutan, role: a.approverRole, action: a.action,
           catatan: a.catatan, actedAt: a.actedAt,
         })),
+      };
+    });
+  }
+
+  /**
+   * Konteks approval untuk sebuah dokumen (dipakai panel di halaman dokumen):
+   * apakah approval diperlukan, rantai role, dan status permintaan terkini.
+   */
+  docContext(docType: DocType, docId: string) {
+    return this.tenancy.run(async (tx) => {
+      const meta = await this.docMeta(tx, docType, docId);
+      const rule = meta.eligible ? await this.matchedRule(tx, docType, meta.amount) : null;
+      const req = await tx.approvalRequest.findFirst({
+        where: { docType, docId },
+        orderBy: { createdAt: 'desc' },
+        include: { actions: { orderBy: { urutan: 'asc' } } },
+      });
+      return {
+        required: !!rule,
+        posted: meta.posted,
+        amount: meta.amount.toFixed(2),
+        steps: rule ? rule.steps.map((s) => s.approverRole) : [],
+        request: req
+          ? {
+              id: req.id,
+              status: req.status,
+              currentStep: req.currentStep,
+              totalSteps: req.totalSteps,
+              stepRoles: req.stepRoles.split(','),
+              actions: req.actions.map((a) => ({
+                urutan: a.urutan, role: a.approverRole, action: a.action,
+                catatan: a.catatan, actedAt: a.actedAt,
+              })),
+            }
+          : null,
       };
     });
   }

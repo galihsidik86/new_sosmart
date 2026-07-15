@@ -26,6 +26,7 @@ const NAV: NavItem[] = [
   { group: 'Transaksi', href: '/transaksi/penjualan', label: 'Penjualan', icon: 'cart', roles: TX_KASIR },
   { group: 'Transaksi', href: '/transaksi/pembelian', label: 'Pembelian', icon: 'bag', roles: FULL },
   { group: 'Transaksi', href: '/transaksi/kas-bank', label: 'Kas / Bank', icon: 'wallet', roles: TX_KASIR },
+  { group: 'Transaksi', href: '/approval', label: 'Kotak Approval', icon: 'check', roles: FULL },
   { group: 'Pembukuan', href: '/pembukuan/coa', label: 'Bagan Akun', icon: 'book-open', roles: ACCOUNTING },
   { group: 'Pembukuan', href: '/pembukuan/jurnal', label: 'Jurnal Umum', icon: 'notebook', roles: ACCOUNTING },
   { group: 'Pembukuan', href: '/pembukuan/bukubesar', label: 'Buku Besar', icon: 'book', roles: ACCOUNTING },
@@ -61,6 +62,7 @@ const NAV: NavItem[] = [
   { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang', icon: 'network', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/user', label: 'Pengguna', icon: 'user-cog', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/akun-default', label: 'Akun Default', icon: 'sliders', roles: FULL },
+  { group: 'Pengaturan', href: '/pengaturan/approval', label: 'Aturan Approval', icon: 'check', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/saldo-awal', label: 'Saldo Awal', icon: 'layers', roles: FULL },
 ];
 
