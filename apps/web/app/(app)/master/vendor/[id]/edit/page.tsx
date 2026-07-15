@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
-  PageContainer, PageHeader, Card, Button, FormField, Input, buttonClass,
+  PageContainer, PageHeader, Card, Button, FormField, Input, Select, buttonClass,
 } from '@/components/ui';
 
 interface Vendor {
@@ -17,6 +17,7 @@ interface Vendor {
   kota: string | null;
   telp: string | null;
   terminHari: number;
+  partnerTenantId: string | null;
 }
 
 async function updateVendor(formData: FormData) {
@@ -36,6 +37,7 @@ async function updateVendor(formData: FormData) {
       kota: formData.get('kota') || null,
       telp: formData.get('telp') || null,
       terminHari: Number(formData.get('terminHari') ?? 30),
+      partnerTenantId: (formData.get('partnerTenantId') as string) || null,
     }),
   });
   revalidatePath('/master/vendor');
@@ -46,10 +48,13 @@ export default async function EditVendorPage({ params }: { params: Promise<{ id:
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const { id } = await params;
-  const v = await apiFetch<Vendor>(`/vendors/${id}`, { tenantId });
+  const [v, partners] = await Promise.all([
+    apiFetch<Vendor>(`/vendors/${id}`, { tenantId }),
+    apiFetch<Array<{ tenantId: string; nama: string }>>('/consolidation/candidates', { tenantId }).catch(() => []),
+  ]);
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <Link href="/master/vendor" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader title="Edit Vendor" subtitle={`${v.kode} · ${v.nama}`} className="mt-2" />
@@ -70,6 +75,14 @@ export default async function EditVendorPage({ params }: { params: Promise<{ id:
               <FormField label="Telp"><Input name="telp" defaultValue={v.telp ?? ''} /></FormField>
             </div>
             <FormField label="Termin (hari)"><Input name="terminHari" type="number" defaultValue={String(v.terminHari)} /></FormField>
+            {partners.length > 0 && (
+              <FormField label="Entitas intra-grup (intercompany)" hint="Kalau vendor ini anak/anggota grup, tunjuk tenant-nya → utang ke sini dieliminasi saat konsolidasi.">
+                <Select name="partnerTenantId" defaultValue={v.partnerTenantId ?? ''}>
+                  <option value="">— bukan intra-grup —</option>
+                  {partners.map((p) => <option key={p.tenantId} value={p.tenantId}>{p.nama}</option>)}
+                </Select>
+              </FormField>
+            )}
             <div className="flex gap-2 pt-2">
               <Button type="submit">Simpan perubahan</Button>
               <Link href="/master/vendor" className={buttonClass('secondary')}>

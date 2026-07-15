@@ -23,6 +23,9 @@ type CreateGroupInput = z.infer<typeof createGroupSchema>;
 const addMemberSchema = z.object({
   memberTenantId: z.string().uuid(),
   ownershipPct: z.union([z.number(), z.string()]).transform((v) => String(v)),
+  acquisitionCost: z.union([z.number(), z.string()]).transform((v) => String(v)).optional(),
+  acquisitionNetAssets: z.union([z.number(), z.string()]).transform((v) => String(v)).optional(),
+  acquisitionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 type AddMemberInput = z.infer<typeof addMemberSchema>;
 
@@ -69,7 +72,11 @@ export class ConsolidationController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(addMemberSchema)) body: AddMemberInput,
   ) {
-    return this.svc.addMember(id, body.memberTenantId, body.ownershipPct);
+    return this.svc.addMember(id, body.memberTenantId, body.ownershipPct, {
+      cost: body.acquisitionCost,
+      netAssets: body.acquisitionNetAssets,
+      date: body.acquisitionDate,
+    });
   }
 
   @Delete('members/:id')

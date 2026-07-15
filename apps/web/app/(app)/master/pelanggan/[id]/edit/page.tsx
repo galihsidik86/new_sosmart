@@ -20,6 +20,7 @@ interface Customer {
   telp: string | null;
   terminHari: number;
   kreditLimit: string;
+  partnerTenantId: string | null;
 }
 
 const TIPE_LABEL: Record<Tipe, string> = {
@@ -49,6 +50,7 @@ async function updateCustomer(formData: FormData) {
       telp: formData.get('telp') || null,
       terminHari: Number(formData.get('terminHari') ?? 14),
       kreditLimit: String(formData.get('kreditLimit') ?? '0'),
+      partnerTenantId: (formData.get('partnerTenantId') as string) || null,
     }),
   });
   revalidatePath('/master/pelanggan');
@@ -59,10 +61,13 @@ export default async function EditPelangganPage({ params }: { params: Promise<{ 
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const { id } = await params;
-  const c = await apiFetch<Customer>(`/customers/${id}`, { tenantId });
+  const [c, partners] = await Promise.all([
+    apiFetch<Customer>(`/customers/${id}`, { tenantId }),
+    apiFetch<Array<{ tenantId: string; nama: string }>>('/consolidation/candidates', { tenantId }).catch(() => []),
+  ]);
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <Link href="/master/pelanggan" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader title="Edit Pelanggan" subtitle={`${c.kode} · ${c.nama}`} className="mt-2" />
@@ -92,6 +97,14 @@ export default async function EditPelangganPage({ params }: { params: Promise<{ 
               <FormField label="Termin (hari)"><Input name="terminHari" type="number" defaultValue={String(c.terminHari)} /></FormField>
               <FormField label="Limit kredit"><Input name="kreditLimit" type="number" defaultValue={c.kreditLimit} /></FormField>
             </div>
+            {partners.length > 0 && (
+              <FormField label="Entitas intra-grup (intercompany)" hint="Kalau pelanggan ini adalah anak/anggota grup, tunjuk tenant-nya → piutang ke sini dieliminasi saat konsolidasi.">
+                <Select name="partnerTenantId" defaultValue={c.partnerTenantId ?? ''}>
+                  <option value="">— bukan intra-grup —</option>
+                  {partners.map((p) => <option key={p.tenantId} value={p.tenantId}>{p.nama}</option>)}
+                </Select>
+              </FormField>
+            )}
             <div className="flex gap-2 pt-2">
               <Button type="submit">Simpan perubahan</Button>
               <Link href="/master/pelanggan" className={buttonClass('secondary')}>

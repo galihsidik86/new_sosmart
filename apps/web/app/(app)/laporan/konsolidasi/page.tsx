@@ -34,11 +34,17 @@ async function addMemberAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
+  const acqCost = String(formData.get('acquisitionCost') ?? '').trim();
+  const acqNet = String(formData.get('acquisitionNetAssets') ?? '').trim();
+  const acqDate = String(formData.get('acquisitionDate') ?? '').trim();
   await apiFetch(`/consolidation/groups/${formData.get('groupId')}/members`, {
     method: 'POST', tenantId,
     body: JSON.stringify({
       memberTenantId: formData.get('memberTenantId'),
       ownershipPct: String(formData.get('ownershipPct') ?? '100'),
+      ...(acqCost ? { acquisitionCost: acqCost } : {}),
+      ...(acqNet ? { acquisitionNetAssets: acqNet } : {}),
+      ...(acqDate ? { acquisitionDate: acqDate } : {}),
     }),
   });
   revalidatePath('/laporan/konsolidasi');
@@ -122,6 +128,14 @@ export default async function KonsolidasiPage() {
                   <div className="w-24">
                     <label className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold">Milik %</label>
                     <Input numeric type="number" step="0.01" min={0} max={100} name="ownershipPct" defaultValue="100" required />
+                  </div>
+                  <div className="w-32">
+                    <label className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold">Biaya akuisisi</label>
+                    <Input numeric type="number" step="0.01" name="acquisitionCost" placeholder="(opsional)" />
+                  </div>
+                  <div className="w-32">
+                    <label className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold">Aset bersih akuisisi</label>
+                    <Input numeric type="number" step="0.01" name="acquisitionNetAssets" placeholder="(opsional)" />
                   </div>
                   <Button type="submit" size="sm" variant="secondary">Tambah</Button>
                 </form>

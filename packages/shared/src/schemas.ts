@@ -129,6 +129,8 @@ export const createVendorInputSchema = z.object({
   contactPerson: z.string().max(100).optional(),
   terminHari: z.coerce.number().int().min(0).max(365).default(30),
   catatan: z.string().max(500).optional(),
+  /** Entitas intra-grup (untuk eliminasi konsolidasi). */
+  partnerTenantId: z.string().uuid().nullable().optional(),
 });
 export type CreateVendorInput = z.infer<typeof createVendorInputSchema>;
 
@@ -160,6 +162,8 @@ export const createCustomerInputSchema = z.object({
   terminHari: z.coerce.number().int().min(0).max(365).default(14),
   kreditLimit: moneyStringSchema.default('0'),
   catatan: z.string().max(500).optional(),
+  /** Entitas intra-grup (untuk eliminasi konsolidasi). */
+  partnerTenantId: z.string().uuid().nullable().optional(),
 });
 export type CreateCustomerInput = z.infer<typeof createCustomerInputSchema>;
 

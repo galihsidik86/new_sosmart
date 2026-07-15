@@ -755,6 +755,8 @@ model Vendor {
   /// Apakah vendor adalah PKP (penting untuk PPN masukan).
   isPkp         Boolean  @default(false) @map("is_pkp")
   kategori      String?
+  /// Kalau vendor ini entitas intra-grup, tunjuk tenant-nya (eliminasi IC).
+  partnerTenantId String? @map("partner_tenant_id") @db.Uuid
   alamat        String?
   kota          String?
   provinsi      String?
@@ -793,6 +795,9 @@ model Customer {
   npwp          String?
   isPkp         Boolean      @default(false) @map("is_pkp")
   tipe          TipeCustomer @default(RITEL)
+  /// Kalau customer ini adalah entitas dalam grup (intra-grup), tunjuk tenant-
+  /// nya. Dipakai eliminasi intercompany level-transaksi saat konsolidasi.
+  partnerTenantId String?    @map("partner_tenant_id") @db.Uuid
   alamat        String?
   kota          String?
   provinsi      String?
@@ -1122,6 +1127,11 @@ model GroupMember {
   memberTenantId String   @map("member_tenant_id") @db.Uuid
   /// Kepemilikan induk atas anak, persen (0–100). Sisanya = kepentingan minoritas.
   ownershipPct   Decimal  @default(100) @map("ownership_pct") @db.Decimal(7, 4)
+  /// Metode akuisisi (opsional). Biaya perolehan investasi induk atas anak.
+  acquisitionCost      Decimal?  @map("acquisition_cost") @db.Decimal(20, 2)
+  /// Aset bersih anak (nilai wajar) pada tanggal akuisisi — basis goodwill.
+  acquisitionNetAssets Decimal?  @map("acquisition_net_assets") @db.Decimal(20, 2)
+  acquisitionDate      DateTime? @map("acquisition_date") @db.Date
   createdAt      DateTime @default(now()) @map("created_at")
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)

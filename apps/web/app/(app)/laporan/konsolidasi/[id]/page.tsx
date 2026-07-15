@@ -15,9 +15,11 @@ interface Report {
   group: { id: string; nama: string };
   entities: Array<{ tenantId: string; nama: string; ownershipPct: string; isParent: boolean; netAssets: string; netIncome: string }>;
   skippedTenantIds: string[];
+  goodwill: { total: string; detail: Array<{ nama: string; goodwill: string }> };
+  icRekon: Array<{ dari: string; ke: string; piutang: string; utangLawan: string; selisih: string; cocok: boolean }>;
   neraca: {
     rows: Row[]; totalAset: string; totalLiabilitas: string;
-    totalEkuitasKonsolidasi: string; ekuitasIndukInduk: string; kepentinganMinoritas: string;
+    totalEkuitasKonsolidasi: string; eliminasiEkuitasAkuisisi: string; ekuitasIndukInduk: string; kepentinganMinoritas: string;
   };
   labaRugi: {
     rows: Row[]; pendapatan: string; beban: string;
@@ -143,6 +145,48 @@ export default async function KonsolidasiReportPage({
             </Table>
           </Card>
 
+          {/* Goodwill (metode akuisisi) */}
+          {Number(rep.goodwill.total) !== 0 && (
+            <Card className="mb-6" padding="lg">
+              <SectionHeader className="mb-3">Goodwill (Metode Akuisisi)</SectionHeader>
+              <Table>
+                <THead><TH>Anak</TH><TH numeric>Goodwill</TH></THead>
+                <TBody>
+                  {rep.goodwill.detail.map((g) => (
+                    <TR key={g.nama}><TD className="text-tanah-700">{g.nama}</TD><TD className="text-right font-mono tabular-nums">{fmtRp(g.goodwill)}</TD></TR>
+                  ))}
+                  <TR><TD className="font-semibold text-tanah-700">Total Goodwill</TD><TD className="text-right font-mono tabular-nums font-semibold">{fmtRp(rep.goodwill.total)}</TD></TR>
+                </TBody>
+              </Table>
+              <p className="text-xs text-tanah-500 mt-2">Goodwill = biaya perolehan − (kepemilikan% × aset bersih anak saat akuisisi). Diakui sebagai aset konsolidasi.</p>
+            </Card>
+          )}
+
+          {/* Rekonsiliasi intercompany level-transaksi */}
+          {rep.icRekon.length > 0 && (
+            <Card className="mb-6" padding="lg">
+              <SectionHeader className="mb-3">Rekonsiliasi Intercompany (Piutang ↔ Utang)</SectionHeader>
+              <Table>
+                <THead>
+                  <TH>Dari → Ke</TH><TH numeric>Piutang</TH><TH numeric>Utang lawan</TH>
+                  <TH numeric>Selisih</TH><TH className="text-center">Cocok</TH>
+                </THead>
+                <TBody>
+                  {rep.icRekon.map((r, i) => (
+                    <TR key={i}>
+                      <TD className="text-tanah-700">{r.dari} → {r.ke}</TD>
+                      <TD className="text-right font-mono tabular-nums">{fmtRp(r.piutang)}</TD>
+                      <TD className="text-right font-mono tabular-nums">{fmtRp(r.utangLawan)}</TD>
+                      <TD className="text-right font-mono tabular-nums">{fmtRp(r.selisih)}</TD>
+                      <TD className="text-center"><Badge variant={r.cocok ? 'success' : 'danger'}>{r.cocok ? '✓' : 'beda'}</Badge></TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+              <p className="text-xs text-tanah-500 mt-2">Piutang antar-perusahaan seharusnya sama dengan utang lawannya. Selisih ≠ 0 → perlu ditelusuri sebelum konsolidasi final.</p>
+            </Card>
+          )}
+
           {/* Neraca konsolidasi */}
           <Card className="mb-6" padding="lg">
             <div className="flex items-center justify-between mb-3">
@@ -162,6 +206,9 @@ export default async function KonsolidasiReportPage({
             <dl className="text-sm space-y-1 border-t border-cream-200 pt-3 mt-2 max-w-sm ml-auto">
               <div className="flex justify-between"><dt className="text-tanah-500">Total Aset</dt><dd className="font-mono tabular-nums font-semibold">{fmtRp(rep.neraca.totalAset)}</dd></div>
               <div className="flex justify-between"><dt className="text-tanah-500">Total Liabilitas</dt><dd className="font-mono tabular-nums">{fmtRp(rep.neraca.totalLiabilitas)}</dd></div>
+              {Number(rep.neraca.eliminasiEkuitasAkuisisi) !== 0 && (
+                <div className="flex justify-between"><dt className="text-tanah-500">Eliminasi ekuitas anak (akuisisi/investasi)</dt><dd className="font-mono tabular-nums text-bata-700">{fmtRp(rep.neraca.eliminasiEkuitasAkuisisi)}</dd></div>
+              )}
               <div className="flex justify-between"><dt className="text-tanah-500">Ekuitas — Induk</dt><dd className="font-mono tabular-nums">{fmtRp(rep.neraca.ekuitasIndukInduk)}</dd></div>
               <div className="flex justify-between"><dt className="text-tanah-500">Kepentingan Minoritas (NCI)</dt><dd className="font-mono tabular-nums text-wedel-900">{fmtRp(rep.neraca.kepentinganMinoritas)}</dd></div>
               <div className="flex justify-between border-t border-cream-200 pt-1 font-semibold"><dt className="text-tanah-700">Total Ekuitas</dt><dd className="font-mono tabular-nums">{fmtRp(rep.neraca.totalEkuitasKonsolidasi)}</dd></div>
