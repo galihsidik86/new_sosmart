@@ -11,6 +11,19 @@
    token SEMANTIK + CSS var untuk dipakai komponen non-utility.
    ============================================================= */
 :root {
+  /* Aksen (themeable) — triplet RGB, default Sogan/maroon.
+     Diganti runtime lewat [data-theme] (lihat ThemeSwitcher). */
+  --sogan-50: 251 242 238;
+  --sogan-100: 244 221 211;
+  --sogan-200: 229 180 164;
+  --sogan-300: 208 134 114;
+  --sogan-400: 184 90 72;
+  --sogan-500: 139 46 46;
+  --sogan-600: 122 40 40;
+  --sogan-700: 94 31 31;
+  --sogan-800: 66 23 23;
+  --sogan-900: 42 15 15;
+
   /* Surfaces */
   --bg: #F5F1E8;          /* cream-100, page bg */
   --bg-subtle: #FBF9F4;   /* cream-50 */
@@ -23,10 +36,10 @@
   --fg2: #8C6B4A;         /* tanah-500, secondary */
   --fg3: #B89A7A;         /* tanah-300, tertiary/hint */
 
-  /* Brand & status */
-  --primary: #8B2E2E;     /* sogan-500 */
-  --primary-hover: #7A2828;
-  --primary-press: #5E1F1F;
+  /* Brand & status — ikut aksen themeable */
+  --primary: rgb(var(--sogan-500));
+  --primary-hover: rgb(var(--sogan-600));
+  --primary-press: rgb(var(--sogan-700));
   --accent: #D4A437;      /* emas-500 */
   --success: #4A7C3A;     /* padi-500 */
   --warning: #D4A437;     /* emas-500 */
@@ -36,7 +49,7 @@
   /* Borders */
   --border: #ECE5D8;      /* cream-200 */
   --border-strong: #D6C9B3; /* cream-400 */
-  --border-focus: #8B2E2E;
+  --border-focus: rgb(var(--sogan-500));
 
   /* Typography */
   --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
@@ -48,6 +61,32 @@
   --dur-fast: 120ms;
   --dur-base: 240ms;
   --dur-slow: 400ms;
+}
+
+/* ---- Preset aksen (ThemeSwitcher menyetel [data-theme] di <html>) ---- */
+:root[data-theme="biru"] {
+  --sogan-50: 239 246 251;  --sogan-100: 214 232 245; --sogan-200: 174 207 234;
+  --sogan-300: 127 176 219; --sogan-400: 78 141 199;  --sogan-500: 42 111 168;
+  --sogan-600: 36 95 144;   --sogan-700: 28 74 112;   --sogan-800: 21 54 80;
+  --sogan-900: 14 35 52;
+}
+:root[data-theme="hijau"] {
+  --sogan-50: 238 246 234;  --sogan-100: 216 236 207; --sogan-200: 180 217 163;
+  --sogan-300: 141 193 118; --sogan-400: 102 163 74;  --sogan-500: 74 124 58;
+  --sogan-600: 63 106 49;   --sogan-700: 51 88 41;    --sogan-800: 36 64 29;
+  --sogan-900: 23 41 19;
+}
+:root[data-theme="emas"] {
+  --sogan-50: 250 241 221;  --sogan-100: 243 225 180; --sogan-200: 232 200 120;
+  --sogan-300: 217 169 63;  --sogan-400: 184 134 42;  --sogan-500: 150 106 30;
+  --sogan-600: 126 89 26;   --sogan-700: 99 69 21;    --sogan-800: 70 49 15;
+  --sogan-900: 44 30 9;
+}
+:root[data-theme="ungu"] {
+  --sogan-50: 245 239 250;  --sogan-100: 230 214 243; --sogan-200: 205 174 232;
+  --sogan-300: 175 131 217; --sogan-400: 142 87 196;  --sogan-500: 109 52 160;
+  --sogan-600: 94 44 138;   --sogan-700: 72 34 107;   --sogan-800: 51 24 76;
+  --sogan-900: 32 15 48;
 }
 
 html, body {

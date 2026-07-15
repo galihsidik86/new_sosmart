@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Icon } from './ui/icons';
 import { cn } from './ui/cn';
+import { ThemeSwitcher } from './ThemeSwitcher';
 import { logoutAction } from '@/lib/logout-action';
 
 /**
@@ -114,6 +115,8 @@ export function Topbar({ tenantNama, periodeLabel, user, role }: TopbarProps) {
             {periodeLabel}
           </div>
         )}
+
+        <ThemeSwitcher />
 
         <div className="relative" ref={menuRef}>
           <button

@@ -10,17 +10,19 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Aksen utama — di-back CSS variable supaya bisa diganti tema runtime
+        // (lihat globals.css :root & [data-theme]). Default = Sogan/maroon.
         sogan: {
-          50: '#FBF2EE',
-          100: '#F4DDD3',
-          200: '#E5B4A4',
-          300: '#D08672',
-          400: '#B85A48',
-          500: '#8B2E2E',
-          600: '#7A2828',
-          700: '#5E1F1F',
-          800: '#421717',
-          900: '#2A0F0F',
+          50: 'rgb(var(--sogan-50) / <alpha-value>)',
+          100: 'rgb(var(--sogan-100) / <alpha-value>)',
+          200: 'rgb(var(--sogan-200) / <alpha-value>)',
+          300: 'rgb(var(--sogan-300) / <alpha-value>)',
+          400: 'rgb(var(--sogan-400) / <alpha-value>)',
+          500: 'rgb(var(--sogan-500) / <alpha-value>)',
+          600: 'rgb(var(--sogan-600) / <alpha-value>)',
+          700: 'rgb(var(--sogan-700) / <alpha-value>)',
+          800: 'rgb(var(--sogan-800) / <alpha-value>)',
+          900: 'rgb(var(--sogan-900) / <alpha-value>)',
         },
         cream: {
           50: '#FBF9F4',
@@ -56,7 +58,7 @@ export default {
         md: '0 6px 16px rgba(92, 58, 30, 0.10)',
         lg: '0 16px 32px rgba(92, 58, 30, 0.12)',
         xl: '0 32px 64px rgba(92, 58, 30, 0.16)',
-        focus: '0 0 0 3px rgba(139, 46, 46, 0.18)',
+        focus: '0 0 0 3px rgb(var(--sogan-500) / 0.18)',
         inner: 'inset 0 1px 2px rgba(92, 58, 30, 0.08)',
       },
       transitionTimingFunction: {
