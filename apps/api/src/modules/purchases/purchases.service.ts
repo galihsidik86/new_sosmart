@@ -28,6 +28,7 @@ import { JournalsService } from '../journals/journals.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
 import { BuktiPotongService } from '../bukti-potong/bukti-potong.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
+import { ApprovalService } from '../approval/approval.service.js';
 
 const isPpnable = (k: KlasifikasiPpn) =>
   k === KlasifikasiPpn.BKP || k === KlasifikasiPpn.JKP;
@@ -45,6 +46,7 @@ export class PurchasesService {
     private readonly excel: ExcelService,
     private readonly cabangScope: CabangScopeService,
     private readonly glConfig: GlConfigService,
+    private readonly approval: ApprovalService,
   ) {}
 
   async exportXlsx(filter: {
@@ -408,6 +410,7 @@ export class PurchasesService {
       if (inv.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException(`Status ${inv.status}, tidak bisa di-post`);
       }
+      await this.approval.assertApprovedForPost(tx, 'PEMBELIAN', id, new Decimal(inv.totalNetto));
       await this.assertPeriodOpen(tx, inv.tanggal);
 
       // Entri utang saldo awal TIDAK BOLEH di-post lewat endpoint tagihan

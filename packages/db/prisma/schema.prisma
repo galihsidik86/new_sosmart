@@ -58,6 +58,24 @@ enum BankReconciliationStatus {
   SELESAI
 }
 
+enum ApprovalDocType {
+  PENJUALAN
+  PEMBELIAN
+  KAS_BANK
+  JURNAL
+}
+
+enum ApprovalStatus {
+  MENUNGGU
+  DISETUJUI
+  DITOLAK
+}
+
+enum ApprovalActionType {
+  SETUJU
+  TOLAK
+}
+
 enum PpnSkema {
   EFEKTIF_11
   EFEKTIF_12
@@ -991,6 +1009,84 @@ model BankReconciliationLine {
 
   @@index([reconciliationId])
   @@map("bank_reconciliation_lines")
+}
+
+/// Aturan approval berjenjang per jenis dokumen. Dokumen dengan nilai ≥
+/// minAmount memicu aturan; aturan dgn minAmount tertinggi yang cocok dipakai.
+model ApprovalRule {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String          @map("tenant_id") @db.Uuid
+  docType   ApprovalDocType @map("doc_type")
+  /// Ambang nilai minimum (inklusif) yang memicu aturan ini.
+  minAmount Decimal         @default(0) @map("min_amount") @db.Decimal(20, 2)
+  isActive  Boolean         @default(true) @map("is_active")
+  catatan   String?
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  steps ApprovalRuleStep[]
+
+  @@index([tenantId, docType])
+  @@map("approval_rules")
+}
+
+/// Satu langkah (tingkat) approval dalam sebuah aturan — approver = pemegang role.
+model ApprovalRuleStep {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String @map("tenant_id") @db.Uuid
+  ruleId       String @map("rule_id") @db.Uuid
+  urutan       Int
+  approverRole Role   @map("approver_role")
+
+  rule ApprovalRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@unique([ruleId, urutan])
+  @@map("approval_rule_steps")
+}
+
+/// Permintaan approval untuk satu dokumen (polymorphic via docType+docId).
+model ApprovalRequest {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String          @map("tenant_id") @db.Uuid
+  docType       ApprovalDocType @map("doc_type")
+  docId         String          @map("doc_id") @db.Uuid
+  cabangId      String?         @map("cabang_id") @db.Uuid
+  amount        Decimal         @db.Decimal(20, 2)
+  status        ApprovalStatus  @default(MENUNGGU)
+  /// Langkah yang sedang menunggu persetujuan (1-based).
+  currentStep   Int             @default(1) @map("current_step")
+  totalSteps    Int             @map("total_steps")
+  /// Snapshot role approver per langkah (CSV terurut, mis. "ADMIN,OWNER") —
+  /// tahan terhadap perubahan aturan setelah request dibuat.
+  stepRoles     String          @map("step_roles")
+  requestedById String?         @map("requested_by_id") @db.Uuid
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  resolvedAt    DateTime?       @map("resolved_at")
+
+  actions ApprovalAction[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, docType, docId])
+  @@map("approval_requests")
+}
+
+/// Jejak keputusan tiap langkah approval (setuju/tolak + oleh siapa).
+model ApprovalAction {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String             @map("tenant_id") @db.Uuid
+  requestId      String             @map("request_id") @db.Uuid
+  urutan         Int
+  approverRole   Role               @map("approver_role")
+  approverUserId String             @map("approver_user_id") @db.Uuid
+  action         ApprovalActionType
+  catatan        String?
+  actedAt        DateTime           @default(now()) @map("acted_at")
+
+  request ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@map("approval_actions")
 }
 
 /// Generator nomor dokumen (per tenant per kode periodik).

@@ -34,6 +34,7 @@ import { ProjectsModule } from './modules/projects/projects.module.js';
 import { Pph23TarifModule } from './modules/pph23-tarif/pph23-tarif.module.js';
 import { IndustriModule } from './modules/industri/industri.module.js';
 import { BankReconciliationModule } from './modules/bank-reconciliation/bank-reconciliation.module.js';
+import { ApprovalModule } from './modules/approval/approval.module.js';
 import { OpeningBalanceModule } from './modules/opening-balance/opening-balance.module.js';
 import { FiscalYearClosingModule } from './modules/fiscal-year/fiscal-year-closing.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
@@ -76,6 +77,7 @@ import { HealthController } from './modules/health/health.controller.js';
     Pph23TarifModule,
     IndustriModule,
     BankReconciliationModule,
+    ApprovalModule,
     OpeningBalanceModule,
   ],
   controllers: [HealthController],

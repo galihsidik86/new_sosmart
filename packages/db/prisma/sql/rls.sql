@@ -408,6 +408,35 @@ CREATE POLICY bank_reconciliation_lines_isolation ON bank_reconciliation_lines
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- APPROVAL BERJENJANG
+ALTER TABLE approval_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE approval_rules FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS approval_rules_isolation ON approval_rules;
+CREATE POLICY approval_rules_isolation ON approval_rules
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
+ALTER TABLE approval_rule_steps ENABLE ROW LEVEL SECURITY;
+ALTER TABLE approval_rule_steps FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS approval_rule_steps_isolation ON approval_rule_steps;
+CREATE POLICY approval_rule_steps_isolation ON approval_rule_steps
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
+ALTER TABLE approval_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE approval_requests FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS approval_requests_isolation ON approval_requests;
+CREATE POLICY approval_requests_isolation ON approval_requests
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
+ALTER TABLE approval_actions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE approval_actions FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS approval_actions_isolation ON approval_actions;
+CREATE POLICY approval_actions_isolation ON approval_actions
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity

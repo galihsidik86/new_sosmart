@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import {
+  JournalSource,
   JournalStatus,
   PeriodStatus,
   Prisma,
@@ -22,6 +23,7 @@ import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { PeriodsService } from '../periods/periods.service.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
+import { ApprovalService } from '../approval/approval.service.js';
 import { validateRequestedBy } from '../../common/tenancy/step-up.js';
 import { BudgetGuardService } from '../projects/budget-guard.service.js';
 
@@ -56,6 +58,7 @@ export class JournalsService {
     private readonly excel: ExcelService,
     private readonly cabangScope: CabangScopeService,
     private readonly budgetGuard: BudgetGuardService,
+    private readonly approval: ApprovalService,
   ) {}
 
   async exportXlsx(f: ListFilter): Promise<Buffer> {
@@ -259,6 +262,11 @@ export class JournalsService {
     this.cabangScope.assertAccess(j.cabangId);
     if (j.status !== JournalStatus.DRAFT) {
       throw new BadRequestException(`Jurnal ${j.nomor ?? j.id} status ${j.status}, tidak bisa di-post`);
+    }
+    // Approval hanya untuk jurnal MANUAL (bukan jurnal auto dari
+    // penjualan/pembelian/kas-bank yang punya gate di dokumen sumbernya).
+    if (j.sumber === JournalSource.MANUAL) {
+      await this.approval.assertApprovedForPost(tx, 'JURNAL', journalId, new Decimal(j.totalDebit));
     }
     await this.periods.assertOpen(tx, j.tanggal);
 

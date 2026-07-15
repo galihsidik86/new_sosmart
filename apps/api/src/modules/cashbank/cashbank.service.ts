@@ -19,6 +19,7 @@ import { validateRequestedBy } from '../../common/tenancy/step-up.js';
 import { SequenceService } from '../../common/sequence/sequence.service.js';
 import { JournalsService } from '../journals/journals.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
+import { ApprovalService } from '../approval/approval.service.js';
 import { GlConfigKey } from '@lentera/shared/enums';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
@@ -46,6 +47,7 @@ export class CashBankService {
     private readonly excel: ExcelService,
     private readonly cabangScope: CabangScopeService,
     private readonly glConfig: GlConfigService,
+    private readonly approval: ApprovalService,
   ) {}
 
   async exportXlsx(filter: {
@@ -295,6 +297,10 @@ export class CashBankService {
       this.cabangScope.assertAccess(e.cabangId);
       if (e.status !== InvoiceStatus.DRAFT) {
         throw new BadRequestException(`Status ${e.status}`);
+      }
+      // Approval hanya untuk uang KELUAR (PAYMENT).
+      if (e.tipe === 'PAYMENT') {
+        await this.approval.assertApprovedForPost(tx, 'KAS_BANK', id, new Decimal(e.total));
       }
       const period = await tx.fiscalPeriod.findUnique({
         where: { id: e.fiscalPeriodId },
