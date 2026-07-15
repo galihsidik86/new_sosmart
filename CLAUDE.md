@@ -189,7 +189,8 @@ Saat **INSERT** baris baru: RLS hanya **filter**, tidak inject kolom. Kolom `ten
 ### Pajak (Fase 7) — Payroll, Bupot, SPT Masa
 
 - **`Karyawan`** model: NIK 16 digit, NPWP 15/16 digit (opsional — tanpa NPWP kena surcharge 20% di PPh 21), `ptkpStatus` (TK_0..K_3 + HB_*), gaji pokok + tunjangan + iuran BPJS karyawan default.
-- **TER table** (`apps/api/src/modules/payroll/ter-table.ts`): **DEMO/PLACEHOLDER** brackets only. Production wajib lengkapi dari sumber peraturan resmi DJP. Engine `lookupTer` agnostic terhadap jumlah bracket.
+- **TER table** (`apps/api/src/modules/payroll/ter-table.ts`): bracket bawah–menengah (>99% pegawai) sudah cocok dgn sumber independen PMK 168/2023; bracket teratas (bruto > `TER_UNVERIFIED_BRUTO_MIN` = Rp700jt/bulan, tarif 30–34% kategori B/C) masih **direkonstruksi** — verifikasi ke Lampiran PDF resmi DJP sebelum dipakai klien high-earner. Engine `lookupTer` agnostic jumlah bracket; `lookupTerDetail` menandai `unverified`.
+  - **Gate TER**: `PayrollService.post()` MEM-BLOKIR posting bila ada line dgn bruto di zona belum-terverifikasi kecuali `konfirmasiTerTinggi=true` (throw + sebut nama karyawan). UI payroll: banner keras + baris bertanda ⚠ + checkbox konfirmasi `required` sebelum Jalankan & Post. Kasus bruto normal tak terpengaruh.
 - **Mapping PTKP → kategori TER**: A=TK_0, B=TK_1/K_0/TK_2, C=TK_3/K_1/K_2/K_3/HB_*. Helper di `@lentera/shared/enums` (`PTKP_TO_KATEGORI`) dan duplicated di `PayrollService` untuk DB enum.
 - **`PayrollService.calcLine`**: bruto = gaji + tunjangan; tarif TER lookup; tanpa NPWP × 1.2; PPh 21 = bruto × tarif; take-home = bruto − PPh21 − BPJS − potonganLain.
 - **`PayrollService.post`**: alokasi `PR-YYYY-MM-NNN`, 1 jurnal gabungan (D Beban Gaji 6-101, K Utang PPh 21 2-1022, K Utang BPJS 2-106, K Kas/Bank). **Auto-generate BuktiPotong PPh 21 per karyawan** dengan nomor `BP21-YYMMNNNN` untuk SPT Masa.
