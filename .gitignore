@@ -34,3 +34,6 @@ apps/api/uploads/
 test-results/
 playwright-report/
 .playwright/
+
+# Backup output di server (DB dumps + globals + uploads + .env) — JANGAN commit.
+/backups/
