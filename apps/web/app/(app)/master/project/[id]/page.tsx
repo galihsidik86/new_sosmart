@@ -9,6 +9,8 @@ import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select, Textarea,
   buttonClass, type BadgeVariant,
 } from '@/components/ui';
+import { DokumenLinksInput } from '@/components/DokumenLinksInput';
+import { LinkBukti } from '@/components/LinkBukti';
 
 type Status = 'PERENCANAAN' | 'AKTIF' | 'DITAHAN' | 'SELESAI' | 'DIBATALKAN';
 type Prioritas = 'RENDAH' | 'SEDANG' | 'TINGGI';
@@ -30,6 +32,7 @@ interface UserLite { id: string; nama: string; email?: string }
 interface Task {
   id: string; nama: string; deskripsi: string | null;
   pjUserId: string | null; tenggat: string | null; status: TaskStatus;
+  linkDokumen: string[];
   pjUser: UserLite | null;
 }
 interface ProjectDetail {
@@ -46,6 +49,7 @@ interface ProjectDetail {
   catatan: string | null;
   pjUserId: string | null;
   customerId: string | null;
+  linkDokumen: string[];
   pjUser: UserLite | null;
   customer: { id: string; kode: string; nama: string } | null;
   progress: number;
@@ -134,6 +138,37 @@ async function deleteTaskAction(projectId: string, taskId: string) {
   if (!tenantId) redirect('/login');
   await apiFetch(`/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE', tenantId });
   revalidatePath(`/master/project/${projectId}`);
+}
+
+function cleanLinks(formData: FormData): string[] {
+  return formData.getAll('linkDokumen').map((v) => String(v).trim()).filter(Boolean);
+}
+
+async function updateProjectDocsAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  const id = String(formData.get('id'));
+  await apiFetch(`/projects/${id}`, {
+    method: 'PATCH',
+    tenantId,
+    body: JSON.stringify({ linkDokumen: cleanLinks(formData) }),
+  });
+  revalidatePath(`/master/project/${id}`);
+}
+
+async function updateTaskDocsAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  const id = String(formData.get('id'));
+  const taskId = String(formData.get('taskId'));
+  await apiFetch(`/projects/${id}/tasks/${taskId}`, {
+    method: 'PATCH',
+    tenantId,
+    body: JSON.stringify({ linkDokumen: cleanLinks(formData) }),
+  });
+  revalidatePath(`/master/project/${id}`);
 }
 
 async function addMemberAction(formData: FormData) {
@@ -390,6 +425,28 @@ export default async function ProjectDetailPage({
         </div>
 
         <Card className="mb-6">
+          <h2 className="font-semibold text-tanah-700 mb-3">Dokumen Projek ({p.linkDokumen.length})</h2>
+          {p.linkDokumen.length > 0 && (
+            <ul className="space-y-1 mb-3">
+              {p.linkDokumen.map((u, i) => (
+                <li key={i} className="text-xs flex items-center gap-2">
+                  <span className="text-tanah-400">{i + 1}.</span>
+                  <LinkBukti url={u} variant="full" />
+                </li>
+              ))}
+            </ul>
+          )}
+          <form action={updateProjectDocsAction} className="space-y-2 pt-3 border-t border-cream-200">
+            <input type="hidden" name="id" value={p.id} />
+            <div className="text-xs text-tanah-500">
+              Tautan kontrak / proposal / SOW / brief (URL Google Drive, Dropbox, dll).
+            </div>
+            <DokumenLinksInput initial={p.linkDokumen} />
+            <Button type="submit" size="sm">Simpan dokumen</Button>
+          </form>
+        </Card>
+
+        <Card className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-tanah-700">Tugas &amp; Milestone ({p.taskDone}/{p.taskTotal} selesai)</h2>
             <span className="text-sm text-tanah-500">{p.progress}% progres</span>
@@ -426,6 +483,26 @@ export default async function ProjectDetailPage({
                     {t.tenggat && <span>📅 {fmtTanggal(t.tenggat)}</span>}
                     <Badge variant={TASK_VARIANT[t.status]} size="sm">{TASK_LABEL[t.status]}</Badge>
                   </div>
+                  <details className="mt-1">
+                    <summary className="text-xs text-sogan-500 cursor-pointer hover:underline">
+                      📎 Dokumen ({t.linkDokumen.length})
+                    </summary>
+                    <div className="mt-2 pl-1 space-y-2">
+                      {t.linkDokumen.length > 0 && (
+                        <ul className="space-y-1">
+                          {t.linkDokumen.map((u, i) => (
+                            <li key={i} className="text-xs"><LinkBukti url={u} variant="full" /></li>
+                          ))}
+                        </ul>
+                      )}
+                      <form action={updateTaskDocsAction} className="space-y-2">
+                        <input type="hidden" name="id" value={p.id} />
+                        <input type="hidden" name="taskId" value={t.id} />
+                        <DokumenLinksInput initial={t.linkDokumen} />
+                        <Button type="submit" size="sm" variant="secondary">Simpan dokumen tugas</Button>
+                      </form>
+                    </div>
+                  </details>
                 </div>
                 <form>
                   <button

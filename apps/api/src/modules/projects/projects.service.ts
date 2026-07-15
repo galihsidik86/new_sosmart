@@ -33,6 +33,7 @@ export interface CreateProjectInput {
   industriId?: string | null;
   pjUserId?: string | null;
   customerId?: string | null;
+  linkDokumen?: string[];
 }
 
 export interface UpdateProjectInput {
@@ -48,6 +49,7 @@ export interface UpdateProjectInput {
   industriId?: string | null;
   pjUserId?: string | null;
   customerId?: string | null;
+  linkDokumen?: string[];
 }
 
 export interface CreateTaskInput {
@@ -56,6 +58,7 @@ export interface CreateTaskInput {
   pjUserId?: string | null;
   tenggat?: string | null;
   status?: ProjectTaskStatus;
+  linkDokumen?: string[];
 }
 
 export interface UpdateTaskInput {
@@ -65,6 +68,7 @@ export interface UpdateTaskInput {
   tenggat?: string | null;
   status?: ProjectTaskStatus;
   urutan?: number;
+  linkDokumen?: string[];
 }
 
 @Injectable()
@@ -253,6 +257,7 @@ export class ProjectsService {
           status: input.status ?? ProjectTaskStatus.BELUM,
           urutan: (max._max.urutan ?? 0) + 1,
           selesaiAt: input.status === ProjectTaskStatus.SELESAI ? new Date() : null,
+          linkDokumen: input.linkDokumen ?? [],
         },
       });
     });
@@ -272,6 +277,7 @@ export class ProjectsService {
         data.tenggat = input.tenggat ? new Date(input.tenggat + 'T00:00:00Z') : null;
       }
       if (input.urutan !== undefined) data.urutan = input.urutan;
+      if (input.linkDokumen !== undefined) data.linkDokumen = input.linkDokumen;
       if (input.status !== undefined) {
         data.status = input.status;
         data.selesaiAt = input.status === ProjectTaskStatus.SELESAI ? new Date() : null;
@@ -325,6 +331,7 @@ export class ProjectsService {
             industriId: input.industriId ?? null,
             pjUserId: input.pjUserId ?? null,
             customerId: input.customerId ?? null,
+            linkDokumen: input.linkDokumen ?? [],
             createdById: userId,
           },
         });
@@ -359,6 +366,7 @@ export class ProjectsService {
       if (input.catatan !== undefined) data.catatan = input.catatan;
       if (input.pjUserId !== undefined) data.pjUserId = input.pjUserId;
       if (input.customerId !== undefined) data.customerId = input.customerId;
+      if (input.linkDokumen !== undefined) data.linkDokumen = input.linkDokumen;
       if (input.industriId !== undefined) {
         data.industri = input.industriId
           ? { connect: { id: input.industriId } }

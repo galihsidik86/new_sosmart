@@ -2000,6 +2000,8 @@ model Project {
   budgetTotal    Decimal?      @map("budget_total") @db.Decimal(20, 2)
   /// Nilai kontrak / target pendapatan project (opsional).
   nilaiKontrak   Decimal?      @map("nilai_kontrak") @db.Decimal(20, 2)
+  /// Tautan dokumen project (kontrak/proposal/SOW/brief) — URL eksternal.
+  linkDokumen    String[]      @default([]) @map("link_dokumen")
   catatan        String?
   /// Klasifikasi jenis industri klien project (mis. Automotive utk project di Toyota).
   industriId     String?       @map("industri_id") @db.Uuid
@@ -2040,6 +2042,8 @@ model ProjectTask {
   pjUserId  String?           @map("pj_user_id") @db.Uuid
   tenggat   DateTime?         @db.Date
   status    ProjectTaskStatus @default(BELUM)
+  /// Tautan dokumen milestone (URL eksternal).
+  linkDokumen String[]        @default([]) @map("link_dokumen")
   urutan    Int               @default(0)
   selesaiAt DateTime?         @map("selesai_at")
   createdAt DateTime          @default(now()) @map("created_at")

@@ -20,6 +20,7 @@ import { ProjectsService } from './projects.service.js';
 
 const money = z.string().regex(/^\d+(\.\d{1,2})?$/);
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const linkDokumen = z.array(z.string().url('Tautan dokumen harus URL valid').max(2000)).max(50).optional();
 
 const createSchema = z.object({
   kode: z.string().min(1).max(30),
@@ -35,6 +36,7 @@ const createSchema = z.object({
   industriId: z.string().uuid().nullable().optional(),
   pjUserId: z.string().uuid().nullable().optional(),
   customerId: z.string().uuid().nullable().optional(),
+  linkDokumen,
 });
 type CreateInput = z.infer<typeof createSchema>;
 
@@ -51,6 +53,7 @@ const updateSchema = z.object({
   industriId: z.string().uuid().nullable().optional(),
   pjUserId: z.string().uuid().nullable().optional(),
   customerId: z.string().uuid().nullable().optional(),
+  linkDokumen,
 });
 type UpdateInput = z.infer<typeof updateSchema>;
 
@@ -60,6 +63,7 @@ const taskCreateSchema = z.object({
   pjUserId: z.string().uuid().nullable().optional(),
   tenggat: isoDate.nullable().optional(),
   status: z.nativeEnum(ProjectTaskStatus).optional(),
+  linkDokumen,
 });
 type TaskCreateInput = z.infer<typeof taskCreateSchema>;
 
@@ -70,6 +74,7 @@ const taskUpdateSchema = z.object({
   tenggat: isoDate.nullable().optional(),
   status: z.nativeEnum(ProjectTaskStatus).optional(),
   urutan: z.coerce.number().int().min(0).optional(),
+  linkDokumen,
 });
 type TaskUpdateInput = z.infer<typeof taskUpdateSchema>;
 
