@@ -10,14 +10,23 @@ import {
   Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, type BadgeVariant,
 } from '@/components/ui';
 
-type Status = 'AKTIF' | 'SELESAI' | 'DIBATALKAN';
+type Status = 'PERENCANAAN' | 'AKTIF' | 'DITAHAN' | 'SELESAI' | 'DIBATALKAN';
+type Prioritas = 'RENDAH' | 'SEDANG' | 'TINGGI';
 interface IndustriOpt { id: string; kode: string; nama: string }
+interface UserOpt { userId: string; nama: string; email: string }
+interface CustomerOpt { id: string; kode: string; nama: string }
 
 const STATUS_VARIANT: Record<Status, BadgeVariant> = {
+  PERENCANAAN: 'neutral',
   AKTIF: 'success',
-  SELESAI: 'neutral',
+  DITAHAN: 'warning',
+  SELESAI: 'brand',
   DIBATALKAN: 'danger',
 };
+const STATUS_LABEL: Record<Status, string> = {
+  PERENCANAAN: 'Perencanaan', AKTIF: 'Aktif', DITAHAN: 'Ditahan', SELESAI: 'Selesai', DIBATALKAN: 'Dibatalkan',
+};
+const PRIO_VARIANT: Record<Prioritas, BadgeVariant> = { RENDAH: 'neutral', SEDANG: 'warning', TINGGI: 'danger' };
 
 interface ProjectRow {
   id: string;
@@ -27,8 +36,13 @@ interface ProjectRow {
   tanggalMulai: string;
   tanggalSelesai: string | null;
   status: Status;
+  prioritas: Prioritas;
   budgetTotal: string | null;
   industri: IndustriOpt | null;
+  pjNama: string | null;
+  progress: number;
+  taskTotal: number;
+  taskDone: number;
   _count: { members: number; budgets: number };
 }
 
@@ -45,7 +59,12 @@ async function createProjectAction(formData: FormData) {
       deskripsi: String(formData.get('deskripsi') ?? '') || undefined,
       tanggalMulai: String(formData.get('tanggalMulai') ?? ''),
       tanggalSelesai: String(formData.get('tanggalSelesai') ?? '') || undefined,
+      status: String(formData.get('status') ?? '') || undefined,
+      prioritas: String(formData.get('prioritas') ?? '') || undefined,
       budgetTotal: String(formData.get('budgetTotal') ?? '') || undefined,
+      nilaiKontrak: String(formData.get('nilaiKontrak') ?? '') || undefined,
+      pjUserId: String(formData.get('pjUserId') ?? '') || undefined,
+      customerId: String(formData.get('customerId') ?? '') || undefined,
       industriId: String(formData.get('industriId') ?? '') || undefined,
     }),
   });
@@ -61,12 +80,14 @@ export default async function ProjectsPage({
   const includeSelesai = sp.semua === '1';
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [projects, industri] = await Promise.all([
+  const [projects, industri, users, customers] = await Promise.all([
     apiFetch<ProjectRow[]>(
       `/projects${includeSelesai ? '?includeSelesai=true' : ''}`,
       { tenantId },
     ),
     apiFetch<IndustriOpt[]>('/industri', { tenantId }).catch(() => [] as IndustriOpt[]),
+    apiFetch<UserOpt[]>('/users', { tenantId }).catch(() => [] as UserOpt[]),
+    apiFetch<CustomerOpt[]>('/customers', { tenantId }).catch(() => [] as CustomerOpt[]),
   ]);
 
   return (
@@ -92,6 +113,7 @@ export default async function ProjectsPage({
                 <TH>Kode / Nama</TH>
                 <TH>Periode</TH>
                 <TH numeric>Budget Total</TH>
+                <TH className="text-center w-32">Progres</TH>
                 <TH className="text-center">Status</TH>
                 <TH className="text-center">Member</TH>
                 <TH numeric stickyEnd className="w-24" />
@@ -102,9 +124,11 @@ export default async function ProjectsPage({
                     <TD>
                       <div className="font-semibold text-tanah-700">{p.nama}</div>
                       <div className="text-xs text-tanah-500 font-mono">{p.kode}</div>
-                      {p.industri && (
-                        <Badge variant="neutral" size="sm" className="mt-1">{p.industri.nama}</Badge>
-                      )}
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <Badge variant={PRIO_VARIANT[p.prioritas]} size="sm">{p.prioritas.toLowerCase()}</Badge>
+                        {p.pjNama && <span className="text-xs text-tanah-500">👤 {p.pjNama}</span>}
+                        {p.industri && <Badge variant="neutral" size="sm">{p.industri.nama}</Badge>}
+                      </div>
                     </TD>
                     <TD className="text-xs text-tanah-500">
                       {fmtTanggal(p.tanggalMulai)}
@@ -114,12 +138,24 @@ export default async function ProjectsPage({
                       {p.budgetTotal ? fmtRp(p.budgetTotal) : <span className="text-tanah-300">—</span>}
                     </MoneyCell>
                     <TD className="text-center">
+                      {p.taskTotal > 0 ? (
+                        <div>
+                          <div className="text-xs text-tanah-500 mb-1">{p.progress}% · {p.taskDone}/{p.taskTotal}</div>
+                          <div className="h-1.5 rounded-full bg-cream-200 overflow-hidden">
+                            <div className="h-full bg-sogan-500 rounded-full" style={{ width: `${p.progress}%` }} />
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-tanah-300 text-xs">—</span>
+                      )}
+                    </TD>
+                    <TD className="text-center">
                       <Badge
                         variant={STATUS_VARIANT[p.status]}
                         size="sm"
                         className={p.status === 'DIBATALKAN' ? 'line-through' : undefined}
                       >
-                        {p.status}
+                        {STATUS_LABEL[p.status]}
                       </Badge>
                     </TD>
                     <TD className="text-center text-xs text-tanah-500">
@@ -137,7 +173,7 @@ export default async function ProjectsPage({
                     </TD>
                   </TR>
                 ))}
-                {projects.length === 0 && <EmptyRow colSpan={6}>Belum ada project.</EmptyRow>}
+                {projects.length === 0 && <EmptyRow colSpan={7}>Belum ada project.</EmptyRow>}
               </TBody>
             </Table>
           </section>
@@ -148,9 +184,46 @@ export default async function ProjectsPage({
               <FormField label="Kode" required><Input name="kode" required placeholder="PRJ-001" /></FormField>
               <FormField label="Nama Project" required><Input name="nama" required /></FormField>
               <FormField label="Deskripsi"><Textarea name="deskripsi" rows={2} /></FormField>
-              <FormField label="Tanggal Mulai" required><Input name="tanggalMulai" type="date" required /></FormField>
-              <FormField label="Tanggal Selesai"><Input name="tanggalSelesai" type="date" /></FormField>
-              <FormField label="Budget Total (opsional)"><Input name="budgetTotal" type="number" placeholder="0" /></FormField>
+              <div className="grid grid-cols-2 gap-2">
+                <FormField label="Status">
+                  <Select name="status" defaultValue="AKTIF">
+                    {(Object.keys(STATUS_LABEL) as Status[]).map((st) => (
+                      <option key={st} value={st}>{STATUS_LABEL[st]}</option>
+                    ))}
+                  </Select>
+                </FormField>
+                <FormField label="Prioritas">
+                  <Select name="prioritas" defaultValue="SEDANG">
+                    <option value="RENDAH">Rendah</option>
+                    <option value="SEDANG">Sedang</option>
+                    <option value="TINGGI">Tinggi</option>
+                  </Select>
+                </FormField>
+              </div>
+              <FormField label="Penanggung jawab (PIC)">
+                <Select name="pjUserId" defaultValue="">
+                  <option value="">— belum ditentukan —</option>
+                  {users.map((u) => (
+                    <option key={u.userId} value={u.userId}>{u.nama}</option>
+                  ))}
+                </Select>
+              </FormField>
+              <FormField label="Klien / Pelanggan">
+                <Select name="customerId" defaultValue="">
+                  <option value="">— tanpa klien —</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
+                  ))}
+                </Select>
+              </FormField>
+              <div className="grid grid-cols-2 gap-2">
+                <FormField label="Tanggal Mulai" required><Input name="tanggalMulai" type="date" required /></FormField>
+                <FormField label="Tanggal Selesai"><Input name="tanggalSelesai" type="date" /></FormField>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <FormField label="Budget (biaya)"><Input name="budgetTotal" type="number" placeholder="0" /></FormField>
+                <FormField label="Nilai Kontrak"><Input name="nilaiKontrak" type="number" placeholder="0" /></FormField>
+              </div>
               <FormField label="Jenis Industri (opsional)">
                 <Select name="industriId" defaultValue="">
                   <option value="">— pilih industri —</option>

@@ -4,14 +4,34 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
-import { fmtRp } from '@/lib/format';
+import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select, Textarea, buttonClass,
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select, Textarea,
+  buttonClass, type BadgeVariant,
 } from '@/components/ui';
 
-type Status = 'AKTIF' | 'SELESAI' | 'DIBATALKAN';
+type Status = 'PERENCANAAN' | 'AKTIF' | 'DITAHAN' | 'SELESAI' | 'DIBATALKAN';
+type Prioritas = 'RENDAH' | 'SEDANG' | 'TINGGI';
+type TaskStatus = 'BELUM' | 'PROSES' | 'SELESAI';
 type MemberRole = 'MANAGER' | 'MEMBER';
 
+const STATUS_VARIANT: Record<Status, BadgeVariant> = {
+  PERENCANAAN: 'neutral', AKTIF: 'success', DITAHAN: 'warning', SELESAI: 'brand', DIBATALKAN: 'danger',
+};
+const STATUS_LABEL: Record<Status, string> = {
+  PERENCANAAN: 'Perencanaan', AKTIF: 'Aktif', DITAHAN: 'Ditahan', SELESAI: 'Selesai', DIBATALKAN: 'Dibatalkan',
+};
+const PRIO_VARIANT: Record<Prioritas, BadgeVariant> = { RENDAH: 'neutral', SEDANG: 'warning', TINGGI: 'danger' };
+const TASK_VARIANT: Record<TaskStatus, BadgeVariant> = { BELUM: 'neutral', PROSES: 'warning', SELESAI: 'success' };
+const TASK_LABEL: Record<TaskStatus, string> = { BELUM: 'Belum', PROSES: 'Proses', SELESAI: 'Selesai' };
+const TASK_STATUSES: TaskStatus[] = ['BELUM', 'PROSES', 'SELESAI'];
+
+interface UserLite { id: string; nama: string; email?: string }
+interface Task {
+  id: string; nama: string; deskripsi: string | null;
+  pjUserId: string | null; tenggat: string | null; status: TaskStatus;
+  pjUser: UserLite | null;
+}
 interface ProjectDetail {
   id: string;
   kode: string;
@@ -20,8 +40,20 @@ interface ProjectDetail {
   tanggalMulai: string;
   tanggalSelesai: string | null;
   status: Status;
+  prioritas: Prioritas;
   budgetTotal: string | null;
+  nilaiKontrak: string | null;
   catatan: string | null;
+  pjUserId: string | null;
+  customerId: string | null;
+  pjUser: UserLite | null;
+  customer: { id: string; kode: string; nama: string } | null;
+  progress: number;
+  taskDone: number;
+  taskTotal: number;
+  realisasiBiaya: string;
+  realisasiPendapatan: string;
+  tasks: Task[];
   members: Array<{
     id: string;
     userId: string;
@@ -40,6 +72,7 @@ interface ProjectDetail {
 
 interface UserRow { userId: string; email: string; nama: string }
 interface Account { id: string; kode: string; nama: string; isPostable: boolean }
+interface CustomerOpt { id: string; kode: string; nama: string }
 
 async function updateAction(formData: FormData) {
   'use server';
@@ -51,13 +84,56 @@ async function updateAction(formData: FormData) {
     tenantId,
     body: JSON.stringify({
       nama: formData.get('nama'),
+      deskripsi: (formData.get('deskripsi') as string) || null,
       status: formData.get('status'),
+      prioritas: formData.get('prioritas'),
+      tanggalMulai: formData.get('tanggalMulai') || undefined,
       tanggalSelesai: formData.get('tanggalSelesai') || null,
       budgetTotal: formData.get('budgetTotal') || null,
-      catatan: formData.get('catatan') || null,
+      nilaiKontrak: formData.get('nilaiKontrak') || null,
+      pjUserId: (formData.get('pjUserId') as string) || null,
+      customerId: (formData.get('customerId') as string) || null,
+      catatan: (formData.get('catatan') as string) || null,
     }),
   });
   revalidatePath(`/master/project/${id}`);
+}
+
+async function addTaskAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  const id = String(formData.get('id'));
+  await apiFetch(`/projects/${id}/tasks`, {
+    method: 'POST',
+    tenantId,
+    body: JSON.stringify({
+      nama: formData.get('nama'),
+      pjUserId: (formData.get('pjUserId') as string) || null,
+      tenggat: (formData.get('tenggat') as string) || null,
+    }),
+  });
+  revalidatePath(`/master/project/${id}`);
+}
+
+async function setTaskStatusAction(projectId: string, taskId: string, status: TaskStatus) {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  await apiFetch(`/projects/${projectId}/tasks/${taskId}`, {
+    method: 'PATCH',
+    tenantId,
+    body: JSON.stringify({ status }),
+  });
+  revalidatePath(`/master/project/${projectId}`);
+}
+
+async function deleteTaskAction(projectId: string, taskId: string) {
+  'use server';
+  const tenantId = await getActiveTenantId();
+  if (!tenantId) redirect('/login');
+  await apiFetch(`/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE', tenantId });
+  revalidatePath(`/master/project/${projectId}`);
 }
 
 async function addMemberAction(formData: FormData) {
@@ -125,17 +201,23 @@ export default async function ProjectDetailPage({
   const { id } = await params;
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [p, users, accounts] = await Promise.all([
+  const [p, users, accounts, customers] = await Promise.all([
     apiFetch<ProjectDetail>(`/projects/${id}`, { tenantId }),
     apiFetch<UserRow[]>('/users', { tenantId }),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
+    apiFetch<CustomerOpt[]>('/customers', { tenantId }).catch(() => [] as CustomerOpt[]),
   ]);
   const memberUserIds = new Set(p.members.map((m) => m.userId));
   const nonMembers = users.filter((u) => !memberUserIds.has(u.userId));
   const postableAccounts = accounts.filter((a) => a.isPostable);
+  const biaya = Number(p.realisasiBiaya);
+  const pendapatan = Number(p.realisasiPendapatan);
+  const budget = p.budgetTotal ? Number(p.budgetTotal) : 0;
+  const kontrak = p.nilaiKontrak ? Number(p.nilaiKontrak) : 0;
+  const serapanBudget = budget > 0 ? Math.round((biaya / budget) * 100) : 0;
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <Link href="/master/project" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader
@@ -146,7 +228,14 @@ export default async function ProjectDetailPage({
               <span className="font-mono text-tanah-500 text-base font-normal">{p.kode}</span>
             </span>
           }
-          subtitle={p.deskripsi || undefined}
+          subtitle={
+            <span className="flex items-center gap-2 flex-wrap">
+              <Badge variant={STATUS_VARIANT[p.status]} size="sm">{STATUS_LABEL[p.status]}</Badge>
+              <Badge variant={PRIO_VARIANT[p.prioritas]} size="sm">Prioritas {p.prioritas.toLowerCase()}</Badge>
+              {p.customer && <span className="text-xs text-tanah-500">Klien: {p.customer.nama}</span>}
+              {p.pjUser && <span className="text-xs text-tanah-500">· PIC: {p.pjUser.nama}</span>}
+            </span>
+          }
           actions={
             <Link
               href={`/laporan/budget-actual?projectId=${p.id}` as Route}
@@ -157,21 +246,96 @@ export default async function ProjectDetailPage({
           }
         />
 
+        {/* Ringkasan: progres + budget vs realisasi */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-2">Progres Tugas</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-sogan-500 tabular-nums">{p.progress}%</span>
+              <span className="text-sm text-tanah-500">{p.taskDone}/{p.taskTotal} tugas</span>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-cream-200 overflow-hidden">
+              <div className="h-full bg-sogan-500 rounded-full" style={{ width: `${p.progress}%` }} />
+            </div>
+            <div className="text-xs text-tanah-500 mt-2">
+              {fmtTanggal(p.tanggalMulai)}{p.tanggalSelesai && <> – {fmtTanggal(p.tanggalSelesai)}</>}
+            </div>
+          </Card>
+
+          <Card>
+            <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-2">Biaya (Budget vs Realisasi)</div>
+            <div className="text-2xl font-bold text-tanah-700 tabular-nums font-mono">{fmtRp(biaya)}</div>
+            <div className="text-xs text-tanah-500">dari budget {budget > 0 ? fmtRp(budget) : '—'}</div>
+            {budget > 0 && (
+              <div className="mt-2 h-2 rounded-full bg-cream-200 overflow-hidden">
+                <div className={`h-full rounded-full ${serapanBudget > 100 ? 'bg-bata-500' : 'bg-padi-500'}`}
+                  style={{ width: `${Math.min(serapanBudget, 100)}%` }} />
+              </div>
+            )}
+            {budget > 0 && (
+              <div className={`text-xs mt-1 ${serapanBudget > 100 ? 'text-bata-700 font-semibold' : 'text-tanah-500'}`}>
+                serapan {serapanBudget}%{serapanBudget > 100 ? ' — melebihi budget' : ''}
+              </div>
+            )}
+          </Card>
+
+          <Card>
+            <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-2">Pendapatan & Laba Berjalan</div>
+            <div className="text-2xl font-bold text-tanah-700 tabular-nums font-mono">{fmtRp(pendapatan)}</div>
+            <div className="text-xs text-tanah-500">dari kontrak {kontrak > 0 ? fmtRp(kontrak) : '—'}</div>
+            <div className={`text-sm mt-2 font-semibold ${pendapatan - biaya >= 0 ? 'text-padi-700' : 'text-bata-700'}`}>
+              Laba berjalan: {fmtRp(pendapatan - biaya)}
+            </div>
+          </Card>
+        </div>
+
         <div className="grid grid-cols-2 gap-6 mb-6">
           <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Info & Status</h2>
             <form action={updateAction} className="space-y-3 text-sm">
               <input type="hidden" name="id" value={p.id} />
               <FormField label="Nama" required><Input name="nama" defaultValue={p.nama} required /></FormField>
-              <FormField label="Tanggal Selesai"><Input name="tanggalSelesai" type="date" defaultValue={p.tanggalSelesai?.slice(0, 10) ?? ''} /></FormField>
-              <FormField label="Budget Total"><Input name="budgetTotal" type="number" defaultValue={p.budgetTotal ?? ''} /></FormField>
-              <FormField label="Status">
-                <Select name="status" defaultValue={p.status}>
-                  <option value="AKTIF">AKTIF</option>
-                  <option value="SELESAI">SELESAI</option>
-                  <option value="DIBATALKAN">DIBATALKAN</option>
+              <FormField label="Deskripsi"><Textarea name="deskripsi" rows={2} defaultValue={p.deskripsi ?? ''} /></FormField>
+              <div className="grid grid-cols-2 gap-2">
+                <FormField label="Status">
+                  <Select name="status" defaultValue={p.status}>
+                    {(Object.keys(STATUS_LABEL) as Status[]).map((st) => (
+                      <option key={st} value={st}>{STATUS_LABEL[st]}</option>
+                    ))}
+                  </Select>
+                </FormField>
+                <FormField label="Prioritas">
+                  <Select name="prioritas" defaultValue={p.prioritas}>
+                    <option value="RENDAH">Rendah</option>
+                    <option value="SEDANG">Sedang</option>
+                    <option value="TINGGI">Tinggi</option>
+                  </Select>
+                </FormField>
+              </div>
+              <FormField label="Penanggung jawab (PIC)">
+                <Select name="pjUserId" defaultValue={p.pjUserId ?? ''}>
+                  <option value="">— belum ditentukan —</option>
+                  {users.map((u) => (
+                    <option key={u.userId} value={u.userId}>{u.nama}</option>
+                  ))}
                 </Select>
               </FormField>
+              <FormField label="Klien / Pelanggan">
+                <Select name="customerId" defaultValue={p.customerId ?? ''}>
+                  <option value="">— tanpa klien —</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
+                  ))}
+                </Select>
+              </FormField>
+              <div className="grid grid-cols-2 gap-2">
+                <FormField label="Tanggal Mulai"><Input name="tanggalMulai" type="date" defaultValue={p.tanggalMulai.slice(0, 10)} /></FormField>
+                <FormField label="Tanggal Selesai"><Input name="tanggalSelesai" type="date" defaultValue={p.tanggalSelesai?.slice(0, 10) ?? ''} /></FormField>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <FormField label="Budget (biaya)"><Input name="budgetTotal" type="number" defaultValue={p.budgetTotal ?? ''} /></FormField>
+                <FormField label="Nilai Kontrak"><Input name="nilaiKontrak" type="number" defaultValue={p.nilaiKontrak ?? ''} /></FormField>
+              </div>
               <FormField label="Catatan"><Textarea name="catatan" rows={2} defaultValue={p.catatan ?? ''} /></FormField>
               <Button type="submit" className="w-full">Simpan</Button>
             </form>
@@ -224,6 +388,82 @@ export default async function ProjectDetailPage({
             </form>
           </Card>
         </div>
+
+        <Card className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-tanah-700">Tugas &amp; Milestone ({p.taskDone}/{p.taskTotal} selesai)</h2>
+            <span className="text-sm text-tanah-500">{p.progress}% progres</span>
+          </div>
+
+          <ul className="divide-y divide-cream-200 mb-4">
+            {p.tasks.map((t) => (
+              <li key={t.id} className="py-2.5 flex items-start gap-3">
+                {/* pemilih status: 3 tombol (Belum/Proses/Selesai) */}
+                <form className="flex rounded-lg overflow-hidden border border-cream-300 shrink-0">
+                  {TASK_STATUSES.map((st) => (
+                    <button
+                      key={st}
+                      type="submit"
+                      formAction={setTaskStatusAction.bind(null, p.id, t.id, st)}
+                      className={`px-2 py-1 text-[11px] font-semibold transition-colors ${
+                        t.status === st
+                          ? st === 'SELESAI' ? 'bg-padi-500 text-cream-50'
+                            : st === 'PROSES' ? 'bg-emas-300 text-emas-700'
+                            : 'bg-cream-300 text-tanah-700'
+                          : 'bg-white text-tanah-400 hover:bg-cream-50'
+                      }`}
+                    >
+                      {TASK_LABEL[st]}
+                    </button>
+                  ))}
+                </form>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-medium ${t.status === 'SELESAI' ? 'line-through text-tanah-400' : 'text-tanah-700'}`}>
+                    {t.nama}
+                  </div>
+                  <div className="text-xs text-tanah-500 flex items-center gap-2 flex-wrap">
+                    {t.pjUser && <span>👤 {t.pjUser.nama}</span>}
+                    {t.tenggat && <span>📅 {fmtTanggal(t.tenggat)}</span>}
+                    <Badge variant={TASK_VARIANT[t.status]} size="sm">{TASK_LABEL[t.status]}</Badge>
+                  </div>
+                </div>
+                <form>
+                  <button
+                    type="submit"
+                    formAction={deleteTaskAction.bind(null, p.id, t.id)}
+                    className="text-xs text-bata-500 font-semibold hover:underline shrink-0"
+                  >
+                    hapus
+                  </button>
+                </form>
+              </li>
+            ))}
+            {p.tasks.length === 0 && (
+              <li className="py-3 text-sm text-tanah-500">Belum ada tugas. Tambah di bawah.</li>
+            )}
+          </ul>
+
+          <form action={addTaskAction} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end pt-3 border-t border-cream-200">
+            <input type="hidden" name="id" value={p.id} />
+            <FormField label="Tugas / milestone" className="sm:col-span-5">
+              <Input name="nama" required placeholder="mis. Kickoff meeting" />
+            </FormField>
+            <FormField label="PIC" className="sm:col-span-3">
+              <Select name="pjUserId" defaultValue="">
+                <option value="">—</option>
+                {users.map((u) => (
+                  <option key={u.userId} value={u.userId}>{u.nama}</option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField label="Tenggat" className="sm:col-span-2">
+              <Input name="tenggat" type="date" />
+            </FormField>
+            <div className="sm:col-span-2">
+              <Button type="submit" className="w-full">+ Tambah</Button>
+            </div>
+          </form>
+        </Card>
 
         <Card>
           <h2 className="font-semibold text-tanah-700 mb-3">Budget per Akun × Bulan ({p.budgets.length})</h2>

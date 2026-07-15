@@ -273,9 +273,23 @@ enum MetodePenyusutan {
 
 /// Jenis mutasi stok di kartu stok.
 enum ProjectStatus {
+  PERENCANAAN
   AKTIF
+  DITAHAN
   SELESAI
   DIBATALKAN
+}
+
+enum ProjectPrioritas {
+  RENDAH
+  SEDANG
+  TINGGI
+}
+
+enum ProjectTaskStatus {
+  BELUM
+  PROSES
+  SELESAI
 }
 
 enum ProjectMemberRole {
@@ -1981,11 +1995,19 @@ model Project {
   tanggalMulai   DateTime      @map("tanggal_mulai") @db.Date
   tanggalSelesai DateTime?     @map("tanggal_selesai") @db.Date
   status         ProjectStatus @default(AKTIF)
+  prioritas      ProjectPrioritas @default(SEDANG)
   /// Budget total tingkat project (opsional). Detail per akun × bulan ada di Budget.
   budgetTotal    Decimal?      @map("budget_total") @db.Decimal(20, 2)
+  /// Nilai kontrak / target pendapatan project (opsional).
+  nilaiKontrak   Decimal?      @map("nilai_kontrak") @db.Decimal(20, 2)
   catatan        String?
   /// Klasifikasi jenis industri klien project (mis. Automotive utk project di Toyota).
   industriId     String?       @map("industri_id") @db.Uuid
+  /// Penanggung jawab (PIC) — user id. FK lunak (tanpa relasi Prisma), nama
+  /// di-resolve di service.
+  pjUserId       String?       @map("pj_user_id") @db.Uuid
+  /// Klien/pelanggan project (opsional). FK lunak ke Customer.
+  customerId     String?       @map("customer_id") @db.Uuid
 
   createdById String?  @map("created_by_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at")
@@ -1994,6 +2016,7 @@ model Project {
   tenant               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   industri             Industri?             @relation(fields: [industriId], references: [id], onDelete: SetNull)
   members              ProjectMember[]
+  tasks                ProjectTask[]
   budgets              Budget[]
   journalLines         JournalLine[]
   salesInvoiceLines    SalesInvoiceLine[]
@@ -2004,6 +2027,28 @@ model Project {
   @@index([tenantId, status])
   @@index([industriId])
   @@map("projects")
+}
+
+/// Tugas / milestone dalam sebuah project (manajemen projek sederhana).
+/// pjUserId = penanggung jawab tugas (FK lunak, nama di-resolve di service).
+model ProjectTask {
+  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String            @map("tenant_id") @db.Uuid
+  projectId String            @map("project_id") @db.Uuid
+  nama      String
+  deskripsi String?
+  pjUserId  String?           @map("pj_user_id") @db.Uuid
+  tenggat   DateTime?         @db.Date
+  status    ProjectTaskStatus @default(BELUM)
+  urutan    Int               @default(0)
+  selesaiAt DateTime?         @map("selesai_at")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, projectId])
+  @@map("project_tasks")
 }
 
 /// Master jenis/klasifikasi industri klien project (mis. Automotive, FMCG,

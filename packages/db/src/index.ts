@@ -42,6 +42,8 @@ export {
   AuditAction,
   ProjectStatus,
   ProjectMemberRole,
+  ProjectPrioritas,
+  ProjectTaskStatus,
 } from '@prisma/client';
 
 // Model types (interface) — type-only

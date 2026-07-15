@@ -4,7 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ProjectMemberRole, ProjectStatus } from '@lentera/db';
+import { Prisma, ProjectMemberRole, ProjectStatus, ProjectPrioritas, ProjectTaskStatus } from '@lentera/db';
+import { Decimal } from 'decimal.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 
@@ -24,19 +25,46 @@ export interface CreateProjectInput {
   deskripsi?: string;
   tanggalMulai: string; // YYYY-MM-DD
   tanggalSelesai?: string;
+  status?: ProjectStatus;
+  prioritas?: ProjectPrioritas;
   budgetTotal?: string;
+  nilaiKontrak?: string | null;
   catatan?: string;
   industriId?: string | null;
+  pjUserId?: string | null;
+  customerId?: string | null;
 }
 
 export interface UpdateProjectInput {
   nama?: string;
   deskripsi?: string | null;
+  tanggalMulai?: string;
   tanggalSelesai?: string | null;
   status?: ProjectStatus;
+  prioritas?: ProjectPrioritas;
   budgetTotal?: string | null;
+  nilaiKontrak?: string | null;
   catatan?: string | null;
   industriId?: string | null;
+  pjUserId?: string | null;
+  customerId?: string | null;
+}
+
+export interface CreateTaskInput {
+  nama: string;
+  deskripsi?: string | null;
+  pjUserId?: string | null;
+  tenggat?: string | null;
+  status?: ProjectTaskStatus;
+}
+
+export interface UpdateTaskInput {
+  nama?: string;
+  deskripsi?: string | null;
+  pjUserId?: string | null;
+  tenggat?: string | null;
+  status?: ProjectTaskStatus;
+  urutan?: number;
 }
 
 @Injectable()
@@ -72,18 +100,40 @@ export class ProjectsService {
     const { userId, role } = this.ctx.require();
     return this.tenancy.run(async (tx) => {
       const where: Prisma.ProjectWhereInput = { tenantId };
-      if (!includeSelesai) where.status = ProjectStatus.AKTIF;
+      // "aktif saja" = yang masih berjalan (bukan Selesai/Batal).
+      if (!includeSelesai) {
+        where.status = { notIn: [ProjectStatus.SELESAI, ProjectStatus.DIBATALKAN] };
+      }
       // Non OWNER/ADMIN → filter ke project yang dia jadi member
       if (role !== 'OWNER' && role !== 'ADMIN') {
         where.members = { some: { userId } };
       }
-      return tx.project.findMany({
+      const rows = await tx.project.findMany({
         where,
         orderBy: [{ status: 'asc' }, { kode: 'asc' }],
         include: {
           industri: { select: { id: true, kode: true, nama: true } },
           _count: { select: { members: true, budgets: true } },
+          tasks: { select: { status: true } },
         },
+      });
+      // Resolusi nama PIC (batch) + hitung progres dari tugas.
+      const pjIds = rows.map((r) => r.pjUserId).filter((x): x is string => !!x);
+      const users = pjIds.length
+        ? await tx.user.findMany({ where: { id: { in: pjIds } }, select: { id: true, nama: true } })
+        : [];
+      const umap = new Map(users.map((u) => [u.id, u.nama]));
+      return rows.map((r) => {
+        const total = r.tasks.length;
+        const done = r.tasks.filter((t) => t.status === 'SELESAI').length;
+        const { tasks, ...rest } = r;
+        return {
+          ...rest,
+          pjNama: r.pjUserId ? umap.get(r.pjUserId) ?? null : null,
+          taskTotal: total,
+          taskDone: done,
+          progress: total ? Math.round((done / total) * 100) : 0,
+        };
       });
     });
   }
@@ -103,6 +153,7 @@ export class ProjectsService {
             include: { account: { select: { kode: true, nama: true } } },
             orderBy: [{ periode: 'asc' }, { account: { kode: 'asc' } }],
           },
+          tasks: { orderBy: [{ urutan: 'asc' }, { createdAt: 'asc' }] },
         },
       });
       if (!p || p.tenantId !== tenantId) {
@@ -113,6 +164,130 @@ export class ProjectsService {
         if (!isMember) throw new ForbiddenException('Tidak boleh lihat project ini');
       }
       return p;
+    });
+  }
+
+  /** Detail lengkap: byId + resolusi nama PIC/klien/assignee, progres, realisasi. */
+  async detail(id: string) {
+    const p = await this.byId(id);
+    return this.tenancy.run(async (tx) => {
+      const userIds = [
+        ...(p.pjUserId ? [p.pjUserId] : []),
+        ...p.tasks.map((t) => t.pjUserId).filter((x): x is string => !!x),
+      ];
+      const users = userIds.length
+        ? await tx.user.findMany({
+            where: { id: { in: userIds } },
+            select: { id: true, nama: true, email: true },
+          })
+        : [];
+      const umap = new Map(users.map((u) => [u.id, u]));
+      const customer = p.customerId
+        ? await tx.customer.findUnique({
+            where: { id: p.customerId },
+            select: { id: true, kode: true, nama: true },
+          })
+        : null;
+
+      const total = p.tasks.length;
+      const done = p.tasks.filter((t) => t.status === 'SELESAI').length;
+      const progress = total ? Math.round((done / total) * 100) : 0;
+
+      // Realisasi dari jurnal POSTED ber-project (biaya net & pendapatan net).
+      const lines = await tx.journalLine.findMany({
+        where: {
+          projectId: id,
+          journal: { status: 'POSTED' },
+          account: { kind: { in: ['BEBAN_POKOK', 'BEBAN', 'BEBAN_LAIN', 'PENDAPATAN', 'PENDAPATAN_LAIN'] } },
+        },
+        select: { debit: true, kredit: true, account: { select: { kind: true } } },
+      });
+      let biaya = new Decimal(0);
+      let pendapatan = new Decimal(0);
+      for (const l of lines) {
+        const d = new Decimal(l.debit.toString());
+        const k = new Decimal(l.kredit.toString());
+        if (l.account.kind === 'PENDAPATAN' || l.account.kind === 'PENDAPATAN_LAIN') {
+          pendapatan = pendapatan.plus(k.minus(d));
+        } else {
+          biaya = biaya.plus(d.minus(k));
+        }
+      }
+
+      return {
+        ...p,
+        pjUser: p.pjUserId ? umap.get(p.pjUserId) ?? null : null,
+        customer,
+        progress,
+        taskDone: done,
+        taskTotal: total,
+        realisasiBiaya: biaya.toFixed(2),
+        realisasiPendapatan: pendapatan.toFixed(2),
+        tasks: p.tasks.map((t) => ({
+          ...t,
+          pjUser: t.pjUserId ? umap.get(t.pjUserId) ?? null : null,
+        })),
+      };
+    });
+  }
+
+  // ---------- Tugas / milestone ----------
+
+  async addTask(projectId: string, input: CreateTaskInput) {
+    await this.byId(projectId);
+    const tenantId = this.ctx.require().tenantId;
+    return this.tenancy.run(async (tx) => {
+      await this.assertCanManage(tx, projectId);
+      const max = await tx.projectTask.aggregate({
+        where: { projectId },
+        _max: { urutan: true },
+      });
+      return tx.projectTask.create({
+        data: {
+          tenantId,
+          projectId,
+          nama: input.nama.trim(),
+          deskripsi: input.deskripsi ?? null,
+          pjUserId: input.pjUserId ?? null,
+          tenggat: input.tenggat ? new Date(input.tenggat + 'T00:00:00Z') : null,
+          status: input.status ?? ProjectTaskStatus.BELUM,
+          urutan: (max._max.urutan ?? 0) + 1,
+          selesaiAt: input.status === ProjectTaskStatus.SELESAI ? new Date() : null,
+        },
+      });
+    });
+  }
+
+  async updateTask(projectId: string, taskId: string, input: UpdateTaskInput) {
+    await this.byId(projectId);
+    return this.tenancy.run(async (tx) => {
+      await this.assertCanManage(tx, projectId);
+      const t = await tx.projectTask.findFirst({ where: { id: taskId, projectId } });
+      if (!t) throw new NotFoundException('Tugas tidak ditemukan');
+      const data: Prisma.ProjectTaskUpdateInput = {};
+      if (input.nama !== undefined) data.nama = input.nama.trim();
+      if (input.deskripsi !== undefined) data.deskripsi = input.deskripsi;
+      if (input.pjUserId !== undefined) data.pjUserId = input.pjUserId;
+      if (input.tenggat !== undefined) {
+        data.tenggat = input.tenggat ? new Date(input.tenggat + 'T00:00:00Z') : null;
+      }
+      if (input.urutan !== undefined) data.urutan = input.urutan;
+      if (input.status !== undefined) {
+        data.status = input.status;
+        data.selesaiAt = input.status === ProjectTaskStatus.SELESAI ? new Date() : null;
+      }
+      return tx.projectTask.update({ where: { id: taskId }, data });
+    });
+  }
+
+  async deleteTask(projectId: string, taskId: string) {
+    await this.byId(projectId);
+    return this.tenancy.run(async (tx) => {
+      await this.assertCanManage(tx, projectId);
+      const t = await tx.projectTask.findFirst({ where: { id: taskId, projectId } });
+      if (!t) throw new NotFoundException('Tugas tidak ditemukan');
+      await tx.projectTask.delete({ where: { id: taskId } });
+      return { removed: true };
     });
   }
 
@@ -142,10 +317,14 @@ export class ProjectsService {
             deskripsi: input.deskripsi ?? null,
             tanggalMulai,
             tanggalSelesai,
-            status: ProjectStatus.AKTIF,
+            status: input.status ?? ProjectStatus.AKTIF,
+            prioritas: input.prioritas ?? ProjectPrioritas.SEDANG,
             budgetTotal: input.budgetTotal ?? null,
+            nilaiKontrak: input.nilaiKontrak ?? null,
             catatan: input.catatan ?? null,
             industriId: input.industriId ?? null,
+            pjUserId: input.pjUserId ?? null,
+            customerId: input.customerId ?? null,
             createdById: userId,
           },
         });
@@ -165,14 +344,21 @@ export class ProjectsService {
       const data: Prisma.ProjectUpdateInput = {};
       if (input.nama !== undefined) data.nama = input.nama.trim();
       if (input.deskripsi !== undefined) data.deskripsi = input.deskripsi;
+      if (input.tanggalMulai !== undefined) {
+        data.tanggalMulai = new Date(input.tanggalMulai + 'T00:00:00Z');
+      }
       if (input.tanggalSelesai !== undefined) {
         data.tanggalSelesai = input.tanggalSelesai
           ? new Date(input.tanggalSelesai + 'T00:00:00Z')
           : null;
       }
       if (input.status !== undefined) data.status = input.status;
+      if (input.prioritas !== undefined) data.prioritas = input.prioritas;
       if (input.budgetTotal !== undefined) data.budgetTotal = input.budgetTotal;
+      if (input.nilaiKontrak !== undefined) data.nilaiKontrak = input.nilaiKontrak;
       if (input.catatan !== undefined) data.catatan = input.catatan;
+      if (input.pjUserId !== undefined) data.pjUserId = input.pjUserId;
+      if (input.customerId !== undefined) data.customerId = input.customerId;
       if (input.industriId !== undefined) {
         data.industri = input.industriId
           ? { connect: { id: input.industriId } }

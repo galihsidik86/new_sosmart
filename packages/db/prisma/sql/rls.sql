@@ -468,6 +468,14 @@ CREATE POLICY jenis_pelanggan_isolation ON jenis_pelanggan
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- TUGAS PROJECT
+ALTER TABLE project_tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_tasks FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS project_tasks_isolation ON project_tasks;
+CREATE POLICY project_tasks_isolation ON project_tasks
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity
