@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
-import { fmtRp } from '@/lib/format';
+import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
   PageContainer, PageHeader, Card, Badge, StatusBanner, FormField, Input, Button,
   Table, THead, TH, TBody, TR, TD, SectionHeader,
