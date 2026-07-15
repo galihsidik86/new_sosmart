@@ -265,6 +265,15 @@ Impor dari barrel `@/components/ui`. Primitives inti:
 
 Katalog komponen hidup di rute `/ui-kit`. Kalau butuh pola baru yang berulang, **buat primitive di `components/ui/` dulu**, jangan inline.
 
+## Rekonsiliasi Bank
+
+Modul `bank-reconciliation` (worksheet manual, tanpa import CSV rekening koran — itu follow-up). Rute web `/pembukuan/rekonsiliasi`.
+- **Model**: `BankReconciliation` (per akun kas/bank + tanggal cut-off + `saldoRekeningKoran`) + `BankReconciliationLine` (join ke `journal_line`, `journalLineId` **@unique** → satu baris hanya bisa "cleared" di ≤1 rekonsiliasi). Enum `BankReconciliationStatus` (DRAFT/SELESAI).
+- **Akun yang boleh direkonsiliasi**: `Account.isKasSetara && isPostable` (lihat [Klasifikasi laporan]).
+- **Matematika worksheet** (`buildWorksheet`): saldo buku = `saldoAwal + Σ(debit−kredit)` POSTED s/d cut-off; item beredar = baris belum di-clear (debit → setoran dalam perjalanan, kredit → pembayaran belum kliring); **bank disesuaikan = saldoRekeningKoran + setoran − pembayaran**; `selisih = saldoBuku − bankDisesuaikan`. Identitas cek: nothing-cleared + statement 0 → `selisih = saldoAwal`.
+- **Lifecycle**: create (cegah >1 DRAFT/akun) → toggle cleared per baris → `finalize` (WAJIB `|selisih| ≤ 0.5`, snapshot saldoBuku+selisih) → `reopen`/`delete` (DRAFT saja). Biaya admin/jasa giro yang cuma ada di bank dibukukan via jurnal penyesuaian dulu, lalu barisnya muncul untuk dicentang.
+- RLS + GRANT kedua tabel di `prisma/sql/rls.sql` (manual sekali di DB live setelah `migrate deploy`).
+
 ## Coretax
 
 Adapter akan ditulis di Fase 9. Pendekatan: kontrak XML/JSON sesuai spec DJP public 2025, default mode `mock` (in-memory sandbox), switch ke `production` setelah Sertifikat Elektronik PKP tersedia.
