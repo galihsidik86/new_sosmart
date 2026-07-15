@@ -23,7 +23,10 @@ interface InboxItem {
   currentStep: number; totalSteps: number; currentRole: string; createdAt: string;
 }
 
-async function actAction(formData: FormData) {
+// Keputusan di-bind lewat formAction per tombol — jangan andalkan name/value
+// tombol submit karena Next 15 tidak selalu menyertakan submitter ke FormData
+// server action (mengakibatkan action=null → 400).
+async function actAction(decision: 'SETUJU' | 'TOLAK', formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
@@ -31,7 +34,7 @@ async function actAction(formData: FormData) {
     method: 'POST',
     tenantId,
     body: JSON.stringify({
-      action: formData.get('action'),
+      action: decision,
       catatan: String(formData.get('catatan') ?? '') || undefined,
     }),
   });
@@ -77,11 +80,11 @@ export default async function ApprovalInboxPage() {
                     <Badge variant="brand">{it.currentStep}/{it.totalSteps} · {it.currentRole}</Badge>
                   </TD>
                   <TD>
-                    <form action={actAction} className="flex flex-wrap items-center gap-2">
+                    <form className="flex flex-wrap items-center gap-2">
                       <input type="hidden" name="id" value={it.id} />
                       <Input name="catatan" placeholder="Catatan (opsional)" className="max-w-[200px]" />
-                      <Button type="submit" name="action" value="SETUJU" variant="success" size="sm">Setuju</Button>
-                      <Button type="submit" name="action" value="TOLAK" variant="danger" size="sm">Tolak</Button>
+                      <Button type="submit" formAction={actAction.bind(null, 'SETUJU')} variant="success" size="sm">Setuju</Button>
+                      <Button type="submit" formAction={actAction.bind(null, 'TOLAK')} variant="danger" size="sm">Tolak</Button>
                     </form>
                   </TD>
                 </TR>
