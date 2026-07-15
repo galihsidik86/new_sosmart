@@ -187,24 +187,39 @@ async function main() {
   console.log('✓ approval: 2 user approver + 3 aturan');
 
   // ---------- 2. KONSOLIDASI: anak dengan COA lengkap + transaksi ----------
+  // Pendapatan & sebagian beban lewat FAKTUR (lihat seed-demo-invoices.sh);
+  // jurnal manual di sini hanya untuk opex tanpa faktur (gaji, listrik).
   const marketeers = await seedSubsidiary(INST, 'Marketeers',
     { '1-101': 120e6, '1-1021': 350e6, '1-103': 200e6, '1-104': 150e6, '1-202': 300e6, '1-203': 60e6, '1-206': 200e6, '1-207': 50e6, '2-101': 120e6, '2-201': 200e6, '3-101': 700e6, '3-102': 190e6 },
     [
-      { no: 'JU-2026-05-0001', bulan: 5, tgl: '2026-05-20', desc: 'Pendapatan iklan Mei (kredit)', lines: [{ kode: '1-103', debit: 120e6 }, { kode: '4-102', kredit: 120e6 }] },
-      { no: 'JU-2026-06-0001', bulan: 6, tgl: '2026-06-05', desc: 'Pendapatan iklan & media Juni', lines: [{ kode: '1-1021', debit: 210e6 }, { kode: '4-102', kredit: 210e6 }] },
-      { no: 'JU-2026-06-0002', bulan: 6, tgl: '2026-06-25', desc: 'Beban gaji redaksi Juni', lines: [{ kode: '6-101', debit: 95e6 }, { kode: '1-1021', kredit: 95e6 }] },
-      { no: 'JU-2026-06-0003', bulan: 6, tgl: '2026-06-28', desc: 'Beban sewa kantor Juni', lines: [{ kode: '6-102', debit: 28e6 }, { kode: '1-1021', kredit: 28e6 }] },
-      { no: 'JU-2026-06-0004', bulan: 6, tgl: '2026-06-29', desc: 'Beban pemasaran Juni', lines: [{ kode: '6-104', debit: 22e6 }, { kode: '1-101', kredit: 22e6 }] },
+      { no: 'JU-2026-06-0001', bulan: 6, tgl: '2026-06-25', desc: 'Beban gaji redaksi Juni', lines: [{ kode: '6-101', debit: 95e6 }, { kode: '1-1021', kredit: 95e6 }] },
+      { no: 'JU-2026-06-0002', bulan: 6, tgl: '2026-06-28', desc: 'Beban listrik & utilitas Juni', lines: [{ kode: '6-105', debit: 12e6 }, { kode: '1-101', kredit: 12e6 }] },
     ]);
   const inspirasi = await seedSubsidiary(OMG, 'MarkPlus Inspirasi Indonesia',
     { '1-101': 80e6, '1-1021': 220e6, '1-103': 130e6, '1-104': 60e6, '1-206': 150e6, '1-207': 30e6, '2-101': 90e6, '2-201': 120e6, '3-101': 300e6, '3-102': 100e6 },
     [
-      { no: 'JU-2026-05-0001', bulan: 5, tgl: '2026-05-18', desc: 'Pendapatan pelatihan Mei (kredit)', lines: [{ kode: '1-103', debit: 75e6 }, { kode: '4-101', kredit: 75e6 }] },
-      { no: 'JU-2026-06-0001', bulan: 6, tgl: '2026-06-08', desc: 'Pendapatan jasa pelatihan Juni', lines: [{ kode: '1-1021', debit: 130e6 }, { kode: '4-101', kredit: 130e6 }] },
-      { no: 'JU-2026-06-0002', bulan: 6, tgl: '2026-06-26', desc: 'Beban gaji trainer Juni', lines: [{ kode: '6-101', debit: 62e6 }, { kode: '1-1021', kredit: 62e6 }] },
-      { no: 'JU-2026-06-0003', bulan: 6, tgl: '2026-06-27', desc: 'Beban sewa venue Juni', lines: [{ kode: '6-102', debit: 20e6 }, { kode: '1-101', kredit: 20e6 }] },
-      { no: 'JU-2026-06-0004', bulan: 6, tgl: '2026-06-30', desc: 'Beban administrasi Juni', lines: [{ kode: '6-106', debit: 14e6 }, { kode: '1-101', kredit: 14e6 }] },
+      { no: 'JU-2026-06-0001', bulan: 6, tgl: '2026-06-26', desc: 'Beban gaji trainer Juni', lines: [{ kode: '6-101', debit: 62e6 }, { kode: '1-1021', kredit: 62e6 }] },
+      { no: 'JU-2026-06-0002', bulan: 6, tgl: '2026-06-30', desc: 'Beban listrik & utilitas Juni', lines: [{ kode: '6-105', debit: 8e6 }, { kode: '1-101', kredit: 8e6 }] },
     ]);
+
+  // Mitra dagang (non-IC) untuk faktur penjualan/pembelian.
+  const party = async (tenantId: string, kind: 'c' | 'v', kode: string, nama: string, apKode = '2-101') => {
+    if (kind === 'c') {
+      await prisma.customer.upsert({ where: { tenantId_kode: { tenantId, kode } }, update: { nama }, create: { tenantId, kode, nama } });
+    } else {
+      const ap = await prisma.account.findUnique({ where: { tenantId_kode: { tenantId, kode: apKode } }, select: { id: true } });
+      await prisma.vendor.upsert({ where: { tenantId_kode: { tenantId, kode } }, update: { nama, akunUtangId: ap?.id }, create: { tenantId, kode, nama, akunUtangId: ap?.id } });
+    }
+  };
+  await party(INST, 'c', 'CUST-01', 'PT Astra International Tbk');
+  await party(INST, 'c', 'CUST-02', 'PT Bank Central Asia Tbk');
+  await party(INST, 'v', 'VEND-01', 'PT Percetakan Gramedia');
+  await party(INST, 'v', 'VEND-02', 'PT Kreatif Digital Nusantara');
+  await party(OMG, 'c', 'CUST-01', 'PT Telkom Indonesia');
+  await party(OMG, 'c', 'CUST-02', 'PT Pertamina (Persero)');
+  await party(OMG, 'v', 'VEND-01', 'PT Graha Sewa Prima');
+  await party(OMG, 'v', 'VEND-02', 'PT Boga Katering Utama');
+  console.log('✓ mitra dagang anak (customer/vendor) dibuat');
 
   // Investasi induk (intercompany, dieliminasi) + offset ekuitas.
   const mpAcct = async (kode: string, nama: string, kind: AccountKind, nb: NormalBalance, saldo: string, ic: boolean, klas: string | null) => {
