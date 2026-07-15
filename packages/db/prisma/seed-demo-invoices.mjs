@@ -27,9 +27,10 @@ async function api(path, { method = 'GET', token, tenant, body } = {}) {
 let uid = 0;
 const key = () => `a0000000-0000-0000-0000-00000000000${(++uid).toString(16)}`;
 
+const MP = '9e648607-436f-4aaf-aabd-f0abdd80100c';
 const SUBS = [
   {
-    tenant: INST, nama: 'Marketeers',
+    tenant: INST, nama: 'Marketeers', icCust: 'IC-MKT', icPiutang: 60000000, icUtang: 60000000,
     sales: [
       { cust: 'CUST-01', amt: 150000000, pend: '4-102', desc: 'Paket iklan majalah Marketeers edisi Juni' },
       { cust: 'CUST-02', amt: 90000000, pend: '4-102', desc: 'Konten bersponsor & media placement' },
@@ -40,7 +41,7 @@ const SUBS = [
     ],
   },
   {
-    tenant: OMG, nama: 'MarkPlus Inspirasi Indonesia',
+    tenant: OMG, nama: 'MarkPlus Inspirasi Indonesia', icCust: 'IC-INSP', icPiutang: 40000000, icUtang: 35000000,
     sales: [
       { cust: 'CUST-01', amt: 100000000, pend: '4-101', desc: 'Pelatihan leadership korporat' },
       { cust: 'CUST-02', amt: 80000000, pend: '4-101', desc: 'Workshop transformasi digital' },
@@ -92,6 +93,40 @@ async function main() {
         const p = await api(`/purchase-invoices/${inv.data.id}/post`, { method: 'POST', token, tenant: s.tenant, body: {} });
         console.log(`  ${s.nama} PURCHASE ${pu.desc}: ${p.ok ? 'posted' : p.data?.message || p.status}`);
       } else console.log(`  ${s.nama} PURCHASE create gagal:`, inv.data?.message || inv.status);
+    }
+    // Faktur IC: utang anak ke induk (akun IC berdedikasi → tereliminasi).
+    {
+      const body = {
+        cabangId: cabang, vendorId: vendByKode['IC-MP'], tanggal: '2026-06-16', termin: 'KREDIT',
+        akunApId: byKode['2-108'], tarifPph23Persen: 0, potongPph23: false, idempotencyKey: key(),
+        lines: [{ itemId: null, deskripsi: 'Jasa manajemen & lisensi dari induk (intercompany)', qty: '1', satuan: 'Job', hargaSatuan: String(s.icUtang), diskonPersen: '0', klasifikasiPpn: 'NON_BKP', isJasa: false, akunDebitId: byKode['5-201'] }],
+      };
+      const inv = await api('/purchase-invoices', { method: 'POST', token, tenant: s.tenant, body });
+      if (inv.data?.id) {
+        const p = await api(`/purchase-invoices/${inv.data.id}/post`, { method: 'POST', token, tenant: s.tenant, body: {} });
+        console.log(`  ${s.nama} IC-PURCHASE ${s.icUtang}: ${p.ok ? 'posted' : p.data?.message || p.status}`);
+      }
+    }
+  }
+
+  // Induk: faktur penjualan IC ke tiap anak (akun IC berdedikasi).
+  {
+    const accts = (await api('/accounts?view=flat', { token, tenant: MP })).data;
+    const byKode = Object.fromEntries(accts.map((a) => [a.kode, a.id]));
+    const custs = (await api('/customers', { token, tenant: MP })).data;
+    const custByKode = Object.fromEntries(custs.map((c) => [c.kode, c.id]));
+    const cabang = (await api('/cabang', { token, tenant: MP })).data[0].id;
+    for (const s of SUBS) {
+      const body = {
+        cabangId: cabang, customerId: custByKode[s.icCust], tanggal: '2026-06-15', termin: 'KREDIT',
+        akunArId: byKode['1-108'], idempotencyKey: key(),
+        lines: [{ itemId: null, deskripsi: `Jasa manajemen & lisensi ke ${s.nama} (intercompany)`, qty: '1', satuan: 'Job', hargaSatuan: String(s.icPiutang), diskonPersen: '0', klasifikasiPpn: 'NON_BKP', isJasa: false, akunPendapatanId: byKode['4-201'] }],
+      };
+      const inv = await api('/sales-invoices', { method: 'POST', token, tenant: MP, body });
+      if (inv.data?.id) {
+        const p = await api(`/sales-invoices/${inv.data.id}/post`, { method: 'POST', token, tenant: MP, body: {} });
+        console.log(`  MP IC-SALE ke ${s.nama} ${s.icPiutang}: ${p.ok ? 'posted' : p.data?.message || p.status}`);
+      } else console.log(`  MP IC-SALE create gagal:`, inv.data?.message || inv.status);
     }
   }
   console.log('SEED FAKTUR SELESAI');

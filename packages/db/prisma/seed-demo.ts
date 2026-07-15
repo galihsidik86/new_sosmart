@@ -21,7 +21,7 @@ const INST = '11111111-1111-1111-1111-111111111111';
 const OMG = '22222222-2222-2222-2222-222222222222';
 
 // ---------- COA standar (mirror seed.ts) ----------
-type CoaNode = { kode: string; nama: string; kind: AccountKind; normal: NormalBalance; postable?: boolean; children?: CoaNode[] };
+type CoaNode = { kode: string; nama: string; kind: AccountKind; normal: NormalBalance; postable?: boolean; ic?: boolean; children?: CoaNode[] };
 const A = AccountKind, D = NormalBalance.DEBIT, K = NormalBalance.KREDIT;
 const COA: CoaNode[] = [
   { kode: '1', nama: 'ASET', kind: A.ASET, normal: D, postable: false, children: [
@@ -46,6 +46,7 @@ const COA: CoaNode[] = [
   { kode: '2', nama: 'LIABILITAS', kind: A.LIABILITAS, normal: K, postable: false, children: [
     { kode: '2-10', nama: 'Liabilitas Jangka Pendek', kind: A.LIABILITAS, normal: K, postable: false, children: [
       { kode: '2-101', nama: 'Utang Usaha', kind: A.LIABILITAS, normal: K },
+      { kode: '2-108', nama: 'Utang Intercompany', kind: A.LIABILITAS, normal: K, ic: true },
       { kode: '2-1021', nama: 'Utang PPN Keluaran', kind: A.LIABILITAS, normal: K },
       { kode: '2-1022', nama: 'Utang PPh 21', kind: A.LIABILITAS, normal: K },
       { kode: '2-110', nama: 'Beban Masih Harus Dibayar', kind: A.LIABILITAS, normal: K },
@@ -65,6 +66,7 @@ const COA: CoaNode[] = [
   ] },
   { kode: '5', nama: 'BEBAN POKOK', kind: A.BEBAN_POKOK, normal: D, postable: false, children: [
     { kode: '5-101', nama: 'Beban Pokok Jasa', kind: A.BEBAN_POKOK, normal: D },
+    { kode: '5-201', nama: 'Beban Jasa Intercompany', kind: A.BEBAN_POKOK, normal: D, ic: true },
   ] },
   { kode: '6', nama: 'BEBAN OPERASIONAL', kind: A.BEBAN, normal: D, postable: false, children: [
     { kode: '6-101', nama: 'Beban Gaji & Tunjangan', kind: A.BEBAN, normal: D },
@@ -85,12 +87,12 @@ async function seedFullCoa(tenantId: string) {
     const parent = parentKode ? await prisma.account.findUnique({ where: { tenantId_kode: { tenantId, kode: parentKode } }, select: { id: true } }) : null;
     await prisma.account.upsert({
       where: { tenantId_kode: { tenantId, kode: node.kode } },
-      update: { nama: node.nama, isPostable: postable, parentId: parent?.id ?? null },
+      update: { nama: node.nama, isPostable: postable, parentId: parent?.id ?? null, isIntercompany: !!node.ic },
       create: {
         tenantId, kode: node.kode, nama: node.nama, kind: node.kind, normalBalance: node.normal,
         isPostable: postable, parentId: parent?.id ?? null, saldoAwal: '0',
         klasifikasiNeraca: deriveKlasifikasiNeraca(node.kind, node.kode) as never,
-        isKasSetara: deriveIsKasSetara(node.kode),
+        isKasSetara: deriveIsKasSetara(node.kode), isIntercompany: !!node.ic,
       },
     });
     for (const c of node.children ?? []) await insert(c, node.kode);
@@ -151,13 +153,15 @@ async function seedSubsidiary(
 ) {
   await prisma.tenant.upsert({ where: { id: tenantId }, update: { nama }, create: { id: tenantId, nama } });
   await prisma.membership.upsert({ where: { userId_tenantId: { userId: DEMO, tenantId } }, update: { role: Role.OWNER }, create: { userId: DEMO, tenantId, role: Role.OWNER } });
+  // Reset penuh faktur + jurnal (anak = 100% data demo) → idempotent bersih.
+  await prisma.salesInvoice.deleteMany({ where: { tenantId } });
+  await prisma.purchaseInvoice.deleteMany({ where: { tenantId } });
+  await prisma.journal.deleteMany({ where: { tenantId } });
   await seedFullCoa(tenantId);
   const fy = await seedFY(tenantId);
   let cabang = await prisma.cabang.findFirst({ where: { tenantId } });
   if (!cabang) cabang = await prisma.cabang.create({ data: { tenantId, kode: 'PST', nama: 'Kantor Pusat' } });
   for (const [kode, amt] of Object.entries(bal)) await openBal(tenantId, kode, amt);
-  // Hapus jurnal manual lama (idempotent) lalu post ulang.
-  await prisma.journal.deleteMany({ where: { tenantId, sumber: JournalSource.MANUAL } });
   const periods = await prisma.fiscalPeriod.findMany({ where: { tenantId }, select: { id: true, no: true } });
   const pById = new Map(periods.map((p) => [p.no, p.id]));
   for (const j of jurnal) {
@@ -189,13 +193,13 @@ async function main() {
   // ---------- 2. KONSOLIDASI: anak dengan COA lengkap + transaksi ----------
   // Pendapatan & sebagian beban lewat FAKTUR (lihat seed-demo-invoices.sh);
   // jurnal manual di sini hanya untuk opex tanpa faktur (gaji, listrik).
-  const marketeers = await seedSubsidiary(INST, 'Marketeers',
+  await seedSubsidiary(INST, 'Marketeers',
     { '1-101': 120e6, '1-1021': 350e6, '1-103': 200e6, '1-104': 150e6, '1-202': 300e6, '1-203': 60e6, '1-206': 200e6, '1-207': 50e6, '2-101': 120e6, '2-201': 200e6, '3-101': 700e6, '3-102': 190e6 },
     [
       { no: 'JU-2026-06-9001', bulan: 6, tgl: '2026-06-25', desc: 'Beban gaji redaksi Juni', lines: [{ kode: '6-101', debit: 95e6 }, { kode: '1-1021', kredit: 95e6 }] },
       { no: 'JU-2026-06-9002', bulan: 6, tgl: '2026-06-28', desc: 'Beban listrik & utilitas Juni', lines: [{ kode: '6-105', debit: 12e6 }, { kode: '1-101', kredit: 12e6 }] },
     ]);
-  const inspirasi = await seedSubsidiary(OMG, 'MarkPlus Inspirasi Indonesia',
+  await seedSubsidiary(OMG, 'MarkPlus Inspirasi Indonesia',
     { '1-101': 80e6, '1-1021': 220e6, '1-103': 130e6, '1-104': 60e6, '1-206': 150e6, '1-207': 30e6, '2-101': 90e6, '2-201': 120e6, '3-101': 300e6, '3-102': 100e6 },
     [
       { no: 'JU-2026-06-9001', bulan: 6, tgl: '2026-06-26', desc: 'Beban gaji trainer Juni', lines: [{ kode: '6-101', debit: 62e6 }, { kode: '1-1021', kredit: 62e6 }] },
@@ -232,29 +236,31 @@ async function main() {
   await mpAcct('1-302', 'Investasi pada Marketeers', A.ASET, D, '450000000', true, 'ASET_TETAP');
   await mpAcct('1-303', 'Investasi pada MarkPlus Inspirasi Indonesia', A.ASET, D, '300000000', true, 'ASET_TETAP');
   await mpAcct('3-106', 'Tambahan Modal Disetor', A.EKUITAS, K, '750000000', false, null);
+  // Akun intercompany di induk (dieliminasi saat konsolidasi).
+  await mpAcct('1-108', 'Piutang Intercompany', A.ASET, D, '0', true, 'ASET_LANCAR');
+  await mpAcct('4-201', 'Pendapatan Jasa Intercompany', A.PENDAPATAN, K, '0', true, null);
 
   await prisma.group.deleteMany({ where: { tenantId: MP } });
   const g = await prisma.group.create({ data: { tenantId: MP, nama: 'MarkPlus Group' } });
   await prisma.groupMember.create({ data: { tenantId: MP, groupId: g.id, memberTenantId: INST, ownershipPct: '100', acquisitionCost: '450000000', acquisitionNetAssets: '400000000', acquisitionDate: new Date('2025-01-01') } });
-  await prisma.groupMember.create({ data: { tenantId: MP, groupId: g.id, memberTenantId: OMG, ownershipPct: '80', acquisitionCost: '300000000', acquisitionNetAssets: '250000000', acquisitionDate: new Date('2025-06-01') } });
+  await prisma.groupMember.create({ data: { tenantId: MP, groupId: g.id, memberTenantId: OMG, ownershipPct: '100', acquisitionCost: '300000000', acquisitionNetAssets: '250000000', acquisitionDate: new Date('2025-06-01') } });
 
-  // Transaksi intercompany (faktur) — MP jual jasa ke anak.
-  const mpCabang = await prisma.cabang.findFirst({ where: { tenantId: MP } });
-  const mpPeriod = await prisma.fiscalPeriod.findFirst({ where: { tenantId: MP, startDate: { lte: new Date('2026-06-15') }, endDate: { gte: new Date('2026-06-15') } } })
-    ?? await prisma.fiscalPeriod.findFirst({ where: { tenantId: MP }, orderBy: { startDate: 'desc' } });
-  const mpAr = await prisma.account.findFirst({ where: { tenantId: MP, kode: '1-103' } });
-  const seedIc = async (child: string, childNama: string, ref: { period: { id: string }; cabang: { id: string } }, piutang: number, utang: number, invNo: string, billNo: string) => {
-    const cust = await prisma.customer.upsert({ where: { tenantId_kode: { tenantId: MP, kode: `IC-${invNo}` } }, update: { partnerTenantId: child, nama: childNama }, create: { tenantId: MP, kode: `IC-${invNo}`, nama: childNama, partnerTenantId: child } });
-    await prisma.salesInvoice.deleteMany({ where: { tenantId: MP, customerId: cust.id } });
-    await prisma.salesInvoice.create({ data: { tenantId: MP, cabangId: mpCabang!.id, fiscalPeriodId: mpPeriod!.id, customerId: cust.id, akunArId: mpAr!.id, nomor: invNo, tanggal: new Date('2026-06-10'), jatuhTempo: new Date('2026-07-10'), status: InvoiceStatus.POSTED, totalNetto: String(piutang), totalDibayar: '0' } });
-    const childAp = await prisma.account.findFirst({ where: { tenantId: child, kode: '2-101' } });
-    const vend = await prisma.vendor.upsert({ where: { tenantId_kode: { tenantId: child, kode: 'IC-MP' } }, update: { partnerTenantId: MP, akunUtangId: childAp!.id }, create: { tenantId: child, kode: 'IC-MP', nama: 'PT MarkPlus Indonesia', partnerTenantId: MP, akunUtangId: childAp!.id } });
-    await prisma.purchaseInvoice.deleteMany({ where: { tenantId: child, vendorId: vend.id } });
-    await prisma.purchaseInvoice.create({ data: { tenantId: child, cabangId: ref.cabang.id, fiscalPeriodId: ref.period.id, vendorId: vend.id, akunApId: childAp!.id, nomor: billNo, tanggal: new Date('2026-06-12'), jatuhTempo: new Date('2026-07-12'), status: InvoiceStatus.POSTED, totalNetto: String(utang), totalDibayar: '0' } });
+  // Mitra intercompany (customer di induk + vendor di anak, partner-tagged).
+  // Fakturnya dibuat BERJURNAL lewat API (seed-demo-invoices.mjs) memakai akun IC.
+  // Reset faktur IC di induk (+ jurnalnya). Anak sudah di-reset penuh di seedSubsidiary.
+  const oldIc = await prisma.salesInvoice.findMany({ where: { tenantId: MP, customer: { partnerTenantId: { not: null } } }, select: { journalId: true } });
+  await prisma.salesInvoice.deleteMany({ where: { tenantId: MP, customer: { partnerTenantId: { not: null } } } });
+  const jids = oldIc.map((i) => i.journalId).filter((x): x is string => !!x);
+  if (jids.length) await prisma.journal.deleteMany({ where: { id: { in: jids } } });
+  await prisma.customer.deleteMany({ where: { tenantId: MP, kode: { startsWith: 'IC-INV-' } } });
+  const seedIcParty = async (child: string, childNama: string, custKode: string) => {
+    await prisma.customer.upsert({ where: { tenantId_kode: { tenantId: MP, kode: custKode } }, update: { partnerTenantId: child, nama: childNama }, create: { tenantId: MP, kode: custKode, nama: childNama, partnerTenantId: child } });
+    const ap = await prisma.account.findFirst({ where: { tenantId: child, kode: '2-108' } });
+    await prisma.vendor.upsert({ where: { tenantId_kode: { tenantId: child, kode: 'IC-MP' } }, update: { partnerTenantId: MP, akunUtangId: ap!.id }, create: { tenantId: child, kode: 'IC-MP', nama: 'PT MarkPlus Indonesia', partnerTenantId: MP, akunUtangId: ap!.id } });
   };
-  await seedIc(INST, 'Marketeers', marketeers, 60e6, 60e6, 'INV-MP-2026-06-0101', 'BILL-MKT-2026-06-0044');
-  await seedIc(OMG, 'MarkPlus Inspirasi Indonesia', inspirasi, 40e6, 35e6, 'INV-MP-2026-06-0102', 'BILL-INSP-2026-06-0021');
-  console.log('✓ konsolidasi: 2 anak (COA lengkap + saldo awal + jurnal) + investasi + grup + IC');
+  await seedIcParty(INST, 'Marketeers', 'IC-MKT');
+  await seedIcParty(OMG, 'MarkPlus Inspirasi Indonesia', 'IC-INSP');
+  console.log('✓ konsolidasi: 2 anak (COA lengkap + jurnal) + investasi + grup + mitra IC (100%)');
 
   // ---------- 3. REKONSILIASI BANK ----------
   await prisma.bankReconciliation.deleteMany({ where: { tenantId: MP } });
