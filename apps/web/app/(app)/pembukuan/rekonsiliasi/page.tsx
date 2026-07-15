@@ -74,12 +74,12 @@ export default async function RekonsiliasiListPage() {
                     <span className="text-tanah-700">{r.akun.nama}</span>
                   </TD>
                   <TD className="text-tanah-700">{fmtTanggal(r.tanggal)}</TD>
-                  <TD numeric className="font-mono tabular-nums">{fmtRp(r.saldoRekeningKoran)}</TD>
+                  <TD className="text-right font-mono tabular-nums">{fmtRp(r.saldoRekeningKoran)}</TD>
                   <TD className="text-center text-tanah-500">{r._count.lines}</TD>
                   <TD className="text-center">
                     <Badge variant={r.status === 'SELESAI' ? 'success' : 'neutral'}>{r.status}</Badge>
                   </TD>
-                  <TD numeric>
+                  <TD className="text-right">
                     <Link
                       href={`/pembukuan/rekonsiliasi/${r.id}` as Route}
                       className="text-xs text-sogan-500 font-semibold hover:underline"

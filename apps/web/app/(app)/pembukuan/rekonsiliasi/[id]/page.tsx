@@ -215,8 +215,8 @@ export default async function RekonsiliasiDetailPage({
                     {l.nomor && <span className="font-mono text-xs text-tanah-500">{l.nomor}</span>}{' '}
                     <span className="text-tanah-700">{l.keterangan}</span>
                   </TD>
-                  <TD numeric className="font-mono tabular-nums text-padi-700">{Number(l.debit) ? fmtRp(l.debit) : '—'}</TD>
-                  <TD numeric className="font-mono tabular-nums text-bata-700">{Number(l.kredit) ? fmtRp(l.kredit) : '—'}</TD>
+                  <TD className="text-right font-mono tabular-nums text-padi-700">{Number(l.debit) ? fmtRp(l.debit) : '—'}</TD>
+                  <TD className="text-right font-mono tabular-nums text-bata-700">{Number(l.kredit) ? fmtRp(l.kredit) : '—'}</TD>
                 </TR>
               ))}
             </TBody>
