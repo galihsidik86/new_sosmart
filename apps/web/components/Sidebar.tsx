@@ -29,6 +29,7 @@ const NAV: NavItem[] = [
   { group: 'Pembukuan', href: '/pembukuan/coa', label: 'Bagan Akun', icon: 'book-open', roles: ACCOUNTING },
   { group: 'Pembukuan', href: '/pembukuan/jurnal', label: 'Jurnal Umum', icon: 'notebook', roles: ACCOUNTING },
   { group: 'Pembukuan', href: '/pembukuan/bukubesar', label: 'Buku Besar', icon: 'book', roles: ACCOUNTING },
+  { group: 'Pembukuan', href: '/pembukuan/rekonsiliasi', label: 'Rekonsiliasi Bank', icon: 'check', roles: ACCOUNTING },
   { group: 'Persediaan', href: '/persediaan/saldo', label: 'Saldo Stok', icon: 'boxes', roles: ACCOUNTING },
   { group: 'Persediaan', href: '/persediaan/kartu-stok', label: 'Kartu Stok', icon: 'list', roles: ACCOUNTING },
   { group: 'Persediaan', href: '/persediaan/penyesuaian', label: 'Penyesuaian Stok', icon: 'clipboard', roles: FULL },

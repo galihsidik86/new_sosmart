@@ -393,6 +393,21 @@ CREATE POLICY industri_isolation ON industri
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- REKONSILIASI BANK
+ALTER TABLE bank_reconciliations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_reconciliations FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS bank_reconciliations_isolation ON bank_reconciliations;
+CREATE POLICY bank_reconciliations_isolation ON bank_reconciliations
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
+ALTER TABLE bank_reconciliation_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_reconciliation_lines FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS bank_reconciliation_lines_isolation ON bank_reconciliation_lines;
+CREATE POLICY bank_reconciliation_lines_isolation ON bank_reconciliation_lines
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity

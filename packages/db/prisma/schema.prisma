@@ -53,6 +53,11 @@ enum KlasifikasiNeraca {
   LIABILITAS_PANJANG
 }
 
+enum BankReconciliationStatus {
+  DRAFT
+  SELESAI
+}
+
 enum PpnSkema {
   EFEKTIF_11
   EFEKTIF_12
@@ -495,6 +500,7 @@ model Account {
   glConfig            GlConfig[]
   budgets             Budget[]
   saldoAwalAkunLines  SaldoAwalAkunLine[]
+  bankReconciliations BankReconciliation[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
@@ -930,10 +936,61 @@ model JournalLine {
   account Account  @relation(fields: [accountId], references: [id], onDelete: Restrict)
   project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
+  bankReconLine BankReconciliationLine?
+
   @@index([journalId])
   @@index([tenantId, accountId])
   @@index([projectId, accountId])
   @@map("journal_lines")
+}
+
+/// Rekonsiliasi bank — mencocokkan saldo buku akun kas/bank terhadap saldo per
+/// rekening koran pada tanggal cut-off. Baris jurnal yang sudah muncul di
+/// rekening koran ditandai "cleared" (via BankReconciliationLine); sisanya jadi
+/// item beredar (setoran dalam perjalanan / pembayaran belum kliring).
+model BankReconciliation {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  /// Cabang scope (opsional — akun kas/bank bisa lintas cabang).
+  cabangId           String?  @map("cabang_id") @db.Uuid
+  /// Akun kas/bank yang direkonsiliasi.
+  akunId             String   @map("akun_id") @db.Uuid
+  /// Tanggal cut-off / tanggal rekening koran.
+  tanggal            DateTime @db.Date
+  /// Saldo akhir per rekening koran bank (diinput user).
+  saldoRekeningKoran Decimal  @map("saldo_rekening_koran") @db.Decimal(20, 2)
+  /// Snapshot saldo buku (GL) akun pada cut-off — diisi saat finalize.
+  saldoBuku          Decimal  @default(0) @map("saldo_buku") @db.Decimal(20, 2)
+  /// Snapshot selisih (saldo buku − saldo bank disesuaikan) saat finalize.
+  selisih            Decimal  @default(0) @db.Decimal(20, 2)
+  status             BankReconciliationStatus @default(DRAFT)
+  catatan            String?
+  createdById        String?  @map("created_by_id") @db.Uuid
+  finalizedAt        DateTime? @map("finalized_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  akun  Account @relation(fields: [akunId], references: [id], onDelete: Restrict)
+  lines BankReconciliationLine[]
+
+  @@index([tenantId, akunId])
+  @@map("bank_reconciliations")
+}
+
+/// Satu baris jurnal yang ditandai sudah kliring di rekening koran. Unik per
+/// journalLineId → sebuah baris hanya bisa "cleared" di satu rekonsiliasi.
+model BankReconciliationLine {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  reconciliationId String   @map("reconciliation_id") @db.Uuid
+  journalLineId    String   @unique @map("journal_line_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  reconciliation BankReconciliation @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  journalLine    JournalLine        @relation(fields: [journalLineId], references: [id], onDelete: Cascade)
+
+  @@index([reconciliationId])
+  @@map("bank_reconciliation_lines")
 }
 
 /// Generator nomor dokumen (per tenant per kode periodik).
