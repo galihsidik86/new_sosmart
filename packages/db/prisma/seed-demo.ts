@@ -192,14 +192,14 @@ async function main() {
   const marketeers = await seedSubsidiary(INST, 'Marketeers',
     { '1-101': 120e6, '1-1021': 350e6, '1-103': 200e6, '1-104': 150e6, '1-202': 300e6, '1-203': 60e6, '1-206': 200e6, '1-207': 50e6, '2-101': 120e6, '2-201': 200e6, '3-101': 700e6, '3-102': 190e6 },
     [
-      { no: 'JU-2026-06-0001', bulan: 6, tgl: '2026-06-25', desc: 'Beban gaji redaksi Juni', lines: [{ kode: '6-101', debit: 95e6 }, { kode: '1-1021', kredit: 95e6 }] },
-      { no: 'JU-2026-06-0002', bulan: 6, tgl: '2026-06-28', desc: 'Beban listrik & utilitas Juni', lines: [{ kode: '6-105', debit: 12e6 }, { kode: '1-101', kredit: 12e6 }] },
+      { no: 'JU-2026-06-9001', bulan: 6, tgl: '2026-06-25', desc: 'Beban gaji redaksi Juni', lines: [{ kode: '6-101', debit: 95e6 }, { kode: '1-1021', kredit: 95e6 }] },
+      { no: 'JU-2026-06-9002', bulan: 6, tgl: '2026-06-28', desc: 'Beban listrik & utilitas Juni', lines: [{ kode: '6-105', debit: 12e6 }, { kode: '1-101', kredit: 12e6 }] },
     ]);
   const inspirasi = await seedSubsidiary(OMG, 'MarkPlus Inspirasi Indonesia',
     { '1-101': 80e6, '1-1021': 220e6, '1-103': 130e6, '1-104': 60e6, '1-206': 150e6, '1-207': 30e6, '2-101': 90e6, '2-201': 120e6, '3-101': 300e6, '3-102': 100e6 },
     [
-      { no: 'JU-2026-06-0001', bulan: 6, tgl: '2026-06-26', desc: 'Beban gaji trainer Juni', lines: [{ kode: '6-101', debit: 62e6 }, { kode: '1-1021', kredit: 62e6 }] },
-      { no: 'JU-2026-06-0002', bulan: 6, tgl: '2026-06-30', desc: 'Beban listrik & utilitas Juni', lines: [{ kode: '6-105', debit: 8e6 }, { kode: '1-101', kredit: 8e6 }] },
+      { no: 'JU-2026-06-9001', bulan: 6, tgl: '2026-06-26', desc: 'Beban gaji trainer Juni', lines: [{ kode: '6-101', debit: 62e6 }, { kode: '1-1021', kredit: 62e6 }] },
+      { no: 'JU-2026-06-9002', bulan: 6, tgl: '2026-06-30', desc: 'Beban listrik & utilitas Juni', lines: [{ kode: '6-105', debit: 8e6 }, { kode: '1-101', kredit: 8e6 }] },
     ]);
 
   // Mitra dagang (non-IC) untuk faktur penjualan/pembelian.
