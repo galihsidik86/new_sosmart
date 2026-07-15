@@ -1,0 +1,2 @@
+# Shell scripts harus selalu LF (dijalankan di server Linux; CRLF merusak shebang).
+*.sh text eol=lf
