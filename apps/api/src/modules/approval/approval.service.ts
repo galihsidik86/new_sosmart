@@ -16,8 +16,8 @@ export interface UpsertRuleInput {
   minAmount: string;
   isActive?: boolean;
   catatan?: string;
-  /** Role approver terurut (tingkat 1..n). */
-  steps: string[];
+  /** Langkah approver terurut: role, ATAU user spesifik (per-individu). */
+  steps: Array<{ role?: string; userId?: string }>;
 }
 
 @Injectable()
@@ -29,13 +29,29 @@ export class ApprovalService {
 
   // ============================================================ RULES (config)
 
-  listRules() {
-    return this.tenancy.run((tx) =>
+  async listRules() {
+    const rules = await this.tenancy.run((tx) =>
       tx.approvalRule.findMany({
         orderBy: [{ docType: 'asc' }, { minAmount: 'asc' }],
         include: { steps: { orderBy: { urutan: 'asc' } } },
       }),
     );
+    const userIds = [
+      ...new Set(rules.flatMap((r) => r.steps.map((s) => s.approverUserId).filter((x): x is string => !!x))),
+    ];
+    const users = userIds.length
+      ? await this.tenancy.run((tx) => tx.user.findMany({ where: { id: { in: userIds } }, select: { id: true, nama: true } }))
+      : [];
+    const nameById = new Map(users.map((u) => [u.id, u.nama]));
+    return rules.map((r) => ({
+      ...r,
+      steps: r.steps.map((s) => ({
+        urutan: s.urutan,
+        approverRole: s.approverRole,
+        approverUserId: s.approverUserId,
+        approverNama: s.approverUserId ? nameById.get(s.approverUserId) ?? '(user)' : null,
+      })),
+    }));
   }
 
   async upsertRule(id: string | null, input: UpsertRuleInput) {
@@ -59,14 +75,25 @@ export class ApprovalService {
           })()
         : await tx.approvalRule.create({ data: { tenantId, ...data } });
 
-      await tx.approvalRuleStep.createMany({
-        data: input.steps.map((role, i) => ({
-          tenantId,
-          ruleId: rule.id,
-          urutan: i + 1,
-          approverRole: role as never,
-        })),
-      });
+      // Resolve tiap langkah: user spesifik → ambil role-nya dari membership;
+      // else pakai role langsung.
+      const stepsData: Array<{ tenantId: string; ruleId: string; urutan: number; approverRole: string; approverUserId: string | null }> = [];
+      for (let i = 0; i < input.steps.length; i++) {
+        const st = input.steps[i]!;
+        let role = st.role;
+        const userId = st.userId ?? null;
+        if (userId) {
+          const m = await tx.membership.findUnique({
+            where: { userId_tenantId: { userId, tenantId } },
+            select: { role: true },
+          });
+          if (!m) throw new BadRequestException('User approver bukan anggota tenant');
+          role = m.role;
+        }
+        if (!role) throw new BadRequestException('Tiap langkah butuh role atau user');
+        stepsData.push({ tenantId, ruleId: rule.id, urutan: i + 1, approverRole: role, approverUserId: userId });
+      }
+      await tx.approvalRuleStep.createMany({ data: stepsData as never });
       return rule;
     });
   }
@@ -172,6 +199,7 @@ export class ApprovalService {
       }
 
       const stepRoles = rule.steps.map((s) => s.approverRole);
+      const stepUserIds = rule.steps.map((s) => s.approverUserId ?? '');
       return tx.approvalRequest.create({
         data: {
           tenantId,
@@ -183,6 +211,7 @@ export class ApprovalService {
           currentStep: 1,
           totalSteps: stepRoles.length,
           stepRoles: stepRoles.join(','),
+          stepUserIds: stepUserIds.join(','),
           requestedById: userId,
         },
       });
@@ -199,13 +228,21 @@ export class ApprovalService {
         throw new BadRequestException(`Permintaan sudah ${req.status}`);
       }
       const roles = req.stepRoles.split(',');
-      const expected = roles[req.currentStep - 1];
-      // OWNER boleh menyetujui langkah apa pun (mencegah deadlock); selain itu
-      // role user harus persis role langkah ini.
-      if (role !== 'OWNER' && role !== expected) {
-        throw new ForbiddenException(
-          `Langkah ini harus disetujui oleh ${expected}. Role Anda: ${role}.`,
-        );
+      const users = (req.stepUserIds || '').split(',');
+      const expectedRole = roles[req.currentStep - 1];
+      const expectedUser = users[req.currentStep - 1] || '';
+      // OWNER boleh menyetujui langkah apa pun (mencegah deadlock). Selain itu:
+      // langkah per-individu → user harus persis; langkah per-role → role cocok.
+      if (role !== 'OWNER') {
+        if (expectedUser) {
+          if (userId !== expectedUser) {
+            throw new ForbiddenException('Langkah ini hanya bisa disetujui oleh user yang ditunjuk.');
+          }
+        } else if (role !== expectedRole) {
+          throw new ForbiddenException(
+            `Langkah ini harus disetujui oleh ${expectedRole}. Role Anda: ${role}.`,
+          );
+        }
       }
 
       await tx.approvalAction.create({
@@ -213,7 +250,7 @@ export class ApprovalService {
           tenantId,
           requestId,
           urutan: req.currentStep,
-          approverRole: expected as never,
+          approverRole: expectedRole as never,
           approverUserId: userId,
           action,
           catatan: catatan?.trim() || null,
@@ -245,7 +282,7 @@ export class ApprovalService {
 
   /** Inbox approver: request MENUNGGU yang langkah kininya bisa disetujui user. */
   inbox() {
-    const { role } = this.ctx.require();
+    const { role, userId } = this.ctx.require();
     return this.tenancy.run(async (tx) => {
       const reqs = await tx.approvalRequest.findMany({
         where: { status: 'MENUNGGU' },
@@ -253,8 +290,11 @@ export class ApprovalService {
       });
       return reqs
         .filter((r) => {
-          const expected = r.stepRoles.split(',')[r.currentStep - 1];
-          return role === 'OWNER' || role === expected;
+          if (role === 'OWNER') return true;
+          const expectedUser = (r.stepUserIds || '').split(',')[r.currentStep - 1] || '';
+          if (expectedUser) return userId === expectedUser;
+          const expectedRole = r.stepRoles.split(',')[r.currentStep - 1];
+          return role === expectedRole;
         })
         .map((r) => ({
           id: r.id,

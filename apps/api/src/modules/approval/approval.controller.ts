@@ -26,7 +26,13 @@ const upsertRuleSchema = z.object({
   minAmount: z.union([z.number(), z.string()]).transform((v) => String(v)),
   isActive: z.boolean().optional(),
   catatan: z.string().max(500).optional(),
-  steps: z.array(ROLE).min(1).max(5),
+  steps: z
+    .array(
+      z.object({ role: ROLE.optional(), userId: z.string().uuid().optional() })
+        .refine((s) => !!s.role || !!s.userId, 'Tiap langkah butuh role atau user'),
+    )
+    .min(1)
+    .max(5),
 });
 type UpsertRuleInput = z.infer<typeof upsertRuleSchema>;
 

@@ -1035,11 +1035,14 @@ model ApprovalRule {
 
 /// Satu langkah (tingkat) approval dalam sebuah aturan — approver = pemegang role.
 model ApprovalRuleStep {
-  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId     String @map("tenant_id") @db.Uuid
-  ruleId       String @map("rule_id") @db.Uuid
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String  @map("tenant_id") @db.Uuid
+  ruleId       String  @map("rule_id") @db.Uuid
   urutan       Int
-  approverRole Role   @map("approver_role")
+  approverRole Role    @map("approver_role")
+  /// Kalau di-set: hanya user INI yang boleh menyetujui langkah ini (approver
+  /// per-individu). Kalau null: siapa pun pemegang `approverRole`.
+  approverUserId String? @map("approver_user_id") @db.Uuid
 
   rule ApprovalRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
@@ -1062,6 +1065,9 @@ model ApprovalRequest {
   /// Snapshot role approver per langkah (CSV terurut, mis. "ADMIN,OWNER") —
   /// tahan terhadap perubahan aturan setelah request dibuat.
   stepRoles     String          @map("step_roles")
+  /// Snapshot user approver per langkah (CSV terurut; entri kosong = berbasis
+  /// role, entri berisi UUID = approver per-individu). Sejajar dgn stepRoles.
+  stepUserIds   String          @default("") @map("step_user_ids")
   requestedById String?         @map("requested_by_id") @db.Uuid
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")

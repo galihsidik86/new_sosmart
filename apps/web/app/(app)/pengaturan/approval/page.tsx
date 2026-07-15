@@ -16,18 +16,21 @@ const DOC_LABEL: Record<string, string> = {
 };
 const ROLE_OPTS = ['OWNER', 'ADMIN', 'AKUNTAN'];
 
-interface Step { urutan: number; approverRole: string }
+interface Step { urutan: number; approverRole: string; approverUserId: string | null; approverNama: string | null }
 interface Rule {
   id: string; docType: string; minAmount: string; isActive: boolean; catatan: string | null; steps: Step[];
 }
+interface UserRow { userId: string; nama: string; role: string }
 
 async function createRuleAction(formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
+  // Tiap langkah: "role:ADMIN" atau "user:<uuid>".
   const steps = [formData.get('step1'), formData.get('step2'), formData.get('step3')]
     .map((v) => String(v ?? ''))
-    .filter((v) => v);
+    .filter((v) => v)
+    .map((v) => (v.startsWith('user:') ? { userId: v.slice(5) } : { role: v.slice(5) }));
   await apiFetch('/approval/rules', {
     method: 'POST',
     tenantId,
@@ -51,7 +54,10 @@ async function deleteRuleAction(formData: FormData) {
 export default async function ApprovalRulesPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const rules = await apiFetch<Rule[]>('/approval/rules', { tenantId });
+  const [rules, users] = await Promise.all([
+    apiFetch<Rule[]>('/approval/rules', { tenantId }),
+    apiFetch<UserRow[]>('/users', { tenantId }),
+  ]);
 
   return (
     <PageContainer size="list">
@@ -78,7 +84,9 @@ export default async function ApprovalRulesPage() {
                   <TD>
                     <div className="flex flex-wrap items-center gap-1">
                       {r.steps.map((st) => (
-                        <Badge key={st.urutan} variant="neutral">{st.urutan}. {st.approverRole}</Badge>
+                        <Badge key={st.urutan} variant={st.approverUserId ? 'brand' : 'neutral'}>
+                          {st.urutan}. {st.approverNama ? `👤 ${st.approverNama}` : st.approverRole}
+                        </Badge>
                       ))}
                     </div>
                   </TD>
@@ -112,9 +120,14 @@ export default async function ApprovalRulesPage() {
                 <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Rantai persetujuan (berurutan)</div>
                 {[1, 2, 3].map((n) => (
                   <FormField key={n} label={`Tingkat ${n}${n > 1 ? ' (opsional)' : ''}`}>
-                    <Select name={`step${n}`} defaultValue={n === 1 ? 'ADMIN' : ''}>
+                    <Select name={`step${n}`} defaultValue={n === 1 ? 'role:ADMIN' : ''}>
                       <option value="">— tidak ada —</option>
-                      {ROLE_OPTS.map((role) => <option key={role} value={role}>{role}</option>)}
+                      <optgroup label="Berdasarkan role">
+                        {ROLE_OPTS.map((role) => <option key={role} value={`role:${role}`}>{role}</option>)}
+                      </optgroup>
+                      <optgroup label="User spesifik">
+                        {users.map((u) => <option key={u.userId} value={`user:${u.userId}`}>👤 {u.nama} ({u.role})</option>)}
+                      </optgroup>
                     </Select>
                   </FormField>
                 ))}
