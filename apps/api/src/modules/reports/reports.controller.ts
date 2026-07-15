@@ -335,8 +335,9 @@ export class ReportsController {
   arAging(
     @Query('asOf') asOf: string,
     @Query('cabangId') cabangId?: string,
+    @Query('jenisPelangganId') jenisPelangganId?: string,
   ) {
-    return this.ar.build({ asOf, cabangId: cabangId || undefined });
+    return this.ar.build({ asOf, cabangId: cabangId || undefined, jenisPelangganId: jenisPelangganId || undefined });
   }
 
   @Get('ar-statement')
@@ -372,9 +373,10 @@ export class ReportsController {
     @Res() reply: ReplyLike,
     @Query('asOf') asOf: string,
     @Query('cabangId') cabangId?: string,
+    @Query('jenisPelangganId') jenisPelangganId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.ar.build({ asOf, cabangId: cabangId || undefined }),
+      this.ar.build({ asOf, cabangId: cabangId || undefined, jenisPelangganId: jenisPelangganId || undefined }),
       this.brand(),
     ]);
     sendPdf(reply, `aging-piutang-${asOf}.pdf`, await this.pdf.buildArAging(data, nama.nama, nama.logo));
@@ -428,9 +430,10 @@ export class ReportsController {
     @Res() reply: ReplyLike,
     @Query('asOf') asOf: string,
     @Query('cabangId') cabangId?: string,
+    @Query('jenisPelangganId') jenisPelangganId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.ar.build({ asOf, cabangId: cabangId || undefined }),
+      this.ar.build({ asOf, cabangId: cabangId || undefined, jenisPelangganId: jenisPelangganId || undefined }),
       this.tenantNama(),
     ]);
     sendXlsx(reply, `aging-piutang-${asOf}.xlsx`, await this.xlsx.buildArAging(data, nama));

@@ -80,11 +80,11 @@ export class ArAgingService {
     private readonly cabangScope: CabangScopeService,
   ) {}
 
-  async build(opts: { asOf: string; cabangId?: string }): Promise<ArAgingResponse> {
+  async build(opts: { asOf: string; cabangId?: string; jenisPelangganId?: string }): Promise<ArAgingResponse> {
     return this.tenancy.run(async (tx) => {
       if (opts.cabangId) this.cabangScope.assertAccess(opts.cabangId);
       const asOfDate = this.parseDate(opts.asOf);
-      const invoices = await this.fetchOpenInvoices(tx, asOfDate, opts.cabangId);
+      const invoices = await this.fetchOpenInvoices(tx, asOfDate, opts.cabangId, undefined, opts.jenisPelangganId);
 
       const perCustomer = new Map<
         string,
@@ -212,6 +212,7 @@ export class ArAgingService {
     asOf: Date,
     cabangId?: string,
     customerId?: string,
+    jenisPelangganId?: string,
   ): Promise<
     Array<{
       id: string;
@@ -237,6 +238,7 @@ export class ArAgingService {
       where: {
         ...cabangFilter,
         ...(customerId ? { customerId } : {}),
+        ...(jenisPelangganId ? { customer: { jenisPelangganId } } : {}),
         tanggal: { lte: asOf },
         status: { in: [InvoiceStatus.POSTED, InvoiceStatus.PARTIAL, InvoiceStatus.PAID] },
       },

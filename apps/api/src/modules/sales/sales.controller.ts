@@ -56,8 +56,9 @@ export class SalesController {
     @Query('projectId') projectId?: string,
     @Query('search') search?: string,
     @Query('industriId') industriId?: string,
+    @Query('jenisPelangganId') jenisPelangganId?: string,
   ) {
-    return this.sales.list({ status, customerId, periodId, cabangId, projectId, search, industriId });
+    return this.sales.list({ status, customerId, periodId, cabangId, projectId, search, industriId, jenisPelangganId });
   }
 
   @Get('export.xlsx')
@@ -70,9 +71,10 @@ export class SalesController {
     @Query('projectId') projectId?: string,
     @Query('search') search?: string,
     @Query('industriId') industriId?: string,
+    @Query('jenisPelangganId') jenisPelangganId?: string,
   ) {
     sendXlsx(reply, 'penjualan.xlsx',
-      await this.sales.exportXlsx({ status, customerId, periodId, cabangId, projectId, search, industriId }));
+      await this.sales.exportXlsx({ status, customerId, periodId, cabangId, projectId, search, industriId, jenisPelangganId }));
   }
 
   @Get(':id/print.pdf')

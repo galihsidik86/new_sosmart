@@ -27,17 +27,18 @@ interface Row {
 export default async function PenjualanPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: Status; search?: string; cabangId?: string; projectId?: string; industriId?: string }>;
+  searchParams: Promise<{ status?: Status; search?: string; cabangId?: string; projectId?: string; industriId?: string; jenisPelangganId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
-  const apiParams = { status: sp.status, search: sp.search, cabangId: sp.cabangId, projectId: sp.projectId, industriId: sp.industriId };
-  const [rows, cabang, projects, industri] = await Promise.all([
+  const apiParams = { status: sp.status, search: sp.search, cabangId: sp.cabangId, projectId: sp.projectId, industriId: sp.industriId, jenisPelangganId: sp.jenisPelangganId };
+  const [rows, cabang, projects, industri, jenisPelanggan] = await Promise.all([
     apiFetch<Row[]>(buildListHref('/sales-invoices', apiParams), { tenantId }),
     apiFetch<FilterOption[]>('/cabang', { tenantId }).catch(() => [] as FilterOption[]),
     apiFetch<FilterOption[]>('/projects', { tenantId }).catch(() => [] as FilterOption[]),
     apiFetch<FilterOption[]>('/industri', { tenantId }).catch(() => [] as FilterOption[]),
+    apiFetch<{ id: string; nama: string }[]>('/jenis-pelanggan', { tenantId }).catch(() => []),
   ]);
   const isPusat = ['OWNER', 'ADMIN', 'AKUNTAN'].includes(s.role ?? '');
 
@@ -66,6 +67,7 @@ export default async function PenjualanPage({
           cabang={isPusat && cabang.length > 1 ? cabang : undefined}
           projects={projects}
           industri={industri}
+          jenisPelanggan={jenisPelanggan}
           searchPlaceholder="Cari no. faktur / pelanggan / keterangan…"
         />
 

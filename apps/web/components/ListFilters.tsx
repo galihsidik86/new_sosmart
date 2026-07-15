@@ -26,14 +26,17 @@ export function ListFilters({
   cabang,
   projects,
   industri,
+  jenisPelanggan,
   searchPlaceholder = 'Cari nomor / keterangan…',
-  ownKeys = ['search', 'cabangId', 'projectId', 'industriId'],
+  ownKeys = ['search', 'cabangId', 'projectId', 'industriId', 'jenisPelangganId'],
 }: {
   action: string;
   params: Record<string, string | undefined>;
   cabang?: FilterOption[];
   projects?: FilterOption[];
   industri?: FilterOption[];
+  /** Jenis pelanggan (master per-tenant). Hanya di halaman berbasis pelanggan. */
+  jenisPelanggan?: { id: string; nama: string }[];
   searchPlaceholder?: string;
   ownKeys?: string[];
 }) {
@@ -41,7 +44,8 @@ export function ListFilters({
     ([k, v]) => v && !ownKeys.includes(k),
   ) as [string, string][];
   const hasActive = !!(
-    params.search || params.cabangId || params.projectId || params.industriId
+    params.search || params.cabangId || params.projectId || params.industriId ||
+    params.jenisPelangganId
   );
 
   return (
@@ -110,6 +114,25 @@ export function ListFilters({
             {industri.map((i) => (
               <option key={i.id} value={i.id}>
                 {i.nama}
+              </option>
+            ))}
+          </Select>
+        </label>
+      )}
+
+      {jenisPelanggan && jenisPelanggan.length > 0 && (
+        <label className="flex items-center gap-2">
+          <FilterLabel>Jenis</FilterLabel>
+          <Select
+            name="jenisPelangganId"
+            defaultValue={params.jenisPelangganId ?? ''}
+            fullWidth={false}
+            className="min-w-[150px]"
+          >
+            <option value="">Semua jenis</option>
+            {jenisPelanggan.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.nama}
               </option>
             ))}
           </Select>

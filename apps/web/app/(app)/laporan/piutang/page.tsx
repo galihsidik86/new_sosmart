@@ -41,7 +41,7 @@ const BUCKET_LABEL: Record<keyof Buckets, string> = {
 export default async function PiutangPage({
   searchParams,
 }: {
-  searchParams: Promise<{ asOf?: string; cabangId?: string; search?: string }>;
+  searchParams: Promise<{ asOf?: string; cabangId?: string; search?: string; jenisPelangganId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
@@ -51,11 +51,14 @@ export default async function PiutangPage({
   const asOf = sp.asOf ?? today;
   const cabangId = sp.cabangId ?? '';
   const search = (sp.search ?? '').trim();
+  const jenisId = sp.jenisPelangganId ?? '';
+  const jenisQ = jenisId ? `&jenisPelangganId=${jenisId}` : '';
 
-  const [cabang, ar] = await Promise.all([
+  const [cabang, jenisList, ar] = await Promise.all([
     apiFetch<Cabang[]>('/cabang', { tenantId }),
+    apiFetch<{ id: string; nama: string }[]>('/jenis-pelanggan', { tenantId }).catch(() => []),
     apiFetch<AR>(
-      `/reports/ar-aging?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`,
+      `/reports/ar-aging?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}${jenisQ}`,
       { tenantId },
     ),
   ]);
@@ -81,8 +84,8 @@ export default async function PiutangPage({
           subtitle="Saldo piutang per pelanggan · umur dihitung dari jatuh tempo · pembayaran ≤ tanggal patokan."
           actions={
             <ReportActions
-              xlsx={`/proxy/reports/ar-aging.xlsx?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
-              pdf={`/proxy/reports/ar-aging.pdf?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}`}
+              xlsx={`/proxy/reports/ar-aging.xlsx?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}${jenisQ}`}
+              pdf={`/proxy/reports/ar-aging.pdf?asOf=${asOf}${cabangId ? `&cabangId=${cabangId}` : ''}${jenisQ}`}
             />
           }
         />
@@ -105,6 +108,17 @@ export default async function PiutangPage({
               </option>
             ))}
           </Select>
+          {jenisList.length > 0 && (
+            <>
+              <FilterLabel>Jenis</FilterLabel>
+              <Select name="jenisPelangganId" defaultValue={jenisId} fullWidth={false}>
+                <option value="">Semua jenis</option>
+                {jenisList.map((j) => (
+                  <option key={j.id} value={j.id}>{j.nama}</option>
+                ))}
+              </Select>
+            </>
+          )}
           <input
             name="search"
             defaultValue={search}

@@ -61,6 +61,7 @@ export class SalesService {
     cabangId?: string;
     projectId?: string;
     industriId?: string;
+    jenisPelangganId?: string;
     search?: string;
   }): Promise<Buffer> {
     const rows = await this.list(filter);
@@ -97,11 +98,13 @@ export class SalesService {
     cabangId?: string;
     projectId?: string;
     industriId?: string;
+    jenisPelangganId?: string;
     search?: string;
   }) {
     const where: Prisma.SalesInvoiceWhereInput = {};
     if (filter.status) where.status = filter.status;
     if (filter.customerId) where.customerId = filter.customerId;
+    if (filter.jenisPelangganId) where.customer = { jenisPelangganId: filter.jenisPelangganId };
     if (filter.periodId) where.fiscalPeriodId = filter.periodId;
     if (filter.cabangId) {
       this.cabangScope.assertAccess(filter.cabangId);
