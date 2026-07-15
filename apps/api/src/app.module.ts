@@ -38,6 +38,7 @@ import { ApprovalModule } from './modules/approval/approval.module.js';
 import { ConsolidationModule } from './modules/consolidation/consolidation.module.js';
 import { OpeningBalanceModule } from './modules/opening-balance/opening-balance.module.js';
 import { TermPembayaranModule } from './modules/term-pembayaran/term-pembayaran.module.js';
+import { JenisPelangganModule } from './modules/jenis-pelanggan/jenis-pelanggan.module.js';
 import { FiscalYearClosingModule } from './modules/fiscal-year/fiscal-year-closing.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { HealthController } from './modules/health/health.controller.js';
@@ -83,6 +84,7 @@ import { HealthController } from './modules/health/health.controller.js';
     ConsolidationModule,
     OpeningBalanceModule,
     TermPembayaranModule,
+    JenisPelangganModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

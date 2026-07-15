@@ -460,6 +460,14 @@ CREATE POLICY term_pembayaran_isolation ON term_pembayaran
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- MASTER JENIS PELANGGAN
+ALTER TABLE jenis_pelanggan ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jenis_pelanggan FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS jenis_pelanggan_isolation ON jenis_pelanggan;
+CREATE POLICY jenis_pelanggan_isolation ON jenis_pelanggan
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity

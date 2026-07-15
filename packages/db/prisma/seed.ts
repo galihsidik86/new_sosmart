@@ -16,7 +16,6 @@ import {
   PpnSkema,
   Role,
   KlasifikasiPpn,
-  TipeCustomer,
   PeriodStatus,
   FiscalYearStatus,
   KelompokAsetTetap,
@@ -551,13 +550,13 @@ async function seedCustomers(tenantId: string, coa: Map<string, string>) {
   const akunPiutang = coa.get('1-103');
   const data: Array<{
     kode: string; nama: string; npwp: string | null; isPkp: boolean;
-    tipe: TipeCustomer; kota: string; telp: string; terminHari: number; kreditLimit: string;
+    tipe: string; kota: string; telp: string; terminHari: number; kreditLimit: string;
   }> = [
-    { kode: 'PLG-001', nama: 'CV Berkah Jaya Mandiri', npwp: '012345678501000', isPkp: true, tipe: TipeCustomer.DISTRIBUTOR, kota: 'Semarang', telp: '024-841-220', terminHari: 30, kreditLimit: '300000000' },
-    { kode: 'PLG-002', nama: 'Toko Maju Jaya', npwp: '073456789507000', isPkp: true, tipe: TipeCustomer.RITEL, kota: 'Salatiga', telp: '0298-321-441', terminHari: 14, kreditLimit: '100000000' },
-    { kode: 'PLG-003', nama: 'PT Logistik Andal Nusantara', npwp: '023456789502000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Semarang', telp: '024-700-8800', terminHari: 45, kreditLimit: '500000000' },
-    { kode: 'PLG-004', nama: 'UD Sumber Rejeki', npwp: null, isPkp: false, tipe: TipeCustomer.RITEL, kota: 'Solo', telp: '0271-220-118', terminHari: 7, kreditLimit: '25000000' },
-    { kode: 'PLG-005', nama: 'Koperasi Tani Sejahtera', npwp: '084567890508000', isPkp: false, tipe: TipeCustomer.KOPERASI, kota: 'Magelang', telp: '0276-330-552', terminHari: 30, kreditLimit: '80000000' },
+    { kode: 'PLG-001', nama: 'CV Berkah Jaya Mandiri', npwp: '012345678501000', isPkp: true, tipe: 'DISTRIBUTOR', kota: 'Semarang', telp: '024-841-220', terminHari: 30, kreditLimit: '300000000' },
+    { kode: 'PLG-002', nama: 'Toko Maju Jaya', npwp: '073456789507000', isPkp: true, tipe: 'RITEL', kota: 'Salatiga', telp: '0298-321-441', terminHari: 14, kreditLimit: '100000000' },
+    { kode: 'PLG-003', nama: 'PT Logistik Andal Nusantara', npwp: '023456789502000', isPkp: true, tipe: 'KORPORAT', kota: 'Semarang', telp: '024-700-8800', terminHari: 45, kreditLimit: '500000000' },
+    { kode: 'PLG-004', nama: 'UD Sumber Rejeki', npwp: null, isPkp: false, tipe: 'RITEL', kota: 'Solo', telp: '0271-220-118', terminHari: 7, kreditLimit: '25000000' },
+    { kode: 'PLG-005', nama: 'Koperasi Tani Sejahtera', npwp: '084567890508000', isPkp: false, tipe: 'KOPERASI', kota: 'Magelang', telp: '0276-330-552', terminHari: 30, kreditLimit: '80000000' },
   ];
   for (const c of data) {
     await prisma.customer.upsert({
@@ -568,7 +567,6 @@ async function seedCustomers(tenantId: string, coa: Map<string, string>) {
         nama: c.nama,
         npwp: c.npwp,
         isPkp: c.isPkp,
-        tipe: c.tipe,
         kota: c.kota,
         telp: c.telp,
         terminHari: c.terminHari,

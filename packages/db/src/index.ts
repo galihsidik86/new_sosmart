@@ -21,7 +21,6 @@ export {
   ApprovalActionType,
   PpnSkema,
   KlasifikasiPpn,
-  TipeCustomer,
   PeriodStatus,
   FiscalYearStatus,
   JournalStatus,

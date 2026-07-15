@@ -104,16 +104,6 @@ enum KlasifikasiPpn {
   BEBAS_PPN // PPN dibebaskan (kawasan berikat, ekspor, dll)
 }
 
-/// Tipe pelanggan — mempengaruhi termin & kebijakan harga.
-enum TipeCustomer {
-  DISTRIBUTOR
-  RITEL
-  KORPORAT
-  KOPERASI
-  PEMERINTAH
-  LAINNYA
-}
-
 /// Status periode buku — gating untuk posting transaksi.
 enum PeriodStatus {
   OPEN
@@ -794,7 +784,8 @@ model Customer {
   nama          String
   npwp          String?
   isPkp         Boolean      @default(false) @map("is_pkp")
-  tipe          TipeCustomer @default(RITEL)
+  /// Jenis pelanggan (master per-tenant, mis. Consumer/Brand/Personal Based).
+  jenisPelangganId String?   @map("jenis_pelanggan_id") @db.Uuid
   /// Kalau customer ini adalah entitas dalam grup (intra-grup), tunjuk tenant-
   /// nya. Dipakai eliminasi intercompany level-transaksi saat konsolidasi.
   partnerTenantId String?    @map("partner_tenant_id") @db.Uuid
@@ -815,14 +806,34 @@ model Customer {
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
 
-  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  akunPiutang   Account?       @relation("CustomerAkunPiutang", fields: [akunPiutangId], references: [id], onDelete: SetNull)
-  salesInvoices SalesInvoice[]
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  akunPiutang    Account?        @relation("CustomerAkunPiutang", fields: [akunPiutangId], references: [id], onDelete: SetNull)
+  jenisPelanggan JenisPelanggan? @relation(fields: [jenisPelangganId], references: [id], onDelete: SetNull)
+  salesInvoices  SalesInvoice[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
   @@index([tenantId, isAktif])
   @@map("customers")
+}
+
+/// Master jenis/segmen pelanggan per tenant (mis. Consumer/Brand/Personal
+/// Based untuk MarkPlus, atau Distributor/Ritel untuk tenant lain). Mengikuti
+/// konvensi RLS via tenant_id (tanpa relasi Prisma ke Tenant).
+model JenisPelanggan {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  nama      String
+  aktif     Boolean  @default(true)
+  urutan    Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  customers Customer[]
+
+  @@unique([tenantId, nama])
+  @@index([tenantId, aktif])
+  @@map("jenis_pelanggan")
 }
 
 // ===============================================================

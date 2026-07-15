@@ -47,12 +47,12 @@ export class CustomersController {
   list(
     @Query('search') search?: string,
     @Query('onlyActive') onlyActive?: string,
-    @Query('tipe') tipe?: string,
+    @Query('jenisPelangganId') jenisPelangganId?: string,
   ) {
     return this.customers.list({
       search,
       onlyActive: onlyActive !== 'false',
-      tipe,
+      jenisPelangganId,
     });
   }
 

@@ -19,7 +19,6 @@ import {
   PpnSkema,
   Role,
   KlasifikasiPpn,
-  TipeCustomer,
   PeriodStatus,
   FiscalYearStatus,
   KelompokAsetTetap,
@@ -315,28 +314,28 @@ async function seedVendors(tenantId: string, coa: Map<string, string>) {
 
 async function seedCustomers(tenantId: string, coa: Map<string, string>) {
   const akunPiutang = coa.get('1-103');
-  const data: Array<{ kode: string; nama: string; npwp: string; isPkp: boolean; tipe: TipeCustomer; kota: string; termin: number; limit: string }> = [
-    { kode: 'CST-001', nama: 'PT Bank Mandiri (Persero) Tbk', npwp: '012345678501000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 45, limit: '3000000000' },
-    { kode: 'CST-002', nama: 'PT Telkomsel', npwp: '013345678502000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 45, limit: '3000000000' },
-    { kode: 'CST-003', nama: 'PT Unilever Indonesia Tbk', npwp: '014345678503000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Tangerang', termin: 30, limit: '2500000000' },
-    { kode: 'CST-004', nama: 'PT Astra International Tbk', npwp: '015345678504000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 45, limit: '2500000000' },
-    { kode: 'CST-005', nama: 'PT Bank Central Asia Tbk', npwp: '016345678505000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 45, limit: '2500000000' },
-    { kode: 'CST-006', nama: 'PT Pertamina (Persero)', npwp: '017345678506000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 60, limit: '3000000000' },
-    { kode: 'CST-007', nama: 'PT Gojek Indonesia', npwp: '018345678507000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 30, limit: '2000000000' },
-    { kode: 'CST-008', nama: 'PT Sinar Mas Land', npwp: '019345678508000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Tangerang', termin: 45, limit: '2000000000' },
-    { kode: 'CST-009', nama: 'PT Kalbe Farma Tbk', npwp: '020345678509000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 30, limit: '1500000000' },
-    { kode: 'CST-010', nama: 'PT Prudential Life Assurance', npwp: '021345678510000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 45, limit: '1500000000' },
-    { kode: 'CST-011', nama: 'PT Indofood Sukses Makmur Tbk', npwp: '022345678511000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 30, limit: '2000000000' },
-    { kode: 'CST-012', nama: 'PT XL Axiata Tbk', npwp: '023345678512000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 45, limit: '1500000000' },
-    { kode: 'CST-013', nama: 'PT Bank Rakyat Indonesia Tbk', npwp: '024345678513000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 45, limit: '2500000000' },
-    { kode: 'CST-014', nama: 'Universitas Prasetiya Mulya', npwp: '025345678514000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Tangerang', termin: 30, limit: '800000000' },
-    { kode: 'CST-015', nama: 'PT Erajaya Swasembada Tbk', npwp: '026345678515000', isPkp: true, tipe: TipeCustomer.KORPORAT, kota: 'Jakarta', termin: 30, limit: '1000000000' },
+  const data: Array<{ kode: string; nama: string; npwp: string; isPkp: boolean; tipe: string; kota: string; termin: number; limit: string }> = [
+    { kode: 'CST-001', nama: 'PT Bank Mandiri (Persero) Tbk', npwp: '012345678501000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 45, limit: '3000000000' },
+    { kode: 'CST-002', nama: 'PT Telkomsel', npwp: '013345678502000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 45, limit: '3000000000' },
+    { kode: 'CST-003', nama: 'PT Unilever Indonesia Tbk', npwp: '014345678503000', isPkp: true, tipe: 'KORPORAT', kota: 'Tangerang', termin: 30, limit: '2500000000' },
+    { kode: 'CST-004', nama: 'PT Astra International Tbk', npwp: '015345678504000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 45, limit: '2500000000' },
+    { kode: 'CST-005', nama: 'PT Bank Central Asia Tbk', npwp: '016345678505000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 45, limit: '2500000000' },
+    { kode: 'CST-006', nama: 'PT Pertamina (Persero)', npwp: '017345678506000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 60, limit: '3000000000' },
+    { kode: 'CST-007', nama: 'PT Gojek Indonesia', npwp: '018345678507000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 30, limit: '2000000000' },
+    { kode: 'CST-008', nama: 'PT Sinar Mas Land', npwp: '019345678508000', isPkp: true, tipe: 'KORPORAT', kota: 'Tangerang', termin: 45, limit: '2000000000' },
+    { kode: 'CST-009', nama: 'PT Kalbe Farma Tbk', npwp: '020345678509000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 30, limit: '1500000000' },
+    { kode: 'CST-010', nama: 'PT Prudential Life Assurance', npwp: '021345678510000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 45, limit: '1500000000' },
+    { kode: 'CST-011', nama: 'PT Indofood Sukses Makmur Tbk', npwp: '022345678511000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 30, limit: '2000000000' },
+    { kode: 'CST-012', nama: 'PT XL Axiata Tbk', npwp: '023345678512000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 45, limit: '1500000000' },
+    { kode: 'CST-013', nama: 'PT Bank Rakyat Indonesia Tbk', npwp: '024345678513000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 45, limit: '2500000000' },
+    { kode: 'CST-014', nama: 'Universitas Prasetiya Mulya', npwp: '025345678514000', isPkp: true, tipe: 'KORPORAT', kota: 'Tangerang', termin: 30, limit: '800000000' },
+    { kode: 'CST-015', nama: 'PT Erajaya Swasembada Tbk', npwp: '026345678515000', isPkp: true, tipe: 'KORPORAT', kota: 'Jakarta', termin: 30, limit: '1000000000' },
   ];
   const map = new Map<string, string>();
   for (const c of data) {
     const row = await prisma.customer.create({
       data: {
-        tenantId, kode: c.kode, nama: c.nama, npwp: c.npwp, isPkp: c.isPkp, tipe: c.tipe,
+        tenantId, kode: c.kode, nama: c.nama, npwp: c.npwp, isPkp: c.isPkp,
         kota: c.kota, terminHari: c.termin, kreditLimit: c.limit, akunPiutangId: akunPiutang ?? null,
       },
     });

@@ -136,22 +136,13 @@ export type CreateVendorInput = z.infer<typeof createVendorInputSchema>;
 
 // ---------- CUSTOMER ----------
 
-export const TipeCustomerEnum = z.enum([
-  'DISTRIBUTOR',
-  'RITEL',
-  'KORPORAT',
-  'KOPERASI',
-  'PEMERINTAH',
-  'LAINNYA',
-]);
-export type TipeCustomerInput = z.infer<typeof TipeCustomerEnum>;
-
 export const createCustomerInputSchema = z.object({
   kode: z.string().min(1).max(50),
   nama: z.string().min(1).max(200),
   npwp: npwpSchema,
   isPkp: z.boolean().default(false),
-  tipe: TipeCustomerEnum.default('RITEL'),
+  /** Jenis pelanggan (master per-tenant). Opsional. */
+  jenisPelangganId: z.string().uuid().nullable().optional(),
   alamat: z.string().max(500).optional(),
   kota: z.string().max(100).optional(),
   provinsi: z.string().max(100).optional(),

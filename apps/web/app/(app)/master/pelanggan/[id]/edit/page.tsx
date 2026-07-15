@@ -7,7 +7,7 @@ import {
   PageContainer, PageHeader, Card, Button, FormField, Input, Select, buttonClass,
 } from '@/components/ui';
 
-type Tipe = 'DISTRIBUTOR' | 'RITEL' | 'KORPORAT' | 'KOPERASI' | 'PEMERINTAH' | 'LAINNYA';
+interface JenisPelanggan { id: string; nama: string }
 
 interface Customer {
   id: string;
@@ -15,22 +15,13 @@ interface Customer {
   nama: string;
   npwp: string | null;
   isPkp: boolean;
-  tipe: Tipe;
+  jenisPelangganId: string | null;
   kota: string | null;
   telp: string | null;
   terminHari: number;
   kreditLimit: string;
   partnerTenantId: string | null;
 }
-
-const TIPE_LABEL: Record<Tipe, string> = {
-  DISTRIBUTOR: 'Distributor',
-  RITEL: 'Ritel',
-  KORPORAT: 'Korporat',
-  KOPERASI: 'Koperasi',
-  PEMERINTAH: 'Pemerintah',
-  LAINNYA: 'Lainnya',
-};
 
 async function updateCustomer(formData: FormData) {
   'use server';
@@ -45,7 +36,7 @@ async function updateCustomer(formData: FormData) {
       nama: formData.get('nama'),
       npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
       isPkp: formData.get('isPkp') === 'on',
-      tipe: formData.get('tipe') ?? 'RITEL',
+      jenisPelangganId: formData.get('jenisPelangganId') || null,
       kota: formData.get('kota') || null,
       telp: formData.get('telp') || null,
       terminHari: Number(formData.get('terminHari') ?? 14),
@@ -61,9 +52,10 @@ export default async function EditPelangganPage({ params }: { params: Promise<{ 
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const { id } = await params;
-  const [c, partners] = await Promise.all([
+  const [c, partners, jenisList] = await Promise.all([
     apiFetch<Customer>(`/customers/${id}`, { tenantId }),
     apiFetch<Array<{ tenantId: string; nama: string }>>('/consolidation/candidates', { tenantId }).catch(() => []),
+    apiFetch<JenisPelanggan[]>('/jenis-pelanggan', { tenantId }),
   ]);
 
   return (
@@ -82,10 +74,11 @@ export default async function EditPelangganPage({ params }: { params: Promise<{ 
               <input type="checkbox" name="isPkp" defaultChecked={c.isPkp} />
               Pelanggan ini PKP
             </label>
-            <FormField label="Tipe">
-              <Select name="tipe" defaultValue={c.tipe}>
-                {(Object.keys(TIPE_LABEL) as Tipe[]).map((t) => (
-                  <option key={t} value={t}>{TIPE_LABEL[t]}</option>
+            <FormField label="Jenis Pelanggan">
+              <Select name="jenisPelangganId" defaultValue={c.jenisPelangganId ?? ''}>
+                <option value="">— pilih —</option>
+                {jenisList.map((j) => (
+                  <option key={j.id} value={j.id}>{j.nama}</option>
                 ))}
               </Select>
             </FormField>

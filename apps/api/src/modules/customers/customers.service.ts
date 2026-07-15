@@ -8,7 +8,6 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { ExcelService } from '../../common/excel/excel.service.js';
 import type { ImportResult } from '../../common/http/multipart.js';
-import { TipeCustomer } from '@lentera/db';
 import type { CreateCustomerInput } from '@lentera/shared/schemas';
 
 @Injectable()
@@ -23,9 +22,11 @@ export class CustomersService {
     const tenantId = this.ctx.require().tenantId;
     const rows = await this.excel.parseBuffer(buffer, ['Kode', 'Nama']);
     const result: ImportResult = { created: 0, skipped: 0, errors: [] };
-    const allowedTipe = new Set(Object.values(TipeCustomer) as string[]);
 
     return this.tenancy.run(async (tx) => {
+      // Peta jenis pelanggan (nama → id) untuk mencocokkan kolom "Jenis"/"Tipe".
+      const jenisList = await tx.jenisPelanggan.findMany({ select: { id: true, nama: true } });
+      const jenisMap = new Map(jenisList.map((j) => [j.nama.toLowerCase(), j.id]));
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]!;
         const xlsRow = i + 2;
@@ -36,12 +37,9 @@ export class CustomersService {
           result.skipped++;
           continue;
         }
-        const tipeRaw = String(row['Tipe'] ?? 'RITEL').trim().toUpperCase();
-        if (!allowedTipe.has(tipeRaw)) {
-          result.errors.push({ row: xlsRow, message: `Tipe "${tipeRaw}" tidak valid` });
-          result.skipped++;
-          continue;
-        }
+        // Kolom "Jenis" (atau "Tipe" lama) → cocokkan ke master jenis pelanggan.
+        const jenisNama = String(row['Jenis'] ?? row['Tipe'] ?? '').trim();
+        const jenisPelangganId = jenisNama ? (jenisMap.get(jenisNama.toLowerCase()) ?? null) : null;
         try {
           await tx.customer.create({
             data: {
@@ -49,7 +47,7 @@ export class CustomersService {
               kode, nama,
               npwp: String(row['NPWP'] ?? '').replace(/\D/g, '') || null,
               isPkp: ['ya', 'y', 'true', '1'].includes(String(row['PKP'] ?? '').toLowerCase().trim()),
-              tipe: tipeRaw as TipeCustomer,
+              jenisPelangganId,
               kota: String(row['Kota'] ?? '').trim() || null,
               telp: String(row['Telp'] ?? '').trim() || null,
               terminHari: Number(row['Termin (hari)'] ?? row['Termin'] ?? 14),
@@ -79,7 +77,7 @@ export class CustomersService {
         { header: 'Nama', key: 'nama', width: 36, value: (r) => r.nama },
         { header: 'NPWP', key: 'npwp', width: 20, value: (r) => r.npwp ?? '' },
         { header: 'PKP', key: 'isPkp', width: 8, value: (r) => (r.isPkp ? 'Ya' : '') },
-        { header: 'Tipe', key: 'tipe', width: 14, value: (r) => r.tipe },
+        { header: 'Jenis', key: 'jenis', width: 16, value: (r) => r.jenisPelanggan?.nama ?? '' },
         { header: 'Kota', key: 'kota', width: 16, value: (r) => r.kota ?? '' },
         { header: 'Telp', key: 'telp', width: 16, value: (r) => r.telp ?? '' },
         { header: 'Termin (hari)', key: 'terminHari', width: 12, format: 'number',
@@ -92,10 +90,10 @@ export class CustomersService {
     );
   }
 
-  list(opts: { search?: string; onlyActive?: boolean; tipe?: string }) {
+  list(opts: { search?: string; onlyActive?: boolean; jenisPelangganId?: string }) {
     const where: Prisma.CustomerWhereInput = {};
     if (opts.onlyActive ?? true) where.isAktif = true;
-    if (opts.tipe) where.tipe = opts.tipe as Prisma.CustomerWhereInput['tipe'];
+    if (opts.jenisPelangganId) where.jenisPelangganId = opts.jenisPelangganId;
     if (opts.search) {
       where.OR = [
         { kode: { contains: opts.search, mode: 'insensitive' } },
@@ -109,6 +107,7 @@ export class CustomersService {
         orderBy: { kode: 'asc' },
         include: {
           akunPiutang: { select: { id: true, kode: true, nama: true } },
+          jenisPelanggan: { select: { id: true, nama: true } },
         },
       }),
     );
@@ -118,7 +117,7 @@ export class CustomersService {
     return this.tenancy.run(async (tx) => {
       const c = await tx.customer.findUnique({
         where: { id },
-        include: { akunPiutang: true },
+        include: { akunPiutang: true, jenisPelanggan: { select: { id: true, nama: true } } },
       });
       if (!c) throw new NotFoundException('Pelanggan tidak ditemukan');
       return c;

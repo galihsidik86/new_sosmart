@@ -18,7 +18,7 @@ async function importCustomersAction(formData: FormData) {
   return result;
 }
 
-type Tipe = 'DISTRIBUTOR' | 'RITEL' | 'KORPORAT' | 'KOPERASI' | 'PEMERINTAH' | 'LAINNYA';
+interface JenisPelanggan { id: string; nama: string }
 
 interface CustomerRow {
   id: string;
@@ -26,22 +26,13 @@ interface CustomerRow {
   nama: string;
   npwp: string | null;
   isPkp: boolean;
-  tipe: Tipe;
+  jenisPelanggan: { id: string; nama: string } | null;
   kota: string | null;
   telp: string | null;
   terminHari: number;
   kreditLimit: string;
   isAktif: boolean;
 }
-
-const TIPE_LABEL: Record<Tipe, string> = {
-  DISTRIBUTOR: 'Distributor',
-  RITEL: 'Ritel',
-  KORPORAT: 'Korporat',
-  KOPERASI: 'Koperasi',
-  PEMERINTAH: 'Pemerintah',
-  LAINNYA: 'Lainnya',
-};
 
 async function createCustomer(formData: FormData) {
   'use server';
@@ -55,7 +46,7 @@ async function createCustomer(formData: FormData) {
       nama: formData.get('nama'),
       npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
       isPkp: formData.get('isPkp') === 'on',
-      tipe: formData.get('tipe') ?? 'RITEL',
+      jenisPelangganId: formData.get('jenisPelangganId') || null,
       kota: formData.get('kota') || undefined,
       telp: formData.get('telp') || undefined,
       terminHari: Number(formData.get('terminHari') ?? 14),
@@ -68,7 +59,10 @@ async function createCustomer(formData: FormData) {
 export default async function PelangganPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const customers = await apiFetch<CustomerRow[]>('/customers', { tenantId });
+  const [customers, jenisList] = await Promise.all([
+    apiFetch<CustomerRow[]>('/customers', { tenantId }),
+    apiFetch<JenisPelanggan[]>('/jenis-pelanggan', { tenantId }),
+  ]);
 
   return (
     <>
@@ -89,7 +83,7 @@ export default async function PelangganPage() {
             <Table>
               <THead>
                 <TH>Kode</TH>
-                <TH>Nama / Tipe</TH>
+                <TH>Nama / Jenis</TH>
                 <TH>NPWP</TH>
                 <TH numeric>Termin</TH>
                 <TH numeric>Limit Kredit</TH>
@@ -102,7 +96,7 @@ export default async function PelangganPage() {
                     <TD>
                       <div className="font-semibold text-tanah-700">{c.nama}</div>
                       <div className="text-xs text-tanah-500 flex items-center gap-2">
-                        <span>{TIPE_LABEL[c.tipe]}</span>
+                        <span>{c.jenisPelanggan?.nama ?? '—'}</span>
                         {c.isPkp && <Badge variant="success" size="sm">PKP</Badge>}
                         <span>· {c.kota ?? '—'}</span>
                       </div>
@@ -134,10 +128,11 @@ export default async function PelangganPage() {
                 <input type="checkbox" name="isPkp" />
                 Pelanggan ini PKP
               </label>
-              <FormField label="Tipe">
-                <Select name="tipe" defaultValue="RITEL">
-                  {(Object.keys(TIPE_LABEL) as Tipe[]).map((t) => (
-                    <option key={t} value={t}>{TIPE_LABEL[t]}</option>
+              <FormField label="Jenis Pelanggan">
+                <Select name="jenisPelangganId" defaultValue="">
+                  <option value="">— pilih —</option>
+                  {jenisList.map((j) => (
+                    <option key={j.id} value={j.id}>{j.nama}</option>
                   ))}
                 </Select>
               </FormField>
