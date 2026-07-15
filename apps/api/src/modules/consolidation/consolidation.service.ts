@@ -9,6 +9,19 @@ import { AccountKind, JournalStatus, NormalBalance, Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 
+interface IcDoc {
+  nomor: string | null;
+  tanggal: Date;
+  kontak: string;
+  netto: string;
+  dibayar: string;
+  outstanding: string;
+}
+interface IcSide {
+  total: Decimal;
+  docs: IcDoc[];
+}
+
 interface EntityAccount {
   kode: string;
   nama: string;
@@ -299,16 +312,21 @@ export class ConsolidationService {
 
     // 9. Rekonsiliasi intercompany level-transaksi (piutang E→P vs utang P→E).
     const nameOf = (id: string) => names.get(id) ?? id;
-    const icRekon: Array<{ dari: string; ke: string; piutang: string; utangLawan: string; selisih: string; cocok: boolean }> = [];
+    const emptySide: IcSide = { total: new Decimal(0), docs: [] };
+    const icRekon: Array<{
+      dari: string; ke: string; piutang: string; utangLawan: string; selisih: string; cocok: boolean;
+      piutangDocs: IcDoc[]; utangDocs: IcDoc[];
+    }> = [];
     for (const e of entities) {
-      for (const [partnerId, amt] of perEntityIc.get(e.tenantId)!.receivable) {
+      for (const [partnerId, side] of perEntityIc.get(e.tenantId)!.receivable) {
         if (!groupTenantSet.has(partnerId)) continue;
-        const partnerPay = perEntityIc.get(partnerId)?.payable.get(e.tenantId) ?? new Decimal(0);
-        const d = amt.minus(partnerPay);
+        const partnerSide = perEntityIc.get(partnerId)?.payable.get(e.tenantId) ?? emptySide;
+        const d = side.total.minus(partnerSide.total);
         icRekon.push({
           dari: e.nama, ke: nameOf(partnerId),
-          piutang: amt.toFixed(2), utangLawan: partnerPay.toFixed(2),
+          piutang: side.total.toFixed(2), utangLawan: partnerSide.total.toFixed(2),
           selisih: d.toFixed(2), cocok: d.abs().lte(new Decimal('0.5')),
+          piutangDocs: side.docs, utangDocs: partnerSide.docs,
         });
       }
     }
@@ -357,34 +375,56 @@ export class ConsolidationService {
     tx: Prisma.TransactionClient,
     endDate: Date,
     groupTenantSet: Set<string>,
-  ): Promise<{ receivable: Map<string, Decimal>; payable: Map<string, Decimal> }> {
-    const receivable = new Map<string, Decimal>();
-    const payable = new Map<string, Decimal>();
+  ): Promise<{ receivable: Map<string, IcSide>; payable: Map<string, IcSide> }> {
+    const receivable = new Map<string, IcSide>();
+    const payable = new Map<string, IcSide>();
+    const add = (m: Map<string, IcSide>, p: string, doc: IcDoc) => {
+      const cur = m.get(p) ?? { total: new Decimal(0), docs: [] as IcDoc[] };
+      cur.total = cur.total.plus(new Decimal(doc.outstanding));
+      cur.docs.push(doc);
+      m.set(p, cur);
+    };
     const sales = await tx.salesInvoice.findMany({
       where: {
         status: { in: ['POSTED', 'PARTIAL'] }, tanggal: { lte: endDate },
         customer: { partnerTenantId: { not: null } },
       },
-      select: { totalNetto: true, totalDibayar: true, customer: { select: { partnerTenantId: true } } },
+      select: {
+        nomor: true, tanggal: true, totalNetto: true, totalDibayar: true,
+        customer: { select: { partnerTenantId: true, nama: true } },
+      },
+      orderBy: { tanggal: 'asc' },
     });
     for (const s of sales) {
       const p = s.customer.partnerTenantId!;
       if (!groupTenantSet.has(p)) continue;
       const out = new Decimal(s.totalNetto).minus(new Decimal(s.totalDibayar));
-      receivable.set(p, (receivable.get(p) ?? new Decimal(0)).plus(out));
+      add(receivable, p, {
+        nomor: s.nomor, tanggal: s.tanggal, kontak: s.customer.nama,
+        netto: new Decimal(s.totalNetto).toFixed(2), dibayar: new Decimal(s.totalDibayar).toFixed(2),
+        outstanding: out.toFixed(2),
+      });
     }
     const purch = await tx.purchaseInvoice.findMany({
       where: {
         status: { in: ['POSTED', 'PARTIAL'] }, tanggal: { lte: endDate },
         vendor: { partnerTenantId: { not: null } },
       },
-      select: { totalNetto: true, totalDibayar: true, vendor: { select: { partnerTenantId: true } } },
+      select: {
+        nomor: true, tanggal: true, totalNetto: true, totalDibayar: true,
+        vendor: { select: { partnerTenantId: true, nama: true } },
+      },
+      orderBy: { tanggal: 'asc' },
     });
     for (const pu of purch) {
       const p = pu.vendor.partnerTenantId!;
       if (!groupTenantSet.has(p)) continue;
       const out = new Decimal(pu.totalNetto).minus(new Decimal(pu.totalDibayar));
-      payable.set(p, (payable.get(p) ?? new Decimal(0)).plus(out));
+      add(payable, p, {
+        nomor: pu.nomor, tanggal: pu.tanggal, kontak: pu.vendor.nama,
+        netto: new Decimal(pu.totalNetto).toFixed(2), dibayar: new Decimal(pu.totalDibayar).toFixed(2),
+        outstanding: out.toFixed(2),
+      });
     }
     return { receivable, payable };
   }

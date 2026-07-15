@@ -16,7 +16,10 @@ interface Report {
   entities: Array<{ tenantId: string; nama: string; ownershipPct: string; isParent: boolean; netAssets: string; netIncome: string }>;
   skippedTenantIds: string[];
   goodwill: { total: string; detail: Array<{ nama: string; goodwill: string }> };
-  icRekon: Array<{ dari: string; ke: string; piutang: string; utangLawan: string; selisih: string; cocok: boolean }>;
+  icRekon: Array<{
+    dari: string; ke: string; piutang: string; utangLawan: string; selisih: string; cocok: boolean;
+    piutangDocs: IcDoc[]; utangDocs: IcDoc[];
+  }>;
   neraca: {
     rows: Row[]; totalAset: string; totalLiabilitas: string;
     totalEkuitasKonsolidasi: string; eliminasiEkuitasAkuisisi: string; ekuitasIndukInduk: string; kepentinganMinoritas: string;
@@ -26,6 +29,31 @@ interface Report {
     labaBersihKonsolidasi: string; labaIndukInduk: string; labaMinoritas: string;
   };
   balanced: boolean; selisih: string;
+}
+
+interface IcDoc { nomor: string | null; tanggal: string; kontak: string; netto: string; dibayar: string; outstanding: string }
+
+function DocList({ docs, label }: { docs: IcDoc[]; label: string }) {
+  return (
+    <div className="flex-1 min-w-[240px]">
+      <div className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold mb-1">{label} ({docs.length})</div>
+      {docs.length === 0 ? (
+        <p className="text-xs text-tanah-400">— tidak ada faktur —</p>
+      ) : (
+        <table className="w-full text-xs">
+          <tbody className="divide-y divide-cream-200">
+            {docs.map((d, i) => (
+              <tr key={i}>
+                <td className="py-1 pr-2 font-mono text-tanah-500">{d.nomor ?? '— draft —'}</td>
+                <td className="py-1 pr-2 text-tanah-600">{fmtTanggal(d.tanggal)}</td>
+                <td className="py-1 text-right font-mono tabular-nums">{fmtRp(d.outstanding)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 }
 
 const KIND_LABEL: Record<string, string> = {
@@ -162,28 +190,30 @@ export default async function KonsolidasiReportPage({
             </Card>
           )}
 
-          {/* Rekonsiliasi intercompany level-transaksi */}
+          {/* Rekonsiliasi intercompany level-transaksi (dengan detail dokumen) */}
           {rep.icRekon.length > 0 && (
             <Card className="mb-6" padding="lg">
               <SectionHeader className="mb-3">Rekonsiliasi Intercompany (Piutang ↔ Utang)</SectionHeader>
-              <Table>
-                <THead>
-                  <TH>Dari → Ke</TH><TH numeric>Piutang</TH><TH numeric>Utang lawan</TH>
-                  <TH numeric>Selisih</TH><TH className="text-center">Cocok</TH>
-                </THead>
-                <TBody>
-                  {rep.icRekon.map((r, i) => (
-                    <TR key={i}>
-                      <TD className="text-tanah-700">{r.dari} → {r.ke}</TD>
-                      <TD className="text-right font-mono tabular-nums">{fmtRp(r.piutang)}</TD>
-                      <TD className="text-right font-mono tabular-nums">{fmtRp(r.utangLawan)}</TD>
-                      <TD className="text-right font-mono tabular-nums">{fmtRp(r.selisih)}</TD>
-                      <TD className="text-center"><Badge variant={r.cocok ? 'success' : 'danger'}>{r.cocok ? '✓' : 'beda'}</Badge></TD>
-                    </TR>
-                  ))}
-                </TBody>
-              </Table>
-              <p className="text-xs text-tanah-500 mt-2">Piutang antar-perusahaan seharusnya sama dengan utang lawannya. Selisih ≠ 0 → perlu ditelusuri sebelum konsolidasi final.</p>
+              <div className="space-y-2">
+                {rep.icRekon.map((r, i) => (
+                  <details key={i} className="rounded-lg border border-cream-200 bg-cream-50/50 group">
+                    <summary className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 cursor-pointer list-none">
+                      <span className="text-sm font-semibold text-tanah-700">{r.dari} → {r.ke}</span>
+                      <span className="flex items-center gap-3 text-sm">
+                        <span className="font-mono tabular-nums text-padi-700">Piutang {fmtRp(r.piutang)}</span>
+                        <span className="font-mono tabular-nums text-bata-700">Utang {fmtRp(r.utangLawan)}</span>
+                        <span className="font-mono tabular-nums text-tanah-700">Δ {fmtRp(r.selisih)}</span>
+                        <Badge variant={r.cocok ? 'success' : 'danger'}>{r.cocok ? '✓ cocok' : 'beda'}</Badge>
+                      </span>
+                    </summary>
+                    <div className="px-4 pb-3 pt-1 flex flex-wrap gap-6 border-t border-cream-200">
+                      <DocList docs={r.piutangDocs} label={`Piutang di ${r.dari}`} />
+                      <DocList docs={r.utangDocs} label={`Utang di ${r.ke}`} />
+                    </div>
+                  </details>
+                ))}
+              </div>
+              <p className="text-xs text-tanah-500 mt-3">Klik tiap baris untuk melihat faktur pembentuknya. Piutang IC seharusnya = utang lawannya; selisih ≠ 0 → telusuri faktur yang belum tercatat/beda nilai di salah satu sisi.</p>
             </Card>
           )}
 
