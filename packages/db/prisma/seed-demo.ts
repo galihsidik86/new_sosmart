@@ -97,12 +97,12 @@ async function main() {
   console.log('✓ approval: 2 user approver + 3 aturan');
 
   // ---------- 2. KONSOLIDASI: anak + investasi induk + grup + IC ----------
-  const inst = await seedSubsidiary(INST, 'PT MarkPlus Institute', { kas: 250e6, piutang: 200e6, utang: 50e6, modal: 400e6 });
-  const omg = await seedSubsidiary(OMG, 'PT OMG Consulting', { kas: 200e6, piutang: 100e6, utang: 50e6, modal: 250e6 });
+  const inst = await seedSubsidiary(INST, 'Marketeers', { kas: 250e6, piutang: 200e6, utang: 50e6, modal: 400e6 });
+  const omg = await seedSubsidiary(OMG, 'MarkPlus Inspirasi Indonesia', { kas: 200e6, piutang: 100e6, utang: 50e6, modal: 250e6 });
 
   // Investasi induk pada anak (intercompany, dieliminasi) + offset ekuitas.
-  await acct(MP, '1-302', 'Investasi pada PT MarkPlus Institute', AccountKind.ASET, NormalBalance.DEBIT, '450000000', { intercompany: true, klas: 'ASET_TETAP' });
-  await acct(MP, '1-303', 'Investasi pada PT OMG Consulting', AccountKind.ASET, NormalBalance.DEBIT, '300000000', { intercompany: true, klas: 'ASET_TETAP' });
+  await acct(MP, '1-302', 'Investasi pada Marketeers', AccountKind.ASET, NormalBalance.DEBIT, '450000000', { intercompany: true, klas: 'ASET_TETAP' });
+  await acct(MP, '1-303', 'Investasi pada MarkPlus Inspirasi Indonesia', AccountKind.ASET, NormalBalance.DEBIT, '300000000', { intercompany: true, klas: 'ASET_TETAP' });
   await acct(MP, '3-106', 'Tambahan Modal Disetor', AccountKind.EKUITAS, NormalBalance.KREDIT, '750000000', {});
 
   await prisma.group.deleteMany({ where: { tenantId: MP } });
@@ -150,8 +150,8 @@ async function main() {
       },
     });
   };
-  await seedIc(INST, 'PT MarkPlus Institute', inst, 60e6, 60e6, 'INV-MP-2026-06-0101', 'BILL-INST-2026-06-0044'); // cocok
-  await seedIc(OMG, 'PT OMG Consulting', omg, 40e6, 35e6, 'INV-MP-2026-06-0102', 'BILL-OMG-2026-06-0021');   // selisih 5jt
+  await seedIc(INST, 'Marketeers', inst, 60e6, 60e6, 'INV-MP-2026-06-0101', 'BILL-MKT-2026-06-0044'); // cocok
+  await seedIc(OMG, 'MarkPlus Inspirasi Indonesia', omg, 40e6, 35e6, 'INV-MP-2026-06-0102', 'BILL-INSP-2026-06-0021');   // selisih 5jt
   console.log('✓ konsolidasi: 2 anak + investasi + grup + transaksi IC');
 
   // ---------- 3. REKONSILIASI BANK di MarkPlus ----------
