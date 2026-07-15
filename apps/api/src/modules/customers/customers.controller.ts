@@ -32,8 +32,12 @@ export class CustomersController {
   constructor(private readonly customers: CustomersService) {}
 
   @Get('export.xlsx')
-  async exportXlsx(@Res() reply: ReplyLike) {
-    sendXlsx(reply, 'pelanggan.xlsx', await this.customers.exportXlsx());
+  async exportXlsx(
+    @Res() reply: ReplyLike,
+    @Query('search') search?: string,
+    @Query('jenisPelangganId') jenisPelangganId?: string,
+  ) {
+    sendXlsx(reply, 'pelanggan.xlsx', await this.customers.exportXlsx({ search, jenisPelangganId }));
   }
 
   @Post('import')

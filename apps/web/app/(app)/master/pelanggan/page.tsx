@@ -9,6 +9,8 @@ import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
   Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, buttonClass,
 } from '@/components/ui';
+import { ListFilters } from '@/components/ListFilters';
+import { buildListHref } from '@/lib/list-query';
 
 async function importCustomersAction(formData: FormData) {
   'use server';
@@ -56,11 +58,17 @@ async function createCustomer(formData: FormData) {
   revalidatePath('/master/pelanggan');
 }
 
-export default async function PelangganPage() {
+export default async function PelangganPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; jenisPelangganId?: string }>;
+}) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
+  const sp = await searchParams;
+  const apiParams = { search: sp.search, jenisPelangganId: sp.jenisPelangganId };
   const [customers, jenisList] = await Promise.all([
-    apiFetch<CustomerRow[]>('/customers', { tenantId }),
+    apiFetch<CustomerRow[]>(buildListHref('/customers', apiParams), { tenantId }),
     apiFetch<JenisPelanggan[]>('/jenis-pelanggan', { tenantId }),
   ]);
 
@@ -72,10 +80,17 @@ export default async function PelangganPage() {
           subtitle={`${customers.length} pelanggan · pelanggan PKP berhak terima faktur pajak.`}
           actions={
             <>
-              <a href="/proxy/customers/export.xlsx" className={buttonClass('success')}>Export Excel</a>
+              <a href={buildListHref('/proxy/customers/export.xlsx', apiParams)} className={buttonClass('success')}>Export Excel</a>
               <ImportExcelButton importAction={importCustomersAction} />
             </>
           }
+        />
+
+        <ListFilters
+          action="/master/pelanggan"
+          params={sp}
+          jenisPelanggan={jenisList}
+          searchPlaceholder="Cari kode / nama / NPWP…"
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

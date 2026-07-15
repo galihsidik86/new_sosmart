@@ -68,8 +68,8 @@ export class CustomersService {
     });
   }
 
-  async exportXlsx(): Promise<Buffer> {
-    const rows = await this.list({ onlyActive: false });
+  async exportXlsx(opts: { search?: string; jenisPelangganId?: string } = {}): Promise<Buffer> {
+    const rows = await this.list({ onlyActive: false, ...opts });
     return this.excel.buildBuffer(
       'Pelanggan',
       [
