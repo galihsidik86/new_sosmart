@@ -9,7 +9,7 @@ import { AccountKind, JournalStatus, NormalBalance, Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 
-interface IcDoc {
+export interface IcDoc {
   nomor: string | null;
   tanggal: Date;
   kontak: string;
@@ -17,7 +17,7 @@ interface IcDoc {
   dibayar: string;
   outstanding: string;
 }
-interface IcSide {
+export interface IcSide {
   total: Decimal;
   docs: IcDoc[];
 }
@@ -190,7 +190,7 @@ export class ConsolidationService {
     // 4. Baca balances tiap entitas dalam konteks RLS-nya sendiri.
     const groupTenantSet = new Set(entities.map((e) => e.tenantId));
     const perEntity = new Map<string, EntityAccount[]>();
-    const perEntityIc = new Map<string, { receivable: Map<string, Decimal>; payable: Map<string, Decimal> }>();
+    const perEntityIc = new Map<string, { receivable: Map<string, IcSide>; payable: Map<string, IcSide> }>();
     for (const e of entities) {
       const data = await this.tenancy.runAs(e.tenantId, userId, async (tx) => ({
         accounts: await this.entityBalances(tx, startDate, endDate),
