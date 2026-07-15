@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader } from './ui';
+import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 
 type Tipe = 'RECEIPT' | 'PAYMENT' | 'TRANSFER';
 
@@ -32,6 +33,7 @@ export interface CashBankDefaultValues {
   kontak?: string;
   deskripsi?: string;
   linkBukti?: string;
+  linkBuktiTambahan?: string[];
   salesInvoiceId?: string;
   purchaseInvoiceId?: string;
   pph23Dipotong?: string;
@@ -66,7 +68,9 @@ export function CashBankForm({
   const [total, setTotal] = useState(defaultValues?.total ?? '0');
   const [kontak, setKontak] = useState(defaultValues?.kontak ?? '');
   const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
-  const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
+  const [buktiList, setBuktiList] = useState<string[]>(
+    mergeBukti(defaultValues?.linkBukti, defaultValues?.linkBuktiTambahan),
+  );
   const [salesInvoiceId, setSalesInvoiceId] = useState(defaultValues?.salesInvoiceId ?? '');
   const [purchaseInvoiceId, setPurchaseInvoiceId] = useState(defaultValues?.purchaseInvoiceId ?? '');
   const [pph23Dipotong, setPph23Dipotong] = useState(defaultValues?.pph23Dipotong ?? '0');
@@ -130,6 +134,7 @@ export function CashBankForm({
       setError('Akun asal dan tujuan transfer harus berbeda.');
       return;
     }
+    const { linkBukti, linkBuktiTambahan } = splitBukti(buktiList);
     const payload: Record<string, unknown> = {
       cabangId,
       tipe,
@@ -138,7 +143,8 @@ export function CashBankForm({
       total: String(totalNum),
       kontak: kontak || undefined,
       deskripsi: deskripsi || undefined,
-      linkBukti: linkBukti.trim() || null,
+      linkBukti,
+      linkBuktiTambahan,
       lines: tipe === 'TRANSFER' ? [] : lines.map((l) => ({
         accountId: l.accountId,
         projectId: projectId || null,
@@ -259,9 +265,9 @@ export function CashBankForm({
           </FormField>
           <FormField
             className="col-span-full"
-            label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — URL scan slip/foto struk)</span></>}
+            label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — bisa lebih dari satu: URL scan slip/foto struk)</span></>}
           >
-            <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />
+            <LinkBuktiInput value={buktiList} onChange={setBuktiList} />
           </FormField>
         </div>
 

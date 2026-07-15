@@ -452,6 +452,14 @@ CREATE POLICY group_members_isolation ON group_members
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- MASTER TERMIN PEMBAYARAN
+ALTER TABLE term_pembayaran ENABLE ROW LEVEL SECURITY;
+ALTER TABLE term_pembayaran FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS term_pembayaran_isolation ON term_pembayaran;
+CREATE POLICY term_pembayaran_isolation ON term_pembayaran
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity

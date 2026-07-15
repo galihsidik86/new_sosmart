@@ -58,6 +58,7 @@ const NAV: NavItem[] = [
   { group: 'Master Data', href: '/master/project', label: 'Project', icon: 'folder', roles: FULL },
   { group: 'Master Data', href: '/master/industri', label: 'Jenis Industri', icon: 'building', roles: FULL },
   { group: 'Master Data', href: '/master/pph23-tarif', label: 'Tarif PPh 23', icon: 'percent', roles: FULL },
+  { group: 'Master Data', href: '/master/termin-pembayaran', label: 'Termin Pembayaran', icon: 'calendar', roles: FULL },
   { group: 'Pengaturan', href: '/pengaturan/profil-perusahaan', label: 'Profil Perusahaan', icon: 'building', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/periode', label: 'Periode Buku', icon: 'calendar', roles: FULL },
   { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang', icon: 'network', roles: ADMIN_ONLY },

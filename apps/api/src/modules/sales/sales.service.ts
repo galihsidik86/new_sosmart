@@ -151,6 +151,7 @@ export class SalesService {
           cabang: true,
           fiscalPeriod: true,
           akunAr: { select: { id: true, kode: true, nama: true } },
+          termPembayaran: { select: { id: true, nama: true, hari: true } },
           lines: {
             orderBy: { no: 'asc' },
             include: {
@@ -223,9 +224,19 @@ export class SalesService {
         });
         if (!customer) throw new BadRequestException('Pelanggan tidak ditemukan');
 
+        // Jatuh tempo: override eksplisit > termin master (hari) > default customer.
+        let jatuhTempoHari = customer.terminHari;
+        if (input.termPembayaranId) {
+          const term = await tx.termPembayaran.findFirst({
+            where: { id: input.termPembayaranId },
+            select: { hari: true },
+          });
+          if (!term) throw new BadRequestException('Termin pembayaran tidak ditemukan');
+          jatuhTempoHari = term.hari;
+        }
         const jatuhTempo = input.jatuhTempo
           ? new Date(input.jatuhTempo + 'T00:00:00Z')
-          : new Date(tanggal.getTime() + customer.terminHari * 86_400_000);
+          : new Date(tanggal.getTime() + jatuhTempoHari * 86_400_000);
 
         // PMK 131/2024: Faktur pajak (dan PPN keluaran) hanya diterbitkan
         // untuk customer PKP. Untuk non-PKP: klasifikasi kena PPN (BKP/JKP)
@@ -248,9 +259,11 @@ export class SalesService {
             tanggal,
             jatuhTempo,
             termin: input.termin,
+            termPembayaranId: input.termPembayaranId ?? null,
             akunArId: input.akunArId,
             deskripsi: input.deskripsi,
             linkBukti: input.linkBukti ?? null,
+            linkBuktiTambahan: input.linkBuktiTambahan ?? [],
             hargaTermasukPajak: input.hargaTermasukPajak,
             kodeFakturPajak: input.kodeFakturPajak,
             nsfp: input.nsfp,
@@ -346,9 +359,18 @@ export class SalesService {
         select: { terminHari: true, isPkp: true },
       });
       if (!customer) throw new BadRequestException('Pelanggan tidak ditemukan');
+      let jatuhTempoHari = customer.terminHari;
+      if (input.termPembayaranId) {
+        const term = await tx.termPembayaran.findFirst({
+          where: { id: input.termPembayaranId },
+          select: { hari: true },
+        });
+        if (!term) throw new BadRequestException('Termin pembayaran tidak ditemukan');
+        jatuhTempoHari = term.hari;
+      }
       const jatuhTempo = input.jatuhTempo
         ? new Date(input.jatuhTempo + 'T00:00:00Z')
-        : new Date(tanggal.getTime() + customer.terminHari * 86_400_000);
+        : new Date(tanggal.getTime() + jatuhTempoHari * 86_400_000);
 
       // PMK 131/2024: non-PKP → coerce BKP/JKP ke NON_BKP (tidak terbit FP).
       const lines = customer.isPkp
@@ -370,9 +392,11 @@ export class SalesService {
           tanggal,
           jatuhTempo,
           termin: input.termin,
+          termPembayaranId: input.termPembayaranId ?? null,
           akunArId: input.akunArId,
           deskripsi: input.deskripsi,
           linkBukti: input.linkBukti ?? null,
+          linkBuktiTambahan: input.linkBuktiTambahan ?? [],
           hargaTermasukPajak: input.hargaTermasukPajak,
           kodeFakturPajak: input.kodeFakturPajak,
           nsfp: input.nsfp,
@@ -533,6 +557,7 @@ export class SalesService {
         tanggal: inv.tanggal.toISOString().slice(0, 10),
         deskripsi: `Faktur penjualan ${nomor}`,
         linkBukti: inv.linkBukti ?? null,
+        linkBuktiTambahan: inv.linkBuktiTambahan ?? [],
         sumber: JournalSource.PENJUALAN,
         sumberRef: inv.id,
         lines,

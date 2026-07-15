@@ -19,6 +19,7 @@ interface JurnalDetail {
   tanggal: string;
   deskripsi: string;
   linkBukti: string | null;
+  linkBuktiTambahan: string[];
   status: 'DRAFT' | 'POSTED' | 'REVERSED';
   lines: Array<{
     no: number;
@@ -60,7 +61,7 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader title="Edit Draft Jurnal" />
         <JurnalForm
@@ -75,6 +76,7 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
             cabangId: j.cabangId,
             deskripsi: j.deskripsi,
             linkBukti: j.linkBukti ?? '',
+            linkBuktiTambahan: j.linkBuktiTambahan ?? [],
             lines: j.lines
               .sort((a, b) => a.no - b.no)
               .map((l) => ({

@@ -145,6 +145,7 @@ export class PurchasesService {
           cabang: true,
           fiscalPeriod: true,
           akunAp: { select: { id: true, kode: true, nama: true } },
+          termPembayaran: { select: { id: true, nama: true, hari: true } },
           lines: {
             orderBy: { no: 'asc' },
             include: {
@@ -212,9 +213,18 @@ export class PurchasesService {
         });
         if (!vendor) throw new BadRequestException('Vendor tidak ditemukan');
 
+        let jatuhTempoHari = vendor.terminHari;
+        if (input.termPembayaranId) {
+          const term = await tx.termPembayaran.findFirst({
+            where: { id: input.termPembayaranId },
+            select: { hari: true },
+          });
+          if (!term) throw new BadRequestException('Termin pembayaran tidak ditemukan');
+          jatuhTempoHari = term.hari;
+        }
         const jatuhTempo = input.jatuhTempo
           ? new Date(input.jatuhTempo + 'T00:00:00Z')
-          : new Date(tanggal.getTime() + vendor.terminHari * 86_400_000);
+          : new Date(tanggal.getTime() + jatuhTempoHari * 86_400_000);
 
         const calc = this.computeTotals(input.lines, {
           tarifPpn: input.tarifPpnPersen,
@@ -237,11 +247,13 @@ export class PurchasesService {
             tanggal,
             jatuhTempo,
             termin: input.termin,
+            termPembayaranId: input.termPembayaranId ?? null,
             akunApId: input.akunApId,
             nomorVendor: input.nomorVendor,
             nsfpMasukan: input.nsfpMasukan,
             deskripsi: input.deskripsi,
             linkBukti: input.linkBukti ?? null,
+            linkBuktiTambahan: input.linkBuktiTambahan ?? [],
             hargaTermasukPajak: input.hargaTermasukPajak,
             status: InvoiceStatus.DRAFT,
             totalDpp: calc.totalDpp.toFixed(2),
@@ -326,9 +338,18 @@ export class PurchasesService {
         select: { isPkp: true, terminHari: true, npwp: true },
       });
       if (!vendor) throw new BadRequestException('Vendor tidak ditemukan');
+      let jatuhTempoHari = vendor.terminHari;
+      if (input.termPembayaranId) {
+        const term = await tx.termPembayaran.findFirst({
+          where: { id: input.termPembayaranId },
+          select: { hari: true },
+        });
+        if (!term) throw new BadRequestException('Termin pembayaran tidak ditemukan');
+        jatuhTempoHari = term.hari;
+      }
       const jatuhTempo = input.jatuhTempo
         ? new Date(input.jatuhTempo + 'T00:00:00Z')
-        : new Date(tanggal.getTime() + vendor.terminHari * 86_400_000);
+        : new Date(tanggal.getTime() + jatuhTempoHari * 86_400_000);
 
       const calc = this.computeTotals(input.lines, {
         tarifPpn: input.tarifPpnPersen,
@@ -349,11 +370,13 @@ export class PurchasesService {
           tanggal,
           jatuhTempo,
           termin: input.termin,
+          termPembayaranId: input.termPembayaranId ?? null,
           akunApId: input.akunApId,
           nomorVendor: input.nomorVendor,
           nsfpMasukan: input.nsfpMasukan,
           deskripsi: input.deskripsi,
           linkBukti: input.linkBukti ?? null,
+          linkBuktiTambahan: input.linkBuktiTambahan ?? [],
           hargaTermasukPajak: input.hargaTermasukPajak,
           totalDpp: calc.totalDpp.toFixed(2),
           totalPpn: calc.totalPpn.toFixed(2),
@@ -512,6 +535,7 @@ export class PurchasesService {
         tanggal: inv.tanggal.toISOString().slice(0, 10),
         deskripsi: `Tagihan pembelian ${nomor}`,
         linkBukti: inv.linkBukti ?? null,
+        linkBuktiTambahan: inv.linkBuktiTambahan ?? [],
         sumber: JournalSource.PEMBELIAN,
         sumberRef: inv.id,
         lines,

@@ -20,11 +20,14 @@ interface Customer {
 interface Cabang { id: string; kode: string; nama: string }
 interface Account { id: string; kode: string; nama: string; isPostable: boolean; kind: string }
 interface Project { id: string; kode: string; nama: string }
+interface Term { id: string; nama: string; hari: number }
 
 interface Detail {
   id: string; tanggal: string; cabangId: string; customerId: string;
   termin: 'TUNAI' | 'KREDIT'; akunArId: string; deskripsi: string | null;
   linkBukti: string | null;
+  linkBuktiTambahan: string[];
+  termPembayaranId: string | null;
   hargaTermasukPajak: boolean;
   status: 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
   lines: Array<{
@@ -40,13 +43,14 @@ export default async function PenjualanEditPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [inv, items, customers, cabang, accounts, projects] = await Promise.all([
+  const [inv, items, customers, cabang, accounts, projects, terms] = await Promise.all([
     apiFetch<Detail>(`/sales-invoices/${id}`, { tenantId }),
     apiFetch<Item[]>('/items', { tenantId }),
     apiFetch<Customer[]>('/customers', { tenantId }),
     apiFetch<Cabang[]>('/cabang', { tenantId }),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<Project[]>('/projects', { tenantId }),
+    apiFetch<Term[]>('/term-pembayaran', { tenantId }),
   ]);
 
   if (inv.status !== 'DRAFT') {
@@ -68,7 +72,7 @@ export default async function PenjualanEditPage({ params }: { params: Promise<{ 
   }
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader title="Edit Draft Faktur" />
         <InvoiceForm
@@ -79,6 +83,7 @@ export default async function PenjualanEditPage({ params }: { params: Promise<{ 
           accounts={accounts}
           kasBankAccounts={kasBank}
           projects={projects}
+          termPembayaran={terms}
           submit={submitEdit}
           redirectTo={`/transaksi/penjualan/${id}`}
           submitLabel="Simpan perubahan"
@@ -91,6 +96,8 @@ export default async function PenjualanEditPage({ params }: { params: Promise<{ 
             hargaTermasukPajak: inv.hargaTermasukPajak,
             deskripsi: inv.deskripsi ?? '',
             linkBukti: inv.linkBukti ?? '',
+            linkBuktiTambahan: inv.linkBuktiTambahan ?? [],
+            termPembayaranId: inv.termPembayaranId ?? '',
             kasBankId: inv.termin === 'TUNAI' ? inv.akunArId : undefined,
             lines: inv.lines
               .sort((a, b) => a.no - b.no)

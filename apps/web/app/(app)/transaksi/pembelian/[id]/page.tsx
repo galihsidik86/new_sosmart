@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { StepUpButton } from '@/components/StepUpButton';
 import { PostButton } from '@/components/PostButton';
-import { LinkBukti } from '@/components/LinkBukti';
+import { LinkBuktiList } from '@/components/LinkBukti';
 import { parseBudgetViolations, type PostResult } from '@/lib/budgetGuard';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -24,6 +24,8 @@ interface Detail {
   status: Status;
   deskripsi: string | null;
   linkBukti: string | null;
+  linkBuktiTambahan: string[];
+  termPembayaran: { id: string; nama: string; hari: number } | null;
   vendor: { kode: string; nama: string; npwp: string | null; isPkp: boolean };
   cabang: { kode: string; nama: string };
   fiscalPeriod: { label: string };
@@ -144,6 +146,7 @@ export default async function PembelianDetailPage({
             <>
               {fmtTanggal(inv.tanggal)} · jatuh tempo {fmtTanggal(inv.jatuhTempo)} ·
               cabang {inv.cabang.kode} · termin {inv.termin}
+              {inv.termPembayaran && <> ({inv.termPembayaran.nama})</>}
               {inv.nomorVendor && <span> · faktur vendor {inv.nomorVendor}</span>}
               {inv.journalId && (
                 <span className="block text-xs text-tanah-500 mt-1">
@@ -152,10 +155,10 @@ export default async function PembelianDetailPage({
                     className="text-sogan-500 font-mono hover:underline">lihat</Link>
                 </span>
               )}
-              {inv.linkBukti && (
+              {(inv.linkBukti || inv.linkBuktiTambahan.length > 0) && (
                 <span className="block text-xs mt-1">
                   <span className="text-tanah-500 mr-1">Bukti:</span>
-                  <LinkBukti url={inv.linkBukti} variant="full" />
+                  <LinkBuktiList linkBukti={inv.linkBukti} tambahan={inv.linkBuktiTambahan} />
                 </span>
               )}
               {inv.postedBy && (

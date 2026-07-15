@@ -903,6 +903,8 @@ model Journal {
   deskripsi            String
   /// URL bukti transaksi eksternal (scan/foto/gdrive/dropbox/dll). Optional.
   linkBukti            String?       @map("link_bukti")
+  /// Bukti tambahan (URL) selain linkBukti utama. Total bukti = linkBukti + ini.
+  linkBuktiTambahan    String[]      @default([]) @map("link_bukti_tambahan")
   sumber               JournalSource @default(MANUAL)
   /// Pointer balik ke dokumen sumber (mis. invoice id) untuk telusur.
   sumberRef            String?       @map("sumber_ref")
@@ -1172,6 +1174,10 @@ model SalesInvoice {
   tanggal            DateTime         @db.Date
   jatuhTempo         DateTime         @map("jatuh_tempo") @db.Date
   termin             TerminPembayaran @default(KREDIT)
+  /// Termin pembayaran master (opsional). Kalau diisi, jatuh tempo dihitung
+  /// dari tanggal + TermPembayaran.hari.
+  termPembayaranId   String?          @map("term_pembayaran_id") @db.Uuid
+  termPembayaran     TermPembayaran?  @relation(fields: [termPembayaranId], references: [id], onDelete: SetNull)
   /// Akun kas/bank untuk transaksi TUNAI, atau akun piutang untuk KREDIT
   /// (default dari customer.akunPiutangId).
   akunArId           String           @map("akun_ar_id") @db.Uuid
@@ -1183,6 +1189,8 @@ model SalesInvoice {
   hargaTermasukPajak Boolean          @default(false) @map("harga_termasuk_pajak")
   /// URL bukti transaksi eksternal (scan invoice/PO/DO/foto tanda-tangan/dll).
   linkBukti          String?          @map("link_bukti")
+  /// Bukti tambahan (URL) selain linkBukti utama.
+  linkBuktiTambahan  String[]         @default([]) @map("link_bukti_tambahan")
   /// Faktur pajak data (untuk customer PKP)
   kodeFakturPajak    KodeFakturPajak? @map("kode_faktur_pajak")
   nsfp               String? // 16 digit nomor seri faktur pajak (Coretax)
@@ -1303,6 +1311,10 @@ model PurchaseInvoice {
   tanggal            DateTime         @db.Date
   jatuhTempo         DateTime         @map("jatuh_tempo") @db.Date
   termin             TerminPembayaran @default(KREDIT)
+  /// Termin pembayaran master (opsional). Kalau diisi, jatuh tempo dihitung
+  /// dari tanggal + TermPembayaran.hari.
+  termPembayaranId   String?          @map("term_pembayaran_id") @db.Uuid
+  termPembayaran     TermPembayaran?  @relation(fields: [termPembayaranId], references: [id], onDelete: SetNull)
   /// Akun kas/bank (untuk TUNAI) atau utang usaha (untuk KREDIT)
   akunApId           String           @map("akun_ap_id") @db.Uuid
   status             InvoiceStatus    @default(DRAFT)
@@ -1312,6 +1324,8 @@ model PurchaseInvoice {
   hargaTermasukPajak Boolean          @default(false) @map("harga_termasuk_pajak")
   /// URL bukti tagihan eksternal (scan faktur vendor/PO/DO/dll).
   linkBukti          String?          @map("link_bukti")
+  /// Bukti tambahan (URL) selain linkBukti utama.
+  linkBuktiTambahan  String[]         @default([]) @map("link_bukti_tambahan")
   /// Faktur pajak masukan dari vendor (untuk vendor PKP).
   nsfpMasukan        String?          @map("nsfp_masukan")
 
@@ -1425,6 +1439,8 @@ model CashBankEntry {
   deskripsi          String?
   /// URL bukti transaksi eksternal (scan slip bank/BKM/BKK, foto struk, dll).
   linkBukti          String?       @map("link_bukti")
+  /// Bukti tambahan (URL) selain linkBukti utama.
+  linkBuktiTambahan  String[]      @default([]) @map("link_bukti_tambahan")
   status             InvoiceStatus @default(DRAFT)
   /// Link optional untuk pelunasan AR/AP.
   salesInvoiceId     String?       @map("sales_invoice_id") @db.Uuid
@@ -2039,4 +2055,32 @@ model Budget {
   @@unique([projectId, accountId, periode])
   @@index([tenantId, periode])
   @@map("budgets")
+}
+
+// ===============================================================
+// MASTER: Termin Pembayaran (skema termin — Tunai, Net 30, Net 45, dll)
+// ===============================================================
+
+/// Master termin pembayaran per tenant. `hari` = jumlah hari sampai jatuh
+/// tempo (0 = tunai). Dipakai di faktur penjualan/pembelian untuk hitung
+/// jatuh tempo otomatis. Mengikuti konvensi RLS via tenant_id (tanpa relasi
+/// Prisma ke Tenant).
+model TermPembayaran {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  nama      String
+  /// Jumlah hari sampai jatuh tempo. 0 = tunai (jatuh tempo = tanggal faktur).
+  hari      Int      @default(0)
+  aktif     Boolean  @default(true)
+  /// Urutan tampil di dropdown.
+  urutan    Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  salesInvoices    SalesInvoice[]
+  purchaseInvoices PurchaseInvoice[]
+
+  @@unique([tenantId, nama])
+  @@index([tenantId, aktif])
+  @@map("term_pembayaran")
 }

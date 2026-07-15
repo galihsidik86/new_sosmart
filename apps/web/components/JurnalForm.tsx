@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader } from './ui';
+import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 
 interface Account {
   id: string;
@@ -28,6 +29,7 @@ interface DefaultValues {
   cabangId: string;
   deskripsi: string;
   linkBukti?: string;
+  linkBuktiTambahan?: string[];
   lines: Line[];
 }
 
@@ -82,7 +84,9 @@ export function JurnalForm({
   const today = new Date().toISOString().slice(0, 10);
   const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
   const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
-  const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
+  const [buktiList, setBuktiList] = useState<string[]>(
+    mergeBukti(defaultValues?.linkBukti, defaultValues?.linkBuktiTambahan),
+  );
   const [cabangId, setCabangId] = useState(defaultValues?.cabangId ?? cabang[0]?.id ?? '');
   // Project di header = default untuk semua baris. Jurnal (mis. alokasi lintas
   // project) tetap boleh override per baris di kolom Project.
@@ -152,11 +156,13 @@ export function JurnalForm({
       setError('Pilih cabang');
       return;
     }
+    const { linkBukti, linkBuktiTambahan } = splitBukti(buktiList);
     const payload = {
       cabangId,
       tanggal,
       deskripsi,
-      linkBukti: linkBukti.trim() || null,
+      linkBukti,
+      linkBuktiTambahan,
       sumber: 'MANUAL' as const,
       lines: lines.map((l) => ({
         accountId: l.accountId,
@@ -214,9 +220,9 @@ export function JurnalForm({
           </FormField>
           <FormField
             className="col-span-full"
-            label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span></>}
+            label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — bisa lebih dari satu: URL scan/foto/Drive/Dropbox)</span></>}
           >
-            <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />
+            <LinkBuktiInput value={buktiList} onChange={setBuktiList} />
           </FormField>
         </div>
         <div className="mt-3 flex gap-2">

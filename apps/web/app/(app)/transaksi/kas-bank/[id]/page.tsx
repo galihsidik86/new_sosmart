@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { PostButton } from '@/components/PostButton';
-import { LinkBukti } from '@/components/LinkBukti';
+import { LinkBuktiList } from '@/components/LinkBukti';
 import { parseBudgetViolations, type PostResult } from '@/lib/budgetGuard';
 import { runWithApprover } from '@/lib/stepUp';
 import { apiFetch } from '@/lib/api';
@@ -25,6 +25,7 @@ interface Detail {
   kontak: string | null;
   deskripsi: string | null;
   linkBukti: string | null;
+  linkBuktiTambahan: string[];
   salesInvoiceId: string | null;
   purchaseInvoiceId: string | null;
   journalId: string | null;
@@ -124,10 +125,10 @@ export default async function KasBankDetailPage({
                   </Link>
                 </span>
               )}
-              {e.linkBukti && (
+              {(e.linkBukti || e.linkBuktiTambahan.length > 0) && (
                 <span className="block text-xs mt-1">
                   <span className="text-tanah-500 mr-1">Bukti:</span>
-                  <LinkBukti url={e.linkBukti} variant="full" />
+                  <LinkBuktiList linkBukti={e.linkBukti} tambahan={e.linkBuktiTambahan} />
                 </span>
               )}
             </>

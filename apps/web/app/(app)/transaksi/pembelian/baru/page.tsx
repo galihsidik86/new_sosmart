@@ -21,6 +21,7 @@ interface Vendor {
 interface Cabang { id: string; kode: string; nama: string }
 interface Account { id: string; kode: string; nama: string; isPostable: boolean; kind: string }
 interface Project { id: string; kode: string; nama: string }
+interface Term { id: string; nama: string; hari: number }
 
 async function submitBill(formData: FormData) {
   'use server';
@@ -36,18 +37,19 @@ async function submitBill(formData: FormData) {
 export default async function PembelianBaruPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [items, vendors, cabang, accounts, projects] = await Promise.all([
+  const [items, vendors, cabang, accounts, projects, terms] = await Promise.all([
     apiFetch<Item[]>('/items', { tenantId }),
     apiFetch<Vendor[]>('/vendors', { tenantId }),
     apiFetch<Cabang[]>('/cabang', { tenantId }),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<Project[]>('/projects', { tenantId }),
+    apiFetch<Term[]>('/term-pembayaran', { tenantId }),
   ]);
   const kasBank = accounts.filter(
     (a) => a.isPostable && (a.kode === '1-101' || a.kode.startsWith('1-102')),
   );
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader title="Tagihan Pembelian Baru" />
         <InvoiceForm
@@ -58,6 +60,7 @@ export default async function PembelianBaruPage() {
           accounts={accounts}
           kasBankAccounts={kasBank}
           projects={projects}
+          termPembayaran={terms}
           submit={submitBill}
         />
       </PageContainer>

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { PostButton } from '@/components/PostButton';
-import { LinkBukti } from '@/components/LinkBukti';
+import { LinkBuktiList } from '@/components/LinkBukti';
 import { parseBudgetViolations, type PostResult } from '@/lib/budgetGuard';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
@@ -31,6 +31,7 @@ interface JurnalDetail {
   tanggal: string;
   deskripsi: string;
   linkBukti: string | null;
+  linkBuktiTambahan: string[];
   sumber: string;
   sumberRef: string | null;
   status: Status;
@@ -135,12 +136,12 @@ export default async function JurnalDetailPage({
           className="mb-2"
         />
 
-        {(j.linkBukti || j.postedBy || j.reversedFrom || j.reversals.length > 0) && (
+        {(j.linkBukti || j.linkBuktiTambahan.length > 0 || j.postedBy || j.reversedFrom || j.reversals.length > 0) && (
           <Card padding="sm" className="mb-6 space-y-1">
-            {j.linkBukti && (
+            {(j.linkBukti || j.linkBuktiTambahan.length > 0) && (
               <p className="text-xs">
                 <span className="text-tanah-500 mr-1">Bukti:</span>
-                <LinkBukti url={j.linkBukti} variant="full" />
+                <LinkBuktiList linkBukti={j.linkBukti} tambahan={j.linkBuktiTambahan} />
               </p>
             )}
             {j.postedBy && (

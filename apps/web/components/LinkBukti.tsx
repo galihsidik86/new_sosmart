@@ -41,3 +41,32 @@ export function LinkBukti({
     </a>
   );
 }
+
+/**
+ * Menampilkan link bukti utama + semua bukti tambahan (variant 'full'), satu
+ * per baris. Return null kalau tidak ada satu pun bukti.
+ */
+export function LinkBuktiList({
+  linkBukti,
+  tambahan,
+}: {
+  linkBukti: string | null | undefined;
+  tambahan?: string[] | null;
+}) {
+  const all = [
+    ...(linkBukti ? [linkBukti] : []),
+    ...(tambahan ?? []),
+  ];
+  if (all.length === 0) return null;
+  if (all.length === 1) return <LinkBukti url={all[0]} variant="full" />;
+  return (
+    <span className="inline-flex flex-col gap-0.5 align-top">
+      {all.map((u, i) => (
+        <span key={i}>
+          <span className="text-tanah-400 mr-1 text-[10px]">{i + 1}.</span>
+          <LinkBukti url={u} variant="full" />
+        </span>
+      ))}
+    </span>
+  );
+}

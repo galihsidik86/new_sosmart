@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, Select, SectionHeader } from './ui';
+import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 
 type Klasifikasi = 'BKP' | 'JKP' | 'NON_BKP' | 'BKP_STRATEGIS' | 'BEBAS_PPN';
 
@@ -48,6 +49,7 @@ interface Line {
 }
 
 interface Project { id: string; kode: string; nama: string }
+interface TermOption { id: string; nama: string; hari: number }
 
 export interface InvoiceDefaultValues {
   tanggal: string;
@@ -63,6 +65,8 @@ export interface InvoiceDefaultValues {
   kasBankId?: string;
   deskripsi: string;
   linkBukti?: string;
+  linkBuktiTambahan?: string[];
+  termPembayaranId?: string | null;
   lines: Line[];
 }
 
@@ -76,6 +80,8 @@ interface InvoiceFormProps {
   kasBankAccounts: Account[];
   /** List project AKTIF. Kalau kosong / undefined, kolom project disembunyikan. */
   projects?: Project[];
+  /** Master termin pembayaran (kredit). Kalau kosong, dropdown tidak muncul. */
+  termPembayaran?: TermOption[];
   submit: (formData: FormData) => Promise<void>;
   defaultValues?: InvoiceDefaultValues;
   redirectTo?: string;
@@ -92,10 +98,11 @@ const KL_LABEL: Record<Klasifikasi, string> = {
 const PPNABLE: Klasifikasi[] = ['BKP', 'JKP'];
 
 export function InvoiceForm({
-  mode, items, parties, cabang, accounts, kasBankAccounts, projects, submit,
+  mode, items, parties, cabang, accounts, kasBankAccounts, projects, termPembayaran, submit,
   defaultValues, redirectTo, submitLabel,
 }: InvoiceFormProps) {
   const showProjects = !!projects && projects.length > 0;
+  const terms = termPembayaran ?? [];
   const today = new Date().toISOString().slice(0, 10);
   const [tanggal, setTanggal] = useState(defaultValues?.tanggal ?? today);
   const [partyId, setPartyId] = useState(defaultValues?.partyId ?? parties[0]?.id ?? '');
@@ -107,7 +114,10 @@ export function InvoiceForm({
   const [hargaTermasukPajak, setHargaTermasukPajak] = useState(defaultValues?.hargaTermasukPajak ?? false);
   const [kasBankId, setKasBankId] = useState(defaultValues?.kasBankId ?? kasBankAccounts[0]?.id ?? '');
   const [deskripsi, setDeskripsi] = useState(defaultValues?.deskripsi ?? '');
-  const [linkBukti, setLinkBukti] = useState(defaultValues?.linkBukti ?? '');
+  const [buktiList, setBuktiList] = useState<string[]>(
+    mergeBukti(defaultValues?.linkBukti, defaultValues?.linkBuktiTambahan),
+  );
+  const [termId, setTermId] = useState(defaultValues?.termPembayaranId ?? '');
   // Project di level header — berlaku untuk seluruh baris faktur (1 faktur = 1
   // project). Saat edit, ambil dari baris pertama (semua baris seharusnya sama).
   const [projectId, setProjectId] = useState(defaultValues?.lines?.[0]?.projectId ?? '');
@@ -230,15 +240,19 @@ export function InvoiceForm({
       if (Number(l.qty) <= 0) { setError('Qty harus > 0.'); return; }
     }
 
-    const linkBuktiTrim = linkBukti.trim() || null;
+    const { linkBukti, linkBuktiTambahan } = splitBukti(buktiList);
+    // Termin master hanya relevan untuk KREDIT (jatuh tempo). TUNAI → abaikan.
+    const termPembayaranId = termin === 'KREDIT' ? (termId || null) : null;
     const payload = mode === 'sales' ? {
       cabangId,
       customerId: partyId,
       tanggal,
       termin,
+      termPembayaranId,
       akunArId: akunArOrAp,
       deskripsi: deskripsi || undefined,
-      linkBukti: linkBuktiTrim,
+      linkBukti,
+      linkBuktiTambahan,
       tarifPpnPersen: tarifPpn,
       hargaTermasukPajak,
       idempotencyKey,
@@ -254,9 +268,11 @@ export function InvoiceForm({
       vendorId: partyId,
       tanggal,
       termin,
+      termPembayaranId,
       akunApId: akunArOrAp,
       deskripsi: deskripsi || undefined,
-      linkBukti: linkBuktiTrim,
+      linkBukti,
+      linkBuktiTambahan,
       tarifPpnPersen: tarifPpn,
       tarifPph23Persen: tarifPph23,
       potongPph23,
@@ -330,6 +346,16 @@ export function InvoiceForm({
               <option value="TUNAI">TUNAI</option>
             </Select>
           </FormField>
+          {termin === 'KREDIT' && terms.length > 0 && (
+            <FormField label="Termin Pembayaran">
+              <Select value={termId} onChange={(e) => setTermId(e.target.value)}>
+                <option value="">— default pelanggan ({party?.terminHari ?? 0} hari) —</option>
+                {terms.map((t) => (
+                  <option key={t.id} value={t.id}>{t.nama} — {t.hari} hari</option>
+                ))}
+              </Select>
+            </FormField>
+          )}
           {termin === 'TUNAI' && (
             <FormField label="Akun Kas/Bank">
               <Select value={kasBankId} onChange={(e) => setKasBankId(e.target.value)} className="font-mono">
@@ -375,9 +401,9 @@ export function InvoiceForm({
           </FormField>
           <FormField
             className="col-span-full"
-            label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — URL scan/foto/Drive/Dropbox)</span></>}
+            label={<>Link Bukti Transaksi <span className="text-tanah-500 normal-case">(opsional — bisa lebih dari satu: URL scan/foto/Drive/Dropbox)</span></>}
           >
-            <Input mono type="url" value={linkBukti} onChange={(e) => setLinkBukti(e.target.value)} placeholder="https://drive.google.com/…" />
+            <LinkBuktiInput value={buktiList} onChange={setBuktiList} />
           </FormField>
         </div>
       </Card>

@@ -20,6 +20,7 @@ interface Customer {
 interface Cabang { id: string; kode: string; nama: string }
 interface Account { id: string; kode: string; nama: string; isPostable: boolean; kind: string }
 interface Project { id: string; kode: string; nama: string }
+interface Term { id: string; nama: string; hari: number }
 
 async function submitInvoice(formData: FormData) {
   'use server';
@@ -35,19 +36,20 @@ async function submitInvoice(formData: FormData) {
 export default async function PenjualanBaruPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [items, customers, cabang, accounts, projects] = await Promise.all([
+  const [items, customers, cabang, accounts, projects, terms] = await Promise.all([
     apiFetch<Item[]>('/items', { tenantId }),
     apiFetch<Customer[]>('/customers', { tenantId }),
     apiFetch<Cabang[]>('/cabang', { tenantId }),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<Project[]>('/projects', { tenantId }),
+    apiFetch<Term[]>('/term-pembayaran', { tenantId }),
   ]);
   // Akun kas/bank: kode 1-101 atau 1-102x
   const kasBank = accounts.filter(
     (a) => a.isPostable && (a.kode === '1-101' || a.kode.startsWith('1-102')),
   );
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader title="Faktur Penjualan Baru" />
         <InvoiceForm
@@ -58,6 +60,7 @@ export default async function PenjualanBaruPage() {
           accounts={accounts}
           kasBankAccounts={kasBank}
           projects={projects}
+          termPembayaran={terms}
           submit={submitInvoice}
         />
       </PageContainer>

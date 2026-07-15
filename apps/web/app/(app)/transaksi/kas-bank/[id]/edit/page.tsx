@@ -29,6 +29,7 @@ interface Detail {
   kontak: string | null;
   deskripsi: string | null;
   linkBukti: string | null;
+  linkBuktiTambahan: string[];
   salesInvoiceId: string | null;
   purchaseInvoiceId: string | null;
   pph23Dipotong: string | null;
@@ -101,6 +102,7 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
             kontak: e.kontak ?? '',
             deskripsi: e.deskripsi ?? '',
             linkBukti: e.linkBukti ?? '',
+            linkBuktiTambahan: e.linkBuktiTambahan ?? [],
             salesInvoiceId: e.salesInvoiceId ?? '',
             purchaseInvoiceId: e.purchaseInvoiceId ?? '',
             pph23Dipotong: e.pph23Dipotong ?? '0',

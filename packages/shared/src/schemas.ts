@@ -245,11 +245,18 @@ export const journalLineInputSchema = z.object({
 );
 export type JournalLineInput = z.infer<typeof journalLineInputSchema>;
 
+/// Bukti tambahan (URL) selain linkBukti utama. Maks 20.
+export const linkBuktiTambahanSchema = z
+  .array(z.string().url('Link bukti harus URL valid').max(2000))
+  .max(20, 'Maksimal 20 bukti tambahan')
+  .optional();
+
 export const createJournalInputSchema = z.object({
   cabangId: z.string().uuid(),
   tanggal: isoDateSchema,
   deskripsi: z.string().min(1).max(500),
   linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
+  linkBuktiTambahan: linkBuktiTambahanSchema,
   sumber: journalSourceSchema.default('MANUAL'),
   sumberRef: z.string().optional(),
   lines: z.array(journalLineInputSchema).min(2, 'Minimal 2 baris jurnal'),
@@ -364,12 +371,16 @@ export const createSalesInvoiceInputSchema = z.object({
   cabangId: z.string().uuid(),
   customerId: z.string().uuid(),
   tanggal: isoDate,
-  jatuhTempo: isoDate.optional(), // dihitung dari termin kalau kosong
+  jatuhTempo: isoDate.optional(), // dihitung dari termin/term master kalau kosong
   termin: terminSchema.default('KREDIT'),
+  /// Termin pembayaran master (opsional). Kalau diisi, jatuh tempo dihitung
+  /// dari tanggal + TermPembayaran.hari (kecuali jatuhTempo di-override).
+  termPembayaranId: z.string().uuid().nullable().optional(),
   /// Untuk TUNAI: akun kas/bank. Untuk KREDIT: akun piutang (default dari customer).
   akunArId: z.string().uuid(),
   deskripsi: z.string().max(500).optional(),
   linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
+  linkBuktiTambahan: linkBuktiTambahanSchema,
   kodeFakturPajak: kodeFakturPajakSchema.optional(),
   nsfp: z.string().regex(/^\d{16}$/, 'NSFP harus 16 digit').optional(),
   /// Tarif PPN efektif (11 utk PMK 131/2024 normal, 12 utk BKP mewah).
@@ -404,11 +415,15 @@ export const createPurchaseInvoiceInputSchema = z.object({
   tanggal: isoDate,
   jatuhTempo: isoDate.optional(),
   termin: terminSchema.default('KREDIT'),
+  /// Termin pembayaran master (opsional). Kalau diisi, jatuh tempo dihitung
+  /// dari tanggal + TermPembayaran.hari (kecuali jatuhTempo di-override).
+  termPembayaranId: z.string().uuid().nullable().optional(),
   akunApId: z.string().uuid(),
   nomorVendor: z.string().max(50).optional(),
   nsfpMasukan: z.string().regex(/^\d{16}$/).optional(),
   deskripsi: z.string().max(500).optional(),
   linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
+  linkBuktiTambahan: linkBuktiTambahanSchema,
   hargaTermasukPajak: z.boolean().default(false),
   tarifPpnPersen: z.coerce.number().refine((n) => [11, 12].includes(n)).default(11),
   /// Tarif PPh 23 (2% jasa, 15% royalti/dividen/bunga).
@@ -444,6 +459,7 @@ export const createCashBankInputSchema = z.object({
   kontak: z.string().max(200).optional(),
   deskripsi: z.string().max(500).optional(),
   linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
+  linkBuktiTambahan: linkBuktiTambahanSchema,
   /// Lines wajib untuk RECEIPT/PAYMENT; kosong untuk TRANSFER.
   lines: z.array(cashBankLineInputSchema).default([]),
   /// Optional: link pelunasan ke faktur.
