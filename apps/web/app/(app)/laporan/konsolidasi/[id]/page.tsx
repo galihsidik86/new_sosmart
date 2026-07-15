@@ -236,6 +236,9 @@ export default async function KonsolidasiReportPage({
             <dl className="text-sm space-y-1 border-t border-cream-200 pt-3 mt-2 max-w-sm ml-auto">
               <div className="flex justify-between"><dt className="text-tanah-500">Total Aset</dt><dd className="font-mono tabular-nums font-semibold">{fmtRp(rep.neraca.totalAset)}</dd></div>
               <div className="flex justify-between"><dt className="text-tanah-500">Total Liabilitas</dt><dd className="font-mono tabular-nums">{fmtRp(rep.neraca.totalLiabilitas)}</dd></div>
+              {Number(rep.labaRugi.labaBersihKonsolidasi) !== 0 && (
+                <div className="flex justify-between"><dt className="text-tanah-500">Laba tahun berjalan konsolidasi</dt><dd className="font-mono tabular-nums text-padi-700">{fmtRp(rep.labaRugi.labaBersihKonsolidasi)}</dd></div>
+              )}
               {Number(rep.neraca.eliminasiEkuitasAkuisisi) !== 0 && (
                 <div className="flex justify-between"><dt className="text-tanah-500">Eliminasi ekuitas anak (akuisisi/investasi)</dt><dd className="font-mono tabular-nums text-bata-700">{fmtRp(rep.neraca.eliminasiEkuitasAkuisisi)}</dd></div>
               )}

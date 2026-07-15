@@ -268,9 +268,6 @@ export class ConsolidationService {
     const totalLiab = sumKons(neracaRows, (r) => r.kind === AccountKind.LIABILITAS);
     const totalEkuitasKons = totalAset.minus(totalLiab); // identitas neraca (incl goodwill)
     const ekuitasAkunKons = sumKons(neracaRows, (r) => r.kind === AccountKind.EKUITAS);
-    // Eliminasi ekuitas anak (investasi induk vs ekuitas akuisisi) = plug supaya
-    // baris ekuitas + eliminasi = total ekuitas konsolidasi.
-    const eliminasiEkuitas = totalEkuitasKons.minus(ekuitasAkunKons);
 
     // 8. Laba Rugi konsolidasi.
     const pendapatan = plRows
@@ -280,6 +277,9 @@ export class ConsolidationService {
       .filter((r) => r.kind === AccountKind.BEBAN || r.kind === AccountKind.BEBAN_POKOK || r.kind === AccountKind.BEBAN_LAIN)
       .reduce((a, r) => a.plus(new Decimal(r.konsolidasi)), new Decimal(0));
     const labaBersihKons = pendapatan.minus(beban);
+    // Eliminasi ekuitas anak (investasi induk vs ekuitas akuisisi) = plug supaya
+    // baris ekuitas + laba berjalan + eliminasi = total ekuitas konsolidasi.
+    const eliminasiEkuitas = totalEkuitasKons.minus(ekuitasAkunKons).minus(labaBersihKons);
 
     // 8. Kepentingan minoritas (NCI): per anak, minority% × aset bersih anak.
     let nci = new Decimal(0);
