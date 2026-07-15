@@ -281,6 +281,7 @@ Modul `approval` — persetujuan bertingkat konfigurable sebelum posting.
 - **Matching**: aturan aktif dgn `minAmount` ≤ nilai dokumen tertinggi yang cocok. Tidak ada aturan cocok → tidak perlu approval (backward-compatible, gate inert).
 - **Gate**: `ApprovalService.assertApprovedForPost(tx, docType, docId, amount)` dipanggil di `.post()` sales/purchases/cashbank(**PAYMENT saja**)/journals(**MANUAL saja**). Butuh `ApprovalRequest` DISETUJUI kalau ada aturan cocok.
 - **Alur**: DRAFT → submit (`ApprovalPanel` di halaman dokumen) → approver bertindak per tingkat di **Kotak Approval** (`/approval`) → DISETUJUI → baru bisa post. OWNER boleh setujui langkah apa pun (anti-deadlock). Aturan diatur di Pengaturan › Aturan Approval.
+- **Approver per-langkah**: bisa berbasis **role** ATAU **user spesifik** (`ApprovalRuleStep.approverUserId`; snapshot `stepUserIds` di request). Langkah per-individu hanya bisa disetujui user itu (OWNER tetap override).
 - `docMeta` mengembalikan `eligible` (kas-bank hanya PAYMENT, jurnal hanya MANUAL) supaya panel/submit tidak salah minta approval.
 
 ## Konsolidasi Grup
@@ -289,8 +290,9 @@ Modul `consolidation` — konsolidasi penuh lintas-tenant + eliminasi intercompa
 - **Model**: `Group` (dimiliki tenant induk) + `GroupMember` (tenant anak + `ownershipPct`). `Account.isIntercompany` menandai akun antar-perusahaan.
 - **Lintas-tenant TETAP hormati RLS**: baca tiap entitas via `TenancyService.runAs(tenantId, userId)` — **HANYA** untuk tenant yang user-nya benar-benar anggota (diverifikasi `runAsUser` membership milik-sendiri). Induk tak bisa mengintip tenant yang user-nya bukan anggota. Tidak ada bypass RLS.
 - **Engine** (`consolidate`): gabung 100% tiap entitas per **kode akun** → eliminasi akun ber-flag intercompany (saldo saling hapus) → NCI = Σ (minoritas% × aset bersih anak). Neraca s/d endDate, Laba Rugi rentang. `ekuitasInduk = totalEkuitasKonsolidasi − NCI`. Balance check `Aset = Liab + Ekuitas`.
-- **Batas MVP**: eliminasi level-AKUN (bukan pencocokan per-transaksi antar-counterparty); goodwill/premium akuisisi terlipat ke ekuitas induk (tanpa acquisition-date snapshot). Teruji: 2 tenant (induk 100% + anak 80%, transaksi IC) → angka cocok manual (Kas 140, IC eliminasi 0, NCI 2, induk 138, balanced).
-- Web: Laporan › Konsolidasi Grup (kelola grup/anggota + laporan).
+- **Eliminasi level-transaksi**: Customer/Vendor bisa ditandai `partnerTenantId` (entitas intra-grup). `icBalances` hitung piutang/utang IC per-partner dari faktur outstanding; laporan cocokkan piutang(A→B) vs utang(B→A) + flag selisih. Teruji: 25 vs 20 → selisih 5, tidak cocok.
+- **Goodwill / metode akuisisi**: `GroupMember.acquisitionCost/NetAssets/Date`. Goodwill = biaya − milik%×asetBersihAkuisisi (aset konsolidasi); eliminasi investasi induk vs ekuitas akuisisi via baris `eliminasiEkuitasAkuisisi` (plug), NCI = minoritas%×aset bersih anak. Teruji: induk(Kas100+Investasi80,Modal180)+anak80%(Kas60,Modal60), biaya 80 aset-bersih 60 → goodwill 32, elim ekuitas −48, NCI 12, induk 180, **seimbang**.
+- Web: Laporan › Konsolidasi Grup (kelola grup/anggota + input akuisisi + laporan goodwill/IC-rekon). Edit customer/vendor → dropdown entitas intra-grup.
 
 ## Coretax
 
