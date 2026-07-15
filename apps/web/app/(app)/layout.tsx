@@ -3,9 +3,15 @@ import { getSession } from '@/lib/session';
 import { apiFetch } from '@/lib/api';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
+import { ApprovalNotifier } from '@/components/ApprovalNotifier';
 
 interface PeriodYear {
   periods: Array<{ label: string; status: string }>;
+}
+
+interface ApprovalInboxItem {
+  id: string; docType: string; docId: string; amount: string;
+  currentStep: number; totalSteps: number; currentRole: string;
 }
 
 export default async function AppLayout({
@@ -19,14 +25,17 @@ export default async function AppLayout({
 
   let logoUrl: string | null = null;
   let periodeLabel: string | undefined;
+  let approvalInbox: ApprovalInboxItem[] = [];
   try {
-    const [prof, years] = await Promise.all([
+    const [prof, years, inbox] = await Promise.all([
       apiFetch<{ logoUrl: string | null }>('/tenants/current', { tenantId: s.tenantId }),
       apiFetch<PeriodYear[]>('/periods/years', { tenantId: s.tenantId }).catch(() => [] as PeriodYear[]),
+      apiFetch<ApprovalInboxItem[]>('/approval/inbox', { tenantId: s.tenantId }).catch(() => [] as ApprovalInboxItem[]),
     ]);
     logoUrl = prof.logoUrl;
     periodeLabel = years[0]?.periods.find((p) => p.status === 'OPEN')?.label;
-  } catch { /* logo & periode opsional */ }
+    approvalInbox = inbox;
+  } catch { /* logo, periode & inbox opsional */ }
 
   return (
     <div className="flex min-h-screen bg-cream-100">
@@ -45,6 +54,7 @@ export default async function AppLayout({
         />
         {children}
       </main>
+      <ApprovalNotifier items={approvalInbox} userId={s.user.id} />
     </div>
   );
 }
