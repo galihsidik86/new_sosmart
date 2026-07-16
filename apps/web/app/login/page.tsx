@@ -142,6 +142,16 @@ export default async function LoginPage({
           <p className="text-xs text-tanah-500 mt-6 text-center">
             Lupa password? Hubungi admin / pemilik akun perusahaan Anda untuk mengatur ulang.
           </p>
+          <p className="text-xs mt-3 text-center">
+            <a
+              href="/panduan.html"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-sogan-500 font-semibold hover:underline"
+            >
+              📘 Panduan Penggunaan
+            </a>
+          </p>
         </div>
       </div>
     </main>

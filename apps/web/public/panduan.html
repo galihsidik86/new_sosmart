@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Manual Penggunaan — Lentera (Akuntansi &amp; Pajak)</title>
+<style>
+  :root{
+    --ink:#2E1D0F; --ink2:#5C3A1E; --muted:#8C6B4A; --line:#ECE5D8;
+    --bg:#FBF9F4; --card:#FFFFFF; --brand:#8B2E2E; --brand-soft:#F4DDD3;
+    --ok:#4A7C3A; --warn:#D4A437; --danger:#C44536; --info:#2A6FA8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink2);
+    font-family:"Plus Jakarta Sans","Segoe UI",system-ui,-apple-system,sans-serif;line-height:1.6;font-size:15px}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  h1,h2,h3,h4{font-family:"Fraunces",Georgia,serif;color:var(--ink);line-height:1.2;font-weight:600}
+  h1{font-size:34px;margin:0 0 6px}
+  h2{font-size:26px;margin:52px 0 4px;padding-top:20px;border-top:2px solid var(--line)}
+  h3{font-size:20px;margin:30px 0 4px}
+  h4{font-size:16px;margin:22px 0 2px;font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;color:var(--ink2)}
+  p{margin:8px 0}
+  a{color:var(--brand)}
+  code{background:var(--brand-soft);color:var(--brand);padding:1px 6px;border-radius:5px;font-size:13px;font-family:"JetBrains Mono",ui-monospace,monospace}
+  .cover{background:linear-gradient(135deg,#8B2E2E,#5E1F1F);color:#FBF9F4;border-radius:18px;padding:46px 40px;margin:26px 0 10px}
+  .cover h1{color:#fff;font-size:40px}
+  .cover .sub{opacity:.9;font-size:17px;margin-top:8px}
+  .cover .meta{margin-top:22px;font-size:13px;opacity:.85;border-top:1px solid rgba(255,255,255,.25);padding-top:14px}
+  .lead{font-size:17px;color:var(--ink2)}
+  .toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 26px;margin:22px 0}
+  .toc ol{margin:6px 0;padding-left:22px}
+  .toc a{text-decoration:none;color:var(--ink2);font-weight:600}
+  .toc a:hover{color:var(--brand)}
+  figure{margin:18px 0 22px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card);box-shadow:0 6px 16px rgba(92,58,30,.08)}
+  figure img{display:block;width:100%;height:auto}
+  figcaption{font-size:13px;color:var(--muted);padding:9px 14px;border-top:1px solid var(--line);background:#FBF9F4}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#F5F1E8;color:var(--ink);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+  .b-owner{background:#F4DDD3;color:#8B2E2E}.b-admin{background:#E5D6F3;color:#6D34A0}
+  .b-akun{background:#DDEAF5;color:#1F5480}.b-kasir{background:#FAEFC9;color:#97751F}.b-audit{background:#EFE6DA;color:#5C3A1E}
+  .yes{color:var(--ok);font-weight:700}.no{color:var(--danger)}
+  .callout{border-left:4px solid var(--brand);background:#FBF2EE;padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 0}
+  .callout.tip{border-color:var(--ok);background:#EEF6EA}
+  .callout.warn{border-color:var(--warn);background:#FAEFC9}
+  .callout b{color:var(--ink)}
+  ol.flow{counter-reset:step;list-style:none;padding-left:0;margin:14px 0}
+  ol.flow>li{position:relative;padding:2px 0 14px 46px;margin:0}
+  ol.flow>li:before{counter-increment:step;content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;display:grid;place-items:center;font-family:"Plus Jakarta Sans"}
+  ol.flow>li:not(:last-child):after{content:"";position:absolute;left:14px;top:32px;bottom:-2px;width:2px;background:var(--line)}
+  .pill{display:inline-block;background:var(--brand-soft);color:var(--brand);border-radius:6px;padding:0 7px;font-weight:700;font-size:13px}
+  footer{margin-top:60px;padding-top:18px;border-top:2px solid var(--line);font-size:13px;color:var(--muted)}
+  @media print{.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}figure{break-inside:avoid}h2{break-before:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="cover">
+    <div style="font-size:13px;letter-spacing:.18em;text-transform:uppercase;opacity:.8">Manual Penggunaan</div>
+    <h1>Lentera — Sistem Akuntansi &amp; Pajak</h1>
+    <div class="sub">Panduan alur transaksi &amp; hak akses (RBAC) — multi-perusahaan, multi-cabang</div>
+    <div class="meta">Disusun berdasarkan lingkungan demo <b>PT MarkPlus Indonesia</b> · lentera.sosmartpro.com · Tahun Buku 2026</div>
+  </div>
+
+  <p class="lead">Lentera adalah sistem akuntansi &amp; perpajakan Indonesia berbasis web yang mendukung banyak perusahaan (tenant) dan banyak cabang dalam satu akun. Manual ini menjelaskan <b>peran &amp; hak akses</b>, <b>alur transaksi dari draft hingga terbukukan</b>, serta modul pendukung (approval berjenjang, konsolidasi grup, dan manajemen projek). Seluruh tangkapan layar diambil dari data demo yang riil.</p>
+
+  <div class="toc">
+    <b>Daftar Isi</b>
+    <ol>
+      <li><a href="#pendahuluan">Pendahuluan &amp; Konsep Dasar</a></li>
+      <li><a href="#rbac">Peran &amp; Hak Akses (RBAC)</a></li>
+      <li><a href="#memulai">Memulai: Login, Pilih Perusahaan, Tema</a></li>
+      <li><a href="#master">Master Data</a></li>
+      <li><a href="#transaksi">Alur Transaksi</a></li>
+      <li><a href="#approval">Approval Berjenjang</a></li>
+      <li><a href="#laporan">Laporan Keuangan</a></li>
+      <li><a href="#konsolidasi">Konsolidasi Grup</a></li>
+      <li><a href="#projek">Manajemen Projek</a></li>
+      <li><a href="#praktik">Praktik Baik &amp; Tips</a></li>
+    </ol>
+  </div>
+
+  <h2 id="pendahuluan">1 · Pendahuluan &amp; Konsep Dasar</h2>
+  <p>Beberapa konsep yang perlu dipahami sebelum menggunakan Lentera:</p>
+  <table>
+    <tr><th style="width:180px">Konsep</th><th>Penjelasan</th></tr>
+    <tr><td><b>Tenant (Perusahaan)</b></td><td>Satu badan usaha dengan buku besar sendiri. Satu pengguna bisa menjadi anggota beberapa perusahaan dan berpindah lewat pemilih perusahaan.</td></tr>
+    <tr><td><b>Cabang</b></td><td>Unit di dalam perusahaan. Transaksi dicatat per cabang; laporan bisa disaring per cabang.</td></tr>
+    <tr><td><b>Draft &rarr; Posting</b></td><td>Setiap transaksi dibuat sebagai <b>DRAFT</b> dulu (bisa diedit/dihapus), lalu <b>diposting</b> untuk membentuk jurnal resmi dan memengaruhi saldo. Setelah posting, dokumen terkunci (hanya bisa dibatalkan).</td></tr>
+    <tr><td><b>Periode Buku</b></td><td>Tahun buku dibagi per bulan. Periode yang sudah <b>ditutup</b> tidak menerima transaksi baru.</td></tr>
+    <tr><td><b>Jurnal otomatis</b></td><td>Saat faktur/kas-bank diposting, Lentera membentuk jurnal (debit/kredit) secara otomatis sesuai konfigurasi akun — pengguna tidak perlu menjurnal manual untuk transaksi baku.</td></tr>
+  </table>
+
+  <h2 id="rbac">2 · Peran &amp; Hak Akses (RBAC)</h2>
+  <p>Lentera memakai <b>Role-Based Access Control</b> berlapis: (a) peran di tingkat perusahaan menentukan menu &amp; aksi yang tersedia, (b) peran di tingkat projek (Manager/Member), dan (c) penunjukan approver per langkah pada alur persetujuan. Terdapat lima peran perusahaan:</p>
+
+  <table>
+    <tr><th>Peran</th><th>Fokus</th><th>Yang bisa dilakukan</th><th>Yang dibatasi</th></tr>
+    <tr><td><span class="badge b-owner">OWNER</span></td><td>Pemilik</td><td>Seluruh fitur: transaksi &amp; posting, master data, laporan, <b>kelola pengguna &amp; cabang</b>, atur aturan approval, konsolidasi grup, tutup buku.</td><td>&mdash;</td></tr>
+    <tr><td><span class="badge b-admin">ADMIN</span></td><td>Administrator</td><td>Praktis setara Owner untuk operasional: semua transaksi, master, kelola pengguna, approval, konsolidasi.</td><td>Beberapa aksi kepemilikan tingkat lanjut.</td></tr>
+    <tr><td><span class="badge b-akun">AKUNTAN</span></td><td>Akuntansi</td><td>Semua transaksi (jual/beli/kas/jurnal) &amp; <b>posting</b>, master data, seluruh laporan, rekonsiliasi, tutup buku.</td><td>Kelola pengguna &amp; cabang, atur aturan approval, konsolidasi.</td></tr>
+    <tr><td><span class="badge b-kasir">KASIR</span></td><td>Frontliner</td><td>Buat &amp; posting <b>Penjualan</b> dan <b>Kas/Bank</b>, kelola <b>Pelanggan</b>, mengajukan approval.</td><td>Pembelian, laporan, pembukuan lanjutan, master lain, kotak approval.</td></tr>
+    <tr><td><span class="badge b-audit">AUDITOR</span></td><td>Pemeriksa</td><td><b>Hanya baca</b>: laporan keuangan, buku besar, jurnal, jejak audit, SPT.</td><td>Membuat/mengubah/menghapus apa pun; input transaksi.</td></tr>
+  </table>
+
+  <p>Perbedaan hak akses langsung terlihat dari <b>menu samping</b> yang berbeda per peran:</p>
+  <div class="grid2">
+    <figure><img loading="lazy" alt="20-side-owner" src="/panduan-img/20-side-owner.jpg"><figcaption>OWNER — menu lengkap: Transaksi, Pembukuan, Persediaan, Aset, Pajak, Laporan, Master, Pengaturan.</figcaption></figure>
+    <figure><img loading="lazy" alt="21-side-akuntan" src="/panduan-img/21-side-akuntan.jpg"><figcaption>AKUNTAN — operasional akuntansi penuh, tanpa kelola pengguna/cabang &amp; konsolidasi.</figcaption></figure>
+    <figure><img loading="lazy" alt="22-side-kasir" src="/panduan-img/22-side-kasir.jpg"><figcaption>KASIR — hanya Penjualan, Kas/Bank, dan Data Pelanggan.</figcaption></figure>
+    <figure><img loading="lazy" alt="23-side-auditor" src="/panduan-img/23-side-auditor.jpg"><figcaption>AUDITOR — hanya modul baca: Pembukuan, Persediaan, Aset, Pajak, Laporan.</figcaption></figure>
+  </div>
+  <div class="callout"><b>Pemisahan wewenang.</b> Kombinasi peran + approval berjenjang memastikan transaksi bernilai besar tidak bisa diposting satu orang tanpa persetujuan. Auditor dapat memeriksa tanpa risiko mengubah data.</div>
+
+  <h2 id="memulai">3 · Memulai</h2>
+  <h4>3.1 Login</h4>
+  <p>Buka alamat aplikasi, masukkan <b>email</b> dan <b>password</b>, lalu klik <span class="pill">Masuk</span>. Lupa password &rarr; hubungi Admin/Owner perusahaan untuk mengatur ulang.</p>
+  <figure><img loading="lazy" alt="00-login" src="/panduan-img/00-login.jpg"><figcaption>Halaman login.</figcaption></figure>
+  <h4>3.2 Pilih Perusahaan &amp; Ganti Tema</h4>
+  <p>Jika akun Anda anggota beberapa perusahaan, pilih perusahaan yang akan dikerjakan. Setelah masuk, Anda tiba di <b>Dashboard</b> berisi ringkasan kinerja (pendapatan, laba, per industri, projek teratas) — seluruhnya data nyata dari buku besar. Warna aksen tampilan bisa diganti lewat tombol bulat di kanan atas (5 preset), tersimpan per perangkat.</p>
+  <figure><img loading="lazy" alt="02-dashboard" src="/panduan-img/02-dashboard.jpg"><figcaption>Dashboard — ringkasan kinerja tahun berjalan (YTD) dan kinerja per industri.</figcaption></figure>
+
+  <h2 id="master">4 · Master Data</h2>
+  <p>Sebelum bertransaksi, siapkan data acuan. Semua master berada di grup menu <b>Master Data</b> (dan sebagian di Pembukuan/Pengaturan).</p>
+  <table>
+    <tr><th style="width:190px">Master</th><th>Fungsi</th></tr>
+    <tr><td><b>Bagan Akun (COA)</b></td><td>Daftar akun buku besar. Dasar semua jurnal.</td></tr>
+    <tr><td><b>Data Pelanggan</b></td><td>Pelanggan + <b>Jenis Pelanggan</b> (segmen) &amp; termin default. Bisa disaring per jenis.</td></tr>
+    <tr><td><b>Jenis Pelanggan</b></td><td>Kategori pelanggan yang bisa Anda atur sendiri per perusahaan (mis. Consumer/Brand/Personal Based).</td></tr>
+    <tr><td><b>Termin Pembayaran</b></td><td>Skema jatuh tempo (mis. Net 30) untuk hitung tanggal jatuh tempo otomatis.</td></tr>
+    <tr><td><b>Data Vendor, Barang, Project, Industri, Tarif PPh 23</b></td><td>Master pendukung transaksi &amp; pelaporan.</td></tr>
+  </table>
+  <div class="grid2">
+    <figure><img loading="lazy" alt="13-pelanggan" src="/panduan-img/13-pelanggan.jpg"><figcaption>Data Pelanggan — dengan filter Jenis &amp; kolom segmen.</figcaption></figure>
+    <figure><img loading="lazy" alt="14-jenis-pelanggan" src="/panduan-img/14-jenis-pelanggan.jpg"><figcaption>Master Jenis Pelanggan (per perusahaan).</figcaption></figure>
+  </div>
+  <figure><img loading="lazy" alt="15-termin" src="/panduan-img/15-termin.jpg"><figcaption>Master Termin Pembayaran.</figcaption></figure>
+
+  <h2 id="transaksi">5 · Alur Transaksi</h2>
+  <p>Semua transaksi mengikuti pola yang sama dan konsisten:</p>
+  <ol class="flow">
+    <li><b>Buat DRAFT.</b> Isi form (tanggal, pihak, cabang, termin, baris item, pajak). Simpan sebagai draft — masih bisa diubah/dihapus.</li>
+    <li><b>Ajukan Approval</b> <i>(bila nilai ≥ ambang &amp; ada aturan).</i> Dokumen menunggu persetujuan berjenjang sebelum boleh diposting.</li>
+    <li><b>Posting.</b> Jurnal otomatis terbentuk (debit/kredit), saldo &amp; buku besar ter-update, nomor dokumen dialokasikan.</li>
+    <li><b>Pelunasan</b> lewat <b>Kas/Bank</b> yang ditautkan ke faktur (untuk piutang/utang kredit).</li>
+    <li><b>Laporan &amp; Tutup Buku</b> di akhir periode.</li>
+  </ol>
+
+  <h3>5.1 Penjualan</h3>
+  <p>Menu <b>Transaksi &rarr; Penjualan</b>. Daftar faktur bisa disaring per status, cabang, proyek, dan <b>jenis pelanggan</b>, serta diekspor ke Excel.</p>
+  <figure><img loading="lazy" alt="03-penjualan-list" src="/panduan-img/03-penjualan-list.jpg"><figcaption>Daftar faktur penjualan dengan bar filter (termasuk filter Jenis pelanggan) dan status.</figcaption></figure>
+  <p>Klik <span class="pill">+ Faktur Baru</span> untuk membuat draft: pilih pelanggan, cabang, <b>termin</b> (Tunai/Kredit + skema termin untuk jatuh tempo), tarif PPN, lalu isi baris item. Bukti transaksi bisa dilampirkan sebagai <b>beberapa tautan</b> (URL Google Drive/Dropbox).</p>
+  <figure><img loading="lazy" alt="04-penjualan-form" src="/panduan-img/04-penjualan-form.jpg"><figcaption>Form faktur penjualan — header (pelanggan, termin, PPN) &amp; baris item.</figcaption></figure>
+  <div class="callout tip"><b>Jurnal otomatis.</b> Saat diposting, Lentera mencatat Piutang/Kas (debit), Pendapatan (kredit), dan PPN Keluaran (kredit) sesuai konfigurasi — tanpa jurnal manual.</div>
+
+  <h3>5.2 Pembelian</h3>
+  <p>Menu <b>Transaksi &rarr; Pembelian</b>. Serupa penjualan, plus penanganan <b>PPh 23</b> untuk jasa. Kasir tidak memiliki akses ke menu ini.</p>
+  <figure><img loading="lazy" alt="05-pembelian-list" src="/panduan-img/05-pembelian-list.jpg"><figcaption>Daftar tagihan pembelian.</figcaption></figure>
+
+  <h3>5.3 Kas / Bank</h3>
+  <p>Menu <b>Transaksi &rarr; Kas / Bank</b> untuk penerimaan (RECEIPT), pengeluaran (PAYMENT), dan transfer antar-rekening. Penerimaan/pembayaran dapat ditautkan ke faktur untuk <b>pelunasan piutang/utang</b>.</p>
+  <figure><img loading="lazy" alt="06-kasbank-list" src="/panduan-img/06-kasbank-list.jpg"><figcaption>Daftar transaksi kas/bank.</figcaption></figure>
+
+  <h3>5.4 Jurnal Umum</h3>
+  <p>Menu <b>Pembukuan &rarr; Jurnal Umum</b> untuk penyesuaian manual (mis. akrual, koreksi). Setiap jurnal harus <b>balance</b> (total debit = total kredit) dan mendukung lampiran bukti serta override proyek per baris.</p>
+  <figure><img loading="lazy" alt="07-jurnal-list" src="/panduan-img/07-jurnal-list.jpg"><figcaption>Daftar jurnal umum.</figcaption></figure>
+
+  <h2 id="approval">6 · Approval Berjenjang</h2>
+  <p>Aturan approval dikonfigurasi per <b>jenis dokumen</b> (Penjualan, Pembelian, Kas/Bank keluar, Jurnal manual) dengan <b>ambang nilai</b> dan <b>rantai penyetuju</b> (berbasis peran atau user tertentu). Contoh: pembelian ≥ Rp 250 jt butuh Admin lalu Owner.</p>
+  <figure><img loading="lazy" alt="09-approval-settings" src="/panduan-img/09-approval-settings.jpg"><figcaption>Pengaturan aturan approval — ambang nilai &amp; langkah penyetuju.</figcaption></figure>
+  <p>Bila sebuah dokumen memenuhi ambang, tombol <b>Posting</b> ditolak sampai disetujui. Pembuat menekan <b>Ajukan Approval</b>; penyetuju melihatnya di <b>Kotak Approval</b> dan menekan <b>Setuju</b>/<b>Tolak</b> secara berurutan. Saat login, penyetuju juga mendapat <b>pop-up</b> daftar dokumen yang menunggu.</p>
+  <figure><img loading="lazy" alt="08-approval-inbox" src="/panduan-img/08-approval-inbox.jpg"><figcaption>Kotak Approval — daftar dokumen menunggu persetujuan pengguna.</figcaption></figure>
+  <ol class="flow">
+    <li>Pembuat membuat draft &amp; klik <b>Ajukan Approval</b>.</li>
+    <li>Penyetuju tingkat 1 (mis. Admin) klik <b>Setuju</b> &rarr; naik ke tingkat berikutnya.</li>
+    <li>Penyetuju tingkat 2 (mis. Owner) klik <b>Setuju</b> &rarr; status <b>Disetujui — siap diposting</b>.</li>
+    <li>Pembuat/akuntan menekan <b>Posting</b>; jurnal terbentuk. Jika <b>Ditolak</b>, dokumen dapat diperbaiki &amp; diajukan ulang.</li>
+  </ol>
+
+  <h2 id="laporan">7 · Laporan Keuangan</h2>
+  <p>Grup menu <b>Laporan</b> menyediakan Neraca, Laba Rugi, Arus Kas, Perubahan Ekuitas, Aging Piutang &amp; Utang, Budget vs Actual, Laba Rugi per Proyek, dan Jejak Audit. Setiap laporan bisa difilter (tanggal/cabang/jenis pelanggan) dan diekspor ke Excel/PDF.</p>
+  <div class="grid2">
+    <figure><img loading="lazy" alt="16-neraca" src="/panduan-img/16-neraca.jpg"><figcaption>Neraca.</figcaption></figure>
+    <figure><img loading="lazy" alt="17-labarugi" src="/panduan-img/17-labarugi.jpg"><figcaption>Laba Rugi.</figcaption></figure>
+  </div>
+  <figure><img loading="lazy" alt="18-piutang" src="/panduan-img/18-piutang.jpg"><figcaption>Aging Piutang — dengan filter jenis pelanggan &amp; ekspor.</figcaption></figure>
+
+  <h2 id="konsolidasi">8 · Konsolidasi Grup</h2>
+  <p>Menu <b>Laporan &rarr; Konsolidasi Grup</b> (Owner/Admin) menggabungkan laporan induk + anak perusahaan dengan <b>eliminasi transaksi intercompany</b>, perhitungan <b>goodwill</b>, dan <b>kepentingan non-pengendali (NCI)</b>.</p>
+  <figure><img loading="lazy" alt="10-konsolidasi" src="/panduan-img/10-konsolidasi.jpg"><figcaption>Laporan konsolidasi grup dengan eliminasi intercompany.</figcaption></figure>
+
+  <h2 id="projek">9 · Manajemen Projek</h2>
+  <p>Menu <b>Master Data &rarr; Project</b>. Selain sebagai dimensi biaya/pendapatan, tiap projek kini memiliki manajemen sederhana namun rinci: <b>status</b> (Perencanaan/Aktif/Ditahan/Selesai/Dibatalkan), <b>prioritas</b>, <b>PIC</b>, <b>klien</b>, <b>nilai kontrak</b>, <b>tugas/milestone</b> dengan progres otomatis, <b>ringkasan budget vs realisasi</b>, dan <b>dokumen</b> (tautan) di level projek maupun per milestone.</p>
+  <figure><img loading="lazy" alt="11-project-list" src="/panduan-img/11-project-list.jpg"><figcaption>Daftar projek — dengan kolom progres, prioritas, dan PIC.</figcaption></figure>
+  <figure><img loading="lazy" alt="12-project-detail" src="/panduan-img/12-project-detail.jpg"><figcaption>Detail projek — ringkasan progres &amp; budget-vs-realisasi, info lengkap, dokumen, dan daftar tugas/milestone.</figcaption></figure>
+
+  <h2 id="praktik">10 · Praktik Baik &amp; Tips</h2>
+  <ul>
+    <li><b>Selalu review draft sebelum posting</b> — setelah diposting dokumen terkunci (hanya bisa dibatalkan, yang membentuk jurnal pembalik).</li>
+    <li><b>Manfaatkan approval berjenjang</b> untuk transaksi bernilai besar sebagai kontrol internal; setujui memakai akun penyetuju yang ditunjuk, bukan akun pembuat.</li>
+    <li><b>Gunakan lampiran bukti</b> (tautan Drive/Dropbox) pada setiap transaksi untuk telusur audit.</li>
+    <li><b>Tutup periode</b> secara berkala agar tidak ada transaksi mundur yang mengubah laporan yang sudah final.</li>
+    <li><b>Peran secukupnya</b> — beri Kasir/Auditor peran minimal sesuai tugas; batasi Owner/Admin untuk fungsi kepemilikan.</li>
+  </ul>
+
+  <footer>
+    Manual ini dihasilkan dari lingkungan demo <b>Lentera</b> (PT MarkPlus Indonesia). Tangkapan layar merepresentasikan data nyata pada saat penyusunan. Nama pengguna &amp; angka bersifat contoh demo.
+  </footer>
+</div>
+</body>
+</html>

@@ -146,6 +146,15 @@ export function Topbar({ tenantNama, periodeLabel, user, role }: TopbarProps) {
                   </div>
                 )}
               </div>
+              <a
+                href="/panduan.html"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-tanah-700 hover:bg-cream-50 transition-colors border-b border-cream-200"
+              >
+                <Icon name="book-open" size={16} className="text-sogan-500" />
+                Panduan Penggunaan
+              </a>
               <form action={logoutAction}>
                 <button
                   type="submit"
