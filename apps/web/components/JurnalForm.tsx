@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
+import { apiErrorToState } from '@/lib/form-state';
 
 interface Account {
   id: string;
@@ -100,6 +101,7 @@ export function JurnalForm({
   const showProjects = !!projects && projects.length > 0;
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [invalidLines, setInvalidLines] = useState<Set<number>>(new Set());
   const router = useRouter();
 
   const totals = useMemo(() => {
@@ -148,6 +150,18 @@ export function JurnalForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setInvalidLines(new Set());
+    // Baris yang punya nominal tapi belum pilih akun.
+    const missing = new Set<number>();
+    lines.forEach((l, i) => {
+      const hasNilai = Number(l.debit || 0) > 0 || Number(l.kredit || 0) > 0;
+      if (!l.accountId && hasNilai) missing.add(i);
+    });
+    if (missing.size > 0) {
+      setInvalidLines(missing);
+      setError(`Pilih akun untuk baris ${[...missing].map((i) => i + 1).join(', ')}.`);
+      return;
+    }
     if (!totals.balanced) {
       setError('Total debit dan kredit harus seimbang dan > 0');
       return;
@@ -179,7 +193,8 @@ export function JurnalForm({
         await submit(fd);
         router.push((redirectTo ?? '/pembukuan/jurnal') as Route);
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+        // Ubah "API 400: {json}" jadi pesan yang ramah.
+        setError(apiErrorToState(e).message ?? 'Gagal menyimpan jurnal');
       }
     });
   };
@@ -260,9 +275,20 @@ export function JurnalForm({
                 <td className="px-3 py-1.5">
                   <select
                     value={l.accountId}
-                    onChange={(e) => updateLine(i, { accountId: e.target.value })}
+                    onChange={(e) => {
+                      updateLine(i, { accountId: e.target.value });
+                      if (e.target.value) {
+                        setInvalidLines((prev) => {
+                          const n = new Set(prev);
+                          n.delete(i);
+                          return n;
+                        });
+                      }
+                    }}
                     required
-                    className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono"
+                    className={`w-full px-2 py-1.5 bg-cream-50 border rounded-md text-sm font-mono ${
+                      invalidLines.has(i) ? 'border-bata-500' : 'border-cream-300'
+                    }`}
                   >
                     <option value="">— pilih akun —</option>
                     {postable.map((a) => (
