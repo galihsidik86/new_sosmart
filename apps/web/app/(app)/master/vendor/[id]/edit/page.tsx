@@ -3,9 +3,9 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
-import {
-  PageContainer, PageHeader, Card, Button, FormField, Input, Select, buttonClass,
-} from '@/components/ui';
+import { PageContainer, PageHeader, Card } from '@/components/ui';
+import { VendorForm } from '@/components/VendorForm';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Vendor {
   id: string;
@@ -20,26 +20,30 @@ interface Vendor {
   partnerTenantId: string | null;
 }
 
-async function updateVendor(formData: FormData) {
+async function updateVendor(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
   const id = String(formData.get('id'));
-  await apiFetch(`/vendors/${id}`, {
-    method: 'PATCH',
-    tenantId,
-    body: JSON.stringify({
-      kode: formData.get('kode'),
-      nama: formData.get('nama'),
-      npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
-      isPkp: formData.get('isPkp') === 'on',
-      kategori: formData.get('kategori') || null,
-      kota: formData.get('kota') || null,
-      telp: formData.get('telp') || null,
-      terminHari: Number(formData.get('terminHari') ?? 30),
-      partnerTenantId: (formData.get('partnerTenantId') as string) || null,
-    }),
-  });
+  try {
+    await apiFetch(`/vendors/${id}`, {
+      method: 'PATCH',
+      tenantId,
+      body: JSON.stringify({
+        kode: formData.get('kode'),
+        nama: formData.get('nama'),
+        npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
+        isPkp: formData.get('isPkp') === 'on',
+        kategori: formData.get('kategori') || null,
+        kota: formData.get('kota') || null,
+        telp: formData.get('telp') || null,
+        terminHari: Number(formData.get('terminHari') ?? 30),
+        partnerTenantId: (formData.get('partnerTenantId') as string) || null,
+      }),
+    });
+  } catch (e) {
+    return apiErrorToState(e);
+  }
   revalidatePath('/master/vendor');
   redirect('/master/vendor');
 }
@@ -58,38 +62,14 @@ export default async function EditVendorPage({ params }: { params: Promise<{ id:
       <PageContainer size="form">
         <Link href="/master/vendor" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader title="Edit Vendor" subtitle={`${v.kode} · ${v.nama}`} className="mt-2" />
-
         <Card padding="lg">
-          <form action={updateVendor} className="space-y-4">
-            <input type="hidden" name="id" value={v.id} />
-            <FormField label="Kode" required><Input name="kode" required defaultValue={v.kode} /></FormField>
-            <FormField label="Nama" required><Input name="nama" required defaultValue={v.nama} /></FormField>
-            <FormField label="NPWP"><Input name="npwp" defaultValue={v.npwp ?? ''} /></FormField>
-            <label className="flex items-center gap-2 text-sm text-tanah-700">
-              <input type="checkbox" name="isPkp" defaultChecked={v.isPkp} />
-              Vendor ini PKP (PPN masukan dapat dikreditkan)
-            </label>
-            <FormField label="Kategori"><Input name="kategori" defaultValue={v.kategori ?? ''} /></FormField>
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label="Kota"><Input name="kota" defaultValue={v.kota ?? ''} /></FormField>
-              <FormField label="Telp"><Input name="telp" defaultValue={v.telp ?? ''} /></FormField>
-            </div>
-            <FormField label="Termin (hari)"><Input name="terminHari" type="number" defaultValue={String(v.terminHari)} /></FormField>
-            {partners.length > 0 && (
-              <FormField label="Entitas intra-grup (intercompany)" hint="Kalau vendor ini anak/anggota grup, tunjuk tenant-nya → utang ke sini dieliminasi saat konsolidasi.">
-                <Select name="partnerTenantId" defaultValue={v.partnerTenantId ?? ''}>
-                  <option value="">— bukan intra-grup —</option>
-                  {partners.map((p) => <option key={p.tenantId} value={p.tenantId}>{p.nama}</option>)}
-                </Select>
-              </FormField>
-            )}
-            <div className="flex gap-2 pt-2">
-              <Button type="submit">Simpan perubahan</Button>
-              <Link href="/master/vendor" className={buttonClass('secondary')}>
-                Batal
-              </Link>
-            </div>
-          </form>
+          <VendorForm
+            mode="edit"
+            action={updateVendor}
+            partners={partners}
+            defaults={v}
+            submitLabel="Simpan perubahan"
+          />
         </Card>
       </PageContainer>
     </>

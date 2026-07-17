@@ -1,14 +1,17 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input,
+  PageContainer, PageHeader, Card, Badge,
   Table, THead, TH, TBody, TR, TD, RowActions, EmptyRow, buttonClass,
 } from '@/components/ui';
+import { VendorForm } from '@/components/VendorForm';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 async function importVendorsAction(formData: FormData) {
   'use server';
@@ -31,25 +34,30 @@ interface VendorRow {
   isAktif: boolean;
 }
 
-async function createVendor(formData: FormData) {
+async function createVendor(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
-  if (!tenantId) throw new Error('Tenant tidak aktif');
-  await apiFetch('/vendors', {
-    method: 'POST',
-    tenantId,
-    body: JSON.stringify({
-      kode: formData.get('kode'),
-      nama: formData.get('nama'),
-      npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
-      isPkp: formData.get('isPkp') === 'on',
-      kategori: formData.get('kategori') || undefined,
-      kota: formData.get('kota') || undefined,
-      telp: formData.get('telp') || undefined,
-      terminHari: Number(formData.get('terminHari') ?? 30),
-    }),
-  });
+  if (!tenantId) return { ok: false, message: 'Tenant tidak aktif' };
+  try {
+    await apiFetch('/vendors', {
+      method: 'POST',
+      tenantId,
+      body: JSON.stringify({
+        kode: formData.get('kode'),
+        nama: formData.get('nama'),
+        npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
+        isPkp: formData.get('isPkp') === 'on',
+        kategori: formData.get('kategori') || undefined,
+        kota: formData.get('kota') || undefined,
+        telp: formData.get('telp') || undefined,
+        terminHari: Number(formData.get('terminHari') ?? 30),
+      }),
+    });
+  } catch (e) {
+    return apiErrorToState(e);
+  }
   revalidatePath('/master/vendor');
+  redirect('/master/vendor');
 }
 
 export default async function VendorPage() {
@@ -117,22 +125,7 @@ export default async function VendorPage() {
 
           <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Vendor</h2>
-            <form action={createVendor} className="space-y-3">
-              <FormField label="Kode" required><Input name="kode" required placeholder="VEN-006" /></FormField>
-              <FormField label="Nama" required><Input name="nama" required placeholder="PT …" /></FormField>
-              <FormField label="NPWP (15/16 digit)"><Input name="npwp" placeholder="01.234.567.8-501.000" /></FormField>
-              <label className="flex items-center gap-2 text-sm text-tanah-700">
-                <input type="checkbox" name="isPkp" />
-                Pemasok ini PKP
-              </label>
-              <FormField label="Kategori"><Input name="kategori" placeholder="Barang Dagang / Jasa" /></FormField>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Kota"><Input name="kota" /></FormField>
-                <FormField label="Telp"><Input name="telp" /></FormField>
-              </div>
-              <FormField label="Termin (hari)"><Input name="terminHari" type="number" defaultValue="30" /></FormField>
-              <Button type="submit" className="w-full">Simpan</Button>
-            </form>
+            <VendorForm mode="create" action={createVendor} />
           </Card>
         </div>
       </PageContainer>

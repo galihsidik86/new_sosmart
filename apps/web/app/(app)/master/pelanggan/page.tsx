@@ -1,16 +1,19 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
+  PageContainer, PageHeader, Card, Badge,
   Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, buttonClass,
 } from '@/components/ui';
 import { ListFilters } from '@/components/ListFilters';
 import { buildListHref } from '@/lib/list-query';
+import { CustomerForm } from '@/components/CustomerForm';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 async function importCustomersAction(formData: FormData) {
   'use server';
@@ -36,26 +39,31 @@ interface CustomerRow {
   isAktif: boolean;
 }
 
-async function createCustomer(formData: FormData) {
+async function createCustomer(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
-  if (!tenantId) throw new Error('Tenant tidak aktif');
-  await apiFetch('/customers', {
-    method: 'POST',
-    tenantId,
-    body: JSON.stringify({
-      kode: formData.get('kode'),
-      nama: formData.get('nama'),
-      npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
-      isPkp: formData.get('isPkp') === 'on',
-      jenisPelangganId: formData.get('jenisPelangganId') || null,
-      kota: formData.get('kota') || undefined,
-      telp: formData.get('telp') || undefined,
-      terminHari: Number(formData.get('terminHari') ?? 14),
-      kreditLimit: String(formData.get('kreditLimit') ?? '0'),
-    }),
-  });
+  if (!tenantId) return { ok: false, message: 'Tenant tidak aktif' };
+  try {
+    await apiFetch('/customers', {
+      method: 'POST',
+      tenantId,
+      body: JSON.stringify({
+        kode: formData.get('kode'),
+        nama: formData.get('nama'),
+        npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
+        isPkp: formData.get('isPkp') === 'on',
+        jenisPelangganId: formData.get('jenisPelangganId') || null,
+        kota: formData.get('kota') || undefined,
+        telp: formData.get('telp') || undefined,
+        terminHari: Number(formData.get('terminHari') ?? 14),
+        kreditLimit: String(formData.get('kreditLimit') ?? '0'),
+      }),
+    });
+  } catch (e) {
+    return apiErrorToState(e);
+  }
   revalidatePath('/master/pelanggan');
+  redirect('/master/pelanggan');
 }
 
 export default async function PelangganPage({
@@ -135,32 +143,7 @@ export default async function PelangganPage({
 
           <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Pelanggan</h2>
-            <form action={createCustomer} className="space-y-3">
-              <FormField label="Kode" required><Input name="kode" required placeholder="PLG-006" /></FormField>
-              <FormField label="Nama" required><Input name="nama" required placeholder="CV …" /></FormField>
-              <FormField label="NPWP"><Input name="npwp" placeholder="0X.XXX.XXX.X-XXX.XXX" /></FormField>
-              <label className="flex items-center gap-2 text-sm text-tanah-700">
-                <input type="checkbox" name="isPkp" />
-                Pelanggan ini PKP
-              </label>
-              <FormField label="Jenis Pelanggan">
-                <Select name="jenisPelangganId" defaultValue="">
-                  <option value="">— pilih —</option>
-                  {jenisList.map((j) => (
-                    <option key={j.id} value={j.id}>{j.nama}</option>
-                  ))}
-                </Select>
-              </FormField>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Kota"><Input name="kota" /></FormField>
-                <FormField label="Telp"><Input name="telp" /></FormField>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Termin (hari)"><Input name="terminHari" type="number" defaultValue="14" /></FormField>
-                <FormField label="Limit kredit"><Input name="kreditLimit" type="number" defaultValue="0" /></FormField>
-              </div>
-              <Button type="submit" className="w-full">Simpan</Button>
-            </form>
+            <CustomerForm mode="create" action={createCustomer} jenisList={jenisList} />
           </Card>
         </div>
       </PageContainer>
