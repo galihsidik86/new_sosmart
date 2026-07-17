@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { FieldError } from './FieldError';
+import type { FormState } from '@/lib/form-state';
 
 type Kelompok =
   | 'BANGUNAN_PERMANEN' | 'BANGUNAN_NON_PERMANEN'
@@ -34,8 +36,11 @@ interface AsetFormProps {
   akunAset: Account[];
   akunAkumulasi: Account[];
   akunBeban: Account[];
-  submit: (formData: FormData) => Promise<void>;
+  submit: (formData: FormData) => Promise<FormState | void>;
 }
+
+const inputCls = (invalid: boolean) =>
+  `w-full px-2.5 py-2 bg-cream-50 border rounded-md text-sm ${invalid ? 'border-bata-500' : 'border-cream-300'}`;
 
 export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }: AsetFormProps) {
   const today = new Date().toISOString().slice(0, 10);
@@ -56,6 +61,7 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
   const [catatan, setCatatan] = useState('');
   const [submitting, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [fe, setFe] = useState<Record<string, string>>({});
   const router = useRouter();
 
   const isBangunan =
@@ -84,6 +90,7 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFe({});
     if (isBangunan && metode !== 'GARIS_LURUS') {
       setError('Bangunan wajib metode Garis Lurus (UU PPh).');
       return;
@@ -104,7 +111,12 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
     fd.append('payload', JSON.stringify(payload));
     startTransition(async () => {
       try {
-        await submit(fd);
+        const res = await submit(fd);
+        if (res && !res.ok) {
+          setError(res.fieldErrors ? null : (res.message ?? 'Data tidak valid'));
+          setFe(res.fieldErrors ?? {});
+          return;
+        }
         router.push('/aset/daftar');
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
@@ -120,7 +132,8 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Kode <span className="text-bata-500">*</span></label>
             <input value={kode} onChange={(e) => setKode(e.target.value)} required placeholder="AT-006"
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono" />
+              className={`${inputCls(!!fe.kode)} font-mono`} />
+            <FieldError msg={fe.kode} />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Cabang <span className="text-bata-500">*</span></label>
@@ -138,7 +151,8 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
           <div className="sm:col-span-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Nama Aset <span className="text-bata-500">*</span></label>
             <input value={nama} onChange={(e) => setNama(e.target.value)} required placeholder="Komputer laptop produksi 5 unit"
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
+              className={inputCls(!!fe.nama)} />
+            <FieldError msg={fe.nama} />
           </div>
         </div>
       </section>
@@ -169,13 +183,15 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Masa Manfaat (bulan)</label>
             <input type="number" min={1} value={masaBulan}
               onChange={(e) => setMasaBulan(Number(e.target.value))}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono tabular-nums" />
+              className={`${inputCls(!!fe.masaManfaatBulan)} font-mono tabular-nums`} />
+            <FieldError msg={fe.masaManfaatBulan} />
             <p className="text-[10px] text-tanah-500 mt-1">Default: {MASA[kelompok]} bulan ({MASA[kelompok] / 12} tahun)</p>
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tanggal Perolehan</label>
             <input type="date" value={tanggalPerolehan} onChange={(e) => setTanggalPerolehan(e.target.value)} required
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
+              className={inputCls(!!fe.tanggalPerolehan)} />
+            <FieldError msg={fe.tanggalPerolehan} />
           </div>
         </div>
       </section>
@@ -187,13 +203,15 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Harga Perolehan (Rp) <span className="text-bata-500">*</span></label>
             <input type="number" min={0} step="0.01" value={hargaPerolehan}
               onChange={(e) => setHargaPerolehan(e.target.value)} required
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm text-right font-mono tabular-nums" />
+              className={`${inputCls(!!fe.hargaPerolehan)} text-right font-mono tabular-nums`} />
+            <FieldError msg={fe.hargaPerolehan} />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Nilai Residu (Rp)</label>
             <input type="number" min={0} step="0.01" value={nilaiResidu}
               onChange={(e) => setNilaiResidu(e.target.value)}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm text-right font-mono tabular-nums" />
+              className={`${inputCls(!!fe.nilaiResidu)} text-right font-mono tabular-nums`} />
+            <FieldError msg={fe.nilaiResidu} />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akumulasi Penyusutan Awal (Rp)</label>
@@ -222,23 +240,26 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akun Aset</label>
             <select value={akunAsetId} onChange={(e) => setAkunAsetId(e.target.value)} required
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
+              className={`${inputCls(!!fe.akunAsetId)} font-mono`}>
               {akunAset.map((a) => <option key={a.id} value={a.id}>{a.kode}  {a.nama}</option>)}
             </select>
+            <FieldError msg={fe.akunAsetId} />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akun Akumulasi (kontra-aset)</label>
             <select value={akunAkumId} onChange={(e) => setAkunAkumId(e.target.value)} required
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
+              className={`${inputCls(!!fe.akunAkumulasiId)} font-mono`}>
               {akunAkumulasi.map((a) => <option key={a.id} value={a.id}>{a.kode}  {a.nama}</option>)}
             </select>
+            <FieldError msg={fe.akunAkumulasiId} />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akun Beban Penyusutan</label>
             <select value={akunBebanId} onChange={(e) => setAkunBebanId(e.target.value)} required
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
+              className={`${inputCls(!!fe.akunBebanId)} font-mono`}>
               {akunBeban.map((a) => <option key={a.id} value={a.id}>{a.kode}  {a.nama}</option>)}
             </select>
+            <FieldError msg={fe.akunBebanId} />
           </div>
         </div>
       </section>

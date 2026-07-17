@@ -2,12 +2,14 @@ import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { ImportExcelButton } from '@/components/ImportExcelButton';
+import { KaryawanForm } from '@/components/KaryawanForm';
 import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtNpwp, fmtRp } from '@/lib/format';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 import {
-  PageContainer, PageHeader, Card, Button, FormField, Input, Select,
+  PageContainer, PageHeader, Card,
   Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, buttonClass,
 } from '@/components/ui';
 
@@ -45,28 +47,33 @@ const PTKP_LABEL: Record<Ptkp, string> = {
   HB_0: 'HB/0', HB_1: 'HB/1', HB_2: 'HB/2', HB_3: 'HB/3',
 };
 
-async function createKaryawan(formData: FormData) {
+async function createKaryawan(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch('/karyawan', {
-    method: 'POST',
-    tenantId,
-    body: JSON.stringify({
-      cabangId: (formData.get('cabangId') as string) || undefined,
-      kode: formData.get('kode'),
-      nama: formData.get('nama'),
-      nik: (formData.get('nik') as string)?.replace(/\D/g, ''),
-      npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
-      jabatan: formData.get('jabatan') || undefined,
-      ptkpStatus: formData.get('ptkpStatus'),
-      tanggalMasuk: formData.get('tanggalMasuk'),
-      gajiPokok: String(formData.get('gajiPokok') ?? '0'),
-      tunjanganTetap: String(formData.get('tunjanganTetap') ?? '0'),
-      iuranBpjsKaryawan: String(formData.get('iuranBpjsKaryawan') ?? '0'),
-    }),
-  });
+  try {
+    await apiFetch('/karyawan', {
+      method: 'POST',
+      tenantId,
+      body: JSON.stringify({
+        cabangId: (formData.get('cabangId') as string) || undefined,
+        kode: formData.get('kode'),
+        nama: formData.get('nama'),
+        nik: (formData.get('nik') as string)?.replace(/\D/g, ''),
+        npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || null,
+        jabatan: formData.get('jabatan') || undefined,
+        ptkpStatus: formData.get('ptkpStatus'),
+        tanggalMasuk: formData.get('tanggalMasuk'),
+        gajiPokok: String(formData.get('gajiPokok') ?? '0'),
+        tunjanganTetap: String(formData.get('tunjanganTetap') ?? '0'),
+        iuranBpjsKaryawan: String(formData.get('iuranBpjsKaryawan') ?? '0'),
+      }),
+    });
+  } catch (e) {
+    return { ...apiErrorToState(e, formData), attempt: (_prev.attempt ?? 0) + 1 };
+  }
   revalidatePath('/pajak/karyawan');
+  return { ok: true };
 }
 
 export default async function KaryawanPage() {
@@ -135,31 +142,7 @@ export default async function KaryawanPage() {
 
           <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Karyawan</h2>
-            <form action={createKaryawan} className="space-y-3 text-sm">
-              <FormField label="Kode" required><Input name="kode" required placeholder="KAR-006" /></FormField>
-              <FormField label="Nama" required><Input name="nama" required /></FormField>
-              <FormField label="NIK (16 digit)" required><Input name="nik" required /></FormField>
-              <FormField label="NPWP (15-16 digit)"><Input name="npwp" /></FormField>
-              <FormField label="PTKP">
-                <Select name="ptkpStatus" required defaultValue="TK_0" className="font-mono">
-                  {(Object.keys(PTKP_LABEL) as Ptkp[]).map((p) => (
-                    <option key={p} value={p}>{PTKP_LABEL[p]}</option>
-                  ))}
-                </Select>
-              </FormField>
-              <FormField label="Cabang">
-                <Select name="cabangId">
-                  <option value="">—</option>
-                  {cabang.map((c) => <option key={c.id} value={c.id}>{c.kode}</option>)}
-                </Select>
-              </FormField>
-              <FormField label="Jabatan"><Input name="jabatan" placeholder="Staf …" /></FormField>
-              <FormField label="Tanggal masuk"><Input name="tanggalMasuk" type="date" required defaultValue="2024-01-01" /></FormField>
-              <FormField label="Gaji pokok"><Input name="gajiPokok" type="number" required defaultValue="0" /></FormField>
-              <FormField label="Tunjangan tetap"><Input name="tunjanganTetap" type="number" defaultValue="0" /></FormField>
-              <FormField label="Iuran BPJS karyawan"><Input name="iuranBpjsKaryawan" type="number" defaultValue="0" /></FormField>
-              <Button type="submit" className="w-full">Simpan</Button>
-            </form>
+            <KaryawanForm mode="create" action={createKaryawan} cabang={cabang} />
           </Card>
         </div>
       </PageContainer>

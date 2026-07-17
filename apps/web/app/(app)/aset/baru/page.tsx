@@ -3,19 +3,25 @@ import { AsetForm } from '@/components/AsetForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Cabang { id: string; kode: string; nama: string }
 interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
 
-async function submitAset(formData: FormData) {
+async function submitAset(formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
   const payload = JSON.parse(String(formData.get('payload')));
-  await apiFetch('/aset', {
-    method: 'POST', tenantId,
-    body: JSON.stringify(payload),
-  });
+  try {
+    await apiFetch('/aset', {
+      method: 'POST', tenantId,
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    return apiErrorToState(e);
+  }
+  return { ok: true };
 }
 
 export default async function AsetBaruPage() {
@@ -38,7 +44,7 @@ export default async function AsetBaruPage() {
   );
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader title="Aset Tetap Baru" />
         <AsetForm
