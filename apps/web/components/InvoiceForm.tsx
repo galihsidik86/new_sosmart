@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, Select, SectionHeader } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 type Klasifikasi = 'BKP' | 'JKP' | 'NON_BKP' | 'BKP_STRATEGIS' | 'BEBAS_PPN';
 
@@ -82,7 +83,9 @@ interface InvoiceFormProps {
   projects?: Project[];
   /** Master termin pembayaran (kredit). Kalau kosong, dropdown tidak muncul. */
   termPembayaran?: TermOption[];
-  submit: (formData: FormData) => Promise<void>;
+  /** Server action: kembalikan FormState (ok:false + message) saat gagal.
+   *  Ditangkap di server supaya pesan tak ter-redaksi produksi. */
+  submit: (formData: FormData) => Promise<FormState | void>;
   defaultValues?: InvoiceDefaultValues;
   redirectTo?: string;
   submitLabel?: string;
@@ -290,10 +293,14 @@ export function InvoiceForm({
     fd.append('payload', JSON.stringify(payload));
     startTransition(async () => {
       try {
-        await submit(fd);
+        const res = await submit(fd);
+        if (res && !res.ok) {
+          setError(res.message ?? 'Gagal menyimpan');
+          return;
+        }
         router.push((redirectTo ?? (mode === 'sales' ? '/transaksi/penjualan' : '/transaksi/pembelian')) as Route);
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+        setError(apiErrorToState(e).message ?? 'Gagal menyimpan');
       }
     });
   };

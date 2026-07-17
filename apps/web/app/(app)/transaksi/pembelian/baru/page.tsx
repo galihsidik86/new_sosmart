@@ -3,6 +3,7 @@ import { InvoiceForm } from '@/components/InvoiceForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Item {
   id: string; kode: string; nama: string; satuan: string;
@@ -23,15 +24,20 @@ interface Account { id: string; kode: string; nama: string; isPostable: boolean;
 interface Project { id: string; kode: string; nama: string }
 interface Term { id: string; nama: string; hari: number }
 
-async function submitBill(formData: FormData) {
+async function submitBill(formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
   const payload = JSON.parse(String(formData.get('payload')));
-  await apiFetch('/purchase-invoices', {
-    method: 'POST', tenantId,
-    body: JSON.stringify(payload),
-  });
+  try {
+    await apiFetch('/purchase-invoices', {
+      method: 'POST', tenantId,
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    return apiErrorToState(e);
+  }
+  return { ok: true };
 }
 
 export default async function PembelianBaruPage() {

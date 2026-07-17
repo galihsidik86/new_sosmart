@@ -3,6 +3,7 @@ import { InvoiceForm } from '@/components/InvoiceForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Item {
   id: string; kode: string; nama: string; satuan: string;
@@ -60,14 +61,19 @@ export default async function PembelianEditPage({ params }: { params: Promise<{ 
     (a) => a.isPostable && (a.kode === '1-101' || a.kode.startsWith('1-102')),
   );
 
-  async function submitEdit(formData: FormData) {
+  async function submitEdit(formData: FormData): Promise<FormState> {
     'use server';
     const tid = await getActiveTenantId(); if (!tid) redirect('/login');
     const payload = JSON.parse(String(formData.get('payload')));
-    await apiFetch(`/purchase-invoices/${id}`, {
-      method: 'PATCH', tenantId: tid,
-      body: JSON.stringify(payload),
-    });
+    try {
+      await apiFetch(`/purchase-invoices/${id}`, {
+        method: 'PATCH', tenantId: tid,
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      return apiErrorToState(e);
+    }
+    return { ok: true };
   }
 
   return (
