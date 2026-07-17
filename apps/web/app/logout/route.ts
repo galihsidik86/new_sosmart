@@ -15,5 +15,11 @@ export async function GET(request: Request) {
   }
   const url = new URL(request.url);
   const reason = url.searchParams.get('reason') ?? 'session_expired';
-  return NextResponse.redirect(new URL(`/login?${reason}=1`, request.url));
+  // Location RELATIF: di belakang nginx, request.url pakai host internal
+  // (localhost:PORT). new URL(..., request.url) akan redirect ke localhost.
+  // Location relatif di-resolve browser ke URL publik yang benar.
+  return new NextResponse(null, {
+    status: 307,
+    headers: { Location: `/login?${reason}=1` },
+  });
 }
