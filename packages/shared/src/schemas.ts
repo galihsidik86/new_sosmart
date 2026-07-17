@@ -524,11 +524,19 @@ export const createAsetInputSchema = z.object({
     .union([z.number(), z.string()])
     .transform((v) => String(v))
     .refine((v) => Number(v) > 0, 'Harga perolehan wajib lebih dari 0'),
-  nilaiResidu: z.union([z.number().nonnegative(), z.string()]).transform((v) => String(v)).default('0'),
+  nilaiResidu: z
+    .union([z.number(), z.string()])
+    .transform((v) => String(v))
+    .refine((v) => Number(v) >= 0, 'Nilai residu tidak boleh negatif')
+    .default('0'),
   /// Override masaManfaat (default dari kelompok). Bulan.
   masaManfaatBulan: z.coerce.number().int().positive().optional(),
   /// Snapshot awal akumulasi (untuk onboarding aset existing).
-  akumulasiPenyusutan: z.union([z.number().nonnegative(), z.string()]).transform((v) => String(v)).default('0'),
+  akumulasiPenyusutan: z
+    .union([z.number(), z.string()])
+    .transform((v) => String(v))
+    .refine((v) => Number(v) >= 0, 'Akumulasi penyusutan awal tidak boleh negatif')
+    .default('0'),
   lastDepresiasiPeriode: z.string().regex(/^\d{4}-\d{2}$/).optional(),
   akunAsetId: z.string().uuid(),
   akunAkumulasiId: z.string().uuid(),
