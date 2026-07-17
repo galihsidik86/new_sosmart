@@ -6,11 +6,13 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select, Textarea,
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
   buttonClass, type BadgeVariant,
 } from '@/components/ui';
 import { DokumenLinksInput } from '@/components/DokumenLinksInput';
 import { LinkBukti } from '@/components/LinkBukti';
+import { ProjectForm } from '@/components/ProjectForm';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 type Status = 'PERENCANAAN' | 'AKTIF' | 'DITAHAN' | 'SELESAI' | 'DIBATALKAN';
 type Prioritas = 'RENDAH' | 'SEDANG' | 'TINGGI';
@@ -78,29 +80,34 @@ interface UserRow { userId: string; email: string; nama: string }
 interface Account { id: string; kode: string; nama: string; isPostable: boolean }
 interface CustomerOpt { id: string; kode: string; nama: string }
 
-async function updateAction(formData: FormData) {
+async function updateAction(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
   const id = String(formData.get('id'));
-  await apiFetch(`/projects/${id}`, {
-    method: 'PATCH',
-    tenantId,
-    body: JSON.stringify({
-      nama: formData.get('nama'),
-      deskripsi: (formData.get('deskripsi') as string) || null,
-      status: formData.get('status'),
-      prioritas: formData.get('prioritas'),
-      tanggalMulai: formData.get('tanggalMulai') || undefined,
-      tanggalSelesai: formData.get('tanggalSelesai') || null,
-      budgetTotal: formData.get('budgetTotal') || null,
-      nilaiKontrak: formData.get('nilaiKontrak') || null,
-      pjUserId: (formData.get('pjUserId') as string) || null,
-      customerId: (formData.get('customerId') as string) || null,
-      catatan: (formData.get('catatan') as string) || null,
-    }),
-  });
+  try {
+    await apiFetch(`/projects/${id}`, {
+      method: 'PATCH',
+      tenantId,
+      body: JSON.stringify({
+        nama: formData.get('nama'),
+        deskripsi: (formData.get('deskripsi') as string) || null,
+        status: formData.get('status'),
+        prioritas: formData.get('prioritas'),
+        tanggalMulai: formData.get('tanggalMulai') || undefined,
+        tanggalSelesai: formData.get('tanggalSelesai') || null,
+        budgetTotal: formData.get('budgetTotal') || null,
+        nilaiKontrak: formData.get('nilaiKontrak') || null,
+        pjUserId: (formData.get('pjUserId') as string) || null,
+        customerId: (formData.get('customerId') as string) || null,
+        catatan: (formData.get('catatan') as string) || null,
+      }),
+    });
+  } catch (e) {
+    return { ...apiErrorToState(e, formData), attempt: (_prev.attempt ?? 0) + 1 };
+  }
   revalidatePath(`/master/project/${id}`);
+  redirect(`/master/project/${id}`);
 }
 
 async function addTaskAction(formData: FormData) {
@@ -327,53 +334,14 @@ export default async function ProjectDetailPage({
         <div className="grid grid-cols-2 gap-6 mb-6">
           <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Info & Status</h2>
-            <form action={updateAction} className="space-y-3 text-sm">
-              <input type="hidden" name="id" value={p.id} />
-              <FormField label="Nama" required><Input name="nama" defaultValue={p.nama} required /></FormField>
-              <FormField label="Deskripsi"><Textarea name="deskripsi" rows={2} defaultValue={p.deskripsi ?? ''} /></FormField>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Status">
-                  <Select name="status" defaultValue={p.status}>
-                    {(Object.keys(STATUS_LABEL) as Status[]).map((st) => (
-                      <option key={st} value={st}>{STATUS_LABEL[st]}</option>
-                    ))}
-                  </Select>
-                </FormField>
-                <FormField label="Prioritas">
-                  <Select name="prioritas" defaultValue={p.prioritas}>
-                    <option value="RENDAH">Rendah</option>
-                    <option value="SEDANG">Sedang</option>
-                    <option value="TINGGI">Tinggi</option>
-                  </Select>
-                </FormField>
-              </div>
-              <FormField label="Penanggung jawab (PIC)">
-                <Select name="pjUserId" defaultValue={p.pjUserId ?? ''}>
-                  <option value="">— belum ditentukan —</option>
-                  {users.map((u) => (
-                    <option key={u.userId} value={u.userId}>{u.nama}</option>
-                  ))}
-                </Select>
-              </FormField>
-              <FormField label="Klien / Pelanggan">
-                <Select name="customerId" defaultValue={p.customerId ?? ''}>
-                  <option value="">— tanpa klien —</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
-                  ))}
-                </Select>
-              </FormField>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Tanggal Mulai"><Input name="tanggalMulai" type="date" defaultValue={p.tanggalMulai.slice(0, 10)} /></FormField>
-                <FormField label="Tanggal Selesai"><Input name="tanggalSelesai" type="date" defaultValue={p.tanggalSelesai?.slice(0, 10) ?? ''} /></FormField>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Budget (biaya)"><Input name="budgetTotal" type="number" defaultValue={p.budgetTotal ?? ''} /></FormField>
-                <FormField label="Nilai Kontrak"><Input name="nilaiKontrak" type="number" defaultValue={p.nilaiKontrak ?? ''} /></FormField>
-              </div>
-              <FormField label="Catatan"><Textarea name="catatan" rows={2} defaultValue={p.catatan ?? ''} /></FormField>
-              <Button type="submit" className="w-full">Simpan</Button>
-            </form>
+            <ProjectForm
+              mode="edit"
+              action={updateAction}
+              users={users}
+              customers={customers}
+              defaults={p}
+              submitLabel="Simpan"
+            />
           </Card>
 
           <Card>

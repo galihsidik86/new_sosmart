@@ -6,9 +6,11 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select, Textarea,
+  PageContainer, PageHeader, Card, Badge,
   Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, type BadgeVariant,
 } from '@/components/ui';
+import { ProjectForm } from '@/components/ProjectForm';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 type Status = 'PERENCANAAN' | 'AKTIF' | 'DITAHAN' | 'SELESAI' | 'DIBATALKAN';
 type Prioritas = 'RENDAH' | 'SEDANG' | 'TINGGI';
@@ -46,29 +48,34 @@ interface ProjectRow {
   _count: { members: number; budgets: number };
 }
 
-async function createProjectAction(formData: FormData) {
+async function createProjectAction(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch('/projects', {
-    method: 'POST',
-    tenantId,
-    body: JSON.stringify({
-      kode: String(formData.get('kode') ?? ''),
-      nama: String(formData.get('nama') ?? ''),
-      deskripsi: String(formData.get('deskripsi') ?? '') || undefined,
-      tanggalMulai: String(formData.get('tanggalMulai') ?? ''),
-      tanggalSelesai: String(formData.get('tanggalSelesai') ?? '') || undefined,
-      status: String(formData.get('status') ?? '') || undefined,
-      prioritas: String(formData.get('prioritas') ?? '') || undefined,
-      budgetTotal: String(formData.get('budgetTotal') ?? '') || undefined,
-      nilaiKontrak: String(formData.get('nilaiKontrak') ?? '') || undefined,
-      pjUserId: String(formData.get('pjUserId') ?? '') || undefined,
-      customerId: String(formData.get('customerId') ?? '') || undefined,
-      industriId: String(formData.get('industriId') ?? '') || undefined,
-    }),
-  });
+  try {
+    await apiFetch('/projects', {
+      method: 'POST',
+      tenantId,
+      body: JSON.stringify({
+        kode: String(formData.get('kode') ?? ''),
+        nama: String(formData.get('nama') ?? ''),
+        deskripsi: String(formData.get('deskripsi') ?? '') || undefined,
+        tanggalMulai: String(formData.get('tanggalMulai') ?? ''),
+        tanggalSelesai: String(formData.get('tanggalSelesai') ?? '') || undefined,
+        status: String(formData.get('status') ?? '') || undefined,
+        prioritas: String(formData.get('prioritas') ?? '') || undefined,
+        budgetTotal: String(formData.get('budgetTotal') ?? '') || undefined,
+        nilaiKontrak: String(formData.get('nilaiKontrak') ?? '') || undefined,
+        pjUserId: String(formData.get('pjUserId') ?? '') || undefined,
+        customerId: String(formData.get('customerId') ?? '') || undefined,
+        industriId: String(formData.get('industriId') ?? '') || undefined,
+      }),
+    });
+  } catch (e) {
+    return { ...apiErrorToState(e, formData), attempt: (_prev.attempt ?? 0) + 1 };
+  }
   revalidatePath('/master/project');
+  redirect('/master/project');
 }
 
 export default async function ProjectsPage({
@@ -180,60 +187,13 @@ export default async function ProjectsPage({
 
           <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Project</h2>
-            <form action={createProjectAction} className="space-y-3 text-sm">
-              <FormField label="Kode" required><Input name="kode" required placeholder="PRJ-001" /></FormField>
-              <FormField label="Nama Project" required><Input name="nama" required /></FormField>
-              <FormField label="Deskripsi"><Textarea name="deskripsi" rows={2} /></FormField>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Status">
-                  <Select name="status" defaultValue="AKTIF">
-                    {(Object.keys(STATUS_LABEL) as Status[]).map((st) => (
-                      <option key={st} value={st}>{STATUS_LABEL[st]}</option>
-                    ))}
-                  </Select>
-                </FormField>
-                <FormField label="Prioritas">
-                  <Select name="prioritas" defaultValue="SEDANG">
-                    <option value="RENDAH">Rendah</option>
-                    <option value="SEDANG">Sedang</option>
-                    <option value="TINGGI">Tinggi</option>
-                  </Select>
-                </FormField>
-              </div>
-              <FormField label="Penanggung jawab (PIC)">
-                <Select name="pjUserId" defaultValue="">
-                  <option value="">— belum ditentukan —</option>
-                  {users.map((u) => (
-                    <option key={u.userId} value={u.userId}>{u.nama}</option>
-                  ))}
-                </Select>
-              </FormField>
-              <FormField label="Klien / Pelanggan">
-                <Select name="customerId" defaultValue="">
-                  <option value="">— tanpa klien —</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
-                  ))}
-                </Select>
-              </FormField>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Tanggal Mulai" required><Input name="tanggalMulai" type="date" required /></FormField>
-                <FormField label="Tanggal Selesai"><Input name="tanggalSelesai" type="date" /></FormField>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Budget (biaya)"><Input name="budgetTotal" type="number" placeholder="0" /></FormField>
-                <FormField label="Nilai Kontrak"><Input name="nilaiKontrak" type="number" placeholder="0" /></FormField>
-              </div>
-              <FormField label="Jenis Industri (opsional)">
-                <Select name="industriId" defaultValue="">
-                  <option value="">— pilih industri —</option>
-                  {industri.map((i) => (
-                    <option key={i.id} value={i.id}>{i.nama}</option>
-                  ))}
-                </Select>
-              </FormField>
-              <Button type="submit" className="w-full">Tambah Project</Button>
-            </form>
+            <ProjectForm
+              mode="create"
+              action={createProjectAction}
+              users={users}
+              customers={customers}
+              industriList={industri}
+            />
           </Card>
         </div>
       </PageContainer>

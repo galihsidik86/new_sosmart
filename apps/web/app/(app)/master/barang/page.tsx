@@ -1,14 +1,17 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { ImportExcelButton } from '@/components/ImportExcelButton';
 import { apiFetch } from '@/lib/api';
 import { uploadXlsx } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
+  PageContainer, PageHeader, Card, Badge,
   Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, buttonClass,
 } from '@/components/ui';
+import { ItemForm } from '@/components/ItemForm';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 async function importItemsAction(formData: FormData) {
   'use server';
@@ -46,27 +49,32 @@ const KLASIFIKASI_LABEL: Record<ItemRow['klasifikasiPpn'], string> = {
   BEBAS_PPN: 'Bebas PPN',
 };
 
-async function createItem(formData: FormData) {
+async function createItem(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
-  if (!tenantId) throw new Error('Tenant tidak aktif');
+  if (!tenantId) return { ok: false, message: 'Tenant tidak aktif' };
   const isJasa = formData.get('isJasa') === 'on';
   const pph23TarifId = String(formData.get('pph23TarifId') ?? '');
-  await apiFetch('/items', {
-    method: 'POST',
-    tenantId,
-    body: JSON.stringify({
-      kode: formData.get('kode'),
-      nama: formData.get('nama'),
-      kategori: formData.get('kategori') || undefined,
-      satuan: formData.get('satuan') || 'Pcs',
-      hargaJualDefault: String(formData.get('hargaJualDefault') ?? '0'),
-      klasifikasiPpn: formData.get('klasifikasiPpn') ?? 'BKP',
-      isJasa,
-      pph23TarifId: isJasa && pph23TarifId ? pph23TarifId : null,
-    }),
-  });
+  try {
+    await apiFetch('/items', {
+      method: 'POST',
+      tenantId,
+      body: JSON.stringify({
+        kode: formData.get('kode'),
+        nama: formData.get('nama'),
+        kategori: formData.get('kategori') || undefined,
+        satuan: formData.get('satuan') || 'Pcs',
+        hargaJualDefault: String(formData.get('hargaJualDefault') ?? '0'),
+        klasifikasiPpn: formData.get('klasifikasiPpn') ?? 'BKP',
+        isJasa,
+        pph23TarifId: isJasa && pph23TarifId ? pph23TarifId : null,
+      }),
+    });
+  } catch (e) {
+    return { ...apiErrorToState(e, formData), attempt: (_prev.attempt ?? 0) + 1 };
+  }
   revalidatePath('/master/barang');
+  redirect('/master/barang');
 }
 
 export default async function MasterBarangPage({
@@ -182,45 +190,7 @@ export default async function MasterBarangPage({
 
           <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Item</h2>
-            <form action={createItem} className="space-y-3">
-              <FormField label="Kode" required><Input name="kode" required placeholder="BRG-007" /></FormField>
-              <FormField label="Nama" required><Input name="nama" required placeholder="Beras Medium 5 kg" /></FormField>
-              <div className="grid grid-cols-2 gap-2">
-                <FormField label="Kategori"><Input name="kategori" placeholder="Sembako" /></FormField>
-                <FormField label="Satuan"><Input name="satuan" defaultValue="Pcs" /></FormField>
-              </div>
-              <FormField label="Harga jual (Rp)"><Input name="hargaJualDefault" type="number" defaultValue="0" /></FormField>
-              <FormField label="Klasifikasi PPN">
-                <Select name="klasifikasiPpn" defaultValue="BKP">
-                  {(['BKP', 'JKP', 'NON_BKP', 'BKP_STRATEGIS', 'BEBAS_PPN'] as const).map((k) => (
-                    <option key={k} value={k}>
-                      {KLASIFIKASI_LABEL[k]}
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
-              <label className="flex items-center gap-2 text-sm text-tanah-700">
-                <input type="checkbox" name="isJasa" />
-                Adalah jasa (kena PPh 23)
-              </label>
-              <FormField
-                label={
-                  <>
-                    Tarif PPh 23 <span className="text-tanah-500 normal-case font-normal">(hanya jika jasa)</span>
-                  </>
-                }
-              >
-                <Select name="pph23TarifId" defaultValue="">
-                  <option value="">— tidak preset —</option>
-                  {tarifList.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {Number(t.tarif)}% · {t.nama}
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
-              <Button type="submit" className="w-full">Simpan</Button>
-            </form>
+            <ItemForm mode="create" action={createItem} tarifList={tarifList} />
           </Card>
         </div>
       </PageContainer>
