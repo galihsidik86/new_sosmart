@@ -36,9 +36,12 @@ export function VendorForm({
   const [state, formAction, pending] = useActionState(action, emptyFormState);
   const fe = state.fieldErrors ?? {};
   const d = defaults ?? {};
+  const sv = state.values;
+  const v = (k: string, fallback: string) => sv?.[k] ?? fallback;
+  const pkp = sv ? sv.isPkp === 'on' : !!d.isPkp;
 
   return (
-    <form action={formAction} className="space-y-3 text-sm">
+    <form key={state.attempt ?? 0} action={formAction} className="space-y-3 text-sm">
       {mode === 'edit' && <input type="hidden" name="id" value={d.id} />}
       {!state.ok && state.message && !state.fieldErrors && (
         <div className="px-3 py-2 rounded-lg bg-bata-100 border border-bata-300 text-xs text-bata-700">
@@ -46,35 +49,35 @@ export function VendorForm({
         </div>
       )}
       <FormField label="Kode" required>
-        <Input name="kode" required defaultValue={d.kode ?? ''} invalid={!!fe.kode} placeholder="VEN-006" />
+        <Input name="kode" required defaultValue={v('kode', d.kode ?? '')} invalid={!!fe.kode} placeholder="VEN-006" />
         <FieldError msg={fe.kode} />
       </FormField>
       <FormField label="Nama" required>
-        <Input name="nama" required defaultValue={d.nama ?? ''} invalid={!!fe.nama} placeholder="PT …" />
+        <Input name="nama" required defaultValue={v('nama', d.nama ?? '')} invalid={!!fe.nama} placeholder="PT …" />
         <FieldError msg={fe.nama} />
       </FormField>
       <FormField label="NPWP (15/16 digit)">
-        <Input name="npwp" defaultValue={d.npwp ?? ''} invalid={!!fe.npwp} placeholder="01.234.567.8-501.000" />
+        <Input name="npwp" defaultValue={v('npwp', d.npwp ?? '')} invalid={!!fe.npwp} placeholder="01.234.567.8-501.000" />
         <FieldError msg={fe.npwp} />
       </FormField>
       <label className="flex items-center gap-2 text-tanah-700">
-        <input type="checkbox" name="isPkp" defaultChecked={!!d.isPkp} />
+        <input type="checkbox" name="isPkp" defaultChecked={pkp} />
         Pemasok ini PKP (PPN masukan dapat dikreditkan)
       </label>
       <FormField label="Kategori">
-        <Input name="kategori" defaultValue={d.kategori ?? ''} placeholder="Barang Dagang / Jasa" />
+        <Input name="kategori" defaultValue={v('kategori', d.kategori ?? '')} placeholder="Barang Dagang / Jasa" />
       </FormField>
       <div className="grid grid-cols-2 gap-2">
-        <FormField label="Kota"><Input name="kota" defaultValue={d.kota ?? ''} /></FormField>
-        <FormField label="Telp"><Input name="telp" defaultValue={d.telp ?? ''} /></FormField>
+        <FormField label="Kota"><Input name="kota" defaultValue={v('kota', d.kota ?? '')} /></FormField>
+        <FormField label="Telp"><Input name="telp" defaultValue={v('telp', d.telp ?? '')} /></FormField>
       </div>
       <FormField label="Termin (hari)">
-        <Input name="terminHari" type="number" defaultValue={String(d.terminHari ?? 30)} invalid={!!fe.terminHari} />
+        <Input name="terminHari" type="number" defaultValue={v('terminHari', String(d.terminHari ?? 30))} invalid={!!fe.terminHari} />
         <FieldError msg={fe.terminHari} />
       </FormField>
       {partners && partners.length > 0 && (
         <FormField label="Entitas intra-grup (intercompany)">
-          <Select name="partnerTenantId" defaultValue={d.partnerTenantId ?? ''}>
+          <Select name="partnerTenantId" defaultValue={v('partnerTenantId', d.partnerTenantId ?? '')}>
             <option value="">— bukan intra-grup —</option>
             {partners.map((p) => (
               <option key={p.tenantId} value={p.tenantId}>{p.nama}</option>

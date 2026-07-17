@@ -54,7 +54,7 @@ async function createVendor(_prev: FormState, formData: FormData): Promise<FormS
       }),
     });
   } catch (e) {
-    return apiErrorToState(e);
+    return { ...apiErrorToState(e, formData), attempt: (_prev.attempt ?? 0) + 1 };
   }
   revalidatePath('/master/vendor');
   redirect('/master/vendor');

@@ -46,7 +46,7 @@ async function updateCustomer(_prev: FormState, formData: FormData): Promise<For
       }),
     });
   } catch (e) {
-    return apiErrorToState(e);
+    return { ...apiErrorToState(e, formData), attempt: (_prev.attempt ?? 0) + 1 };
   }
   revalidatePath('/master/pelanggan');
   redirect('/master/pelanggan');

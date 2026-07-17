@@ -7,16 +7,28 @@ export interface FormState {
   ok: boolean;
   message?: string;
   fieldErrors?: Record<string, string>;
+  /** Nilai yang tadi diketik user, untuk mengisi ulang form saat error. */
+  values?: Record<string, string>;
+  /** Naik tiap submit gagal → dipakai sebagai key remount form. */
+  attempt?: number;
 }
 
 export const emptyFormState: FormState = { ok: false };
+
+/** Ambil semua field string dari FormData (untuk isi ulang form saat error). */
+export function formValues(fd: FormData): Record<string, string> {
+  const o: Record<string, string> = {};
+  for (const [k, v] of fd.entries()) if (typeof v === 'string') o[k] = v;
+  return o;
+}
 
 /**
  * Ubah error dari apiFetch (mis. `Error("API 400: {json}")`) menjadi FormState
  * dengan pesan per kolom dari Zod `issues[]`. Konflik kode (409) dipetakan ke
  * field "kode".
  */
-export function apiErrorToState(e: unknown): FormState {
+export function apiErrorToState(e: unknown, fd?: FormData): FormState {
+  const values = fd ? formValues(fd) : undefined;
   const raw = e instanceof Error ? e.message : String(e);
   const m = raw.match(/API \d+:\s*(\{[\s\S]*\})/);
   if (m) {
@@ -42,10 +54,11 @@ export function apiErrorToState(e: unknown): FormState {
         ok: false,
         message: msg,
         fieldErrors: Object.keys(fieldErrors).length ? fieldErrors : undefined,
+        values,
       };
     } catch {
       /* jatuh ke pesan mentah di bawah */
     }
   }
-  return { ok: false, message: raw.replace(/^API \d+:\s*/, '') || 'Terjadi kesalahan' };
+  return { ok: false, message: raw.replace(/^API \d+:\s*/, '') || 'Terjadi kesalahan', values };
 }
