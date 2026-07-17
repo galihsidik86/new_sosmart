@@ -3,6 +3,7 @@ import { CashBankForm } from '@/components/CashBankForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Account { id: string; kode: string; nama: string; isPostable: boolean }
 interface Cabang { id: string; kode: string; nama: string }
@@ -18,15 +19,20 @@ interface PurchaseRow {
 }
 interface Project { id: string; kode: string; nama: string }
 
-async function submitCashBank(formData: FormData) {
+async function submitCashBank(formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
   const payload = JSON.parse(String(formData.get('payload')));
-  await apiFetch('/cash-bank', {
-    method: 'POST', tenantId,
-    body: JSON.stringify(payload),
-  });
+  try {
+    await apiFetch('/cash-bank', {
+      method: 'POST', tenantId,
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    return apiErrorToState(e);
+  }
+  return { ok: true };
 }
 
 export default async function KasBankBaruPage() {
@@ -56,7 +62,7 @@ export default async function KasBankBaruPage() {
   }));
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader title="Bukti Kas / Bank Baru" />
         <CashBankForm

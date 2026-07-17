@@ -3,6 +3,7 @@ import { CashBankForm } from '@/components/CashBankForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Account { id: string; kode: string; nama: string; isPostable: boolean }
 interface Cabang { id: string; kode: string; nama: string }
@@ -71,14 +72,19 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
     totalNetto: r.totalNetto, totalDibayar: r.totalDibayar,
   }));
 
-  async function submitEdit(formData: FormData) {
+  async function submitEdit(formData: FormData): Promise<FormState> {
     'use server';
     const tid = await getActiveTenantId(); if (!tid) redirect('/login');
     const payload = JSON.parse(String(formData.get('payload')));
-    await apiFetch(`/cash-bank/${id}`, {
-      method: 'PATCH', tenantId: tid,
-      body: JSON.stringify(payload),
-    });
+    try {
+      await apiFetch(`/cash-bank/${id}`, {
+        method: 'PATCH', tenantId: tid,
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      return apiErrorToState(e);
+    }
+    return { ok: true };
   }
 
   return (

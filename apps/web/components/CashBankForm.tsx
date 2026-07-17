@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 type Tipe = 'RECEIPT' | 'PAYMENT' | 'TRANSFER';
 
@@ -48,7 +49,9 @@ interface CashBankFormProps {
   openSales: InvoiceSummary[];
   openPurchases: InvoiceSummary[];
   projects?: Project[];
-  submit: (formData: FormData) => Promise<void>;
+  /** Server action: kembalikan FormState (ok:false + message) saat gagal —
+   *  ditangkap server-side supaya pesan tak ter-redaksi produksi. */
+  submit: (formData: FormData) => Promise<FormState | void>;
   defaultValues?: CashBankDefaultValues;
   redirectTo?: string;
   submitLabel?: string;
@@ -169,10 +172,14 @@ export function CashBankForm({
     fd.append('payload', JSON.stringify(payload));
     startTransition(async () => {
       try {
-        await submit(fd);
+        const res = await submit(fd);
+        if (res && !res.ok) {
+          setError(res.message ?? 'Gagal menyimpan');
+          return;
+        }
         router.push((redirectTo ?? '/transaksi/kas-bank') as Route);
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+        setError(apiErrorToState(e).message ?? 'Gagal menyimpan');
       }
     });
   };
