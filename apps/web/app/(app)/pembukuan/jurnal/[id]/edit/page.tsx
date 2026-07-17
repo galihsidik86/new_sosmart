@@ -3,6 +3,7 @@ import { JurnalForm } from '@/components/JurnalForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Account {
   id: string;
@@ -48,16 +49,21 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
   }
   if (!j.lines.length) notFound();
 
-  async function submitEdit(formData: FormData) {
+  async function submitEdit(formData: FormData): Promise<FormState> {
     'use server';
     const tid = await getActiveTenantId();
     if (!tid) redirect('/login');
     const payload = JSON.parse(String(formData.get('payload')));
-    await apiFetch(`/journals/${id}`, {
-      method: 'PATCH',
-      tenantId: tid,
-      body: JSON.stringify(payload),
-    });
+    try {
+      await apiFetch(`/journals/${id}`, {
+        method: 'PATCH',
+        tenantId: tid,
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      return apiErrorToState(e);
+    }
+    return { ok: true };
   }
 
   return (

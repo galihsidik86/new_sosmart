@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
-import { apiErrorToState } from '@/lib/form-state';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Account {
   id: string;
@@ -39,8 +39,10 @@ interface JurnalFormProps {
   cabang: Cabang[];
   /** List project AKTIF untuk tenant. Kalau kosong, kolom project disembunyikan. */
   projects?: Project[];
-  /** Server action: terima FormData berisi JSON di field 'payload'. */
-  submit: (formData: FormData) => Promise<void>;
+  /** Server action: terima FormData berisi JSON di field 'payload'.
+   *  Kembalikan FormState (ok:false + message) saat gagal — server action
+   *  menangkap error di sisi server supaya pesan tak ter-redaksi produksi. */
+  submit: (formData: FormData) => Promise<FormState | void>;
   /** Kalau diisi, form jalan dalam mode edit (prefilled). */
   defaultValues?: DefaultValues;
   /** Path redirect setelah submit sukses (default '/pembukuan/jurnal'). */
@@ -190,10 +192,13 @@ export function JurnalForm({
     fd.append('payload', JSON.stringify(payload));
     startTransition(async () => {
       try {
-        await submit(fd);
+        const res = await submit(fd);
+        if (res && !res.ok) {
+          setError(res.message ?? 'Gagal menyimpan jurnal');
+          return;
+        }
         router.push((redirectTo ?? '/pembukuan/jurnal') as Route);
       } catch (e) {
-        // Ubah "API 400: {json}" jadi pesan yang ramah.
         setError(apiErrorToState(e).message ?? 'Gagal menyimpan jurnal');
       }
     });
