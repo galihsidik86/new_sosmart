@@ -7,19 +7,27 @@ async function loginAction(formData: FormData) {
   'use server';
   const email = String(formData.get('email') ?? '');
   const password = String(formData.get('password') ?? '');
-  const r = await apiLogin(email, password);
-
-  // Kalau user cuma punya 1 tenant, auto-pilih supaya hemat klik.
-  const single = r.memberships.length === 1 ? r.memberships[0] : undefined;
-  await setSession({
-    accessToken: r.accessToken,
-    refreshToken: r.refreshToken,
-    user: r.user,
-    ...(single
-      ? { tenantId: single.tenantId, tenantNama: single.tenantNama, role: single.role }
-      : {}),
-  });
-  redirect(single ? '/dashboard' : '/pilih-tenant');
+  // Tangkap error kredensial supaya tampil sebagai pesan ramah, bukan
+  // "Application error" (server-side exception). redirect() dipanggil di luar
+  // try agar NEXT_REDIRECT tidak ikut tertangkap.
+  let dest = '/pilih-tenant';
+  try {
+    const r = await apiLogin(email, password);
+    // Kalau user cuma punya 1 tenant, auto-pilih supaya hemat klik.
+    const single = r.memberships.length === 1 ? r.memberships[0] : undefined;
+    await setSession({
+      accessToken: r.accessToken,
+      refreshToken: r.refreshToken,
+      user: r.user,
+      ...(single
+        ? { tenantId: single.tenantId, tenantNama: single.tenantNama, role: single.role }
+        : {}),
+    });
+    dest = single ? '/dashboard' : '/pilih-tenant';
+  } catch {
+    redirect('/login?error=kredensial');
+  }
+  redirect(dest);
 }
 
 const FITUR = [
@@ -31,7 +39,7 @@ const FITUR = [
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session_expired?: string }>;
+  searchParams: Promise<{ session_expired?: string; error?: string }>;
 }) {
   const sp = await searchParams;
   const s = await getSession();
@@ -124,6 +132,11 @@ export default async function LoginPage({
           {sp.session_expired && (
             <div className="mb-4 px-3 py-2 rounded-lg bg-emas-100 border border-emas-300 text-sm text-emas-700">
               Sesi sudah berakhir. Silakan masuk ulang.
+            </div>
+          )}
+          {sp.error === 'kredensial' && (
+            <div className="mb-4 px-3 py-2 rounded-lg bg-bata-100 border border-bata-300 text-sm text-bata-700">
+              Email atau password salah. Silakan periksa kembali.
             </div>
           )}
 
