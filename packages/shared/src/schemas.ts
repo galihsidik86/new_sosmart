@@ -520,7 +520,10 @@ export const createAsetInputSchema = z.object({
   metode: z.nativeEnum(MetodePenyusutan).default(MetodePenyusutan.GARIS_LURUS),
   tanggalPerolehan: isoDateStrict,
   mulaiPenyusutan: isoDateStrict.optional(), // default: bulan setelah perolehan
-  hargaPerolehan: z.union([z.number().positive(), z.string()]).transform((v) => String(v)),
+  hargaPerolehan: z
+    .union([z.number(), z.string()])
+    .transform((v) => String(v))
+    .refine((v) => Number(v) > 0, 'Harga perolehan wajib lebih dari 0'),
   nilaiResidu: z.union([z.number().nonnegative(), z.string()]).transform((v) => String(v)).default('0'),
   /// Override masaManfaat (default dari kelompok). Bulan.
   masaManfaatBulan: z.coerce.number().int().positive().optional(),
