@@ -560,7 +560,11 @@ export type CreateAsetInput = z.infer<typeof createAsetInputSchema>;
 
 export const disposeAsetInputSchema = z.object({
   tanggalDihentikan: isoDateStrict,
-  hargaJual: z.union([z.number().nonnegative(), z.string()]).transform((v) => String(v)).default('0'),
+  hargaJual: z
+    .union([z.number(), z.string()])
+    .transform((v) => String(v))
+    .refine((v) => Number(v) >= 0, 'Harga jual tidak boleh negatif')
+    .default('0'),
   /// Akun kas/bank tempat hasil penjualan masuk (kalau dijual). Optional kalau RUSAK/PENSIUN.
   akunKasBankId: z.string().uuid().optional(),
   statusBaru: z.enum(['DIJUAL', 'RUSAK', 'PENSIUN']),

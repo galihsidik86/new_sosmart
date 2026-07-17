@@ -5,6 +5,8 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canCancelPosted, canPostAccounting } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { apiErrorToState, type FormState } from '@/lib/form-state';
+import { DisposeForm } from '@/components/DisposeForm';
 import { PageContainer, PageHeader, Card, Button, Badge, type BadgeVariant } from '@/components/ui';
 
 type Status = 'AKTIF' | 'DIJUAL' | 'RUSAK' | 'PENSIUN';
@@ -49,7 +51,7 @@ interface Detail {
   }>;
 }
 
-async function disposeAction(formData: FormData) {
+async function disposeAction(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId(); if (!tenantId) redirect('/login');
   const id = String(formData.get('id'));
@@ -60,11 +62,16 @@ async function disposeAction(formData: FormData) {
     akunKasBankId: (formData.get('akunKasBankId') as string) || undefined,
     catatan: (formData.get('catatan') as string) || undefined,
   };
-  await apiFetch(`/aset/${id}/dispose`, {
-    method: 'POST', tenantId,
-    body: JSON.stringify(payload),
-  });
+  try {
+    await apiFetch(`/aset/${id}/dispose`, {
+      method: 'POST', tenantId,
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    return { ...apiErrorToState(e, formData), attempt: (_prev.attempt ?? 0) + 1 };
+  }
   revalidatePath(`/aset/${id}`);
+  return { ok: true };
 }
 
 async function undisposeAction(formData: FormData) {
@@ -93,7 +100,7 @@ export default async function AsetDetailPage({
   const mayUndispose = canCancelPosted(s.role);
 
   return (
-    <>
+    <>
       <PageContainer size="form">
         <PageHeader
           title={`${aset.kode} — ${aset.nama}`}
@@ -180,46 +187,12 @@ export default async function AsetDetailPage({
         ) : aset.status === 'AKTIF' ? (
           <Card>
             <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Penghentian Aset</h2>
-            <form action={disposeAction} className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <input type="hidden" name="id" value={aset.id} />
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Tanggal</label>
-                <input type="date" name="tanggalDihentikan" required defaultValue={new Date().toISOString().slice(0, 10)}
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Status Baru</label>
-                <select name="statusBaru" required defaultValue="DIJUAL"
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
-                  <option value="DIJUAL">DIJUAL</option>
-                  <option value="RUSAK">RUSAK</option>
-                  <option value="PENSIUN">PENSIUN</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Harga Jual (kalau DIJUAL)</label>
-                <input type="number" min={0} step="0.01" name="hargaJual" defaultValue="0"
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm text-right font-mono tabular-nums" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akun Kas/Bank Terima</label>
-                <select name="akunKasBankId"
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
-                  <option value="">— pilih —</option>
-                  {kasBank.map((a) => <option key={a.id} value={a.id}>{a.kode}  {a.nama}</option>)}
-                </select>
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Catatan</label>
-                <input type="text" name="catatan" placeholder="(opsional)"
-                  className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm" />
-              </div>
-              <div className="sm:col-span-2 flex justify-end">
-                <Button type="submit" variant="danger">
-                  Hentikan Aset (auto-jurnal)
-                </Button>
-              </div>
-            </form>
+            <DisposeForm
+              asetId={aset.id}
+              today={new Date().toISOString().slice(0, 10)}
+              kasBank={kasBank}
+              action={disposeAction}
+            />
           </Card>
         ) : (
           <Card>
