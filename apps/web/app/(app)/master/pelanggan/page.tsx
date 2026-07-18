@@ -13,6 +13,7 @@ import {
 import { ListFilters } from '@/components/ListFilters';
 import { buildListHref } from '@/lib/list-query';
 import { CustomerForm } from '@/components/CustomerForm';
+import { CustomerReportButton } from '@/components/CustomerReportButton';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 async function importCustomersAction(formData: FormData) {
@@ -79,6 +80,9 @@ export default async function PelangganPage({
     apiFetch<CustomerRow[]>(buildListHref('/customers', apiParams), { tenantId }),
     apiFetch<JenisPelanggan[]>('/jenis-pelanggan', { tenantId }),
   ]);
+  const jenisNama = sp.jenisPelangganId
+    ? jenisList.find((j) => j.id === sp.jenisPelangganId)?.nama
+    : undefined;
 
   return (
     <>
@@ -88,6 +92,12 @@ export default async function PelangganPage({
           subtitle={`${customers.length} pelanggan · pelanggan PKP berhak terima faktur pajak.`}
           actions={
             <>
+              <CustomerReportButton
+                customers={customers}
+                orgName={s.tenantNama ?? 'Perusahaan'}
+                search={sp.search}
+                jenisNama={jenisNama}
+              />
               <a href={buildListHref('/proxy/customers/export.xlsx', apiParams)} className={buttonClass('success')}>Export Excel</a>
               <ImportExcelButton importAction={importCustomersAction} />
             </>
