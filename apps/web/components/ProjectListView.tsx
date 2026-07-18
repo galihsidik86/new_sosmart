@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { fmtRp, fmtTanggal } from '@/lib/format';
+import { exportRowsToXlsx } from '@/lib/xlsx-lite';
 import {
   Badge, Button, FilterBar, FilterLabel, Input, Select,
   Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow, type BadgeVariant,
@@ -175,6 +176,26 @@ export function ProjectListView({
     w.focus();
   }
 
+  function exportExcel() {
+    exportRowsToXlsx(
+      'daftar-project',
+      'Project',
+      ['No', 'Kode', 'Nama', 'Penanggung Jawab', 'Mulai', 'Selesai', 'Status', 'Prioritas', 'Progres (%)', 'Budget'],
+      filtered.map((p, i) => [
+        i + 1,
+        p.kode,
+        p.nama,
+        p.pjNama ?? '',
+        fmtTanggal(p.tanggalMulai),
+        p.tanggalSelesai ? fmtTanggal(p.tanggalSelesai) : '',
+        STATUS_LABEL[p.status],
+        PRIO_LABEL[p.prioritas],
+        p.taskTotal > 0 ? p.progress : '',
+        Number(p.budgetTotal ?? 0),
+      ]),
+    );
+  }
+
   return (
     <>
       <FilterBar>
@@ -220,10 +241,13 @@ export function ProjectListView({
             reset filter
           </button>
         )}
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-xs text-tanah-500">
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-tanah-500 mr-1">
             {filtered.length} dari {projects.length}
           </span>
+          <Button variant="success" size="sm" onClick={exportExcel} leftIcon={<span aria-hidden>⬇</span>}>
+            Export Excel
+          </Button>
           <Button variant="soft-sogan" size="sm" onClick={cetak} leftIcon={<span aria-hidden>🖨</span>}>
             Cetak Laporan
           </Button>

@@ -8,6 +8,7 @@ import {
   Table, THead, TH, TBody, TR, TD, RowActions, MoneyCell, EmptyRow,
 } from '@/components/ui';
 import { openPrintReport } from '@/lib/print-report';
+import { exportRowsToXlsx } from '@/lib/xlsx-lite';
 
 type Ptkp = 'TK_0' | 'TK_1' | 'TK_2' | 'TK_3' | 'K_0' | 'K_1' | 'K_2' | 'K_3' | 'HB_0' | 'HB_1' | 'HB_2' | 'HB_3';
 
@@ -96,6 +97,25 @@ export function KaryawanListView({ rows, orgName }: { rows: KaryawanRow[]; orgNa
     });
   }
 
+  function exportExcel() {
+    exportRowsToXlsx(
+      'daftar-karyawan',
+      'Karyawan',
+      ['No', 'Kode', 'Nama', 'Jabatan', 'PTKP', 'NIK', 'NPWP', 'Cabang', 'Gaji Pokok'],
+      filtered.map((k, i) => [
+        i + 1,
+        k.kode,
+        k.nama,
+        k.jabatan ?? '',
+        PTKP_LABEL[k.ptkpStatus],
+        k.nik,
+        k.npwp ? fmtNpwp(k.npwp) : '',
+        k.cabang?.kode ?? '',
+        Number(k.gajiPokok ?? 0),
+      ]),
+    );
+  }
+
   return (
     <>
       <FilterBar>
@@ -113,8 +133,9 @@ export function KaryawanListView({ rows, orgName }: { rows: KaryawanRow[]; orgNa
         {hasFilter && (
           <button type="button" onClick={reset} className="text-xs text-sogan-500 hover:underline">reset filter</button>
         )}
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-xs text-tanah-500">{filtered.length} dari {rows.length}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-tanah-500 mr-1">{filtered.length} dari {rows.length}</span>
+          <Button variant="success" size="sm" onClick={exportExcel} leftIcon={<span aria-hidden>⬇</span>}>Export Excel</Button>
           <Button variant="soft-sogan" size="sm" onClick={cetak} leftIcon={<span aria-hidden>🖨</span>}>Cetak Laporan</Button>
         </div>
       </FilterBar>

@@ -8,6 +8,7 @@ import {
   Table, THead, TH, TBody, TR, TD, RowActions, EmptyRow,
 } from '@/components/ui';
 import { openPrintReport } from '@/lib/print-report';
+import { exportRowsToXlsx } from '@/lib/xlsx-lite';
 
 export interface VendorRow {
   id: string;
@@ -95,6 +96,25 @@ export function VendorListView({ vendors, orgName }: { vendors: VendorRow[]; org
     });
   }
 
+  function exportExcel() {
+    exportRowsToXlsx(
+      'daftar-vendor',
+      'Vendor',
+      ['No', 'Kode', 'Nama', 'Kategori', 'PKP', 'NPWP', 'Kota', 'Telp', 'Termin (hari)'],
+      filtered.map((v, i) => [
+        i + 1,
+        v.kode,
+        v.nama,
+        v.kategori ?? '',
+        v.isPkp ? 'PKP' : '',
+        v.npwp ? fmtNpwp(v.npwp) : '',
+        v.kota ?? '',
+        v.telp ?? '',
+        v.terminHari,
+      ]),
+    );
+  }
+
   return (
     <>
       <FilterBar>
@@ -119,8 +139,9 @@ export function VendorListView({ vendors, orgName }: { vendors: VendorRow[]; org
         {hasFilter && (
           <button type="button" onClick={reset} className="text-xs text-sogan-500 hover:underline">reset filter</button>
         )}
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-xs text-tanah-500">{filtered.length} dari {vendors.length}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-tanah-500 mr-1">{filtered.length} dari {vendors.length}</span>
+          <Button variant="success" size="sm" onClick={exportExcel} leftIcon={<span aria-hidden>⬇</span>}>Export Excel</Button>
           <Button variant="soft-sogan" size="sm" onClick={cetak} leftIcon={<span aria-hidden>🖨</span>}>Cetak Laporan</Button>
         </div>
       </FilterBar>

@@ -28,7 +28,6 @@ export default async function KaryawanPage() {
           subtitle={`${rows.length} karyawan · PTKP menentukan kategori TER PMK 168/2023 untuk PPh 21 bulanan.`}
           actions={
             <>
-              <a href="/proxy/karyawan/export.xlsx" className={buttonClass('success')}>Export Excel</a>
               <ImportExcelButton importAction={importKaryawanAction} />
               <Link href="/pajak/karyawan/baru" className={buttonClass('primary')}>+ Tambah Karyawan</Link>
             </>

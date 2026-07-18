@@ -28,7 +28,6 @@ export default async function PelangganPage() {
           subtitle={`${customers.length} pelanggan · pelanggan PKP berhak terima faktur pajak.`}
           actions={
             <>
-              <a href="/proxy/customers/export.xlsx" className={buttonClass('success')}>Export Excel</a>
               <ImportExcelButton importAction={importCustomersAction} />
               <Link href="/master/pelanggan/baru" className={buttonClass('primary')}>+ Tambah Pelanggan</Link>
             </>

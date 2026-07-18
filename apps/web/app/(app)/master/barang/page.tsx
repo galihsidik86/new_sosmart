@@ -28,7 +28,6 @@ export default async function MasterBarangPage() {
           subtitle={`${items.length} item · klasifikasi PPN mengikuti PMK 131/2024.`}
           actions={
             <>
-              <a href="/proxy/items/export.xlsx" className={buttonClass('success')}>Export Excel</a>
               <ImportExcelButton importAction={importItemsAction} />
               <Link href="/master/barang/baru" className={buttonClass('primary')}>+ Tambah Item</Link>
             </>

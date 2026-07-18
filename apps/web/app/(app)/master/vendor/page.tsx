@@ -28,7 +28,6 @@ export default async function VendorPage() {
           subtitle={`${vendors.length} pemasok · status PKP menentukan PPN masukan dapat dikreditkan.`}
           actions={
             <>
-              <a href="/proxy/vendors/export.xlsx" className={buttonClass('success')}>Export Excel</a>
               <ImportExcelButton importAction={importVendorsAction} />
               <Link href="/master/vendor/baru" className={buttonClass('primary')}>+ Tambah Vendor</Link>
             </>
