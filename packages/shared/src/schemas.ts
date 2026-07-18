@@ -416,9 +416,9 @@ export const createPurchaseInvoiceInputSchema = z.object({
   linkBukti: z.string().url('Link bukti harus URL valid').max(2000).nullable().optional(),
   linkBuktiTambahan: linkBuktiTambahanSchema,
   hargaTermasukPajak: z.boolean().default(false),
-  tarifPpnPersen: z.coerce.number().refine((n) => [11, 12].includes(n)).default(11),
+  tarifPpnPersen: z.coerce.number().refine((n) => [11, 12].includes(n), 'Tarif PPN harus 11 atau 12').default(11),
   /// Tarif PPh 23 (2% jasa, 15% royalti/dividen/bunga).
-  tarifPph23Persen: z.coerce.number().refine((n) => [0, 2, 15].includes(n)).default(2),
+  tarifPph23Persen: z.coerce.number().refine((n) => [0, 2, 15].includes(n), 'Tarif PPh 23 harus 0, 2, atau 15').default(2),
   /// Apakah memotong PPh 23 (hanya berlaku kalau ada baris jasa).
   potongPph23: z.boolean().default(true),
   lines: z.array(purchaseLineInputSchema).min(1),
