@@ -43,8 +43,12 @@ export function LinkBukti({
 }
 
 /**
- * Menampilkan link bukti utama + semua bukti tambahan (variant 'full'), satu
- * per baris. Return null kalau tidak ada satu pun bukti.
+ * Galeri bukti transaksi: gambar → thumbnail preview, PDF → kartu dokumen, link
+ * eksternal → pill hostname. Semua bisa diklik (buka di tab baru). File bukti
+ * yang di-upload disajikan via `/proxy/uploads/bukti/…` (ber-otentikasi,
+ * same-origin → cookie sesi otomatis terkirim saat `<img>` memuat).
+ *
+ * Dirender inline (inline-flex) supaya aman di dalam `<p>`.
  */
 export function LinkBuktiList({
   linkBukti,
@@ -56,17 +60,74 @@ export function LinkBuktiList({
   const all = [
     ...(linkBukti ? [linkBukti] : []),
     ...(tambahan ?? []),
-  ];
+  ].filter(Boolean) as string[];
   if (all.length === 0) return null;
-  if (all.length === 1) return <LinkBukti url={all[0]} variant="full" />;
   return (
-    <span className="inline-flex flex-col gap-0.5 align-top">
-      {all.map((u, i) => (
-        <span key={i}>
-          <span className="text-tanah-400 mr-1 text-[10px]">{i + 1}.</span>
-          <LinkBukti url={u} variant="full" />
-        </span>
+    <span className="inline-flex flex-wrap items-center gap-2 align-top max-w-full">
+      {all.map((url, i) => (
+        <BuktiTile key={i} url={url} index={i} />
       ))}
     </span>
+  );
+}
+
+function BuktiTile({ url, index }: { url: string; index: number }) {
+  const clean = url.split('?')[0].toLowerCase();
+  const isImage = /\.(png|jpe?g|webp|gif)$/.test(clean);
+  const isPdf = clean.endsWith('.pdf');
+
+  if (isImage) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer noopener"
+        title="Buka gambar bukti"
+        className="inline-block rounded-md border border-cream-300 overflow-hidden hover:border-sogan-400 hover:shadow-sm transition-colors duration-fast"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt={`Bukti ${index + 1}`}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          className="h-16 w-16 object-cover block bg-cream-100"
+        />
+      </a>
+    );
+  }
+
+  if (isPdf) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer noopener"
+        title="Buka dokumen PDF bukti"
+        className="inline-flex flex-col items-center justify-center gap-0.5 h-16 w-16 rounded-md border border-cream-300 bg-bata-50 text-bata-700 hover:border-sogan-400 transition-colors duration-fast"
+      >
+        <span className="text-xl" aria-hidden>📄</span>
+        <span className="text-[10px] font-semibold">PDF</span>
+      </a>
+    );
+  }
+
+  let host = 'Link';
+  try {
+    host = new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    /* biarkan 'Link' */
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer noopener"
+      title={url}
+      className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-cream-300 bg-cream-50 text-sogan-600 hover:text-sogan-700 hover:border-sogan-400 text-xs font-mono max-w-[200px] transition-colors duration-fast"
+    >
+      <span aria-hidden>🔗</span>
+      <span className="truncate">{host}</span>
+    </a>
   );
 }
