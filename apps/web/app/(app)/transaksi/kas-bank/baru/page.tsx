@@ -10,14 +10,19 @@ interface Cabang { id: string; kode: string; nama: string }
 interface SalesRow {
   id: string; nomor: string | null; status: string;
   totalNetto: string; totalDibayar: string;
-  customer: { nama: string };
+  customer: { id: string; nama: string };
+  lines: Array<{ projectId: string | null }>;
 }
 interface PurchaseRow {
   id: string; nomor: string | null; status: string;
   totalNetto: string; totalDibayar: string;
-  vendor: { nama: string };
+  vendor: { id: string; nama: string };
+  lines: Array<{ projectId: string | null }>;
 }
 interface Project { id: string; kode: string; nama: string }
+
+const projectIdsOf = (lines: Array<{ projectId: string | null }>) =>
+  Array.from(new Set(lines.map((l) => l.projectId).filter((x): x is string => !!x)));
 
 async function submitCashBank(formData: FormData): Promise<FormState> {
   'use server';
@@ -52,12 +57,14 @@ export default async function KasBankBaruPage() {
   );
   const openSales = [...salesPosted, ...salesPartial].map((r) => ({
     id: r.id, nomor: r.nomor,
-    vendorOrCustomer: r.customer.nama,
+    vendorOrCustomer: r.customer.nama, partaiId: r.customer.id,
+    projectIds: projectIdsOf(r.lines),
     totalNetto: r.totalNetto, totalDibayar: r.totalDibayar,
   }));
   const openPurchases = [...purchasePosted, ...purchasePartial].map((r) => ({
     id: r.id, nomor: r.nomor,
-    vendorOrCustomer: r.vendor.nama,
+    vendorOrCustomer: r.vendor.nama, partaiId: r.vendor.id,
+    projectIds: projectIdsOf(r.lines),
     totalNetto: r.totalNetto, totalDibayar: r.totalDibayar,
   }));
 

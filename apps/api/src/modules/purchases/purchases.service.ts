@@ -127,9 +127,10 @@ export class PurchasesService {
         orderBy: [{ tanggal: 'desc' }, { createdAt: 'desc' }],
         take: 200,
         include: {
-          vendor: { select: { kode: true, nama: true, isPkp: true } },
+          vendor: { select: { id: true, kode: true, nama: true, isPkp: true } },
           cabang: { select: { kode: true } },
           fiscalPeriod: { select: { label: true } },
+          lines: { select: { projectId: true } },
           _count: { select: { lines: true } },
         },
       }),

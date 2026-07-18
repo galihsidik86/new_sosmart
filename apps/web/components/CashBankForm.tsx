@@ -13,6 +13,7 @@ interface Account { id: string; kode: string; nama: string; isPostable: boolean 
 interface Cabang { id: string; kode: string; nama: string }
 interface InvoiceSummary {
   id: string; nomor: string | null; vendorOrCustomer: string;
+  partaiId: string; projectIds: string[];
   totalNetto: string; totalDibayar: string;
 }
 
@@ -80,6 +81,9 @@ export function CashBankForm({
   const [noBuktiPotong, setNoBuktiPotong] = useState(defaultValues?.noBuktiPotong ?? '');
   // Project di level header — berlaku untuk seluruh baris alokasi.
   const [projectId, setProjectId] = useState(defaultValues?.lines?.[0]?.projectId ?? '');
+  // Filter daftar faktur untuk pelunasan: pelanggan (RECEIPT) / vendor (PAYMENT).
+  const [custFilter, setCustFilter] = useState('');
+  const [vendFilter, setVendFilter] = useState('');
   const [lines, setLines] = useState<Line[]>(
     defaultValues?.lines ?? [{ accountId: '', projectId: '', nilai: '0', deskripsi: '' }],
   );
@@ -100,6 +104,33 @@ export function CashBankForm({
   );
   const totalNum = Number(total || 0);
   const balanced = tipe === 'TRANSFER' || Math.abs(sumLines - totalNum) < 0.005;
+
+  // Opsi filter partai (pelanggan/vendor) diturunkan dari faktur terbuka.
+  const customerOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    openSales.forEach((inv) => m.set(inv.partaiId, inv.vendorOrCustomer));
+    return Array.from(m.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [openSales]);
+  const vendorOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    openPurchases.forEach((inv) => m.set(inv.partaiId, inv.vendorOrCustomer));
+    return Array.from(m.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [openPurchases]);
+
+  // Faktur yang tampil hanya yang cocok dengan project (header) + pelanggan/vendor terpilih.
+  const filteredSales = useMemo(
+    () => openSales.filter(
+      (inv) => (!projectId || inv.projectIds.includes(projectId)) && (!custFilter || inv.partaiId === custFilter),
+    ),
+    [openSales, projectId, custFilter],
+  );
+  const filteredPurchases = useMemo(
+    () => openPurchases.filter(
+      (inv) => (!projectId || inv.projectIds.includes(projectId)) && (!vendFilter || inv.partaiId === vendFilter),
+    ),
+    [openPurchases, projectId, vendFilter],
+  );
+  const projectName = projects?.find((p) => p.id === projectId)?.kode;
 
   // Quick template: pelunasan piutang
   const applyPelunasanPiutang = (inv: InvoiceSummary, akunPiutangPlaceholder?: string) => {
@@ -280,20 +311,48 @@ export function CashBankForm({
 
         {(openSales.length > 0 || openPurchases.length > 0) && (
           <div className="mt-4 pt-4 border-t border-cream-200">
-            <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-2">
-              Template: pelunasan faktur belum lunas
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="text-xs uppercase tracking-wider text-tanah-500 font-bold">
+                Template: pelunasan faktur belum lunas
+              </span>
+              {customerOptions.length > 0 && (
+                <Select value={custFilter} onChange={(e) => setCustFilter(e.target.value)} fullWidth={false} className="text-xs py-1">
+                  <option value="">Semua pelanggan</option>
+                  {customerOptions.map(([id, nama]) => <option key={id} value={id}>{nama}</option>)}
+                </Select>
+              )}
+              {vendorOptions.length > 0 && (
+                <Select value={vendFilter} onChange={(e) => setVendFilter(e.target.value)} fullWidth={false} className="text-xs py-1">
+                  <option value="">Semua vendor</option>
+                  {vendorOptions.map(([id, nama]) => <option key={id} value={id}>{nama}</option>)}
+                </Select>
+              )}
+              {projectId && (
+                <span className="text-[11px] text-sogan-600 bg-sogan-50 border border-sogan-200 rounded px-2 py-0.5">
+                  project: {projectName}
+                </span>
+              )}
+              {(custFilter || vendFilter) && (
+                <button type="button" onClick={() => { setCustFilter(''); setVendFilter(''); }}
+                  className="text-xs text-sogan-500 hover:underline">reset</button>
+              )}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {openSales.slice(0, 5).map((inv) => (
+              {filteredSales.slice(0, 12).map((inv) => (
                 <Button key={inv.id} type="button" variant="success" size="sm" onClick={() => applyPelunasanPiutang(inv)}>
                   ← {inv.nomor} {inv.vendorOrCustomer}
                 </Button>
               ))}
-              {openPurchases.slice(0, 5).map((inv) => (
+              {filteredPurchases.slice(0, 12).map((inv) => (
                 <Button key={inv.id} type="button" variant="soft-bata" size="sm" onClick={() => applyPelunasanUtang(inv)}>
                   → {inv.nomor} {inv.vendorOrCustomer}
                 </Button>
               ))}
+              {filteredSales.length === 0 && filteredPurchases.length === 0 && (
+                <span className="text-xs text-tanah-500 italic">
+                  Tidak ada faktur belum lunas yang cocok dengan filter{projectId || custFilter || vendFilter ? ' (project/pelanggan/vendor)' : ''}.
+                </span>
+              )}
             </div>
           </div>
         )}

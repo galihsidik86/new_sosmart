@@ -136,9 +136,10 @@ export class SalesService {
         orderBy: [{ tanggal: 'desc' }, { createdAt: 'desc' }],
         take: 200,
         include: {
-          customer: { select: { kode: true, nama: true, isPkp: true } },
+          customer: { select: { id: true, kode: true, nama: true, isPkp: true } },
           cabang: { select: { kode: true } },
           fiscalPeriod: { select: { label: true } },
+          lines: { select: { projectId: true } },
           _count: { select: { lines: true } },
         },
       }),
