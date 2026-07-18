@@ -10,11 +10,16 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import { Logger } from '@nestjs/common';
+import { installIndonesianErrors } from '@lentera/shared';
 import { AppModule } from './app.module.js';
 import { assertProductionSecrets } from './common/config/env-guard.js';
 import { API_ROOT } from './common/config/paths.js';
 
 async function bootstrap() {
+  // Pasang errorMap Bahasa Indonesia pada instance zod milik @lentera/shared
+  // (instance yang dipakai semua schema) — melokalkan pesan validasi default.
+  installIndonesianErrors();
+
   // Tolak boot kalau JWT secret / APP_DATABASE_URL tidak aman di produksi.
   assertProductionSecrets();
 

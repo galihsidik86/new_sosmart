@@ -583,8 +583,9 @@ export type CreateDepresiasiRunInput = z.infer<typeof createDepresiasiRunInputSc
 // ---------- PAJAK (Fase 7) ----------
 
 const moneyDecimal = z
-  .union([z.number().nonnegative(), z.string()])
-  .transform((v) => String(v));
+  .union([z.number(), z.string()])
+  .transform((v) => String(v))
+  .refine((v) => /^\d+(\.\d+)?$/.test(v), 'Nominal tidak valid (harus angka ≥ 0)');
 
 export const createKaryawanInputSchema = z.object({
   cabangId: z.string().uuid().optional().nullable(),
