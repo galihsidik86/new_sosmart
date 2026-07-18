@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader } from './ui';
+import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader, Combobox } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -131,6 +131,10 @@ export function CashBankForm({
     [openPurchases, projectId, vendFilter],
   );
   const projectName = projects?.find((p) => p.id === projectId)?.kode;
+  const accountOptions = useMemo(
+    () => accounts.filter((a) => a.isPostable).map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
+    [accounts],
+  );
 
   // Quick template: pelunasan piutang
   const applyPelunasanPiutang = (inv: InvoiceSummary, akunPiutangPlaceholder?: string) => {
@@ -316,16 +320,22 @@ export function CashBankForm({
                 Template: pelunasan faktur belum lunas
               </span>
               {customerOptions.length > 0 && (
-                <Select value={custFilter} onChange={(e) => setCustFilter(e.target.value)} fullWidth={false} className="text-xs py-1">
-                  <option value="">Semua pelanggan</option>
-                  {customerOptions.map(([id, nama]) => <option key={id} value={id}>{nama}</option>)}
-                </Select>
+                <Combobox
+                  value={custFilter}
+                  onChange={setCustFilter}
+                  options={[{ value: '', label: 'Semua pelanggan' }, ...customerOptions.map(([id, nama]) => ({ value: id, label: nama }))]}
+                  placeholder="Semua pelanggan"
+                  className="w-52"
+                />
               )}
               {vendorOptions.length > 0 && (
-                <Select value={vendFilter} onChange={(e) => setVendFilter(e.target.value)} fullWidth={false} className="text-xs py-1">
-                  <option value="">Semua vendor</option>
-                  {vendorOptions.map(([id, nama]) => <option key={id} value={id}>{nama}</option>)}
-                </Select>
+                <Combobox
+                  value={vendFilter}
+                  onChange={setVendFilter}
+                  options={[{ value: '', label: 'Semua vendor' }, ...vendorOptions.map(([id, nama]) => ({ value: id, label: nama }))]}
+                  placeholder="Semua vendor"
+                  className="w-52"
+                />
               )}
               {projectId && (
                 <span className="text-[11px] text-sogan-600 bg-sogan-50 border border-sogan-200 rounded px-2 py-0.5">
@@ -378,15 +388,14 @@ export function CashBankForm({
               {lines.map((l, i) => (
                 <tr key={i}>
                   <td className="px-3 py-1.5 text-xs text-tanah-500">{i + 1}</td>
-                  <td className="px-3 py-1.5">
-                    <select value={l.accountId} onChange={(e) => updLine(i, { accountId: e.target.value })}
-                      required
-                      className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded text-sm font-mono">
-                      <option value="">— pilih akun —</option>
-                      {accounts.filter((a) => a.isPostable).map((a) => (
-                        <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>
-                      ))}
-                    </select>
+                  <td className="px-3 py-1.5 min-w-[220px]">
+                    <Combobox
+                      value={l.accountId}
+                      onChange={(v) => updLine(i, { accountId: v })}
+                      options={accountOptions}
+                      mono
+                      placeholder="— pilih akun —"
+                    />
                   </td>
                   <td className="px-3 py-1.5">
                     <input type="text" value={l.deskripsi} onChange={(e) => updLine(i, { deskripsi: e.target.value })}

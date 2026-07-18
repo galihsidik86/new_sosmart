@@ -1,6 +1,7 @@
 export { cn } from './cn';
 export { Button, buttonClass, type ButtonVariant, type ButtonSize } from './Button';
 export { Input, Select, Textarea, controlBase } from './Input';
+export { Combobox, type ComboOption } from './Combobox';
 export { FormField, Label, labelClass } from './FormField';
 export { Card, Section, SectionHeader, cardBase } from './Card';
 export { PageHeader } from './PageHeader';

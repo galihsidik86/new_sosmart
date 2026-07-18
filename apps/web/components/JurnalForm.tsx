@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader } from './ui';
+import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader, Combobox } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -115,6 +115,10 @@ export function JurnalForm({
   const postable = useMemo(
     () => accounts.filter((a) => a.isPostable),
     [accounts],
+  );
+  const accountOptions = useMemo(
+    () => postable.map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
+    [postable],
   );
 
   const updateLine = (i: number, patch: Partial<Line>) =>
@@ -278,11 +282,11 @@ export function JurnalForm({
               <tr key={i}>
                 <td className="px-3 py-1.5 text-xs text-tanah-500 tabular-nums">{i + 1}</td>
                 <td className="px-3 py-1.5">
-                  <select
+                  <Combobox
                     value={l.accountId}
-                    onChange={(e) => {
-                      updateLine(i, { accountId: e.target.value });
-                      if (e.target.value) {
+                    onChange={(v) => {
+                      updateLine(i, { accountId: v });
+                      if (v) {
                         setInvalidLines((prev) => {
                           const n = new Set(prev);
                           n.delete(i);
@@ -290,18 +294,11 @@ export function JurnalForm({
                         });
                       }
                     }}
-                    required
-                    className={`w-full px-2 py-1.5 bg-cream-50 border rounded-md text-sm font-mono ${
-                      invalidLines.has(i) ? 'border-bata-500' : 'border-cream-300'
-                    }`}
-                  >
-                    <option value="">— pilih akun —</option>
-                    {postable.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.kode}  {a.nama}
-                      </option>
-                    ))}
-                  </select>
+                    options={accountOptions}
+                    mono
+                    invalid={invalidLines.has(i)}
+                    placeholder="— pilih akun —"
+                  />
                 </td>
                 {showProjects && (
                   <td className="hidden sm:table-cell px-3 py-1.5">

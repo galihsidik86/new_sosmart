@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, Select, SectionHeader } from './ui';
+import { Card, Button, FormField, Input, Select, SectionHeader, Combobox } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -185,6 +185,19 @@ export function InvoiceForm({
   const removeLine = (i: number) =>
     setLines((p) => (p.length <= 1 ? p : p.filter((_, k) => k !== i)));
 
+  const partyOptions = useMemo(
+    () => parties.map((p) => ({ value: p.id, label: `${p.kode} — ${p.nama}${p.isPkp ? ' (PKP)' : ''}` })),
+    [parties],
+  );
+  const itemOptions = useMemo(
+    () => [{ value: '', label: '— manual —' }, ...items.map((it) => ({ value: it.id, label: `${it.kode}  ${it.nama}` }))],
+    [items],
+  );
+  const accountOptions = useMemo(
+    () => accounts.filter((a) => a.isPostable).map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
+    [accounts],
+  );
+
   // Compute totals. Mirror backend `computeTotals` — kalau `hargaTermasukPajak`,
   // gross ← qty × harga; DPP di-reverse-calc dari gross (gross / (1 + tarifEff)).
   const tarifEff = tarifPpn === 11 ? 0.11 : tarifPpn / 100;
@@ -329,13 +342,7 @@ export function InvoiceForm({
             )}
           </FormField>
           <FormField label={partyLabel}>
-            <Select value={partyId} onChange={(e) => setPartyId(e.target.value)} required>
-              {parties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.kode} — {p.nama}{p.isPkp ? ' (PKP)' : ''}
-                </option>
-              ))}
-            </Select>
+            <Combobox value={partyId} onChange={setPartyId} options={partyOptions} placeholder={`— pilih ${partyLabel.toLowerCase()} —`} />
           </FormField>
           {showProjects && (
             <FormField label="Project">
@@ -451,13 +458,7 @@ export function InvoiceForm({
                 <tr key={i}>
                   <td className="px-2 py-1 text-tanah-500 text-xs">{i + 1}</td>
                   <td className="px-2 py-1">
-                    <select value={l.itemId ?? ''} onChange={(e) => setItem(i, e.target.value)}
-                      className="w-full px-1.5 py-1 bg-cream-50 border border-cream-300 rounded text-xs font-mono">
-                      <option value="">— manual —</option>
-                      {items.map((it) => (
-                        <option key={it.id} value={it.id}>{it.kode} {it.nama}</option>
-                      ))}
-                    </select>
+                    <Combobox value={l.itemId ?? ''} onChange={(v) => setItem(i, v)} options={itemOptions} mono size="sm" placeholder="— manual —" className="min-w-[160px]" />
                   </td>
                   <td className="px-2 py-1">
                     <input type="text" value={l.deskripsi} onChange={(e) => updLine(i, { deskripsi: e.target.value })}
@@ -493,14 +494,7 @@ export function InvoiceForm({
                     </select>
                   </td>
                   <td className="px-2 py-1">
-                    <select value={l.accountId} onChange={(e) => updLine(i, { accountId: e.target.value })}
-                      required
-                      className="w-full px-1.5 py-1 bg-cream-50 border border-cream-300 rounded text-xs font-mono">
-                      <option value="">— pilih —</option>
-                      {accounts.filter((a) => a.isPostable).map((a) => (
-                        <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>
-                      ))}
-                    </select>
+                    <Combobox value={l.accountId} onChange={(v) => updLine(i, { accountId: v })} options={accountOptions} mono size="sm" placeholder="— pilih —" className="min-w-[160px]" />
                   </td>
                   <td className="px-2 py-1 text-right font-mono tabular-nums text-xs">
                     {dpp.toLocaleString('id-ID')}
