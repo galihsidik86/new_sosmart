@@ -3,6 +3,7 @@ import { InvoiceForm } from '@/components/InvoiceForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Item {
@@ -57,6 +58,7 @@ export default async function PenjualanBaruPage() {
   return (
     <>
       <PageContainer size="form">
+        <BackLink href="/transaksi/penjualan" label="← Kembali ke daftar penjualan" />
         <PageHeader title="Faktur Penjualan Baru" />
         <InvoiceForm
           mode="sales"

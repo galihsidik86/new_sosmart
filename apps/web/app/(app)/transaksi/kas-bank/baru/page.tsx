@@ -3,6 +3,7 @@ import { CashBankForm } from '@/components/CashBankForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Account { id: string; kode: string; nama: string; isPostable: boolean }
@@ -71,6 +72,7 @@ export default async function KasBankBaruPage() {
   return (
     <>
       <PageContainer size="form">
+        <BackLink href="/transaksi/kas-bank" label="← Kembali ke daftar kas/bank" />
         <PageHeader title="Bukti Kas / Bank Baru" />
         <CashBankForm
           accounts={accounts} kasBank={kasBank} cabang={cabang}

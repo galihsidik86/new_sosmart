@@ -3,6 +3,7 @@ import { JurnalForm } from '@/components/JurnalForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Account {
@@ -69,6 +70,7 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
   return (
     <>
       <PageContainer size="form">
+        <BackLink href={`/pembukuan/jurnal/${id}`} label="← Kembali ke detail jurnal" />
         <PageHeader title="Edit Draft Jurnal" />
         <JurnalForm
           accounts={accounts}

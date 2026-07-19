@@ -3,6 +3,7 @@ import { InvoiceForm } from '@/components/InvoiceForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Item {
@@ -79,6 +80,7 @@ export default async function PembelianEditPage({ params }: { params: Promise<{ 
   return (
     <>
       <PageContainer size="form">
+        <BackLink href={`/transaksi/pembelian/${id}`} label="← Kembali ke detail tagihan" />
         <PageHeader title="Edit Draft Tagihan" />
         <InvoiceForm
           mode="purchase"
