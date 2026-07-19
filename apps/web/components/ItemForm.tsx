@@ -78,8 +78,9 @@ export function ItemForm({
     () => [pilih, ...accounts.filter((a) => a.isPostable && a.kind === 'BEBAN_POKOK').map(opt)],
     [accounts],
   );
+  // Akun beban untuk jasa: kelompok HPP (5 · BEBAN_POKOK) + Beban (6 · BEBAN).
   const bebanOpts = useMemo(
-    () => [pilih, ...accounts.filter((a) => a.isPostable && (a.kind === 'BEBAN' || a.kind === 'BEBAN_LAIN')).map(opt)],
+    () => [pilih, ...accounts.filter((a) => a.isPostable && (a.kind === 'BEBAN_POKOK' || a.kind === 'BEBAN')).map(opt)],
     [accounts],
   );
 
