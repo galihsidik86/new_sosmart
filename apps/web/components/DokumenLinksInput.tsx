@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button, Input } from './ui';
 
 /**
- * Editor daftar tautan dokumen untuk dipakai DI DALAM form server-action.
- * Merender N input ber-`name` sama → server action baca lewat
- * `formData.getAll(name)` lalu buang yang kosong.
+ * Editor daftar dokumen proyek untuk dipakai DI DALAM form server-action.
+ * Dua sumber:
+ *  1. Tautan URL (Google Drive dsb.) — input ber-`name` sama.
+ *  2. Upload file (PDF/gambar, bisa beberapa) — di-upload ke `/bukti-upload`
+ *     (privat + ber-otentikasi), URL hasilnya jadi hidden input ber-`name` sama.
+ * Server action baca semua lewat `formData.getAll(name)` lalu buang yang kosong.
  */
 export function DokumenLinksInput({
   name = 'linkDokumen',
@@ -16,37 +19,98 @@ export function DokumenLinksInput({
   initial?: string[];
 }) {
   const [list, setList] = useState<string[]>(initial.length ? initial : ['']);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
   const upd = (i: number, v: string) => setList((l) => l.map((x, k) => (k === i ? v : x)));
   const add = () => setList((l) => [...l, '']);
   const remove = (i: number) =>
     setList((l) => (l.length <= 1 ? [''] : l.filter((_, k) => k !== i)));
 
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setErr(null);
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      Array.from(files).forEach((f) => fd.append('file', f));
+      const res = await fetch('/bukti-upload', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        throw new Error(body.message ?? `Upload gagal (${res.status})`);
+      }
+      const { files: uploaded } = (await res.json()) as { files: Array<{ name: string; url: string }> };
+      const abs = uploaded.map((f) => (f.url.startsWith('http') ? f.url : window.location.origin + f.url));
+      setList((l) => [...l.filter(Boolean), ...abs]);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Upload gagal');
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
+
+  const fileLabel = (url: string) => {
+    const ext = (url.split('?')[0].split('.').pop() ?? '').toLowerCase();
+    return ext === 'pdf' ? 'Dokumen PDF' : `Gambar (${ext || 'file'})`;
+  };
+
   return (
     <div className="space-y-2">
-      {list.map((url, i) => (
-        <div key={i} className="flex gap-2">
-          <Input
-            name={name}
-            mono
-            type="url"
-            value={url}
-            onChange={(e) => upd(i, e.target.value)}
-            placeholder="https://drive.google.com/…"
-          />
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => remove(i)}
-            aria-label="Hapus tautan"
-          >
-            ×
-          </Button>
-        </div>
-      ))}
-      <Button type="button" variant="dashed" size="sm" onClick={add}>
-        + Tambah tautan
-      </Button>
+      {list.map((url, i) => {
+        const isFile = url.includes('/uploads/bukti/');
+        return (
+          <div key={i} className="flex gap-2 items-center">
+            {isFile ? (
+              <>
+                <input type="hidden" name={name} value={url} />
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  title={url}
+                  className="flex-1 flex items-center gap-2 px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm text-sogan-700 hover:bg-cream-100 truncate"
+                >
+                  <span aria-hidden>📎</span>
+                  <span className="truncate">{fileLabel(url)}</span>
+                </a>
+              </>
+            ) : (
+              <Input
+                name={name}
+                mono
+                type="url"
+                value={url}
+                onChange={(e) => upd(i, e.target.value)}
+                placeholder="https://drive.google.com/…"
+              />
+            )}
+            <Button type="button" variant="secondary" size="sm" onClick={() => remove(i)} aria-label="Hapus dokumen">
+              ×
+            </Button>
+          </div>
+        );
+      })}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="dashed" size="sm" onClick={add}>
+          + Link dokumen
+        </Button>
+        <Button type="button" variant="dashed" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          {uploading ? 'Mengunggah…' : '📎 Upload file'}
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+        <span className="text-[11px] text-tanah-500">PDF/gambar, bisa beberapa, maks 10 MB/file</span>
+      </div>
+      {err && <p className="text-xs text-bata-700">{err}</p>}
     </div>
   );
 }
