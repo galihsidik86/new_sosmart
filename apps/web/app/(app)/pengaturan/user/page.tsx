@@ -8,6 +8,8 @@ import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
   Table, THead, TH, TBody, TR, TD, RowActions, EmptyRow, type BadgeVariant,
 } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
+import { CancelButton } from '@/components/CancelButton';
 import { ResetPasswordAction } from './ResetPasswordAction';
 
 type Role = 'OWNER' | 'ADMIN' | 'AKUNTAN' | 'KASIR' | 'AUDITOR';
@@ -96,6 +98,7 @@ export default async function UsersPage() {
   return (
     <>
       <PageContainer size="list">
+        <BackLink href="/dashboard" label="← Kembali ke Dashboard" />
         <PageHeader
           title="Manajemen Pengguna"
           subtitle={`${users.length} pengguna · admin cabang hanya melihat & mengatur user di cabang yang sama. Pemilik tenant (OWNER) tidak tampil bagi admin cabang.`}
@@ -196,6 +199,7 @@ export default async function UsersPage() {
                 </div>
               </div>
               <Button type="submit" className="w-full">Tambahkan</Button>
+              <CancelButton href="/dashboard" className="w-full mt-2" />
             </form>
           </Card>
         </div>

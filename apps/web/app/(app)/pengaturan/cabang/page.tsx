@@ -6,6 +6,8 @@ import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input,
   Table, THead, TH, TBody, TR, TD, buttonClass,
 } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
+import { CancelButton } from '@/components/CancelButton';
 
 interface CabangRow {
   id: string;
@@ -42,8 +44,9 @@ export default async function CabangPage() {
   const cabang = await apiFetch<CabangRow[]>('/cabang', { tenantId });
 
   return (
-    <>
+    <>
       <PageContainer size="list">
+        <BackLink href="/dashboard" label="← Kembali ke Dashboard" />
         <PageHeader
           title="Cabang"
           subtitle="Setiap cabang fisik dengan kantor terpisah biasanya punya NPWP cabang sendiri (kode 3-digit terakhir: 000 = pusat, 001+ = cabang)."
@@ -103,6 +106,7 @@ export default async function CabangPage() {
                 Set sebagai pusat
               </label>
               <Button type="submit" className="w-full">Simpan</Button>
+              <CancelButton href="/dashboard" className="w-full mt-2" />
             </form>
           </Card>
         </div>
