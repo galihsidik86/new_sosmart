@@ -7,6 +7,7 @@ import { canCancelPosted, canPostAccounting } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 import { DisposeForm } from '@/components/DisposeForm';
+import { BackLink } from '@/components/BackLink';
 import { PageContainer, PageHeader, Card, Button, Badge, type BadgeVariant } from '@/components/ui';
 
 type Status = 'AKTIF' | 'DIJUAL' | 'RUSAK' | 'PENSIUN';
@@ -102,6 +103,7 @@ export default async function AsetDetailPage({
   return (
     <>
       <PageContainer size="form">
+        <BackLink href="/aset/daftar" label="← Kembali ke daftar aset" />
         <PageHeader
           title={`${aset.kode} — ${aset.nama}`}
           actions={<Badge variant={STATUS_VARIANT[aset.status]} size="md">{aset.status}</Badge>}
@@ -192,6 +194,7 @@ export default async function AsetDetailPage({
               today={new Date().toISOString().slice(0, 10)}
               kasBank={kasBank}
               action={disposeAction}
+              cancelHref="/aset/daftar"
             />
           </Card>
         ) : (

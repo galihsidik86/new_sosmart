@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { FieldError } from './FieldError';
+import { CancelButton } from './CancelButton';
 import { Button } from '@/components/ui';
 import { emptyFormState, type FormState } from '@/lib/form-state';
 
@@ -16,11 +17,13 @@ export function DisposeForm({
   today,
   kasBank,
   action,
+  cancelHref,
 }: {
   asetId: string;
   today: string;
   kasBank: Account[];
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
+  cancelHref?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, emptyFormState);
   const fe = state.fieldErrors ?? {};
@@ -72,7 +75,8 @@ export function DisposeForm({
           className={inputCls(!!fe.catatan)} />
         <FieldError msg={fe.catatan} />
       </div>
-      <div className="sm:col-span-2 flex justify-end">
+      <div className="sm:col-span-2 flex justify-end gap-2">
+        {cancelHref && <CancelButton href={cancelHref} className="" />}
         <Button type="submit" variant="danger" disabled={pending}>
           {pending ? 'Memproses…' : 'Hentikan Aset (auto-jurnal)'}
         </Button>
