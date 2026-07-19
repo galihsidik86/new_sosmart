@@ -364,6 +364,10 @@ export function JurnalForm({
         right={
           <div className="flex items-center gap-2">
             {error && <span className="text-bata-700 text-xs">{error}</span>}
+            <Button type="button" variant="secondary" size="sm" disabled={submitting}
+              onClick={() => router.push((redirectTo ?? '/pembukuan/jurnal') as Route)}>
+              Batal
+            </Button>
             <Button type="submit" size="sm" disabled={submitting || !totals.balanced}>
               {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
             </Button>

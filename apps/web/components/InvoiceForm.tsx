@@ -544,6 +544,10 @@ export function InvoiceForm({
             <Button type="submit" disabled={submitting} className="w-full">
               {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
             </Button>
+            <Button type="button" variant="secondary" disabled={submitting} className="w-full mt-2"
+              onClick={() => router.push((redirectTo ?? (mode === 'sales' ? '/transaksi/penjualan' : '/transaksi/pembelian')) as Route)}>
+              Batal
+            </Button>
           </div>
         </div>
       </Card>

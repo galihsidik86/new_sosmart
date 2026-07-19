@@ -431,6 +431,10 @@ export function CashBankForm({
         right={
           <div className="flex items-center gap-2">
             {error && <span className="text-bata-700 text-xs">{error}</span>}
+            <Button type="button" variant="secondary" size="sm" disabled={submitting}
+              onClick={() => router.push((redirectTo ?? '/transaksi/kas-bank') as Route)}>
+              Batal
+            </Button>
             <Button type="submit" size="sm" disabled={submitting || !balanced}>
               {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
             </Button>
