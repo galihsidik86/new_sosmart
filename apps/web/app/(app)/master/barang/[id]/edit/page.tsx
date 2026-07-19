@@ -20,8 +20,13 @@ interface Item {
   klasifikasiPpn: Klasifikasi;
   isJasa: boolean;
   pph23TarifId: string | null;
+  akunPendapatanId: string | null;
+  akunPersediaanId: string | null;
+  akunHppId: string | null;
+  akunBebanId: string | null;
 }
 interface Pph23Tarif { id: string; kode: string; nama: string; tarif: string }
+interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
 
 async function updateItem(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
@@ -42,6 +47,10 @@ async function updateItem(_prev: FormState, formData: FormData): Promise<FormSta
         hargaJualDefault: String(formData.get('hargaJualDefault') ?? '0'),
         klasifikasiPpn: formData.get('klasifikasiPpn') ?? 'BKP',
         isJasa,
+        akunPendapatanId: (formData.get('akunPendapatanId') as string) || null,
+        akunPersediaanId: (formData.get('akunPersediaanId') as string) || null,
+        akunHppId: (formData.get('akunHppId') as string) || null,
+        akunBebanId: (formData.get('akunBebanId') as string) || null,
         pph23TarifId: isJasa && pph23TarifId ? pph23TarifId : null,
       }),
     });
@@ -56,9 +65,10 @@ export default async function EditBarangPage({ params }: { params: Promise<{ id:
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const { id } = await params;
-  const [item, tarifList] = await Promise.all([
+  const [item, tarifList, accounts] = await Promise.all([
     apiFetch<Item>(`/items/${id}`, { tenantId }),
     apiFetch<Pph23Tarif[]>('/pph23-tarif', { tenantId }).catch(() => [] as Pph23Tarif[]),
+    apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
   ]);
 
   return (
@@ -67,7 +77,7 @@ export default async function EditBarangPage({ params }: { params: Promise<{ id:
         <Link href="/master/barang" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader title="Edit Barang" subtitle={`${item.kode} · ${item.nama}`} className="mt-2" />
         <Card padding="lg">
-          <ItemForm mode="edit" action={updateItem} tarifList={tarifList} defaults={item} submitLabel="Simpan perubahan" />
+          <ItemForm mode="edit" action={updateItem} tarifList={tarifList} accounts={accounts} defaults={item} submitLabel="Simpan perubahan" />
           <CancelButton href="/master/barang" />
         </Card>
       </PageContainer>

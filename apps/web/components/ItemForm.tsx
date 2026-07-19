@@ -1,7 +1,7 @@
 'use client';
 
-import { useActionState } from 'react';
-import { FormField, Input, Select, Button } from '@/components/ui';
+import { useActionState, useMemo, useState } from 'react';
+import { FormField, Input, Select, Button, Combobox } from '@/components/ui';
 import { FieldError } from './FieldError';
 import { emptyFormState, type FormState } from '@/lib/form-state';
 
@@ -16,6 +16,7 @@ const KLASIFIKASI_LABEL: Record<Klasifikasi, string> = {
 const KLASIFIKASI: Klasifikasi[] = ['BKP', 'JKP', 'NON_BKP', 'BKP_STRATEGIS', 'BEBAS_PPN'];
 
 interface Tarif { id: string; nama: string; tarif: string }
+interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
 
 export interface ItemDefaults {
   id?: string;
@@ -27,18 +28,24 @@ export interface ItemDefaults {
   klasifikasiPpn?: Klasifikasi;
   isJasa?: boolean;
   pph23TarifId?: string | null;
+  akunPendapatanId?: string | null;
+  akunPersediaanId?: string | null;
+  akunHppId?: string | null;
+  akunBebanId?: string | null;
 }
 
 export function ItemForm({
   mode,
   action,
   tarifList,
+  accounts,
   defaults,
   submitLabel,
 }: {
   mode: 'create' | 'edit';
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   tarifList: Tarif[];
+  accounts: Account[];
   defaults?: ItemDefaults;
   submitLabel?: string;
 }) {
@@ -47,7 +54,31 @@ export function ItemForm({
   const d = defaults ?? {};
   const sv = state.values;
   const v = (k: string, fallback: string) => sv?.[k] ?? fallback;
-  const jasa = sv ? sv.isJasa === 'on' : !!d.isJasa;
+
+  const [isJasa, setIsJasa] = useState<boolean>(sv ? sv.isJasa === 'on' : !!d.isJasa);
+  const [akunPendapatanId, setAkunPendapatanId] = useState(v('akunPendapatanId', d.akunPendapatanId ?? ''));
+  const [akunPersediaanId, setAkunPersediaanId] = useState(v('akunPersediaanId', d.akunPersediaanId ?? ''));
+  const [akunHppId, setAkunHppId] = useState(v('akunHppId', d.akunHppId ?? ''));
+  const [akunBebanId, setAkunBebanId] = useState(v('akunBebanId', d.akunBebanId ?? ''));
+
+  const opt = (a: Account) => ({ value: a.id, label: `${a.kode}  ${a.nama}` });
+  const pilih = { value: '', label: '— pilih akun —' };
+  const pendapatanOpts = useMemo(
+    () => [pilih, ...accounts.filter((a) => a.isPostable && (a.kind === 'PENDAPATAN' || a.kind === 'PENDAPATAN_LAIN')).map(opt)],
+    [accounts],
+  );
+  const persediaanOpts = useMemo(
+    () => [pilih, ...accounts.filter((a) => a.isPostable && a.kind === 'ASET').map(opt)],
+    [accounts],
+  );
+  const hppOpts = useMemo(
+    () => [pilih, ...accounts.filter((a) => a.isPostable && a.kind === 'BEBAN_POKOK').map(opt)],
+    [accounts],
+  );
+  const bebanOpts = useMemo(
+    () => [pilih, ...accounts.filter((a) => a.isPostable && (a.kind === 'BEBAN' || a.kind === 'BEBAN_LAIN')).map(opt)],
+    [accounts],
+  );
 
   return (
     <form key={state.attempt ?? 0} action={formAction} className="space-y-3 text-sm">
@@ -81,19 +112,46 @@ export function ItemForm({
         </Select>
       </FormField>
       <label className="flex items-center gap-2 text-tanah-700">
-        <input type="checkbox" name="isJasa" defaultChecked={jasa} />
+        <input type="checkbox" name="isJasa" checked={isJasa} onChange={(e) => setIsJasa(e.target.checked)} />
         Adalah jasa (kena PPh 23)
       </label>
-      <FormField
-        label={<>Tarif PPh 23 <span className="text-tanah-500 normal-case font-normal">(hanya jika jasa)</span></>}
-      >
-        <Select name="pph23TarifId" defaultValue={v('pph23TarifId', d.pph23TarifId ?? '')}>
-          <option value="">— tidak preset —</option>
-          {tarifList.map((t) => (
-            <option key={t.id} value={t.id}>{Number(t.tarif)}% · {t.nama}</option>
-          ))}
-        </Select>
-      </FormField>
+      {isJasa && (
+        <FormField
+          label={<>Tarif PPh 23 <span className="text-tanah-500 normal-case font-normal">(hanya jika jasa)</span></>}
+        >
+          <Select name="pph23TarifId" defaultValue={v('pph23TarifId', d.pph23TarifId ?? '')}>
+            <option value="">— tidak preset —</option>
+            {tarifList.map((t) => (
+              <option key={t.id} value={t.id}>{Number(t.tarif)}% · {t.nama}</option>
+            ))}
+          </Select>
+        </FormField>
+      )}
+
+      <div className="pt-2 border-t border-cream-200">
+        <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-2">Akun Default (auto-jurnal)</div>
+        <FormField label="Akun Pendapatan">
+          <Combobox name="akunPendapatanId" value={akunPendapatanId} onChange={setAkunPendapatanId} options={pendapatanOpts} mono placeholder="— pilih akun pendapatan —" />
+        </FormField>
+        {isJasa ? (
+          <FormField label="Akun Beban (biaya jasa)">
+            <Combobox name="akunBebanId" value={akunBebanId} onChange={setAkunBebanId} options={bebanOpts} mono placeholder="— pilih akun beban —" />
+          </FormField>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <FormField label="Akun Persediaan">
+              <Combobox name="akunPersediaanId" value={akunPersediaanId} onChange={setAkunPersediaanId} options={persediaanOpts} mono placeholder="— pilih akun persediaan —" />
+            </FormField>
+            <FormField label="Akun HPP (Harga Pokok)">
+              <Combobox name="akunHppId" value={akunHppId} onChange={setAkunHppId} options={hppOpts} mono placeholder="— pilih akun HPP —" />
+            </FormField>
+          </div>
+        )}
+        <p className="text-[11px] text-tanah-500 mt-1">
+          Dipakai saat auto-posting faktur: pendapatan saat penjualan; {isJasa ? 'beban saat pembelian jasa' : 'persediaan & HPP saat stok masuk/keluar'}. Kosongkan untuk pakai default COA.
+        </p>
+      </div>
+
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? 'Menyimpan…' : (submitLabel ?? 'Simpan')}
       </Button>

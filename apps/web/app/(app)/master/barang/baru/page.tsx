@@ -9,6 +9,7 @@ import { ItemForm } from '@/components/ItemForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Pph23Tarif { id: string; kode: string; nama: string; tarif: string }
+interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
 
 async function createItem(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
@@ -28,6 +29,10 @@ async function createItem(_prev: FormState, formData: FormData): Promise<FormSta
         hargaJualDefault: String(formData.get('hargaJualDefault') ?? '0'),
         klasifikasiPpn: formData.get('klasifikasiPpn') ?? 'BKP',
         isJasa,
+        akunPendapatanId: (formData.get('akunPendapatanId') as string) || null,
+        akunPersediaanId: (formData.get('akunPersediaanId') as string) || null,
+        akunHppId: (formData.get('akunHppId') as string) || null,
+        akunBebanId: (formData.get('akunBebanId') as string) || null,
         pph23TarifId: isJasa && pph23TarifId ? pph23TarifId : null,
       }),
     });
@@ -41,7 +46,10 @@ async function createItem(_prev: FormState, formData: FormData): Promise<FormSta
 export default async function BarangBaruPage() {
   await getSession();
   const tenantId = (await getActiveTenantId())!;
-  const tarifList = await apiFetch<Pph23Tarif[]>('/pph23-tarif', { tenantId }).catch(() => [] as Pph23Tarif[]);
+  const [tarifList, accounts] = await Promise.all([
+    apiFetch<Pph23Tarif[]>('/pph23-tarif', { tenantId }).catch(() => [] as Pph23Tarif[]),
+    apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
+  ]);
 
   return (
     <PageContainer size="form">
@@ -50,7 +58,7 @@ export default async function BarangBaruPage() {
       </div>
       <PageHeader title="Tambah Barang / Jasa" subtitle="Isi data item baru." />
       <Card padding="lg">
-        <ItemForm mode="create" action={createItem} tarifList={tarifList} />
+        <ItemForm mode="create" action={createItem} tarifList={tarifList} accounts={accounts} />
         <CancelButton href="/master/barang" />
       </Card>
     </PageContainer>

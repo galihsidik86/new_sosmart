@@ -52,7 +52,7 @@ const NAV: NavItem[] = [
   { group: 'Laporan', href: '/laporan/utang', label: 'Aging Utang', icon: 'coins', roles: ACCOUNTING },
   { group: 'Laporan', href: '/laporan/budget-actual', label: 'Budget vs Actual', icon: 'target', roles: FULL },
   { group: 'Laporan', href: '/laporan/jejak-audit', label: 'Jejak Audit', icon: 'search', roles: ACCOUNTING },
-  { group: 'Master Data', href: '/master/barang', label: 'Master Barang', icon: 'package', roles: FULL },
+  { group: 'Master Data', href: '/master/barang', label: 'Master Barang dan Jasa', icon: 'package', roles: FULL },
   { group: 'Master Data', href: '/master/vendor', label: 'Data Vendor', icon: 'truck', roles: FULL },
   { group: 'Master Data', href: '/master/pelanggan', label: 'Data Pelanggan', icon: 'users', roles: TX_KASIR },
   { group: 'Master Data', href: '/master/jenis-pelanggan', label: 'Jenis Pelanggan', icon: 'users', roles: FULL },

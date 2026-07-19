@@ -80,6 +80,7 @@ export class ItemsService {
             akunPendapatanId: input.akunPendapatanId ?? null,
             akunPersediaanId: input.isJasa ? null : input.akunPersediaanId ?? null,
             akunHppId: input.isJasa ? null : input.akunHppId ?? null,
+            akunBebanId: input.isJasa ? (input.akunBebanId ?? null) : null,
             pph23TarifId: input.isJasa ? (input.pph23TarifId ?? null) : null,
             catatan: input.catatan,
           },
@@ -106,6 +107,7 @@ export class ItemsService {
             ? null
             : patch.akunPersediaanId ?? undefined,
           akunHppId: patch.isJasa ? null : patch.akunHppId ?? undefined,
+          akunBebanId: patch.isJasa ? (patch.akunBebanId ?? undefined) : null,
           pph23TarifId: patch.isJasa === false
             ? null
             : patch.pph23TarifId === undefined
