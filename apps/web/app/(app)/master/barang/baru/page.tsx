@@ -49,7 +49,7 @@ export default async function BarangBaruPage() {
   const [tarifList, accounts, prof] = await Promise.all([
     apiFetch<Pph23Tarif[]>('/pph23-tarif', { tenantId }).catch(() => [] as Pph23Tarif[]),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
-    apiFetch<{ jenisUsaha?: 'DAGANG' | 'JASA' }>('/tenants/current', { tenantId }).catch(() => ({})),
+    apiFetch<{ jenisUsaha?: 'DAGANG' | 'JASA' }>('/tenants/current', { tenantId }).catch(() => ({}) as { jenisUsaha?: 'DAGANG' | 'JASA' }),
   ]);
   const forceJasa = prof.jenisUsaha === 'JASA';
 

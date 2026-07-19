@@ -69,7 +69,7 @@ export default async function EditBarangPage({ params }: { params: Promise<{ id:
     apiFetch<Item>(`/items/${id}`, { tenantId }),
     apiFetch<Pph23Tarif[]>('/pph23-tarif', { tenantId }).catch(() => [] as Pph23Tarif[]),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
-    apiFetch<{ jenisUsaha?: 'DAGANG' | 'JASA' }>('/tenants/current', { tenantId }).catch(() => ({})),
+    apiFetch<{ jenisUsaha?: 'DAGANG' | 'JASA' }>('/tenants/current', { tenantId }).catch(() => ({}) as { jenisUsaha?: 'DAGANG' | 'JASA' }),
   ]);
   const forceJasa = prof.jenisUsaha === 'JASA';
 
