@@ -146,7 +146,7 @@ export default async function PenjualanDetailPage({
           subtitle={
             <>
               {fmtTanggal(inv.tanggal)} · jatuh tempo {fmtTanggal(inv.jatuhTempo)} ·
-              cabang {inv.cabang.kode} · termin {inv.termin}
+              cabang {inv.cabang.kode} · {inv.termin}
               {inv.termPembayaran && <> ({inv.termPembayaran.nama})</>}
               {inv.journalId && (
                 <span className="block text-xs text-tanah-500 mt-1">

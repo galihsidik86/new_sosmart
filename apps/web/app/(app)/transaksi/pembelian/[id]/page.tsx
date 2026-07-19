@@ -145,7 +145,7 @@ export default async function PembelianDetailPage({
           subtitle={
             <>
               {fmtTanggal(inv.tanggal)} · jatuh tempo {fmtTanggal(inv.jatuhTempo)} ·
-              cabang {inv.cabang.kode} · termin {inv.termin}
+              cabang {inv.cabang.kode} · {inv.termin}
               {inv.termPembayaran && <> ({inv.termPembayaran.nama})</>}
               {inv.nomorVendor && <span> · faktur vendor {inv.nomorVendor}</span>}
               {inv.journalId && (
