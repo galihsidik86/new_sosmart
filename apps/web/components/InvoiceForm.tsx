@@ -350,9 +350,9 @@ export function InvoiceForm({
               <Combobox value={projectId} onChange={setProjectId} options={projectOptions} placeholder="— tanpa project —" />
             </FormField>
           )}
-          <FormField label="Termin">
+          <FormField label="Jenis Pembayaran">
             <Select value={termin} onChange={(e) => setTermin(e.target.value as 'TUNAI' | 'KREDIT')}>
-              <option value="KREDIT">KREDIT (termin {party?.terminHari ?? 0} hari)</option>
+              <option value="KREDIT">KREDIT (tempo {party?.terminHari ?? 0} hari)</option>
               <option value="TUNAI">TUNAI</option>
             </Select>
           </FormField>
