@@ -5,6 +5,8 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting, canCancelPosted } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import { PageContainer, PageHeader, Button, StatusBanner } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
+import { CancelButton } from '@/components/CancelButton';
 
 interface Preview {
   runId: string;
@@ -222,8 +224,9 @@ export default async function SaldoAwalPage({
   const akunNonZero = akun.filter((a) => Number(a.saldoAwal) !== 0);
 
   return (
-    <>
+    <>
       <PageContainer size="form">
+        <BackLink href="/dashboard" label="← Kembali ke Dashboard" />
         <PageHeader
           title="Prosedur Saldo Awal Terintegrasi"
           subtitle={
@@ -278,6 +281,7 @@ export default async function SaldoAwalPage({
               <Button type="submit" disabled={!preview.balanced}>
                 Posting & Kunci Saldo Awal
               </Button>
+              <CancelButton href="/dashboard" className="ml-2" />
               {!preview.balanced && (
                 <p className="text-xs text-red-600 mt-2">
                   Selisihkan dulu Debit dan Kredit sebelum bisa posting.

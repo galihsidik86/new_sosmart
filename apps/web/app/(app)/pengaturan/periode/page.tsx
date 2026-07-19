@@ -8,6 +8,7 @@ import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input,
   THead, TH, TBody, TR, TD, StatusBanner, buttonClass, type BadgeVariant,
 } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
 
 interface PeriodRow {
   id: string;
@@ -145,8 +146,9 @@ export default async function PeriodePage({
   const years = await apiFetch<YearRow[]>('/periods/years', { tenantId });
 
   return (
-    <>
+    <>
       <PageContainer size="list">
+        <BackLink href="/dashboard" label="← Kembali ke Dashboard" />
         <PageHeader
           title="Periode Buku"
           subtitle="Tutup periode untuk mengunci jurnal sebelum tanggal cutoff. Buka kembali hanya boleh untuk periode terakhir yang ditutup."
