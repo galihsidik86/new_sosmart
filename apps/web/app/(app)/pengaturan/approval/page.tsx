@@ -7,6 +7,8 @@ import {
   PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
   SectionHeader, Table, THead, TH, TBody, TR, TD, EmptyRow,
 } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
+import { CancelButton } from '@/components/CancelButton';
 
 const DOC_LABEL: Record<string, string> = {
   PENJUALAN: 'Penjualan',
@@ -61,6 +63,7 @@ export default async function ApprovalRulesPage() {
 
   return (
     <PageContainer size="list">
+      <BackLink href="/dashboard" label="← Kembali ke Dashboard" />
       <PageHeader
         title="Aturan Approval Berjenjang"
         subtitle="Dokumen dengan nilai ≥ ambang wajib melewati persetujuan berurutan sebelum bisa diposting. Aturan dengan ambang tertinggi yang cocok akan dipakai."
@@ -133,6 +136,7 @@ export default async function ApprovalRulesPage() {
                 ))}
               </div>
               <Button type="submit" className="w-full">Simpan Aturan</Button>
+              <CancelButton href="/dashboard" className="w-full mt-2" />
               <p className="text-[11px] text-tanah-500">
                 Catatan: OWNER selalu boleh menyetujui langkah apa pun (mencegah macet).
               </p>

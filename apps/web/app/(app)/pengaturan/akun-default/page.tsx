@@ -6,6 +6,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import {
   PageContainer, PageHeader, Table, THead, TH, TBody, TR, TD,
 } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
 
 interface ConfigRow {
   key: string;
@@ -73,8 +74,9 @@ export default async function AkunDefaultPage() {
   const postable = accounts.filter((a) => a.isPostable);
 
   return (
-    <>
+    <>
       <PageContainer size="list">
+        <BackLink href="/dashboard" label="← Kembali ke Dashboard" />
         <PageHeader
           title="Akun Default (GL Config)"
           subtitle="Pemetaan akun untuk auto-posting jurnal: opname, disposal aset, payroll, dan komponen laporan keuangan. Kalau dibiarkan kosong, system pakai kode default COA Indonesia (kolom kanan)."

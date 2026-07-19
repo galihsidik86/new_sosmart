@@ -8,6 +8,8 @@ import { canAdmin } from '@/lib/roles';
 import {
   PageContainer, PageHeader, Card, Button, FormField, Input, StatusBanner,
 } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
+import { CancelButton } from '@/components/CancelButton';
 
 interface TenantProfile {
   id: string;
@@ -99,8 +101,9 @@ export default async function ProfilPerusahaanPage({
   const editable = canAdmin(s.role);
 
   return (
-    <>
+    <>
       <PageContainer size="form">
+        <BackLink href="/dashboard" label="← Kembali ke Dashboard" />
         <PageHeader
           title="Profil Perusahaan"
           subtitle="Identitas badan usaha yang tampil di header faktur, laporan, dan dokumen cetak lainnya."
@@ -169,8 +172,9 @@ export default async function ProfilPerusahaanPage({
                 </FormField>
               </div>
               {editable && (
-                <div className="pt-2">
+                <div className="pt-2 flex gap-2">
                   <Button type="submit">Simpan Perubahan</Button>
+                  <CancelButton href="/dashboard" className="" />
                 </div>
               )}
             </fieldset>
