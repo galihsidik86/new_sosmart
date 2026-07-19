@@ -70,8 +70,9 @@ export function ItemForm({
     () => [pilih, ...accounts.filter((a) => a.isPostable && (a.kind === 'PENDAPATAN' || a.kind === 'PENDAPATAN_LAIN')).map(opt)],
     [accounts],
   );
+  // Akun persediaan: aset (kelompok 1) yang berjenis persediaan (nama mengandung "persediaan").
   const persediaanOpts = useMemo(
-    () => [pilih, ...accounts.filter((a) => a.isPostable && a.kind === 'ASET').map(opt)],
+    () => [pilih, ...accounts.filter((a) => a.isPostable && a.kind === 'ASET' && a.nama.toLowerCase().includes('persediaan')).map(opt)],
     [accounts],
   );
   const hppOpts = useMemo(
