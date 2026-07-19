@@ -213,6 +213,7 @@ export default async function PayrollListPage({
                   className="px-2.5 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm font-mono">
                   {kasBank.map((a) => <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>)}
                 </select>
+                <a href="/pajak/payroll" className={buttonClass('secondary', 'md')}>Batal</a>
                 <Button type="submit">
                   Jalankan & Post {periode}
                 </Button>

@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, StatusBanner,
+  PageContainer, PageHeader, Card, Button, Badge, StatusBanner, buttonClass,
   Table, THead, TH, TBody, TR, TD, EmptyRow,
 } from '@/components/ui';
 
@@ -101,7 +101,7 @@ export default async function RekonsiliasiDetailPage({
 
   return (
     <PageContainer size="report">
-      <Link href="/pembukuan/rekonsiliasi" className="text-sm text-sogan-500 hover:underline">← Rekonsiliasi Bank</Link>
+      <Link href="/pembukuan/rekonsiliasi" className="text-sm text-sogan-500 hover:underline">← Kembali ke daftar rekonsiliasi</Link>
       <PageHeader
         className="mt-2"
         title={<>Rekonsiliasi {d.akun.kode} · {d.akun.nama}</>}
@@ -157,6 +157,7 @@ export default async function RekonsiliasiDetailPage({
                 <input type="hidden" name="id" value={d.id} />
                 <Button type="submit" variant="ghost" size="sm">Hapus</Button>
               </form>
+              <Link href="/pembukuan/rekonsiliasi" className={buttonClass('secondary', 'sm')}>Batal</Link>
             </div>
           ) : (
             <form action={reopenRecon} className="mt-4">
