@@ -44,12 +44,16 @@ export function VendorForm({
   const v = (k: string, fallback: string) => sv?.[k] ?? fallback;
   const pkp = sv ? sv.isPkp === 'on' : !!d.isPkp;
   const [akunUtangId, setAkunUtangId] = useState(v('akunUtangId', d.akunUtangId ?? ''));
-  // Akun utang: liabilitas (kelompok 2) berjenis utang.
+  // Akun utang USAHA saja: liabilitas ber-nama "utang" + usaha/dagang/supplier/
+  // pemasok — kecualikan utang pajak (PPN/PPh), BPJS, dan bank.
   const utangOpts = useMemo(
     () => [
       { value: '', label: '— default (2-101 Utang Usaha) —' },
-      ...accounts.filter((a) => a.isPostable && a.kind === 'LIABILITAS' && a.nama.toLowerCase().includes('utang'))
-        .map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
+      ...accounts.filter((a) => {
+        const n = a.nama.toLowerCase();
+        return a.isPostable && a.kind === 'LIABILITAS' && n.includes('utang') &&
+          /usaha|dagang|supplier|pemasok/.test(n);
+      }).map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
     ],
     [accounts],
   );
