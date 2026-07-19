@@ -3,6 +3,7 @@ import { OpnameForm } from '@/components/OpnameForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
 
 interface Item { id: string; kode: string; nama: string; satuan: string; isAktif: boolean }
 interface Cabang { id: string; kode: string; nama: string }
@@ -53,8 +54,9 @@ export default async function OpnameEditPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <>
+    <>
       <PageContainer size="form">
+        <BackLink href={`/persediaan/penyesuaian/${id}`} label="← Kembali ke detail opname" />
         <PageHeader title="Edit Draft Opname" />
         <OpnameForm
           items={items}

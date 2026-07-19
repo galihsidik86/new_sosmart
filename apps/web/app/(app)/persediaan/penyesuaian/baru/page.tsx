@@ -3,6 +3,7 @@ import { OpnameForm } from '@/components/OpnameForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { BackLink } from '@/components/BackLink';
 
 interface Item { id: string; kode: string; nama: string; satuan: string; isAktif: boolean }
 interface Cabang { id: string; kode: string; nama: string }
@@ -38,8 +39,9 @@ export default async function OpnameBaruPage() {
     (saldoMap[r.cabang.id] ??= []).push(r);
   }
   return (
-    <>
+    <>
       <PageContainer size="form">
+        <BackLink href="/persediaan/penyesuaian" label="← Kembali ke daftar opname" />
         <PageHeader title="Opname Stok Baru" />
         <OpnameForm
           items={items}

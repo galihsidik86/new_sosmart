@@ -247,6 +247,11 @@ export function OpnameForm({
         </span>
         <div className="flex gap-2 items-center">
           {error && <span className="text-bata-700 text-xs">{error}</span>}
+          <button type="button" disabled={submitting}
+            onClick={() => router.push((redirectTo ?? '/persediaan/penyesuaian') as Route)}
+            className="px-4 py-2 bg-white hover:bg-cream-50 text-tanah-700 border border-cream-300 rounded-lg text-sm font-semibold disabled:opacity-60">
+            Batal
+          </button>
           <button type="submit" disabled={submitting}
             className="px-4 py-2 bg-sogan-500 hover:bg-sogan-600 disabled:bg-cream-400 text-cream-50 rounded-lg text-sm font-semibold">
             {submitting ? 'Menyimpan…' : (submitLabel ?? 'Simpan sebagai DRAFT')}
