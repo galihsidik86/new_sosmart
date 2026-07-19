@@ -135,6 +135,10 @@ export function CashBankForm({
     () => accounts.filter((a) => a.isPostable).map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
     [accounts],
   );
+  const projectOptions = useMemo(
+    () => [{ value: '', label: '— tanpa project —' }, ...(projects ?? []).map((p) => ({ value: p.id, label: `${p.kode} — ${p.nama}` }))],
+    [projects],
+  );
 
   // Quick template: pelunasan piutang
   const applyPelunasanPiutang = (inv: InvoiceSummary, akunPiutangPlaceholder?: string) => {
@@ -291,12 +295,7 @@ export function CashBankForm({
           )}
           {showProjects && tipe !== 'TRANSFER' && (
             <FormField label="Project">
-              <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-                <option value="">— tanpa project —</option>
-                {projects!.map((p) => (
-                  <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
-                ))}
-              </Select>
+              <Combobox value={projectId} onChange={setProjectId} options={projectOptions} placeholder="— tanpa project —" />
             </FormField>
           )}
           <FormField label="Kontak (pihak transaksi)" className="col-span-full sm:col-span-2">

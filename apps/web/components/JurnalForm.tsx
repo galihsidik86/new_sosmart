@@ -120,6 +120,10 @@ export function JurnalForm({
     () => postable.map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
     [postable],
   );
+  const projectOptions = useMemo(
+    () => [{ value: '', label: '— tanpa project —' }, ...(projects ?? []).map((p) => ({ value: p.id, label: `${p.kode} — ${p.nama}` }))],
+    [projects],
+  );
 
   const updateLine = (i: number, patch: Partial<Line>) =>
     setLines((prev) => prev.map((l, k) => (k === i ? { ...l, ...patch } : l)));
@@ -231,12 +235,7 @@ export function JurnalForm({
           </FormField>
           {showProjects && (
             <FormField label={<>Project <span className="text-tanah-500 normal-case">(default semua baris)</span></>}>
-              <Select value={projectId} onChange={(e) => setHeaderProject(e.target.value)}>
-                <option value="">— tanpa project —</option>
-                {projects!.map((p) => (
-                  <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
-                ))}
-              </Select>
+              <Combobox value={projectId} onChange={setHeaderProject} options={projectOptions} placeholder="— tanpa project —" />
             </FormField>
           )}
           <FormField label="Deskripsi" className="col-start-1 col-span-full">
@@ -302,18 +301,12 @@ export function JurnalForm({
                 </td>
                 {showProjects && (
                   <td className="hidden sm:table-cell px-3 py-1.5">
-                    <select
+                    <Combobox
                       value={l.projectId}
-                      onChange={(e) => updateLine(i, { projectId: e.target.value })}
-                      className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm"
-                    >
-                      <option value="">— tanpa project —</option>
-                      {projects!.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.kode} · {p.nama}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(v) => updateLine(i, { projectId: v })}
+                      options={projectOptions}
+                      placeholder="— tanpa project —"
+                    />
                   </td>
                 )}
                 <td className="px-3 py-1.5">
