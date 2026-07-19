@@ -46,10 +46,12 @@ async function createItem(_prev: FormState, formData: FormData): Promise<FormSta
 export default async function BarangBaruPage() {
   await getSession();
   const tenantId = (await getActiveTenantId())!;
-  const [tarifList, accounts] = await Promise.all([
+  const [tarifList, accounts, prof] = await Promise.all([
     apiFetch<Pph23Tarif[]>('/pph23-tarif', { tenantId }).catch(() => [] as Pph23Tarif[]),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
+    apiFetch<{ jenisUsaha?: 'DAGANG' | 'JASA' }>('/tenants/current', { tenantId }).catch(() => ({})),
   ]);
+  const forceJasa = prof.jenisUsaha === 'JASA';
 
   return (
     <PageContainer size="form">
@@ -58,7 +60,7 @@ export default async function BarangBaruPage() {
       </div>
       <PageHeader title="Tambah Barang / Jasa" subtitle="Isi data item baru." />
       <Card padding="lg">
-        <ItemForm mode="create" action={createItem} tarifList={tarifList} accounts={accounts} />
+        <ItemForm mode="create" action={createItem} tarifList={tarifList} accounts={accounts} forceJasa={forceJasa} />
         <CancelButton href="/master/barang" />
       </Card>
     </PageContainer>

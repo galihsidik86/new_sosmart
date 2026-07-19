@@ -17,6 +17,7 @@ const PROFILE_SELECT = {
   email: true,
   telp: true,
   logoUrl: true,
+  jenisUsaha: true,
 } as const;
 
 @Injectable()

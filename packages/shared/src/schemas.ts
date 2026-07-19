@@ -77,6 +77,7 @@ export const updateTenantInputSchema = z.object({
   nama: z.string().min(2).max(160).optional(),
   npwp: npwpSchema.optional(),
   isPkp: z.boolean().optional(),
+  jenisUsaha: z.enum(['DAGANG', 'JASA']).optional(),
   pkpNo: z.string().max(60).optional().or(z.literal('').transform(() => undefined)),
   alamat: z.string().max(500).optional(),
   email: z.string().email().optional().or(z.literal('').transform(() => undefined)),

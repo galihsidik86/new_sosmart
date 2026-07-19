@@ -6,7 +6,7 @@ import { uploadLogo, type LogoUploadResult } from '@/lib/upload';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canAdmin } from '@/lib/roles';
 import {
-  PageContainer, PageHeader, Card, Button, FormField, Input, StatusBanner,
+  PageContainer, PageHeader, Card, Button, FormField, Input, Select, StatusBanner,
 } from '@/components/ui';
 import { BackLink } from '@/components/BackLink';
 import { CancelButton } from '@/components/CancelButton';
@@ -21,6 +21,7 @@ interface TenantProfile {
   email: string | null;
   telp: string | null;
   logoUrl: string | null;
+  jenisUsaha: 'DAGANG' | 'JASA';
 }
 
 const PATH = '/pengaturan/profil-perusahaan';
@@ -64,6 +65,7 @@ async function updateProfileAction(formData: FormData) {
     tenantId,
     body: JSON.stringify({
       nama: formData.get('nama'),
+      jenisUsaha: formData.get('jenisUsaha') === 'JASA' ? 'JASA' : 'DAGANG',
       npwp: (formData.get('npwp') as string)?.replace(/\D/g, '') || undefined,
       isPkp: formData.get('isPkp') === 'on',
       pkpNo: formData.get('pkpNo') || undefined,
@@ -147,6 +149,15 @@ export default async function ProfilPerusahaanPage({
             <fieldset disabled={!editable} className="space-y-4 disabled:opacity-70">
               <FormField label="Nama Badan Usaha" required>
                 <Input name="nama" required defaultValue={t.nama} placeholder="PT Sinar Niaga Sentosa" />
+              </FormField>
+              <FormField label="Jenis Usaha">
+                <Select name="jenisUsaha" defaultValue={t.jenisUsaha}>
+                  <option value="DAGANG">Dagang (jual-beli barang, ada persediaan)</option>
+                  <option value="JASA">Jasa (tanpa persediaan)</option>
+                </Select>
+                <p className="text-[11px] text-tanah-500 mt-1">
+                  Usaha <b>Jasa</b>: item master otomatis berjenis jasa &amp; menu Persediaan disembunyikan.
+                </p>
               </FormField>
               <div className="grid grid-cols-2 gap-4">
                 <FormField label="NPWP Pusat">

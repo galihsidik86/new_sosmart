@@ -194,6 +194,12 @@ enum CostMethod {
   AVERAGE
 }
 
+/// Jenis usaha badan — menentukan default item (jasa) & tampilan menu persediaan.
+enum JenisUsaha {
+  DAGANG
+  JASA
+}
+
 /// Status PTKP karyawan — menentukan PTKP tahunan & kategori TER bulanan.
 ///   TK = Tidak Kawin · K = Kawin · HB = Hidup Berpisah · angka = tanggungan (0..3).
 enum PtkpStatus {
@@ -369,6 +375,7 @@ model Tenant {
   tahunBuku  Int        @default(1) @map("tahun_buku")
   /// Metode harga pokok persediaan. Sekali ada transaksi, jangan diubah.
   costMethod CostMethod @default(AVERAGE) @map("cost_method")
+  jenisUsaha JenisUsaha @default(DAGANG) @map("jenis_usaha")
   createdAt  DateTime   @default(now()) @map("created_at")
   updatedAt  DateTime   @updatedAt @map("updated_at")
 

@@ -65,11 +65,13 @@ export default async function EditBarangPage({ params }: { params: Promise<{ id:
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const { id } = await params;
-  const [item, tarifList, accounts] = await Promise.all([
+  const [item, tarifList, accounts, prof] = await Promise.all([
     apiFetch<Item>(`/items/${id}`, { tenantId }),
     apiFetch<Pph23Tarif[]>('/pph23-tarif', { tenantId }).catch(() => [] as Pph23Tarif[]),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
+    apiFetch<{ jenisUsaha?: 'DAGANG' | 'JASA' }>('/tenants/current', { tenantId }).catch(() => ({})),
   ]);
+  const forceJasa = prof.jenisUsaha === 'JASA';
 
   return (
     <>
@@ -77,7 +79,7 @@ export default async function EditBarangPage({ params }: { params: Promise<{ id:
         <Link href="/master/barang" className="text-sm text-sogan-500 hover:underline">← Kembali</Link>
         <PageHeader title="Edit Barang" subtitle={`${item.kode} · ${item.nama}`} className="mt-2" />
         <Card padding="lg">
-          <ItemForm mode="edit" action={updateItem} tarifList={tarifList} accounts={accounts} defaults={item} submitLabel="Simpan perubahan" />
+          <ItemForm mode="edit" action={updateItem} tarifList={tarifList} accounts={accounts} defaults={item} submitLabel="Simpan perubahan" forceJasa={forceJasa} />
           <CancelButton href="/master/barang" />
         </Card>
       </PageContainer>

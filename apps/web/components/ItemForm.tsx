@@ -41,6 +41,7 @@ export function ItemForm({
   accounts,
   defaults,
   submitLabel,
+  forceJasa = false,
 }: {
   mode: 'create' | 'edit';
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
@@ -48,6 +49,8 @@ export function ItemForm({
   accounts: Account[];
   defaults?: ItemDefaults;
   submitLabel?: string;
+  /** Usaha jasa: item selalu jasa, ceklis disembunyikan. */
+  forceJasa?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, emptyFormState);
   const fe = state.fieldErrors ?? {};
@@ -55,7 +58,7 @@ export function ItemForm({
   const sv = state.values;
   const v = (k: string, fallback: string) => sv?.[k] ?? fallback;
 
-  const [isJasa, setIsJasa] = useState<boolean>(sv ? sv.isJasa === 'on' : !!d.isJasa);
+  const [isJasa, setIsJasa] = useState<boolean>(forceJasa ? true : (sv ? sv.isJasa === 'on' : !!d.isJasa));
   const [akunPendapatanId, setAkunPendapatanId] = useState(v('akunPendapatanId', d.akunPendapatanId ?? ''));
   const [akunPersediaanId, setAkunPersediaanId] = useState(v('akunPersediaanId', d.akunPersediaanId ?? ''));
   const [akunHppId, setAkunHppId] = useState(v('akunHppId', d.akunHppId ?? ''));
@@ -111,10 +114,19 @@ export function ItemForm({
           ))}
         </Select>
       </FormField>
-      <label className="flex items-center gap-2 text-tanah-700">
-        <input type="checkbox" name="isJasa" checked={isJasa} onChange={(e) => setIsJasa(e.target.checked)} />
-        Adalah jasa (kena PPh 23)
-      </label>
+      {forceJasa ? (
+        <>
+          <input type="hidden" name="isJasa" value="on" />
+          <div className="text-xs text-tanah-600 bg-cream-100 border border-cream-200 rounded-lg px-3 py-2">
+            Jenis usaha perusahaan = <b>Jasa</b> → item ini otomatis berjenis <b>jasa</b> (tanpa persediaan/saldo awal).
+          </div>
+        </>
+      ) : (
+        <label className="flex items-center gap-2 text-tanah-700">
+          <input type="checkbox" name="isJasa" checked={isJasa} onChange={(e) => setIsJasa(e.target.checked)} />
+          Adalah jasa (kena PPh 23)
+        </label>
+      )}
       {isJasa && (
         <FormField
           label={<>Tarif PPh 23 <span className="text-tanah-500 normal-case font-normal">(hanya jika jasa)</span></>}

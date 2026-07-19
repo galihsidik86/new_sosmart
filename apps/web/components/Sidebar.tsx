@@ -79,12 +79,13 @@ interface SidebarProps {
   tenantNama?: string;
   role?: string;
   logoUrl?: string | null;
+  jenisUsaha?: 'DAGANG' | 'JASA';
 }
 
 const initialsOf = (s: string) =>
   s.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
-export function Sidebar({ user, tenantNama, role, logoUrl }: SidebarProps) {
+export function Sidebar({ user, tenantNama, role, logoUrl, jenisUsaha }: SidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false); // mobile drawer
   const [collapsed, setCollapsed] = useState(false); // desktop rail
@@ -101,7 +102,10 @@ export function Sidebar({ user, tenantNama, role, logoUrl }: SidebarProps) {
 
   const userRole = role as Role | undefined;
   const visibleNav = NAV.filter(
-    (n) => !n.roles || (userRole !== undefined && n.roles.includes(userRole)),
+    (n) =>
+      (!n.roles || (userRole !== undefined && n.roles.includes(userRole))) &&
+      // Usaha jasa: sembunyikan menu Persediaan (tak ada stok barang).
+      !(jenisUsaha === 'JASA' && n.group === 'Persediaan'),
   );
   const groups = GROUP_ORDER.filter((g) => visibleNav.some((n) => n.group === g));
 

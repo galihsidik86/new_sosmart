@@ -24,15 +24,17 @@ export default async function AppLayout({
   if (!s.tenantId) redirect('/pilih-tenant');
 
   let logoUrl: string | null = null;
+  let jenisUsaha: 'DAGANG' | 'JASA' = 'DAGANG';
   let periodeLabel: string | undefined;
   let approvalInbox: ApprovalInboxItem[] = [];
   try {
     const [prof, years, inbox] = await Promise.all([
-      apiFetch<{ logoUrl: string | null }>('/tenants/current', { tenantId: s.tenantId }),
+      apiFetch<{ logoUrl: string | null; jenisUsaha?: 'DAGANG' | 'JASA' }>('/tenants/current', { tenantId: s.tenantId }),
       apiFetch<PeriodYear[]>('/periods/years', { tenantId: s.tenantId }).catch(() => [] as PeriodYear[]),
       apiFetch<ApprovalInboxItem[]>('/approval/inbox', { tenantId: s.tenantId }).catch(() => [] as ApprovalInboxItem[]),
     ]);
     logoUrl = prof.logoUrl;
+    jenisUsaha = prof.jenisUsaha ?? 'DAGANG';
     periodeLabel = years[0]?.periods.find((p) => p.status === 'OPEN')?.label;
     approvalInbox = inbox;
   } catch { /* logo, periode & inbox opsional */ }
@@ -44,6 +46,7 @@ export default async function AppLayout({
         tenantNama={s.tenantNama}
         role={s.role}
         logoUrl={logoUrl}
+        jenisUsaha={jenisUsaha}
       />
       <main className="flex-1 min-w-0 flex flex-col bg-cream-100">
         <Topbar
