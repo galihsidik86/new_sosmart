@@ -80,7 +80,7 @@ export function VendorListView({ vendors, orgName }: { vendors: VendorRow[]; org
         { header: 'NPWP', mono: true },
         { header: 'Kota' },
         { header: 'Telp' },
-        { header: 'Termin', align: 'center' },
+        { header: 'Termin Pembayaran', align: 'center' },
       ],
       rows: filtered.map((v, i) => [
         String(i + 1),
@@ -100,7 +100,7 @@ export function VendorListView({ vendors, orgName }: { vendors: VendorRow[]; org
     exportRowsToXlsx(
       'daftar-vendor',
       'Vendor',
-      ['No', 'Kode', 'Nama', 'Kategori', 'PKP', 'NPWP', 'Kota', 'Telp', 'Termin (hari)'],
+      ['No', 'Kode', 'Nama', 'Kategori', 'PKP', 'NPWP', 'Kota', 'Telp', 'Termin Pembayaran (hari)'],
       filtered.map((v, i) => [
         i + 1,
         v.kode,
@@ -152,7 +152,7 @@ export function VendorListView({ vendors, orgName }: { vendors: VendorRow[]; org
           <TH>Nama / Kategori</TH>
           <TH>NPWP</TH>
           <TH className="text-center">PKP</TH>
-          <TH numeric>Termin</TH>
+          <TH numeric>Termin Pembayaran</TH>
           <TH numeric stickyEnd className="w-16" />
         </THead>
         <TBody>

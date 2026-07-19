@@ -71,7 +71,7 @@ export function VendorForm({
         <FormField label="Kota"><Input name="kota" defaultValue={v('kota', d.kota ?? '')} /></FormField>
         <FormField label="Telp"><Input name="telp" defaultValue={v('telp', d.telp ?? '')} /></FormField>
       </div>
-      <FormField label="Termin (hari)">
+      <FormField label="Termin Pembayaran (hari)">
         <Input name="terminHari" type="number" defaultValue={v('terminHari', String(d.terminHari ?? 30))} invalid={!!fe.terminHari} />
         <FieldError msg={fe.terminHari} />
       </FormField>

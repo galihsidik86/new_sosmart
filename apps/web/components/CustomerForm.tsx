@@ -81,7 +81,7 @@ export function CustomerForm({
         <FormField label="Telp"><Input name="telp" defaultValue={v('telp', d.telp ?? '')} /></FormField>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <FormField label="Termin (hari)">
+        <FormField label="Termin Pembayaran (hari)">
           <Input name="terminHari" type="number" defaultValue={v('terminHari', String(d.terminHari ?? 14))} invalid={!!fe.terminHari} />
           <FieldError msg={fe.terminHari} />
         </FormField>

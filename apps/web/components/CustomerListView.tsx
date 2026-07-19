@@ -75,7 +75,7 @@ export function CustomerListView({ customers, orgName }: { customers: CustomerRo
         { header: 'NPWP', mono: true },
         { header: 'Kota' },
         { header: 'Telp' },
-        { header: 'Termin', align: 'center' },
+        { header: 'Termin Pembayaran', align: 'center' },
         { header: 'Limit Kredit', align: 'right' },
       ],
       rows: filtered.map((c, i) => [
@@ -98,7 +98,7 @@ export function CustomerListView({ customers, orgName }: { customers: CustomerRo
     exportRowsToXlsx(
       'daftar-pelanggan',
       'Pelanggan',
-      ['No', 'Kode', 'Nama', 'Jenis', 'PKP', 'NPWP', 'Kota', 'Telp', 'Termin (hari)', 'Limit Kredit'],
+      ['No', 'Kode', 'Nama', 'Jenis', 'PKP', 'NPWP', 'Kota', 'Telp', 'Termin Pembayaran (hari)', 'Limit Kredit'],
       filtered.map((c, i) => [
         i + 1,
         c.kode,
@@ -144,7 +144,7 @@ export function CustomerListView({ customers, orgName }: { customers: CustomerRo
           <TH>Kode</TH>
           <TH>Nama / Jenis</TH>
           <TH>NPWP</TH>
-          <TH numeric>Termin</TH>
+          <TH numeric>Termin Pembayaran</TH>
           <TH numeric>Limit Kredit</TH>
           <TH numeric stickyEnd className="w-16" />
         </THead>
