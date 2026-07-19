@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader, Card } from '@/components/ui';
+import { CancelButton } from '@/components/CancelButton';
 import { ProjectForm } from '@/components/ProjectForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -64,6 +65,7 @@ export default async function ProjectBaruPage() {
           customers={customers}
           industriList={industri}
         />
+        <CancelButton href="/master/project" />
       </Card>
     </PageContainer>
   );

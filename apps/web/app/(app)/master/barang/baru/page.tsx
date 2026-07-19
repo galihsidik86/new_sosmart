@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader, Card } from '@/components/ui';
+import { CancelButton } from '@/components/CancelButton';
 import { ItemForm } from '@/components/ItemForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -50,6 +51,7 @@ export default async function BarangBaruPage() {
       <PageHeader title="Tambah Barang / Jasa" subtitle="Isi data item baru." />
       <Card padding="lg">
         <ItemForm mode="create" action={createItem} tarifList={tarifList} />
+        <CancelButton href="/master/barang" />
       </Card>
     </PageContainer>
   );

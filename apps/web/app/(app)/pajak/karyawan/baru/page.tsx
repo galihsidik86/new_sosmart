@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader, Card } from '@/components/ui';
+import { CancelButton } from '@/components/CancelButton';
 import { KaryawanForm } from '@/components/KaryawanForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -51,6 +52,7 @@ export default async function KaryawanBaruPage() {
       <PageHeader title="Tambah Karyawan" subtitle="PTKP menentukan kategori TER PMK 168/2023." />
       <Card padding="lg">
         <KaryawanForm mode="create" action={createKaryawan} cabang={cabang} />
+        <CancelButton href="/pajak/karyawan" />
       </Card>
     </PageContainer>
   );

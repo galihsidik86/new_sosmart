@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader, Card } from '@/components/ui';
+import { CancelButton } from '@/components/CancelButton';
 import { CustomerForm } from '@/components/CustomerForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -49,6 +50,7 @@ export default async function PelangganBaruPage() {
       <PageHeader title="Tambah Pelanggan" subtitle="Pelanggan PKP berhak menerima faktur pajak." />
       <Card padding="lg">
         <CustomerForm mode="create" action={createCustomer} jenisList={jenisList} />
+        <CancelButton href="/master/pelanggan" />
       </Card>
     </PageContainer>
   );

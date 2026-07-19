@@ -3,6 +3,8 @@ import { AsetForm } from '@/components/AsetForm';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader } from '@/components/ui';
+import { CancelButton } from '@/components/CancelButton';
+import { BackLink } from '@/components/BackLink';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface Cabang { id: string; kode: string; nama: string }
@@ -46,12 +48,14 @@ export default async function AsetBaruPage() {
   return (
     <>
       <PageContainer size="form">
+        <BackLink href="/aset/daftar" label="← Kembali ke daftar aset" />
         <PageHeader title="Aset Tetap Baru" />
         <AsetForm
           cabang={cabang}
           akunAset={akunAset} akunAkumulasi={akunAkum} akunBeban={akunBeban}
           submit={submitAset}
         />
+        <CancelButton href="/aset/daftar" />
       </PageContainer>
     </>
   );

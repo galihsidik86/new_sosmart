@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader, Card } from '@/components/ui';
+import { CancelButton } from '@/components/CancelButton';
 import { VendorForm } from '@/components/VendorForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -70,6 +71,7 @@ export default async function EditVendorPage({ params }: { params: Promise<{ id:
             defaults={v}
             submitLabel="Simpan perubahan"
           />
+          <CancelButton href="/master/vendor" />
         </Card>
       </PageContainer>
     </>

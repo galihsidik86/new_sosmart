@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader, Card } from '@/components/ui';
+import { CancelButton } from '@/components/CancelButton';
 import { VendorForm } from '@/components/VendorForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -44,6 +45,7 @@ export default async function VendorBaruPage() {
       <PageHeader title="Tambah Vendor" subtitle="Isi data pemasok baru." />
       <Card padding="lg">
         <VendorForm mode="create" action={createVendor} />
+        <CancelButton href="/master/vendor" />
       </Card>
     </PageContainer>
   );

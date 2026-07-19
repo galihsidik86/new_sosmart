@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader, Card } from '@/components/ui';
+import { CancelButton } from '@/components/CancelButton';
 import { CustomerForm } from '@/components/CustomerForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -76,6 +77,7 @@ export default async function EditPelangganPage({ params }: { params: Promise<{ 
             defaults={c}
             submitLabel="Simpan perubahan"
           />
+          <CancelButton href="/master/pelanggan" />
         </Card>
       </PageContainer>
     </>

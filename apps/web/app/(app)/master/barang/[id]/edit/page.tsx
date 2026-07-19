@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { PageContainer, PageHeader, Card } from '@/components/ui';
+import { CancelButton } from '@/components/CancelButton';
 import { ItemForm } from '@/components/ItemForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -67,6 +68,7 @@ export default async function EditBarangPage({ params }: { params: Promise<{ id:
         <PageHeader title="Edit Barang" subtitle={`${item.kode} · ${item.nama}`} className="mt-2" />
         <Card padding="lg">
           <ItemForm mode="edit" action={updateItem} tarifList={tarifList} defaults={item} submitLabel="Simpan perubahan" />
+          <CancelButton href="/master/barang" />
         </Card>
       </PageContainer>
     </>
