@@ -91,7 +91,7 @@ export default async function PiutangPage({
         />
 
         <form method="GET" className={filterBarClass}>
-          <FilterLabel>Tanggal patokan (asOf)</FilterLabel>
+          <FilterLabel>Tanggal patokan</FilterLabel>
           <input
             type="date"
             name="asOf"
