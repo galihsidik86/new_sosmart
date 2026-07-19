@@ -1,12 +1,13 @@
 'use client';
 
-import { useActionState } from 'react';
-import { FormField, Input, Select, Button } from '@/components/ui';
+import { useActionState, useMemo, useState } from 'react';
+import { FormField, Input, Select, Button, Combobox } from '@/components/ui';
 import { FieldError } from './FieldError';
 import { emptyFormState, type FormState } from '@/lib/form-state';
 
 interface Jenis { id: string; nama: string }
 interface Partner { tenantId: string; nama: string }
+interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
 
 export interface CustomerDefaults {
   id?: string;
@@ -19,6 +20,7 @@ export interface CustomerDefaults {
   telp?: string | null;
   terminHari?: number;
   kreditLimit?: string;
+  akunPiutangId?: string | null;
   partnerTenantId?: string | null;
 }
 
@@ -26,6 +28,7 @@ export function CustomerForm({
   mode,
   action,
   jenisList,
+  accounts = [],
   defaults,
   partners,
   submitLabel,
@@ -33,6 +36,7 @@ export function CustomerForm({
   mode: 'create' | 'edit';
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   jenisList: Jenis[];
+  accounts?: Account[];
   defaults?: CustomerDefaults;
   partners?: Partner[];
   submitLabel?: string;
@@ -43,6 +47,16 @@ export function CustomerForm({
   const sv = state.values;
   const v = (k: string, fallback: string) => sv?.[k] ?? fallback;
   const pkp = sv ? sv.isPkp === 'on' : !!d.isPkp;
+  const [akunPiutangId, setAkunPiutangId] = useState(v('akunPiutangId', d.akunPiutangId ?? ''));
+  // Akun piutang: aset (kelompok 1) berjenis piutang.
+  const piutangOpts = useMemo(
+    () => [
+      { value: '', label: '— default (1-103 Piutang Usaha) —' },
+      ...accounts.filter((a) => a.isPostable && a.kind === 'ASET' && a.nama.toLowerCase().includes('piutang'))
+        .map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
+    ],
+    [accounts],
+  );
 
   return (
     <form key={state.attempt ?? 0} action={formAction} className="space-y-3 text-sm">
@@ -90,6 +104,9 @@ export function CustomerForm({
           <FieldError msg={fe.kreditLimit} />
         </FormField>
       </div>
+      <FormField label={<>Akun Piutang <span className="text-tanah-500 normal-case font-normal">(default auto-jurnal)</span></>}>
+        <Combobox name="akunPiutangId" value={akunPiutangId} onChange={setAkunPiutangId} options={piutangOpts} mono placeholder="— default (1-103 Piutang Usaha) —" />
+      </FormField>
       {partners && partners.length > 0 && (
         <FormField label="Entitas intra-grup (intercompany)">
           <Select name="partnerTenantId" defaultValue={v('partnerTenantId', d.partnerTenantId ?? '')}>

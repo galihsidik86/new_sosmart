@@ -1,11 +1,12 @@
 'use client';
 
-import { useActionState } from 'react';
-import { FormField, Input, Select, Button } from '@/components/ui';
+import { useActionState, useMemo, useState } from 'react';
+import { FormField, Input, Select, Button, Combobox } from '@/components/ui';
 import { FieldError } from './FieldError';
 import { emptyFormState, type FormState } from '@/lib/form-state';
 
 interface Partner { tenantId: string; nama: string }
+interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
 
 export interface VendorDefaults {
   id?: string;
@@ -17,18 +18,21 @@ export interface VendorDefaults {
   kota?: string | null;
   telp?: string | null;
   terminHari?: number;
+  akunUtangId?: string | null;
   partnerTenantId?: string | null;
 }
 
 export function VendorForm({
   mode,
   action,
+  accounts = [],
   defaults,
   partners,
   submitLabel,
 }: {
   mode: 'create' | 'edit';
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
+  accounts?: Account[];
   defaults?: VendorDefaults;
   partners?: Partner[];
   submitLabel?: string;
@@ -39,6 +43,16 @@ export function VendorForm({
   const sv = state.values;
   const v = (k: string, fallback: string) => sv?.[k] ?? fallback;
   const pkp = sv ? sv.isPkp === 'on' : !!d.isPkp;
+  const [akunUtangId, setAkunUtangId] = useState(v('akunUtangId', d.akunUtangId ?? ''));
+  // Akun utang: liabilitas (kelompok 2) berjenis utang.
+  const utangOpts = useMemo(
+    () => [
+      { value: '', label: '— default (2-101 Utang Usaha) —' },
+      ...accounts.filter((a) => a.isPostable && a.kind === 'LIABILITAS' && a.nama.toLowerCase().includes('utang'))
+        .map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
+    ],
+    [accounts],
+  );
 
   return (
     <form key={state.attempt ?? 0} action={formAction} className="space-y-3 text-sm">
@@ -74,6 +88,9 @@ export function VendorForm({
       <FormField label="Termin Pembayaran (hari)">
         <Input name="terminHari" type="number" defaultValue={v('terminHari', String(d.terminHari ?? 30))} invalid={!!fe.terminHari} />
         <FieldError msg={fe.terminHari} />
+      </FormField>
+      <FormField label={<>Akun Utang <span className="text-tanah-500 normal-case font-normal">(default auto-jurnal)</span></>}>
+        <Combobox name="akunUtangId" value={akunUtangId} onChange={setAkunUtangId} options={utangOpts} mono placeholder="— default (2-101 Utang Usaha) —" />
       </FormField>
       {partners && partners.length > 0 && (
         <FormField label="Entitas intra-grup (intercompany)">

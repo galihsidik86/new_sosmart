@@ -9,6 +9,7 @@ import { CustomerForm } from '@/components/CustomerForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface JenisPelanggan { id: string; nama: string }
+interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
 
 async function createCustomer(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
@@ -28,6 +29,7 @@ async function createCustomer(_prev: FormState, formData: FormData): Promise<For
         telp: formData.get('telp') || undefined,
         terminHari: Number(formData.get('terminHari') ?? 14),
         kreditLimit: String(formData.get('kreditLimit') ?? '0'),
+        akunPiutangId: (formData.get('akunPiutangId') as string) || null,
       }),
     });
   } catch (e) {
@@ -40,7 +42,10 @@ async function createCustomer(_prev: FormState, formData: FormData): Promise<For
 export default async function PelangganBaruPage() {
   await getSession();
   const tenantId = (await getActiveTenantId())!;
-  const jenisList = await apiFetch<JenisPelanggan[]>('/jenis-pelanggan', { tenantId });
+  const [jenisList, accounts] = await Promise.all([
+    apiFetch<JenisPelanggan[]>('/jenis-pelanggan', { tenantId }),
+    apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
+  ]);
 
   return (
     <PageContainer size="form">
@@ -49,7 +54,7 @@ export default async function PelangganBaruPage() {
       </div>
       <PageHeader title="Tambah Pelanggan" subtitle="Pelanggan PKP berhak menerima faktur pajak." />
       <Card padding="lg">
-        <CustomerForm mode="create" action={createCustomer} jenisList={jenisList} />
+        <CustomerForm mode="create" action={createCustomer} jenisList={jenisList} accounts={accounts} />
         <CancelButton href="/master/pelanggan" />
       </Card>
     </PageContainer>

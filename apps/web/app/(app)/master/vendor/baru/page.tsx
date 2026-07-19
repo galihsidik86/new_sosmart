@@ -8,6 +8,8 @@ import { CancelButton } from '@/components/CancelButton';
 import { VendorForm } from '@/components/VendorForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
+interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
+
 async function createVendor(_prev: FormState, formData: FormData): Promise<FormState> {
   'use server';
   const tenantId = await getActiveTenantId();
@@ -25,6 +27,7 @@ async function createVendor(_prev: FormState, formData: FormData): Promise<FormS
         kota: formData.get('kota') || undefined,
         telp: formData.get('telp') || undefined,
         terminHari: Number(formData.get('terminHari') ?? 30),
+        akunUtangId: (formData.get('akunUtangId') as string) || null,
       }),
     });
   } catch (e) {
@@ -36,7 +39,8 @@ async function createVendor(_prev: FormState, formData: FormData): Promise<FormS
 
 export default async function VendorBaruPage() {
   await getSession();
-  await getActiveTenantId();
+  const tenantId = (await getActiveTenantId())!;
+  const accounts = await apiFetch<Account[]>('/accounts?view=flat', { tenantId });
   return (
     <PageContainer size="form">
       <div className="mb-2">
@@ -44,7 +48,7 @@ export default async function VendorBaruPage() {
       </div>
       <PageHeader title="Tambah Vendor" subtitle="Isi data pemasok baru." />
       <Card padding="lg">
-        <VendorForm mode="create" action={createVendor} />
+        <VendorForm mode="create" action={createVendor} accounts={accounts} />
         <CancelButton href="/master/vendor" />
       </Card>
     </PageContainer>

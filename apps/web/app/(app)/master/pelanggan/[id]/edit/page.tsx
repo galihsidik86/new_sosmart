@@ -9,6 +9,7 @@ import { CustomerForm } from '@/components/CustomerForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
 interface JenisPelanggan { id: string; nama: string }
+interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
 
 interface Customer {
   id: string;
@@ -21,6 +22,7 @@ interface Customer {
   telp: string | null;
   terminHari: number;
   kreditLimit: string;
+  akunPiutangId: string | null;
   partnerTenantId: string | null;
 }
 
@@ -43,6 +45,7 @@ async function updateCustomer(_prev: FormState, formData: FormData): Promise<For
         telp: formData.get('telp') || null,
         terminHari: Number(formData.get('terminHari') ?? 14),
         kreditLimit: String(formData.get('kreditLimit') ?? '0'),
+        akunPiutangId: (formData.get('akunPiutangId') as string) || null,
         partnerTenantId: (formData.get('partnerTenantId') as string) || null,
       }),
     });
@@ -57,10 +60,11 @@ export default async function EditPelangganPage({ params }: { params: Promise<{ 
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const { id } = await params;
-  const [c, partners, jenisList] = await Promise.all([
+  const [c, partners, jenisList, accounts] = await Promise.all([
     apiFetch<Customer>(`/customers/${id}`, { tenantId }),
     apiFetch<Array<{ tenantId: string; nama: string }>>('/consolidation/candidates', { tenantId }).catch(() => []),
     apiFetch<JenisPelanggan[]>('/jenis-pelanggan', { tenantId }),
+    apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
   ]);
 
   return (
@@ -73,6 +77,7 @@ export default async function EditPelangganPage({ params }: { params: Promise<{ 
             mode="edit"
             action={updateCustomer}
             jenisList={jenisList}
+            accounts={accounts}
             partners={partners}
             defaults={c}
             submitLabel="Simpan perubahan"

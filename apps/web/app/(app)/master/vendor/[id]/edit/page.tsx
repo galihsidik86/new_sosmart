@@ -8,6 +8,8 @@ import { CancelButton } from '@/components/CancelButton';
 import { VendorForm } from '@/components/VendorForm';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
+interface Account { id: string; kode: string; nama: string; kind: string; isPostable: boolean }
+
 interface Vendor {
   id: string;
   kode: string;
@@ -18,6 +20,7 @@ interface Vendor {
   kota: string | null;
   telp: string | null;
   terminHari: number;
+  akunUtangId: string | null;
   partnerTenantId: string | null;
 }
 
@@ -39,6 +42,7 @@ async function updateVendor(_prev: FormState, formData: FormData): Promise<FormS
         kota: formData.get('kota') || null,
         telp: formData.get('telp') || null,
         terminHari: Number(formData.get('terminHari') ?? 30),
+        akunUtangId: (formData.get('akunUtangId') as string) || null,
         partnerTenantId: (formData.get('partnerTenantId') as string) || null,
       }),
     });
@@ -53,9 +57,10 @@ export default async function EditVendorPage({ params }: { params: Promise<{ id:
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const { id } = await params;
-  const [v, partners] = await Promise.all([
+  const [v, partners, accounts] = await Promise.all([
     apiFetch<Vendor>(`/vendors/${id}`, { tenantId }),
     apiFetch<Array<{ tenantId: string; nama: string }>>('/consolidation/candidates', { tenantId }).catch(() => []),
+    apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
   ]);
 
   return (
@@ -67,6 +72,7 @@ export default async function EditVendorPage({ params }: { params: Promise<{ id:
           <VendorForm
             mode="edit"
             action={updateVendor}
+            accounts={accounts}
             partners={partners}
             defaults={v}
             submitLabel="Simpan perubahan"

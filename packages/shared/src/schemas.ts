@@ -131,6 +131,8 @@ export const createVendorInputSchema = z.object({
   email: z.string().email().optional().or(z.literal('').transform(() => undefined)),
   contactPerson: z.string().max(100).optional(),
   terminHari: z.coerce.number().int().min(0).max(365).default(30),
+  /** Override akun utang usaha default (kalau null pakai 2-101). */
+  akunUtangId: z.string().uuid().nullable().optional(),
   catatan: z.string().max(500).optional(),
   /** Entitas intra-grup (untuk eliminasi konsolidasi). */
   partnerTenantId: z.string().uuid().nullable().optional(),
@@ -155,6 +157,8 @@ export const createCustomerInputSchema = z.object({
   contactPerson: z.string().max(100).optional(),
   terminHari: z.coerce.number().int().min(0).max(365).default(14),
   kreditLimit: moneyStringSchema.default('0'),
+  /** Override akun piutang usaha default (kalau null pakai 1-103). */
+  akunPiutangId: z.string().uuid().nullable().optional(),
   catatan: z.string().max(500).optional(),
   /** Entitas intra-grup (untuk eliminasi konsolidasi). */
   partnerTenantId: z.string().uuid().nullable().optional(),
