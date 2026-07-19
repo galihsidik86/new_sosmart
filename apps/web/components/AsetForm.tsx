@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { FieldError } from './FieldError';
+import { Combobox } from './ui';
 import type { FormState } from '@/lib/form-state';
 
 type Kelompok =
@@ -142,10 +143,8 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
                 {cabang[0] ? `${cabang[0].kode} — ${cabang[0].nama}` : '—'}
               </div>
             ) : (
-              <select value={cabangId} onChange={(e) => setCabangId(e.target.value)} required
-                className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm">
-                {cabang.map((c) => <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>)}
-              </select>
+              <Combobox value={cabangId} onChange={setCabangId} placeholder="— pilih cabang —"
+                options={cabang.map((c) => ({ value: c.id, label: `${c.kode} — ${c.nama}` }))} />
             )}
           </div>
           <div className="sm:col-span-2">

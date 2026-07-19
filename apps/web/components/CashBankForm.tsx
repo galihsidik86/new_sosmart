@@ -244,11 +244,8 @@ export function CashBankForm({
                 {cabang[0] ? `${cabang[0].kode} — ${cabang[0].nama}` : '—'}
               </div>
             ) : (
-              <Select value={cabangId} onChange={(e) => setCabangId(e.target.value)}>
-                {cabang.map((c) => (
-                  <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
-                ))}
-              </Select>
+              <Combobox value={cabangId} onChange={setCabangId} placeholder="— pilih cabang —"
+                options={cabang.map((c) => ({ value: c.id, label: `${c.kode} — ${c.nama}` }))} />
             )}
           </FormField>
           <FormField label={`Akun Kas/Bank ${tipe === 'TRANSFER' ? '(dari)' : ''}`}>

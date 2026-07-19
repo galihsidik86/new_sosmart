@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader, Combobox } from './ui';
+import { Card, Button, FormField, Input, StatusBanner, SectionHeader, Combobox } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -226,11 +226,8 @@ export function JurnalForm({
                 {cabang[0] ? `${cabang[0].kode} — ${cabang[0].nama}` : '—'}
               </div>
             ) : (
-              <Select value={cabangId} onChange={(e) => setCabangId(e.target.value)} required>
-                {cabang.map((c) => (
-                  <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>
-                ))}
-              </Select>
+              <Combobox value={cabangId} onChange={setCabangId} placeholder="— pilih cabang —"
+                options={cabang.map((c) => ({ value: c.id, label: `${c.kode} — ${c.nama}` }))} />
             )}
           </FormField>
           {showProjects && (
