@@ -32,8 +32,17 @@ in_port="$(port_for "$inactive")"; act_port="$(port_for "$active")"
 echo "==> aktif=$active(:$act_port) → deploy ke inaktif=$inactive(:$in_port)"
 
 echo "==> [1/8] sync config PM2 dari sumber tunggal infra/ecosystem.config.cjs"
+# Peringatan awal: kalau ecosystem server berbeda dari infra (disunting manual
+# di server), tampilkan diff yang akan DITIMPA — jangan sampai hilang senyap.
+if [ -f "$ROOT/ecosystem.config.cjs" ] && \
+   ! diff -q "$ROOT/infra/ecosystem.config.cjs" "$ROOT/ecosystem.config.cjs" >/dev/null 2>&1; then
+  echo "    ⚠ PERINGATAN: ecosystem server BEDA dari infra — kemungkinan disunting manual di server."
+  echo "      Berikut yang akan DITIMPA oleh infra (sumber tunggal); pindahkan ke infra/ kalau memang disengaja:"
+  diff "$ROOT/infra/ecosystem.config.cjs" "$ROOT/ecosystem.config.cjs" 2>&1 | sed 's/^/        /' || true
+fi
 cp -f "$ROOT/infra/ecosystem.config.cjs" "$ROOT/ecosystem.config.cjs"
 node -e "require('$ROOT/ecosystem.config.cjs')" # gagal-cepat kalau syntax rusak
+echo "    ✓ config PM2 tersinkron dari infra"
 
 echo "==> [2/8] env"
 set -a; source "$ROOT/.env"; set +a
