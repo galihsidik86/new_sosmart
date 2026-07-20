@@ -1,4 +1,6 @@
 // PM2 ecosystem — Lentera (blue-green web).
+// SUMBER TUNGGAL: edit file ini (infra/), JANGAN sunting /srv/lentera/ecosystem.config.cjs
+// di server — scripts/deploy-web-bg.sh menyalinnya ke server tiap deploy.
 //
 // Web dijalankan sebagai DUA "warna" yang bergantian tiap deploy:
 //   lentera-web-a  → port 3011, serve dari apps/web/.next-a

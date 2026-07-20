@@ -50,7 +50,7 @@ Server prod: `root@202.134.242.202`, repo di `/srv/lentera` (git pull `origin ma
 - `lentera-web-a` → port **3011**, serve `apps/web/.next-a`
 - `lentera-web-b` → port **3012**, serve `apps/web/.next-b`
 
-Caddy menunjuk warna aktif lewat baris marker **`reverse_proxy 127.0.0.1:<port> # WEB-ACTIVE`** di catch-all `handle {}`. Warna aktif disimpan di `/srv/lentera/.web-active` (`a`|`b`). `next.config.ts` punya `distDir: process.env.NEXT_DIST_DIR || '.next'` supaya build bisa diarahkan per-warna. `ecosystem.config.cjs` (di server, **untracked** di git, ada `.bak`) mendefinisikan dua warna + backoff PM2 (`min_uptime`, `max_restarts`, `exp_backoff_restart_delay`).
+Caddy menunjuk warna aktif lewat baris marker **`reverse_proxy 127.0.0.1:<port> # WEB-ACTIVE`** di catch-all `handle {}`. Warna aktif disimpan di `/srv/lentera/.web-active` (`a`|`b`). `next.config.ts` punya `distDir: process.env.NEXT_DIST_DIR || '.next'` supaya build bisa diarahkan per-warna. Config PM2 (dua warna + backoff `min_uptime`/`max_restarts`/`exp_backoff_restart_delay`) **sumber tunggalnya `infra/ecosystem.config.cjs`** (ter-version-control); deploy menyalinnya ke `/srv/lentera/ecosystem.config.cjs` tiap run — jangan sunting file server langsung, edit `infra/` lalu deploy.
 
 **Deploy web (satu perintah, jalankan detached agar putus-ssh tak meng-kill build):**
 ```bash
@@ -58,7 +58,7 @@ ssh root@202.134.242.202
 setsid bash -c 'cd /srv/lentera && bash scripts/deploy-web-bg.sh > /tmp/deploy-web.log 2>&1; echo EXIT=$? >> /tmp/deploy-web.log' &
 # lalu poll: grep EXIT= /tmp/deploy-web.log  → tunggu EXIT=0
 ```
-`scripts/deploy-web-bg.sh` otomatis: git pull → build ke warna **inaktif** (`NEXT_DIST_DIR=.next-<inaktif>`, dibungkus `nice -n 15 ionice -c3`) → start warna inaktif → **health-check** di port-nya → `sed` port di Caddyfile + `caddy validate` + `systemctl reload caddy` (graceful, **0 request drop**) → `pm2 stop` warna lama → tulis state → `pm2 save`. Build/health gagal ⇒ Caddy **tidak** di-flip, situs tetap warna lama. Teruji: 2 siklus a↔b, 496 & 485 request selama deploy, **0 non-200**.
+`scripts/deploy-web-bg.sh` otomatis: git pull → **sync `infra/ecosystem.config.cjs` → server** → build ke warna **inaktif** (`NEXT_DIST_DIR=.next-<inaktif>`, dibungkus `nice -n 15 ionice -c3`) → `pm2 delete`+`start` warna inaktif dari ecosystem (config terbaru ikut ter-apply; warna standby jadi tetap zero-downtime) → **health-check** di port-nya → `sed` port di Caddyfile + `caddy validate` + `systemctl reload caddy` (graceful, **0 request drop**) → `pm2 stop` warna lama → tulis state → `pm2 save`. Build/health gagal ⇒ Caddy **tidak** di-flip, situs tetap warna lama. Teruji: 4 siklus a↔b, **0 non-200** tiap deploy.
 
 **API deploy** (bukan blue-green): build `apps/api` lalu `pm2 restart lentera-api`. **Shared** (`packages/shared`) berubah → build shared + `prisma generate` sebelum build api/web. Migrasi DB: `pnpm --filter @lentera/db exec prisma migrate deploy` (pakai `DATABASE_URL` superuser).
 
