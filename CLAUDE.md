@@ -55,8 +55,9 @@ Caddy menunjuk warna aktif lewat baris marker **`reverse_proxy 127.0.0.1:<port> 
 **Deploy web (satu perintah, jalankan detached agar putus-ssh tak meng-kill build):**
 ```bash
 ssh root@202.134.242.202
-setsid bash -c 'cd /srv/lentera && bash scripts/deploy-web-bg.sh > /tmp/deploy-web.log 2>&1; echo EXIT=$? >> /tmp/deploy-web.log' &
+setsid bash -c 'cd /srv/lentera && { git pull --ff-only origin main && bash scripts/deploy-web-bg.sh; } > /tmp/deploy-web.log 2>&1; echo EXIT=$? >> /tmp/deploy-web.log' &
 # lalu poll: grep EXIT= /tmp/deploy-web.log  → tunggu EXIT=0
+# git pull SENGAJA di launcher (bukan di skrip) supaya skrip tak menimpa dirinya saat jalan.
 ```
 `scripts/deploy-web-bg.sh` otomatis: git pull → **sync `infra/ecosystem.config.cjs` → server** → build ke warna **inaktif** (`NEXT_DIST_DIR=.next-<inaktif>`, dibungkus `nice -n 15 ionice -c3`) → `pm2 delete`+`start` warna inaktif dari ecosystem (config terbaru ikut ter-apply; warna standby jadi tetap zero-downtime) → **health-check** di port-nya → `sed` port di Caddyfile + `caddy validate` + `systemctl reload caddy` (graceful, **0 request drop**) → `pm2 stop` warna lama → tulis state → `pm2 save`. Build/health gagal ⇒ Caddy **tidak** di-flip, situs tetap warna lama. Teruji: 4 siklus a↔b, **0 non-200** tiap deploy.
 

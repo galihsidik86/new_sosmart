@@ -15,8 +15,9 @@
 # standby di-(re)start dari file itu supaya perubahan config ikut ter-apply.
 # Karena warna standby tak melayani traffic, delete+start-nya tetap zero-downtime.
 #
-# Pakai (di server, jalankan detached agar putus-ssh tak kill build):
-#   setsid bash -c 'cd /srv/lentera && bash scripts/deploy-web-bg.sh > /tmp/deploy-web.log 2>&1; echo EXIT=$? >> /tmp/deploy-web.log' &
+# CATATAN: `git pull` DI LAUNCHER, bukan di skrip ini — supaya skrip tak menimpa
+# dirinya sendiri saat berjalan (self-modify footgun). Pakai (detached):
+#   setsid bash -c 'cd /srv/lentera && { git pull --ff-only origin main && bash scripts/deploy-web-bg.sh; } > /tmp/deploy-web.log 2>&1; echo EXIT=$? >> /tmp/deploy-web.log' &
 #
 set -euo pipefail
 
@@ -30,18 +31,15 @@ port_for(){ [ "$1" = "a" ] && echo 3011 || echo 3012; }
 in_port="$(port_for "$inactive")"; act_port="$(port_for "$active")"
 echo "==> aktif=$active(:$act_port) → deploy ke inaktif=$inactive(:$in_port)"
 
-echo "==> [1/9] git pull"
-git pull --ff-only origin main
-
-echo "==> [2/9] sync config PM2 dari sumber tunggal infra/ecosystem.config.cjs"
+echo "==> [1/8] sync config PM2 dari sumber tunggal infra/ecosystem.config.cjs"
 cp -f "$ROOT/infra/ecosystem.config.cjs" "$ROOT/ecosystem.config.cjs"
 node -e "require('$ROOT/ecosystem.config.cjs')" # gagal-cepat kalau syntax rusak
 
-echo "==> [3/9] env"
+echo "==> [2/8] env"
 set -a; source "$ROOT/.env"; set +a
 export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-http://127.0.0.1:4002}"
 
-echo "==> [4/9] build ke .next-$inactive (nice+ionice; warna aktif tak disentuh)"
+echo "==> [3/8] build ke .next-$inactive (nice+ionice; warna aktif tak disentuh)"
 rm -rf "$WEB/.next-$inactive"
 NEXT_DIST_DIR=".next-$inactive" nice -n 15 ionice -c3 pnpm --filter @lentera/web build
 if [ ! -f "$WEB/.next-$inactive/BUILD_ID" ]; then
@@ -50,14 +48,14 @@ if [ ! -f "$WEB/.next-$inactive/BUILD_ID" ]; then
 fi
 echo "    build OK (BUILD_ID=$(cat "$WEB/.next-$inactive/BUILD_ID"))"
 
-echo "==> [5/9] (re)start lentera-web-$inactive dari ecosystem (:$in_port serve .next-$inactive)"
+echo "==> [4/8] (re)start lentera-web-$inactive dari ecosystem (:$in_port serve .next-$inactive)"
 # delete+start dari file → config terbaru (port/env/backoff) ikut ter-apply.
 # Warna standby tak melayani traffic, jadi ini zero-downtime.
 unset NEXT_DIST_DIR
 pm2 delete "lentera-web-$inactive" >/dev/null 2>&1 || true
 pm2 start ecosystem.config.cjs --only "lentera-web-$inactive"
 
-echo "==> [6/9] health-check warna baru (:$in_port)"
+echo "==> [5/8] health-check warna baru (:$in_port)"
 ok=0
 for i in $(seq 1 30); do
   c=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${in_port}/login" || echo 000)
@@ -69,7 +67,7 @@ if [ "$ok" != "1" ]; then
   pm2 stop "lentera-web-$inactive" >/dev/null 2>&1 || true; exit 1
 fi
 
-echo "==> [7/9] flip Caddy → :$in_port + reload (graceful)"
+echo "==> [6/8] flip Caddy → :$in_port + reload (graceful)"
 BK="${CADDY}.bak.$$"; cp "$CADDY" "$BK"
 sed -i "s|reverse_proxy 127.0.0.1:[0-9]* # WEB-ACTIVE|reverse_proxy 127.0.0.1:${in_port} # WEB-ACTIVE|" "$CADDY"
 if ! caddy validate --config "$CADDY" --adapter caddyfile >/dev/null 2>&1; then
@@ -77,7 +75,7 @@ if ! caddy validate --config "$CADDY" --adapter caddyfile >/dev/null 2>&1; then
 fi
 systemctl reload caddy
 
-echo "==> [8/9] verifikasi situs live"
+echo "==> [7/8] verifikasi situs live"
 sleep 2
 live=$(curl -s -o /dev/null -w "%{http_code}" https://lentera.sosmartpro.com/login --insecure || echo 000)
 echo "    situs live = $live"
@@ -86,7 +84,7 @@ if [ "$live" != "200" ]; then
   exit 1
 fi
 
-echo "==> [9/9] stop warna lama (lentera-web-$active) + simpan state"
+echo "==> [8/8] stop warna lama (lentera-web-$active) + simpan state"
 pm2 stop "lentera-web-$active" >/dev/null 2>&1 || true
 echo "$inactive" > "$STATE"
 pm2 save >/dev/null 2>&1
