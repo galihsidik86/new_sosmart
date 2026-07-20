@@ -10,6 +10,8 @@ Monorepo dikelola dengan **pnpm workspaces**.
 
 **Status fase**: ✅ Fase 1 · ✅ Fase 2 · ✅ Fase 3 · ✅ Fase 4 · ✅ Fase 5 · ✅ Fase 6 · ✅ Fase 7 · ✅ Fase 8 (laporan keuangan SAK ETAP) · ⏭ Fase 9 (Coretax integration).
 
+**Rilis**: 🏷️ [**v1.0.0**](https://github.com/galihsidik86/new_sosmart/releases/tag/v1.0.0) — rilis produksi pertama (Fase 1–8), 21 Jul 2026, commit `880df87`. Live di [lentera.sosmartpro.com](https://lentera.sosmartpro.com).
+
 `Akuntansi.dc.html`, `colors_and_type.css`, dan `support.js` adalah **artefak desain** (Design Component) yang menjadi referensi visual + spec UI; implementasi nyata ada di `apps/web` (Next.js) dan `apps/api` (NestJS).
 
 ## Layout
