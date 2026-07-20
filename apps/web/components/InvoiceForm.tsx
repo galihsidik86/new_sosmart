@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, Select, SectionHeader, Combobox, MoneyInput } from './ui';
+import { fmtRp, fmtPlain } from '@/lib/format';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -504,7 +505,7 @@ export function InvoiceForm({
                     </select>
                   </td>
                   <td className="px-2 py-1 text-right font-mono tabular-nums text-xs">
-                    {dpp.toLocaleString('id-ID')}
+                    {fmtPlain(dpp)}
                   </td>
                   <td className="px-1 text-center">
                     <button type="button" onClick={() => removeLine(i)}
@@ -528,16 +529,16 @@ export function InvoiceForm({
           <dl className="text-sm space-y-2">
             <div className="flex justify-between gap-4">
               <dt className="text-tanah-500">Total DPP</dt>
-              <dd className="font-mono tabular-nums text-tanah-700">{totals.totDpp.toLocaleString('id-ID')}</dd>
+              <dd className="font-mono tabular-nums text-tanah-700">{fmtRp(totals.totDpp)}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-tanah-500">PPN ({tarifPpn}%){hargaTermasukPajak ? ' — incl.' : ''}</dt>
-              <dd className="font-mono tabular-nums text-tanah-700">{totals.totPpn.toLocaleString('id-ID')}</dd>
+              <dd className="font-mono tabular-nums text-tanah-700">{fmtRp(totals.totPpn)}</dd>
             </div>
             {mode === 'purchase' && (
               <div className="flex justify-between gap-4">
                 <dt className="text-tanah-500">PPh 23 dipotong</dt>
-                <dd className="font-mono tabular-nums text-bata-700">({totals.totPph23.toLocaleString('id-ID')})</dd>
+                <dd className="font-mono tabular-nums text-bata-700">({fmtRp(totals.totPph23)})</dd>
               </div>
             )}
           </dl>
@@ -548,7 +549,7 @@ export function InvoiceForm({
                 {mode === 'sales' ? 'Total Faktur' : 'Yang dibayar ke vendor'}
               </div>
               <div className="font-mono tabular-nums text-2xl font-bold text-sogan-700 mt-0.5 whitespace-nowrap">
-                Rp {totals.totNetto.toLocaleString('id-ID')}
+                {fmtRp(totals.totNetto)}
               </div>
             </div>
             {error && <div className="text-bata-700 text-xs mb-2">{error}</div>}

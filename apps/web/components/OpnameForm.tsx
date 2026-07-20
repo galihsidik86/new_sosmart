@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
+import { fmtRp, fmtPlain } from '@/lib/format';
 
 interface Item { id: string; kode: string; nama: string; satuan: string; isAktif: boolean }
 interface Cabang { id: string; kode: string; nama: string }
@@ -203,7 +204,7 @@ export function OpnameForm({
                     {dQty !== 0 && (dQty > 0 ? '+' : '')}{dQty.toLocaleString('id-ID')}
                   </td>
                   <td className={`px-3 py-1.5 text-right font-mono tabular-nums text-xs ${dNilai < 0 ? 'text-bata-700' : dNilai > 0 ? 'text-padi-700' : 'text-tanah-500'}`}>
-                    {dNilai !== 0 && (dNilai > 0 ? '+' : '')}{dNilai.toLocaleString('id-ID')}
+                    {dNilai > 0 ? '+' : ''}{fmtPlain(dNilai)}
                   </td>
                   <td className="px-3 py-1.5">
                     <input type="text" value={l.keterangan}
@@ -242,7 +243,7 @@ export function OpnameForm({
         <span>
           Total selisih nilai persediaan:{' '}
           <span className="font-mono tabular-nums text-base">
-            {totalDelta >= 0 ? '+' : ''}Rp {Math.abs(totalDelta).toLocaleString('id-ID')}
+            {totalDelta > 0 ? '+' : ''}{fmtRp(totalDelta)}
           </span>
         </span>
         <div className="flex gap-2 items-center">

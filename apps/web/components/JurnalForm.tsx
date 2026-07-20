@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, StatusBanner, SectionHeader, Combobox, MoneyInput } from './ui';
+import { fmtRp, fmtPlain } from '@/lib/format';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -339,10 +340,10 @@ export function JurnalForm({
                 <Button type="button" variant="secondary" size="sm" onClick={addLine}>+ Tambah baris</Button>
               </td>
               <td className="px-3 py-2.5 text-right font-mono tabular-nums font-bold text-tanah-700">
-                {totals.td.toLocaleString('id-ID')}
+                {fmtPlain(totals.td)}
               </td>
               <td className="px-3 py-2.5 text-right font-mono tabular-nums font-bold text-tanah-700">
-                {totals.tk.toLocaleString('id-ID')}
+                {fmtPlain(totals.tk)}
               </td>
               <td />
             </tr>
@@ -370,7 +371,7 @@ export function JurnalForm({
           ? '✓ Seimbang — siap diposting'
           : totals.td === totals.tk
           ? 'Isi nominal debit & kredit dulu'
-          : `Belum seimbang — selisih Rp ${Math.abs(totals.diff).toLocaleString('id-ID')}`}
+          : `Belum seimbang — selisih ${fmtRp(Math.abs(totals.diff))}`}
       </StatusBanner>
     </form>
   );

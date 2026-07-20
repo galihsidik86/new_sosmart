@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { FieldError } from './FieldError';
 import { Combobox, MoneyInput } from './ui';
+import { fmtRp } from '@/lib/format';
 import type { FormState } from '@/lib/form-state';
 
 type Kelompok =
@@ -223,7 +224,7 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
         </div>
         <div className="mt-3 px-3 py-2 bg-cream-50 rounded-md text-xs text-tanah-700 flex justify-between">
           <span>Estimasi penyusutan bulan ini:</span>
-          <span className="font-mono tabular-nums font-semibold">Rp {Math.round(penyusutanPerBulan).toLocaleString('id-ID')}</span>
+          <span className="font-mono tabular-nums font-semibold">{fmtRp(Math.round(penyusutanPerBulan))}</span>
         </div>
       </section>
 

@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader, Combobox, MoneyInput } from './ui';
+import { fmtRp, fmtPlain } from '@/lib/format';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -281,9 +282,9 @@ export function CashBankForm({
               {Number(pph23Dipotong) > 0 && (
                 <div className="col-span-full text-xs text-tanah-600 bg-cream-100 border border-cream-200 rounded-lg px-3 py-2">
                   Kas masuk bersih:{' '}
-                  <b className="font-mono tabular-nums">Rp {(totalNum - Number(pph23Dipotong || 0)).toLocaleString('id-ID')}</b>
+                  <b className="font-mono tabular-nums">{fmtRp(totalNum - Number(pph23Dipotong || 0))}</b>
                   {' '}· PPh 23{' '}
-                  <b className="font-mono tabular-nums">Rp {Number(pph23Dipotong || 0).toLocaleString('id-ID')}</b>
+                  <b className="font-mono tabular-nums">{fmtRp(Number(pph23Dipotong || 0))}</b>
                   {' '}dibukukan ke <b>PPh 23 Dibayar Dimuka</b> (kredit pajak). Piutang tetap lunas penuh.
                 </div>
               )}
@@ -413,7 +414,7 @@ export function CashBankForm({
                   <Button type="button" variant="secondary" size="sm" onClick={addLine}>+ Tambah baris</Button>
                 </td>
                 <td className="px-3 py-2 text-right font-mono tabular-nums">
-                  {sumLines.toLocaleString('id-ID')}
+                  {fmtPlain(sumLines)}
                 </td>
                 <td />
               </tr>
@@ -440,7 +441,7 @@ export function CashBankForm({
       >
         {balanced
           ? '✓ Seimbang — siap diposting'
-          : `Selisih: ${(sumLines - totalNum).toLocaleString('id-ID')}`}
+          : `Selisih: ${fmtRp(sumLines - totalNum)}`}
       </StatusBanner>
     </form>
   );
