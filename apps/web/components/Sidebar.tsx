@@ -65,6 +65,7 @@ const NAV: NavItem[] = [
   { group: 'Pengaturan', href: '/pengaturan/cabang', label: 'Cabang', icon: 'network', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/user', label: 'Pengguna', icon: 'user-cog', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/akun-default', label: 'Akun Default', icon: 'sliders', roles: FULL },
+  { group: 'Pengaturan', href: '/pengaturan/atribut-fiskal', label: 'Atribut Fiskal', icon: 'receipt', roles: FULL },
   { group: 'Pengaturan', href: '/pengaturan/approval', label: 'Aturan Approval', icon: 'check', roles: ADMIN_ONLY },
   { group: 'Pengaturan', href: '/pengaturan/saldo-awal', label: 'Saldo Awal', icon: 'layers', roles: FULL },
 ];

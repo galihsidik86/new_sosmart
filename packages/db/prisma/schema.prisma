@@ -53,6 +53,29 @@ enum KlasifikasiNeraca {
   LIABILITAS_PANJANG
 }
 
+// Perlakuan fiskal default akun (rekonsiliasi fiskal komersial vs pajak).
+enum FiskalTreatment {
+  NONE           // default — tak ada koreksi
+  NON_DEDUCTIBLE // beban tak boleh dikurangkan → koreksi (+) seluruh saldo
+  PARTIAL        // sebagian deductible → koreksi (+) sebesar (1 - fiskalPersen%) x saldo
+  FINAL_INCOME   // penghasilan sudah kena PPh final → koreksi (−), keluar dari objek umum
+  NON_OBJECT     // bukan objek PPh → koreksi (−)
+  CADANGAN       // penyisihan (piutang dsb.) → non-deductible, beda SEMENTARA
+}
+
+enum FiskalKategori {
+  NATURA
+  ENTERTAINMENT
+  SUMBANGAN
+  SANKSI_PAJAK
+  PENGHASILAN_FINAL
+  BUNGA
+  SEWA
+  PENYUSUTAN
+  CADANGAN
+  LAINNYA
+}
+
 enum BankReconciliationStatus {
   DRAFT
   SELESAI
@@ -503,6 +526,14 @@ model Account {
   /// Akun transaksi antar-perusahaan (intercompany). Dieliminasi otomatis saat
   /// konsolidasi grup — saldonya saling hapus lintas entitas dalam grup.
   isIntercompany Boolean      @default(false) @map("is_intercompany")
+  /// Perlakuan fiskal default akun untuk Rekonsiliasi Fiskal (komersial vs pajak).
+  /// NONE = tak dikoreksi. Relevan untuk kind BEBAN*/PENDAPATAN*. Disunting di
+  /// Pengaturan › Atribut Fiskal Akun.
+  fiskalTreatment FiskalTreatment @default(NONE) @map("fiskal_treatment")
+  /// % yang boleh dibebankan untuk fiskalTreatment=PARTIAL (0..100). Sisanya dikoreksi (+).
+  fiskalPersen   Decimal?      @map("fiskal_persen") @db.Decimal(5, 2)
+  /// Pengelompokan baris di worksheet rekonsiliasi fiskal.
+  fiskalKategori FiskalKategori? @map("fiskal_kategori")
   /// Saldo awal periode pertama (opsional, dipakai saat onboarding).
   saldoAwal     Decimal       @default(0) @map("saldo_awal") @db.Decimal(20, 2)
   catatan       String?

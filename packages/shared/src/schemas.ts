@@ -323,6 +323,40 @@ export const updateAccountInputSchema = z.object({
 });
 export type UpdateAccountInput = z.infer<typeof updateAccountInputSchema>;
 
+// ---------- REKONSILIASI FISKAL: atribut akun ----------
+
+export const fiskalTreatmentSchema = z.enum([
+  'NONE', 'NON_DEDUCTIBLE', 'PARTIAL', 'FINAL_INCOME', 'NON_OBJECT', 'CADANGAN',
+]);
+export const fiskalKategoriSchema = z.enum([
+  'NATURA', 'ENTERTAINMENT', 'SUMBANGAN', 'SANKSI_PAJAK', 'PENGHASILAN_FINAL',
+  'BUNGA', 'SEWA', 'PENYUSUTAN', 'CADANGAN', 'LAINNYA',
+]);
+
+export const fiskalAttributeSchema = z
+  .object({
+    accountId: z.string().uuid(),
+    fiskalTreatment: fiskalTreatmentSchema,
+    // 0..100; wajib bila PARTIAL. Terima number/string, simpan sebagai string.
+    fiskalPersen: z
+      .union([z.number(), z.string()])
+      .transform((v) => String(v))
+      .refine((v) => v === '' || (Number(v) >= 0 && Number(v) <= 100), 'Persentase harus 0–100')
+      .nullable()
+      .optional(),
+    fiskalKategori: fiskalKategoriSchema.nullable().optional(),
+  })
+  .refine(
+    (v) => v.fiskalTreatment !== 'PARTIAL' || (v.fiskalPersen != null && v.fiskalPersen !== ''),
+    { message: 'Isi persentase deductible untuk perlakuan PARTIAL', path: ['fiskalPersen'] },
+  );
+export type FiskalAttributeInput = z.infer<typeof fiskalAttributeSchema>;
+
+export const bulkFiskalAttributeSchema = z.object({
+  items: z.array(fiskalAttributeSchema).max(500),
+});
+export type BulkFiskalAttributeInput = z.infer<typeof bulkFiskalAttributeSchema>;
+
 // ---------- TRANSAKSI: FAKTUR ----------
 
 const isoDate = z.string()
