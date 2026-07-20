@@ -197,6 +197,11 @@ export function InvoiceForm({
     () => accounts.filter((a) => a.isPostable).map((a) => ({ value: a.id, label: `${a.kode}  ${a.nama}` })),
     [accounts],
   );
+  const accountById = useMemo(() => {
+    const m = new Map<string, Account>();
+    for (const a of accounts) m.set(a.id, a);
+    return m;
+  }, [accounts]);
   const projectOptions = useMemo(
     () => [{ value: '', label: '— tanpa project —' }, ...(projects ?? []).map((p) => ({ value: p.id, label: `${p.kode} — ${p.nama}` }))],
     [projects],
@@ -435,7 +440,6 @@ export function InvoiceForm({
               <th className="px-2 py-2 font-bold w-28 text-right">Harga</th>
               <th className="px-2 py-2 font-bold w-16 text-right">Disk%</th>
               <th className="px-2 py-2 font-bold w-32">Klasifikasi</th>
-              <th className="px-2 py-2 font-bold w-44">Akun {mode === 'sales' ? 'Pendapatan' : 'Debit'}</th>
               <th className="px-2 py-2 font-bold w-28 text-right">DPP</th>
               <th className="w-6" />
             </tr>
@@ -460,6 +464,18 @@ export function InvoiceForm({
                     <input type="text" value={l.deskripsi} onChange={(e) => updLine(i, { deskripsi: e.target.value })}
                       required
                       className="w-full px-1.5 py-1 bg-cream-50 border border-cream-300 rounded text-xs" />
+                    {l.accountId ? (
+                      <div className="mt-0.5 text-[10px] text-tanah-500 font-mono truncate" title="Akun dari master item">
+                        → {accountById.has(l.accountId)
+                          ? `${accountById.get(l.accountId)!.kode} ${accountById.get(l.accountId)!.nama}`
+                          : 'akun tersetel'}
+                      </div>
+                    ) : (
+                      <div className="mt-1">
+                        <Combobox value={l.accountId} onChange={(v) => updLine(i, { accountId: v })} options={accountOptions} mono size="sm" placeholder={`— pilih akun ${mode === 'sales' ? 'pendapatan' : 'debit'} —`} className="min-w-[160px]" />
+                        <div className="mt-0.5 text-[10px] text-bata-600">Akun belum tersetel di item — pilih manual.</div>
+                      </div>
+                    )}
                   </td>
                   <td className="px-2 py-1">
                     <input type="number" min={0} step="0.0001" value={l.qty}
@@ -488,9 +504,6 @@ export function InvoiceForm({
                         <option key={k} value={k}>{KL_LABEL[k]}</option>
                       ))}
                     </select>
-                  </td>
-                  <td className="px-2 py-1">
-                    <Combobox value={l.accountId} onChange={(v) => updLine(i, { accountId: v })} options={accountOptions} mono size="sm" placeholder="— pilih —" className="min-w-[160px]" />
                   </td>
                   <td className="px-2 py-1 text-right font-mono tabular-nums text-xs">
                     {dpp.toLocaleString('id-ID')}
