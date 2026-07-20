@@ -3,7 +3,7 @@
 import { useActionState } from 'react';
 import { FieldError } from './FieldError';
 import { CancelButton } from './CancelButton';
-import { Button } from '@/components/ui';
+import { Button, MoneyInput } from '@/components/ui';
 import { emptyFormState, type FormState } from '@/lib/form-state';
 
 interface Account { id: string; kode: string; nama: string }
@@ -56,8 +56,7 @@ export function DisposeForm({
       </div>
       <div>
         <label className={lbl}>Harga Jual (kalau DIJUAL)</label>
-        <input type="number" min={0} step="0.01" name="hargaJual" defaultValue={v('hargaJual', '0')}
-          className={`${inputCls(!!fe.hargaJual)} text-right font-mono tabular-nums`} />
+        <MoneyInput name="hargaJual" defaultValue={v('hargaJual', '0')} invalid={!!fe.hargaJual} />
         <FieldError msg={fe.hargaJual} />
       </div>
       <div>

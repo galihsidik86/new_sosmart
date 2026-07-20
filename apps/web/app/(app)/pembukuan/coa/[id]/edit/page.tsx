@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
-  PageContainer, PageHeader, Card, Button, FormField, Input, Select, Textarea, buttonClass,
+  PageContainer, PageHeader, Card, Button, FormField, Input, MoneyInput, Select, Textarea, buttonClass,
 } from '@/components/ui';
 
 type Kind =
@@ -94,7 +94,7 @@ export default async function CoaEditPage({ params }: { params: Promise<{ id: st
             <input type="hidden" name="id" value={a.id} />
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Kode" required><Input name="kode" required defaultValue={a.kode} /></FormField>
-              <FormField label="Saldo awal"><Input name="saldoAwal" type="number" defaultValue={a.saldoAwal} /></FormField>
+              <FormField label="Saldo awal"><MoneyInput name="saldoAwal" defaultValue={a.saldoAwal} /></FormField>
             </div>
             <FormField label="Nama" required><Input name="nama" required defaultValue={a.nama} /></FormField>
             <FormField label="Parent (induk)">

@@ -4,7 +4,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, MoneyInput, Select,
   SectionHeader, Table, THead, TH, TBody, TR, TD, EmptyRow,
 } from '@/components/ui';
 import { BackLink } from '@/components/BackLink';
@@ -116,8 +116,8 @@ export default async function ApprovalRulesPage() {
                   ))}
                 </Select>
               </FormField>
-              <FormField label="Ambang nilai minimum (Rp)" required>
-                <Input numeric type="number" step="0.01" name="minAmount" required defaultValue="0" />
+              <FormField label="Ambang nilai minimum" required>
+                <MoneyInput name="minAmount" required defaultValue="0" />
               </FormField>
               <div className="space-y-2">
                 <div className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Rantai persetujuan (berurutan)</div>

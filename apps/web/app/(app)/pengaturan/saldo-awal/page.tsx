@@ -4,7 +4,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting, canCancelPosted } from '@/lib/roles';
 import { fmtRp, fmtTanggal } from '@/lib/format';
-import { PageContainer, PageHeader, Button, StatusBanner } from '@/components/ui';
+import { PageContainer, PageHeader, Button, StatusBanner, MoneyInput } from '@/components/ui';
 import { BackLink } from '@/components/BackLink';
 import { CancelButton } from '@/components/CancelButton';
 
@@ -331,11 +331,7 @@ export default async function SaldoAwalPage({
                     <td className="py-1.5 text-xs text-tanah-500">{a.normalBalance}</td>
                     <td className="py-1.5">
                       <input type="hidden" name="accountId[]" value={a.id} />
-                      <input
-                        type="number" step="0.01" name="nilai[]" defaultValue={a.saldoAwal}
-                        disabled={!isDraft}
-                        className="w-full text-right border border-cream-300 rounded-lg px-2 py-1 font-mono text-sm disabled:bg-cream-50"
-                      />
+                      <MoneyInput name="nilai[]" defaultValue={a.saldoAwal} disabled={!isDraft} size="sm" />
                     </td>
                   </tr>
                 ))}
@@ -380,7 +376,7 @@ export default async function SaldoAwalPage({
                 <input type="date" name="tanggal" required defaultValue={preview.tanggal.slice(0, 10)} className="w-full border border-cream-300 rounded-lg px-2 py-1.5 text-sm" />
               </Field>
               <Field label="Nominal">
-                <input type="number" step="0.01" name="nominal" required className="w-full border border-cream-300 rounded-lg px-2 py-1.5 text-sm" />
+                <MoneyInput name="nominal" required />
               </Field>
               <button type="submit" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-wedel-100 text-wedel-800 hover:bg-wedel-200 h-fit">+ Tambah</button>
             </form>
@@ -415,7 +411,7 @@ export default async function SaldoAwalPage({
                 <input type="date" name="tanggal" required defaultValue={preview.tanggal.slice(0, 10)} className="w-full border border-cream-300 rounded-lg px-2 py-1.5 text-sm" />
               </Field>
               <Field label="Nominal">
-                <input type="number" step="0.01" name="nominal" required className="w-full border border-cream-300 rounded-lg px-2 py-1.5 text-sm" />
+                <MoneyInput name="nominal" required />
               </Field>
               <button type="submit" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-wedel-100 text-wedel-800 hover:bg-wedel-200 h-fit">+ Tambah</button>
             </form>
@@ -454,7 +450,7 @@ export default async function SaldoAwalPage({
                 <input type="number" step="0.0001" name="qty" required className="w-full border border-cream-300 rounded-lg px-2 py-1.5 text-sm" />
               </Field>
               <Field label="Harga Pokok/Unit">
-                <input type="number" step="0.01" name="hargaPokokPerUnit" required className="w-full border border-cream-300 rounded-lg px-2 py-1.5 text-sm" />
+                <MoneyInput name="hargaPokokPerUnit" required />
               </Field>
               <button type="submit" className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-wedel-100 text-wedel-800 hover:bg-wedel-200 h-fit">+ Tambah</button>
             </form>

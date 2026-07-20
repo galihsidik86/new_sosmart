@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { FormField, Input, Select, Textarea, Button } from '@/components/ui';
+import { FormField, Input, Select, Textarea, Button, MoneyInput } from '@/components/ui';
 import { FieldError } from './FieldError';
 import { emptyFormState, type FormState } from '@/lib/form-state';
 
@@ -112,8 +112,8 @@ export function ProjectForm({
         </FormField>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <FormField label="Budget (biaya)"><Input name="budgetTotal" type="number" defaultValue={v('budgetTotal', d.budgetTotal ?? '')} invalid={!!fe.budgetTotal} placeholder="0" /></FormField>
-        <FormField label="Nilai Kontrak"><Input name="nilaiKontrak" type="number" defaultValue={v('nilaiKontrak', d.nilaiKontrak ?? '')} invalid={!!fe.nilaiKontrak} placeholder="0" /></FormField>
+        <FormField label="Budget (biaya)"><MoneyInput name="budgetTotal" defaultValue={v('budgetTotal', d.budgetTotal ?? '')} invalid={!!fe.budgetTotal} /></FormField>
+        <FormField label="Nilai Kontrak"><MoneyInput name="nilaiKontrak" defaultValue={v('nilaiKontrak', d.nilaiKontrak ?? '')} invalid={!!fe.nilaiKontrak} /></FormField>
       </div>
       {mode === 'create' && industriList && (
         <FormField label="Jenis Industri (opsional)">

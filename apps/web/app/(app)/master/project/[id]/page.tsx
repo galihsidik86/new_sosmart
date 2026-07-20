@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, MoneyInput, Select,
   buttonClass, type BadgeVariant,
 } from '@/components/ui';
 import { DokumenLinksInput } from '@/components/DokumenLinksInput';
@@ -569,7 +569,7 @@ export default async function ProjectDetailPage({
               <Input name="periode" placeholder="2026-07" pattern="\d{4}-\d{2}" required mono />
             </FormField>
             <FormField label="Amount">
-              <Input name="amount" type="number" required numeric />
+              <MoneyInput name="amount" required />
             </FormField>
             <div>
               <label className="flex items-center gap-1.5 text-xs text-tanah-500 mb-2">

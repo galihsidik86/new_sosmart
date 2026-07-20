@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { FormField, Input, Select, Button } from '@/components/ui';
+import { FormField, Input, Select, Button, MoneyInput } from '@/components/ui';
 import { FieldError } from './FieldError';
 import { emptyFormState, type FormState } from '@/lib/form-state';
 
@@ -96,15 +96,15 @@ export function KaryawanForm({
         <FieldError msg={fe.tanggalMasuk} />
       </FormField>
       <FormField label="Gaji pokok" required>
-        <Input name="gajiPokok" type="number" required defaultValue={v('gajiPokok', d.gajiPokok ?? '0')} invalid={!!fe.gajiPokok} />
+        <MoneyInput name="gajiPokok" required defaultValue={v('gajiPokok', d.gajiPokok ?? '0')} invalid={!!fe.gajiPokok} />
         <FieldError msg={fe.gajiPokok} />
       </FormField>
       <FormField label="Tunjangan tetap">
-        <Input name="tunjanganTetap" type="number" defaultValue={v('tunjanganTetap', d.tunjanganTetap ?? '0')} invalid={!!fe.tunjanganTetap} />
+        <MoneyInput name="tunjanganTetap" defaultValue={v('tunjanganTetap', d.tunjanganTetap ?? '0')} invalid={!!fe.tunjanganTetap} />
         <FieldError msg={fe.tunjanganTetap} />
       </FormField>
       <FormField label="Iuran BPJS karyawan">
-        <Input name="iuranBpjsKaryawan" type="number" defaultValue={v('iuranBpjsKaryawan', d.iuranBpjsKaryawan ?? '0')} invalid={!!fe.iuranBpjsKaryawan} />
+        <MoneyInput name="iuranBpjsKaryawan" defaultValue={v('iuranBpjsKaryawan', d.iuranBpjsKaryawan ?? '0')} invalid={!!fe.iuranBpjsKaryawan} />
         <FieldError msg={fe.iuranBpjsKaryawan} />
       </FormField>
       <Button type="submit" className="w-full" disabled={pending}>

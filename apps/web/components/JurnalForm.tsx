@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, StatusBanner, SectionHeader, Combobox } from './ui';
+import { Card, Button, FormField, Input, StatusBanner, SectionHeader, Combobox, MoneyInput } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -315,18 +315,10 @@ export function JurnalForm({
                   />
                 </td>
                 <td className="px-3 py-1.5">
-                  <input
-                    type="number" min={0} step="0.01" value={l.debit}
-                    onChange={(e) => updateLine(i, { debit: e.target.value, kredit: '0' })}
-                    className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm text-right font-mono tabular-nums"
-                  />
+                  <MoneyInput value={l.debit} onValueChange={(v) => updateLine(i, { debit: v, kredit: '0' })} />
                 </td>
                 <td className="px-3 py-1.5">
-                  <input
-                    type="number" min={0} step="0.01" value={l.kredit}
-                    onChange={(e) => updateLine(i, { kredit: e.target.value, debit: '0' })}
-                    className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded-md text-sm text-right font-mono tabular-nums"
-                  />
+                  <MoneyInput value={l.kredit} onValueChange={(v) => updateLine(i, { kredit: v, debit: '0' })} />
                 </td>
                 <td className="px-2 text-center">
                   <button

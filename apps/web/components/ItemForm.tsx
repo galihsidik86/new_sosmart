@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useMemo, useState } from 'react';
-import { FormField, Input, Select, Button, Combobox } from '@/components/ui';
+import { FormField, Input, Select, Button, Combobox, MoneyInput } from '@/components/ui';
 import { FieldError } from './FieldError';
 import { emptyFormState, type FormState } from '@/lib/form-state';
 
@@ -105,8 +105,8 @@ export function ItemForm({
         <FormField label="Kategori"><Input name="kategori" defaultValue={v('kategori', d.kategori ?? '')} placeholder="Sembako" /></FormField>
         <FormField label="Satuan"><Input name="satuan" defaultValue={v('satuan', d.satuan ?? 'Pcs')} invalid={!!fe.satuan} /></FormField>
       </div>
-      <FormField label="Harga jual (Rp)">
-        <Input name="hargaJualDefault" type="number" defaultValue={v('hargaJualDefault', d.hargaJualDefault ?? '0')} invalid={!!fe.hargaJualDefault} />
+      <FormField label="Harga jual">
+        <MoneyInput name="hargaJualDefault" defaultValue={v('hargaJualDefault', d.hargaJualDefault ?? '0')} invalid={!!fe.hargaJualDefault} />
         <FieldError msg={fe.hargaJualDefault} />
       </FormField>
       <FormField label="Klasifikasi PPN">

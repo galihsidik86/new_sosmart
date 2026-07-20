@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader, Combobox } from './ui';
+import { Card, Button, FormField, Input, Select, StatusBanner, SectionHeader, Combobox, MoneyInput } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -264,14 +264,13 @@ export function CashBankForm({
               </Select>
             </FormField>
           )}
-          <FormField label="Total (Rp)">
-            <Input numeric type="number" min={0} step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} required />
+          <FormField label="Total">
+            <MoneyInput value={total} onValueChange={setTotal} required />
           </FormField>
           {tipe === 'RECEIPT' && (
             <>
-              <FormField label="PPh 23 dipotong pelanggan (Rp)">
-                <Input numeric type="number" min={0} step="0.01" value={pph23Dipotong}
-                  onChange={(e) => setPph23Dipotong(e.target.value)} />
+              <FormField label="PPh 23 dipotong pelanggan">
+                <MoneyInput value={pph23Dipotong} onValueChange={setPph23Dipotong} />
               </FormField>
               {Number(pph23Dipotong) > 0 && (
                 <FormField label="No. Bukti Potong">
@@ -398,9 +397,7 @@ export function CashBankForm({
                       className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded text-sm" />
                   </td>
                   <td className="px-3 py-1.5">
-                    <input type="number" min={0} step="0.01" value={l.nilai}
-                      onChange={(e) => updLine(i, { nilai: e.target.value })}
-                      className="w-full px-2 py-1.5 bg-cream-50 border border-cream-300 rounded text-sm text-right font-mono tabular-nums" />
+                    <MoneyInput value={l.nilai} onValueChange={(v) => updLine(i, { nilai: v })} />
                   </td>
                   <td className="px-2 text-center">
                     <button type="button" onClick={() => removeLine(i)}

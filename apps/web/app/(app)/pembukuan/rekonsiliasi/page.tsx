@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select,
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, MoneyInput, Select,
   Table, THead, TH, TBody, TR, TD, EmptyRow, SectionHeader,
 } from '@/components/ui';
 
@@ -113,8 +113,8 @@ export default async function RekonsiliasiListPage() {
                 <FormField label="Tanggal Rekening Koran" required>
                   <Input type="date" name="tanggal" required defaultValue={today} />
                 </FormField>
-                <FormField label="Saldo Akhir per Rekening Koran (Rp)" required>
-                  <Input numeric type="number" step="0.01" name="saldoRekeningKoran" required defaultValue="0" />
+                <FormField label="Saldo Akhir per Rekening Koran" required>
+                  <MoneyInput name="saldoRekeningKoran" required defaultValue="0" />
                 </FormField>
                 <Button type="submit" className="w-full">Mulai Rekonsiliasi</Button>
               </form>

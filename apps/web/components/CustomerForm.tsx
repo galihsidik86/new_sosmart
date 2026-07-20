@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useMemo, useState } from 'react';
-import { FormField, Input, Select, Button, Combobox } from '@/components/ui';
+import { FormField, Input, Select, Button, Combobox, MoneyInput } from '@/components/ui';
 import { FieldError } from './FieldError';
 import { emptyFormState, type FormState } from '@/lib/form-state';
 
@@ -100,7 +100,7 @@ export function CustomerForm({
           <FieldError msg={fe.terminHari} />
         </FormField>
         <FormField label="Limit kredit">
-          <Input name="kreditLimit" type="number" defaultValue={v('kreditLimit', d.kreditLimit ?? '0')} invalid={!!fe.kreditLimit} />
+          <MoneyInput name="kreditLimit" defaultValue={v('kreditLimit', d.kreditLimit ?? '0')} invalid={!!fe.kreditLimit} />
           <FieldError msg={fe.kreditLimit} />
         </FormField>
       </div>

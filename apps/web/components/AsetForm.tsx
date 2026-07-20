@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { FieldError } from './FieldError';
-import { Combobox } from './ui';
+import { Combobox, MoneyInput } from './ui';
 import type { FormState } from '@/lib/form-state';
 
 type Kelompok =
@@ -199,24 +199,18 @@ export function AsetForm({ cabang, akunAset, akunAkumulasi, akunBeban, submit }:
         <h2 className="text-xs uppercase tracking-wider text-tanah-500 font-bold mb-3">Nilai</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Harga Perolehan (Rp) <span className="text-bata-500">*</span></label>
-            <input type="number" min={0} step="0.01" value={hargaPerolehan}
-              onChange={(e) => setHargaPerolehan(e.target.value)} required
-              className={`${inputCls(!!fe.hargaPerolehan)} text-right font-mono tabular-nums`} />
+            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Harga Perolehan <span className="text-bata-500">*</span></label>
+            <MoneyInput value={hargaPerolehan} onValueChange={setHargaPerolehan} required invalid={!!fe.hargaPerolehan} />
             <FieldError msg={fe.hargaPerolehan} />
           </div>
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Nilai Residu (Rp)</label>
-            <input type="number" min={0} step="0.01" value={nilaiResidu}
-              onChange={(e) => setNilaiResidu(e.target.value)}
-              className={`${inputCls(!!fe.nilaiResidu)} text-right font-mono tabular-nums`} />
+            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Nilai Residu</label>
+            <MoneyInput value={nilaiResidu} onValueChange={setNilaiResidu} invalid={!!fe.nilaiResidu} />
             <FieldError msg={fe.nilaiResidu} />
           </div>
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akumulasi Penyusutan Awal (Rp)</label>
-            <input type="number" min={0} step="0.01" value={akumulasiAwal}
-              onChange={(e) => setAkumulasiAwal(e.target.value)}
-              className="w-full px-2.5 py-2 bg-cream-50 border border-cream-300 rounded-md text-sm text-right font-mono tabular-nums" />
+            <label className="block text-xs font-bold uppercase tracking-wider text-tanah-500 mb-1">Akumulasi Penyusutan Awal</label>
+            <MoneyInput value={akumulasiAwal} onValueChange={setAkumulasiAwal} />
             <p className="text-[10px] text-tanah-500 mt-1">Untuk aset existing — opening balance saat onboarding.</p>
           </div>
           <div>

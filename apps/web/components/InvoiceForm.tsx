@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Card, Button, FormField, Input, Select, SectionHeader, Combobox } from './ui';
+import { Card, Button, FormField, Input, Select, SectionHeader, Combobox, MoneyInput } from './ui';
 import { LinkBuktiInput, splitBukti, mergeBukti } from './LinkBuktiInput';
 import { apiErrorToState, type FormState } from '@/lib/form-state';
 
@@ -487,9 +487,7 @@ export function InvoiceForm({
                       className="w-full px-1.5 py-1 bg-cream-50 border border-cream-300 rounded text-xs" />
                   </td>
                   <td className="px-2 py-1">
-                    <input type="number" min={0} step="0.01" value={l.hargaSatuan}
-                      onChange={(e) => updLine(i, { hargaSatuan: e.target.value })}
-                      className="w-full px-1.5 py-1 bg-cream-50 border border-cream-300 rounded text-xs text-right font-mono" />
+                    <MoneyInput size="sm" value={l.hargaSatuan} onValueChange={(v) => updLine(i, { hargaSatuan: v })} />
                   </td>
                   <td className="px-2 py-1">
                     <input type="number" min={0} max={100} step="0.01" value={l.diskonPersen}

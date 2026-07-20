@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, Select, SectionHeader,
+  PageContainer, PageHeader, Card, Button, Badge, FormField, Input, MoneyInput, Select, SectionHeader,
 } from '@/components/ui';
 
 interface Member { id: string; memberTenantId: string; nama: string; ownershipPct: string; authorized: boolean }
@@ -131,11 +131,11 @@ export default async function KonsolidasiPage() {
                   </div>
                   <div className="w-32">
                     <label className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold">Biaya akuisisi</label>
-                    <Input numeric type="number" step="0.01" name="acquisitionCost" placeholder="(opsional)" />
+                    <MoneyInput name="acquisitionCost" placeholder="(opsional)" />
                   </div>
                   <div className="w-32">
                     <label className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold">Aset bersih akuisisi</label>
-                    <Input numeric type="number" step="0.01" name="acquisitionNetAssets" placeholder="(opsional)" />
+                    <MoneyInput name="acquisitionNetAssets" placeholder="(opsional)" />
                   </div>
                   <Button type="submit" size="sm" variant="secondary">Tambah</Button>
                 </form>
