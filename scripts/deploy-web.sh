@@ -32,7 +32,10 @@ export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-http://127.0.0.1:4002}"
 STAGING=".next-build-$$"
 echo "==> [3/6] build ke staging: apps/web/$STAGING (live .next tidak disentuh)"
 rm -rf "$WEB/$STAGING"
-NEXT_DIST_DIR="$STAGING" pnpm --filter @lentera/web build
+# nice + ionice: build (webpack berat, box cuma 1.9GB RAM + swap) dijalankan
+# dengan prioritas CPU rendah (nice 15) & I/O idle-class (ionice -c3) supaya
+# tidak menstarve lentera-api / mabrur-api saat swap-thrashing.
+NEXT_DIST_DIR="$STAGING" nice -n 15 ionice -c3 pnpm --filter @lentera/web build
 
 if [ ! -f "$WEB/$STAGING/BUILD_ID" ]; then
   echo "!! BUILD GAGAL (tak ada BUILD_ID). Live .next TIDAK disentuh — situs tetap jalan."
