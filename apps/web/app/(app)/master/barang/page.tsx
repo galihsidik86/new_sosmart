@@ -18,7 +18,10 @@ async function importItemsAction(formData: FormData) {
 export default async function MasterBarangPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const items = await apiFetch<ItemRow[]>('/items', { tenantId });
+  const [items, prof] = await Promise.all([
+    apiFetch<ItemRow[]>('/items', { tenantId }),
+    apiFetch<{ jenisUsaha?: 'DAGANG' | 'JASA' }>('/tenants/current', { tenantId }).catch(() => ({}) as { jenisUsaha?: 'DAGANG' | 'JASA' }),
+  ]);
 
   return (
     <>
@@ -34,7 +37,7 @@ export default async function MasterBarangPage() {
           }
         />
 
-        <ItemListView items={items} orgName={s.tenantNama ?? 'Perusahaan'} />
+        <ItemListView items={items} orgName={s.tenantNama ?? 'Perusahaan'} jenisUsaha={prof.jenisUsaha} />
       </PageContainer>
     </>
   );

@@ -34,7 +34,17 @@ export interface ItemRow {
   stokAwal: Array<{ qty: string; cabang: { kode: string } }>;
 }
 
-export function ItemListView({ items, orgName }: { items: ItemRow[]; orgName: string }) {
+export function ItemListView({
+  items,
+  orgName,
+  jenisUsaha,
+}: {
+  items: ItemRow[];
+  orgName: string;
+  jenisUsaha?: 'DAGANG' | 'JASA';
+}) {
+  // Usaha jasa tidak punya persediaan → kolom Stok Awal disembunyikan.
+  const showStok = jenisUsaha !== 'JASA';
   const [q, setQ] = useState('');
   const [klas, setKlas] = useState('');
   const [tipe, setTipe] = useState('');
@@ -139,7 +149,7 @@ export function ItemListView({ items, orgName }: { items: ItemRow[]; orgName: st
           <TH>Nama</TH>
           <TH>Klasifikasi PPN</TH>
           <TH numeric>Harga Jual</TH>
-          <TH numeric>Stok Awal</TH>
+          {showStok && <TH numeric>Stok Awal</TH>}
           <TH numeric stickyEnd className="w-16" />
         </THead>
         <TBody>
@@ -171,11 +181,13 @@ export function ItemListView({ items, orgName }: { items: ItemRow[]; orgName: st
                 )}
               </TD>
               <MoneyCell className="text-tanah-700">{fmtRp(it.hargaJualDefault)}</MoneyCell>
-              <TD className="text-right text-tanah-500 tabular-nums">
-                {it.stokAwal[0]?.qty
-                  ? `${Number(it.stokAwal[0].qty).toLocaleString('id-ID')} · ${it.stokAwal[0].cabang.kode}`
-                  : '—'}
-              </TD>
+              {showStok && (
+                <TD className="text-right text-tanah-500 tabular-nums">
+                  {it.stokAwal[0]?.qty
+                    ? `${Number(it.stokAwal[0].qty).toLocaleString('id-ID')} · ${it.stokAwal[0].cabang.kode}`
+                    : '—'}
+                </TD>
+              )}
               <TD stickyEnd className="text-right">
                 <RowActions>
                   <Link href={`/master/barang/${it.id}/edit`} className="text-xs text-sogan-500 font-semibold hover:underline">Edit</Link>
@@ -184,7 +196,7 @@ export function ItemListView({ items, orgName }: { items: ItemRow[]; orgName: st
             </TR>
           ))}
           {filtered.length === 0 && (
-            <EmptyRow colSpan={6}>{items.length === 0 ? 'Belum ada barang.' : 'Tidak ada item sesuai filter.'}</EmptyRow>
+            <EmptyRow colSpan={showStok ? 6 : 5}>{items.length === 0 ? 'Belum ada barang.' : 'Tidak ada item sesuai filter.'}</EmptyRow>
           )}
         </TBody>
       </Table>
