@@ -430,19 +430,19 @@ export function InvoiceForm({
           <span className="text-xs text-tanah-500">{lines.length} baris</span>
         </div>
         <div className="overflow-x-auto lentera-scroll">
-        <table className="w-full text-xs">
+        <table className="w-full min-w-[1080px] text-xs table-fixed">
           <thead className="bg-cream-50 text-left">
             <tr className="text-[10px] uppercase tracking-wider text-tanah-500">
-              <th className="px-2 py-2 font-bold w-6">#</th>
+              <th className="px-2 py-2 font-bold w-8">#</th>
               <th className="px-2 py-2 font-bold w-44">Item (opsional)</th>
-              <th className="px-2 py-2 font-bold">Deskripsi</th>
+              <th className="px-2 py-2 font-bold w-56">Deskripsi</th>
               <th className="px-2 py-2 font-bold w-20 text-right">Qty</th>
               <th className="px-2 py-2 font-bold w-16">Satuan</th>
-              <th className="px-2 py-2 font-bold w-28 text-right">Harga</th>
+              <th className="px-2 py-2 font-bold w-40 text-right">Harga</th>
               <th className="px-2 py-2 font-bold w-16 text-right">Disk%</th>
-              <th className="px-2 py-2 font-bold w-32">Klasifikasi</th>
-              <th className="px-2 py-2 font-bold w-28 text-right">DPP</th>
-              <th className="w-6" />
+              <th className="px-2 py-2 font-bold w-28">Klasifikasi</th>
+              <th className="px-2 py-2 font-bold w-36 text-right">DPP</th>
+              <th className="w-8" />
             </tr>
           </thead>
           <tbody className="divide-y divide-cream-200">
