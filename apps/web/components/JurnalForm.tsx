@@ -262,15 +262,15 @@ export function JurnalForm({
           <span className="text-xs text-tanah-500">debit = kredit</span>
         </div>
         <div className="overflow-x-auto lentera-scroll">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[1000px] text-sm table-fixed">
           <thead className="bg-cream-50 text-left">
             <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
               <th className="px-3 py-2.5 font-bold w-8">#</th>
-              <th className="px-3 py-2.5 font-bold">Akun</th>
-              {showProjects && <th className="hidden sm:table-cell px-3 py-2.5 font-bold w-36">Project</th>}
-              <th className="px-3 py-2.5 font-bold">Keterangan baris</th>
-              <th className="px-3 py-2.5 font-bold text-right w-40">Debit</th>
-              <th className="px-3 py-2.5 font-bold text-right w-40">Kredit</th>
+              <th className="px-3 py-2.5 font-bold w-80">Akun</th>
+              {showProjects && <th className="hidden sm:table-cell px-3 py-2.5 font-bold w-40">Project</th>}
+              <th className="px-3 py-2.5 font-bold w-72">Keterangan baris</th>
+              <th className="px-3 py-2.5 font-bold text-right w-44">Debit</th>
+              <th className="px-3 py-2.5 font-bold text-right w-44">Kredit</th>
               <th className="w-8" />
             </tr>
           </thead>

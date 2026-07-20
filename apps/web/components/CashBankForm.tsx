@@ -370,14 +370,14 @@ export function CashBankForm({
             <SectionHeader className="mb-0">2 · Baris Alokasi</SectionHeader>
           </div>
           <div className="overflow-x-auto lentera-scroll">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[880px] text-sm table-fixed">
             <thead className="bg-cream-50 text-left">
               <tr className="text-[11px] uppercase tracking-wider text-tanah-500">
                 <th className="px-3 py-2 font-bold w-8">#</th>
-                <th className="px-3 py-2 font-bold">Akun Lawan</th>
-                <th className="px-3 py-2 font-bold">Keterangan</th>
-                <th className="px-3 py-2 font-bold text-right w-44">Nilai</th>
-                <th className="w-6" />
+                <th className="px-3 py-2 font-bold w-80">Akun Lawan</th>
+                <th className="px-3 py-2 font-bold w-80">Keterangan</th>
+                <th className="px-3 py-2 font-bold text-right w-48">Nilai</th>
+                <th className="w-8" />
               </tr>
             </thead>
             <tbody className="divide-y divide-cream-200">
