@@ -97,7 +97,7 @@ export default async function KasBankEditPage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href={`/transaksi/kas-bank/${id}`} label="← Kembali ke detail kas/bank" />
         <PageHeader title="Edit Draft Bukti Kas/Bank" />
         <CashBankForm

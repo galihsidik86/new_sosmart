@@ -57,7 +57,7 @@ export default async function PenjualanBaruPage() {
   );
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href="/transaksi/penjualan" label="← Kembali ke daftar penjualan" />
         <PageHeader title="Faktur Penjualan Baru" />
         <InvoiceForm

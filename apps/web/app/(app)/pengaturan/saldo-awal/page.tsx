@@ -225,7 +225,7 @@ export default async function SaldoAwalPage({
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href="/dashboard" label="← Kembali ke Dashboard" />
         <PageHeader
           title="Prosedur Saldo Awal Terintegrasi"

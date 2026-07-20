@@ -69,7 +69,7 @@ export default async function JurnalEditPage({ params }: { params: Promise<{ id:
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href={`/pembukuan/jurnal/${id}`} label="← Kembali ke detail jurnal" />
         <PageHeader title="Edit Draft Jurnal" />
         <JurnalForm

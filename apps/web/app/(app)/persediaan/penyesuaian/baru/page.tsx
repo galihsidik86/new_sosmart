@@ -40,7 +40,7 @@ export default async function OpnameBaruPage() {
   }
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href="/persediaan/penyesuaian" label="← Kembali ke daftar opname" />
         <PageHeader title="Opname Stok Baru" />
         <OpnameForm

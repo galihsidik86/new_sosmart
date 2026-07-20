@@ -4,7 +4,7 @@ import { cn } from './cn';
 type Size = 'list' | 'report' | 'form' | 'wide';
 const MAXW: Record<Size, string> = {
   list: 'max-w-7xl',
-  form: 'max-w-5xl',
+  form: 'max-w-6xl',
   report: 'max-w-3xl', // ~760px, laporan keuangan
   wide: 'max-w-none',
 };

@@ -140,7 +140,7 @@ export default async function PenjualanDetailPage({
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <PageHeader
           title={inv.nomor ?? '— Draft —'}
           subtitle={

@@ -43,7 +43,7 @@ export default async function JurnalBaruPage() {
   ]);
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href="/pembukuan/jurnal" label="← Kembali ke daftar jurnal" />
         <PageHeader title="Jurnal Baru" />
         <JurnalForm accounts={accounts} cabang={cabang} projects={projects} submit={submitJurnal} />

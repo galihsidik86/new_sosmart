@@ -80,7 +80,7 @@ export default async function PenjualanEditPage({ params }: { params: Promise<{ 
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href={`/transaksi/penjualan/${id}`} label="← Kembali ke detail faktur" />
         <PageHeader title="Edit Draft Faktur" />
         <InvoiceForm

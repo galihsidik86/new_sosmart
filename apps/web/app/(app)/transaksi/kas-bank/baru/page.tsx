@@ -71,7 +71,7 @@ export default async function KasBankBaruPage() {
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href="/transaksi/kas-bank" label="← Kembali ke daftar kas/bank" />
         <PageHeader title="Bukti Kas / Bank Baru" />
         <CashBankForm

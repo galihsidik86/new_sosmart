@@ -123,7 +123,7 @@ export default async function JurnalDetailPage({
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <PageHeader
           title={j.nomor ?? '— Draft —'}
           subtitle={

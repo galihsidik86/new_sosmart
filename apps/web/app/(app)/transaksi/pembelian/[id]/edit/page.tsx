@@ -79,7 +79,7 @@ export default async function PembelianEditPage({ params }: { params: Promise<{ 
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href={`/transaksi/pembelian/${id}`} label="← Kembali ke detail tagihan" />
         <PageHeader title="Edit Draft Tagihan" />
         <InvoiceForm

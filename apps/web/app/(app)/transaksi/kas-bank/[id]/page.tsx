@@ -101,7 +101,7 @@ export default async function KasBankDetailPage({
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <PageHeader
           title={e.nomor ?? '— Draft —'}
           subtitle={

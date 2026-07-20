@@ -55,7 +55,7 @@ export default async function OpnameEditPage({ params }: { params: Promise<{ id:
 
   return (
     <>
-      <PageContainer size="form">
+      <PageContainer size="wide">
         <BackLink href={`/persediaan/penyesuaian/${id}`} label="← Kembali ke detail opname" />
         <PageHeader title="Edit Draft Opname" />
         <OpnameForm
