@@ -42,6 +42,28 @@ pnpm db:studio         # Prisma Studio
 Demo login: `owner@lentera.id` / `lentera123` (OWNER, semua cabang),
 `akuntan@lentera.id` / `lentera123` (AKUNTAN, hanya cabang SMG).
 
+## Deploy produksi (blue-green, zero-downtime)
+
+Server prod: `root@202.134.242.202`, repo di `/srv/lentera` (git pull `origin main`), reverse-proxy **Caddy** (`/etc/caddy/Caddyfile`, `systemctl reload caddy`). Box kecil: **1.9 GB RAM + 2 GB swap** → `next build` berat, jangan sampai men-starve app tetangga (`lentera-api`, `mabrur-api`).
+
+**Web = blue-green.** Dua "warna" PM2 bergantian, hanya SATU online:
+- `lentera-web-a` → port **3011**, serve `apps/web/.next-a`
+- `lentera-web-b` → port **3012**, serve `apps/web/.next-b`
+
+Caddy menunjuk warna aktif lewat baris marker **`reverse_proxy 127.0.0.1:<port> # WEB-ACTIVE`** di catch-all `handle {}`. Warna aktif disimpan di `/srv/lentera/.web-active` (`a`|`b`). `next.config.ts` punya `distDir: process.env.NEXT_DIST_DIR || '.next'` supaya build bisa diarahkan per-warna. `ecosystem.config.cjs` (di server, **untracked** di git, ada `.bak`) mendefinisikan dua warna + backoff PM2 (`min_uptime`, `max_restarts`, `exp_backoff_restart_delay`).
+
+**Deploy web (satu perintah, jalankan detached agar putus-ssh tak meng-kill build):**
+```bash
+ssh root@202.134.242.202
+setsid bash -c 'cd /srv/lentera && bash scripts/deploy-web-bg.sh > /tmp/deploy-web.log 2>&1; echo EXIT=$? >> /tmp/deploy-web.log' &
+# lalu poll: grep EXIT= /tmp/deploy-web.log  → tunggu EXIT=0
+```
+`scripts/deploy-web-bg.sh` otomatis: git pull → build ke warna **inaktif** (`NEXT_DIST_DIR=.next-<inaktif>`, dibungkus `nice -n 15 ionice -c3`) → start warna inaktif → **health-check** di port-nya → `sed` port di Caddyfile + `caddy validate` + `systemctl reload caddy` (graceful, **0 request drop**) → `pm2 stop` warna lama → tulis state → `pm2 save`. Build/health gagal ⇒ Caddy **tidak** di-flip, situs tetap warna lama. Teruji: 2 siklus a↔b, 496 & 485 request selama deploy, **0 non-200**.
+
+**API deploy** (bukan blue-green): build `apps/api` lalu `pm2 restart lentera-api`. **Shared** (`packages/shared`) berubah → build shared + `prisma generate` sebelum build api/web. Migrasi DB: `pnpm --filter @lentera/db exec prisma migrate deploy` (pakai `DATABASE_URL` superuser).
+
+**Jangan** lagi `rm -rf apps/web/.next` pada instance live, dan **jangan** `pm2 restart` yang memicu `next start` saat `.next` warna aktif tidak ada — itu penyebab crash-loop ENOENT lama yang sempat men-starve app tetangga. Rollback cepat: `sed` port Caddyfile balik ke warna lama + `systemctl reload caddy` + `pm2 restart lentera-web-<lama>`.
+
 ## Arsitektur penting
 
 ### Multi-tenant + multi-cabang
