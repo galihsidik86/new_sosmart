@@ -173,7 +173,7 @@ export default async function KelolaRekonFiskalPage({
                 <TD>{k.deskripsi}{k.catatan ? <span className="block text-[10px] text-tanah-500">{k.catatan}</span> : null}</TD>
                 <TD>{k.jenis === 'POSITIF' ? <span className="text-bata-700">Positif (+)</span> : <span className="text-padi-700">Negatif (−)</span>} <span className="text-[10px] text-tanah-500">{k.beda === 'TETAP' ? 'tetap' : 'sementara'}</span></TD>
                 <TD className="text-xs text-tanah-500">{k.kategori}</TD>
-                <TD numeric className="font-mono tabular-nums">{fmtPlain(k.koreksi)}</TD>
+                <TD className="text-right font-mono tabular-nums">{fmtPlain(k.koreksi)}</TD>
                 <TD className="text-right">
                   <form action={delKoreksi}>
                     <input type="hidden" name="id" value={k.id} />
