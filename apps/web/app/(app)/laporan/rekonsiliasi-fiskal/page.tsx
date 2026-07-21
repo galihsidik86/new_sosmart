@@ -32,6 +32,8 @@ interface Rekon {
     skema: string; tarif: string; peredaranBruto: string; useFasilitas31E: boolean;
     terutang: string; kreditPajak: string; kurangBayar: string;
   };
+  pajakTangguhan?: { bedaTemporerNeto: string; manfaat: string; jenis: string };
+  bebanPajak?: { kini: string; tangguhan: string; total: string };
   finalized?: boolean;
   finalizedAt?: string | null;
 }
@@ -195,6 +197,25 @@ export default async function RekonsiliasiFiskalPage({
               </dd>
             </div>
           </dl>
+
+          {rekon.pajakTangguhan && rekon.bebanPajak && (
+            <div className="px-4 pb-4">
+              <div className="text-[11px] uppercase tracking-wide text-tanah-500 font-bold mb-1.5 pt-3 border-t border-cream-200">
+                Pajak Tangguhan (PSAK 46)
+              </div>
+              <dl className="space-y-1.5 text-sm">
+                <Line label="Beda temporer (sementara) neto" value={fmtRp(rekon.pajakTangguhan.bedaTemporerNeto)} />
+                <Line
+                  label={`Pajak tangguhan — ${rekon.pajakTangguhan.jenis === 'ASET' ? 'manfaat (aset)' : 'beban (liabilitas)'}`}
+                  value={fmtRp(Math.abs(Number(rekon.pajakTangguhan.manfaat)))}
+                />
+                <Line label="Total beban pajak penghasilan (kini + tangguhan)" value={fmtRp(rekon.bebanPajak.total)} bold />
+              </dl>
+              <p className="text-[10px] text-tanah-500 mt-1.5">
+                Estimasi PSAK 46 dari beda waktu tahun berjalan (tarif {Number(rekon.pph.tarif)}%). Indikatif — belum memperhitungkan saldo pajak tangguhan awal.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

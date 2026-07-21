@@ -439,6 +439,22 @@ export class FiskalService {
             : hitungPphBadan(pkp, tarif.toNumber());
       const pphKurangBayar = new Decimal(pphTerutang.toString()).minus(kreditPajak);
 
+      // 9. Pajak tangguhan (PSAK 46) dari beda SEMENTARA (temporer). UMKM final → N/A.
+      const sementaraPositif = koreksi
+        .filter((k) => k.beda === 'SEMENTARA' && k.jenis === 'POSITIF')
+        .reduce((s, k) => s.plus(k.koreksi), new Decimal(0));
+      const sementaraNegatif = koreksi
+        .filter((k) => k.beda === 'SEMENTARA' && k.jenis === 'NEGATIF')
+        .reduce((s, k) => s.plus(k.koreksi), new Decimal(0));
+      const bedaTemporerNeto = sementaraPositif.minus(sementaraNegatif);
+      // + = manfaat / aset pajak tangguhan; − = beban / liabilitas pajak tangguhan.
+      const manfaatTangguhan =
+        skema === SkemaPphBadan.UMKM_FINAL
+          ? new Decimal(0)
+          : bedaTemporerNeto.mul(tarif).div(100).toDecimalPlaces(0);
+      const bebanPajakKini = new Decimal(pphTerutang.toString());
+      const totalBebanPajak = bebanPajakKini.minus(manfaatTangguhan);
+
       return {
         fiscalYear: { id: fy.id, kode: fy.kode, startDate: fy.startDate, endDate: fy.endDate },
         labaKomersial: labaKomersial.toFixed(2),
@@ -457,6 +473,16 @@ export class FiskalService {
           terutang: pphTerutang.toString(),
           kreditPajak: kreditPajak.toFixed(2),
           kurangBayar: pphKurangBayar.toFixed(2), // + = PPh 29 kurang bayar, − = PPh 28A lebih bayar
+        },
+        pajakTangguhan: {
+          bedaTemporerNeto: bedaTemporerNeto.toFixed(2),
+          manfaat: manfaatTangguhan.toFixed(2), // + = manfaat (aset), − = beban (liabilitas)
+          jenis: manfaatTangguhan.gte(0) ? 'ASET' : 'LIABILITAS',
+        },
+        bebanPajak: {
+          kini: bebanPajakKini.toFixed(2),
+          tangguhan: manfaatTangguhan.negated().toFixed(2), // beban tangguhan = − manfaat
+          total: totalBebanPajak.toFixed(2),
         },
       };
   }
