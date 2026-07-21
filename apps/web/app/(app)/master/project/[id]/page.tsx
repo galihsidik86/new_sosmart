@@ -52,6 +52,8 @@ interface ProjectDetail {
   pjUserId: string | null;
   customerId: string | null;
   jenisProjekId: string | null;
+  jenisProjek: { id: string; nama: string } | null;
+  industri: { id: string; kode: string; nama: string } | null;
   linkDokumen: string[];
   pjUser: UserLite | null;
   customer: { id: string; kode: string; nama: string } | null;
@@ -277,6 +279,8 @@ export default async function ProjectDetailPage({
             <span className="flex items-center gap-2 flex-wrap">
               <Badge variant={STATUS_VARIANT[p.status]} size="sm">{STATUS_LABEL[p.status]}</Badge>
               <Badge variant={PRIO_VARIANT[p.prioritas]} size="sm">Prioritas {p.prioritas.toLowerCase()}</Badge>
+              {p.jenisProjek && <Badge variant="brand" size="sm">{p.jenisProjek.nama}</Badge>}
+              {p.industri && <Badge variant="neutral" size="sm">{p.industri.nama}</Badge>}
               {p.customer && <span className="text-xs text-tanah-500">Klien: {p.customer.nama}</span>}
               {p.pjUser && <span className="text-xs text-tanah-500">· PIC: {p.pjUser.nama}</span>}
             </span>

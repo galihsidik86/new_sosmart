@@ -119,6 +119,7 @@ export class ProjectsService {
         orderBy: [{ status: 'asc' }, { kode: 'asc' }],
         include: {
           industri: { select: { id: true, kode: true, nama: true } },
+          jenisProjek: { select: { id: true, nama: true } },
           _count: { select: { members: true, budgets: true } },
           tasks: { select: { status: true } },
         },
@@ -152,6 +153,7 @@ export class ProjectsService {
         where: { id },
         include: {
           industri: { select: { id: true, kode: true, nama: true } },
+          jenisProjek: { select: { id: true, nama: true } },
           members: {
             include: { user: { select: { id: true, email: true, nama: true } } },
           },

@@ -34,6 +34,7 @@ export interface ProjectRow {
   prioritas: Prioritas;
   budgetTotal: string | null;
   industri: IndustriOpt | null;
+  jenisProjek: { id: string; nama: string } | null;
   pjNama: string | null;
   progress: number;
   taskTotal: number;
@@ -58,6 +59,7 @@ export function ProjectListView({
   const [prio, setPrio] = useState('');
   const [pj, setPj] = useState('');
   const [industriId, setIndustriId] = useState('');
+  const [jenisProjekId, setJenisProjekId] = useState('');
   const [dari, setDari] = useState('');
   const [sampai, setSampai] = useState('');
 
@@ -68,6 +70,11 @@ export function ProjectListView({
   const industriOptions = useMemo(() => {
     const m = new Map<string, string>();
     projects.forEach((p) => { if (p.industri) m.set(p.industri.id, p.industri.nama); });
+    return Array.from(m.entries());
+  }, [projects]);
+  const jenisProjekOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    projects.forEach((p) => { if (p.jenisProjek) m.set(p.jenisProjek.id, p.jenisProjek.nama); });
     return Array.from(m.entries());
   }, [projects]);
 
@@ -86,17 +93,18 @@ export function ProjectListView({
         if (prio && p.prioritas !== prio) return false;
         if (pj && p.pjNama !== pj) return false;
         if (industriId && p.industri?.id !== industriId) return false;
+        if (jenisProjekId && p.jenisProjek?.id !== jenisProjekId) return false;
         const mulai = p.tanggalMulai.slice(0, 10);
         if (dari && mulai < dari) return false;
         if (sampai && mulai > sampai) return false;
         return true;
       }),
-    [projects, q, status, prio, pj, industriId, dari, sampai],
+    [projects, q, status, prio, pj, industriId, jenisProjekId, dari, sampai],
   );
 
   const totalBudget = filtered.reduce((a, p) => a + Number(p.budgetTotal ?? 0), 0);
-  const hasFilter = !!(q || status || prio || pj || industriId || dari || sampai);
-  const reset = () => { setQ(''); setStatus(''); setPrio(''); setPj(''); setIndustriId(''); setDari(''); setSampai(''); };
+  const hasFilter = !!(q || status || prio || pj || industriId || jenisProjekId || dari || sampai);
+  const reset = () => { setQ(''); setStatus(''); setPrio(''); setPj(''); setIndustriId(''); setJenisProjekId(''); setDari(''); setSampai(''); };
 
   function cetak() {
     const kriteria: string[] = [];
@@ -224,6 +232,12 @@ export function ProjectListView({
             {pjOptions.map((n) => <option key={n} value={n}>{n}</option>)}
           </Select>
         )}
+        {jenisProjekOptions.length > 0 && (
+          <Select value={jenisProjekId} onChange={(e) => setJenisProjekId(e.target.value)} fullWidth={false}>
+            <option value="">Semua jenis projek</option>
+            {jenisProjekOptions.map(([id, nama]) => <option key={id} value={id}>{nama}</option>)}
+          </Select>
+        )}
         {industriOptions.length > 0 && (
           <Select value={industriId} onChange={(e) => setIndustriId(e.target.value)} fullWidth={false}>
             <option value="">Semua industri</option>
@@ -273,6 +287,7 @@ export function ProjectListView({
                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                   <Badge variant={PRIO_VARIANT[p.prioritas]} size="sm">{p.prioritas.toLowerCase()}</Badge>
                   {p.pjNama && <span className="text-xs text-tanah-500">👤 {p.pjNama}</span>}
+                  {p.jenisProjek && <Badge variant="brand" size="sm">{p.jenisProjek.nama}</Badge>}
                   {p.industri && <Badge variant="neutral" size="sm">{p.industri.nama}</Badge>}
                 </div>
               </TD>
