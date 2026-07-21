@@ -128,6 +128,8 @@ Saat **INSERT** baris baru: RLS hanya **filter**, tidak inject kolom. Kolom `ten
 - **Vendor**: `isPkp` kritikal — hanya vendor PKP yang menerbitkan faktur pajak masukan yang bisa dikreditkan.
 - **Customer**: `isPkp` menentukan apakah faktur pajak diterbitkan; `kreditLimit` dipakai validasi penjualan kredit (Fase 4).
 - **ItemStokAwal**: per item per cabang per tanggal. Fase 5 akan baca ini sebagai opening balance kartu stok.
+- **JenisPelanggan**: master segmen pelanggan yang dikelola (mis. Distributor/Ritel/Korporat). `Customer.jenisPelangganId` (FK SET NULL). Filter di daftar Pelanggan, daftar Penjualan, dan laporan Aging Piutang.
+- **JenisProjek**: master kategori PROJEK yang dikelola (mis. Consumer/Brand/Personal Based). `Project.jenisProjekId` (FK SET NULL). Dipilih di form projek (create & edit), dan jadi filter di 3 laporan proyek — **Laba Rugi per Proyek, Budget vs Actual, Jejak Audit** — berdampingan filter `industriId`. Di service, `industriId` + `jenisProjekId` digabung dalam SATU objek `project: { … }` (jangan dua key `project` yang saling menimpa). CRUD di `/master/jenis-projek` (pola sama `jenis-pelanggan`; hapus diblok bila dipakai projek).
 
 ### Periode buku (Fase 2)
 
