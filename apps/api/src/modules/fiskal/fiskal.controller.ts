@@ -66,4 +66,11 @@ export class FiskalController {
   ) {
     return this.fiskal.upsertKompensasi(body);
   }
+
+  // ---------- Penyusutan fiskal vs komersial ----------
+
+  @Get('penyusutan')
+  penyusutanTahun(@Query('fiscalYearId') fiscalYearId: string) {
+    return this.fiskal.penyusutanTahun(fiscalYearId);
+  }
 }

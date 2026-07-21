@@ -147,6 +147,11 @@ export class AsetService {
             akumulasiPenyusutan: akumAwal.toFixed(2),
             nilaiBuku: nilaiBuku.toFixed(2),
             lastDepresiasiPeriode: input.lastDepresiasiPeriode ?? null,
+            // Parameter penyusutan fiskal (basis UU PPh): metode ikut komersial,
+            // masa manfaat = default kelompok Pasal 11, residu fiskal 0.
+            metodeFiskal: input.metode,
+            masaManfaatFiskalBulan: MASA_MANFAAT_DEFAULT[input.kelompok],
+            nilaiResiduFiskal: '0',
             akunAsetId: input.akunAsetId,
             akunAkumulasiId: input.akunAkumulasiId,
             akunBebanId: input.akunBebanId,

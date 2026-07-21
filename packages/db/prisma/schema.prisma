@@ -1790,6 +1790,14 @@ model AsetTetap {
   /// "YYYY-MM" periode terakhir yang sudah dihitung penyusutannya.
   lastDepresiasiPeriode String? @map("last_depresiasi_periode")
 
+  /// Parameter penyusutan FISKAL (basis UU PPh) — dipakai Rekonsiliasi Fiskal.
+  /// Report-only: TIDAK menerbitkan jurnal; penyusutan fiskal disimulasi dari
+  /// mulaiPenyusutan. metodeFiskal umumnya = metode; masaManfaatFiskal = default
+  /// kelompok Pasal 11 UU PPh; residu fiskal umumnya 0 (disusutkan habis).
+  metodeFiskal           MetodePenyusutan @default(GARIS_LURUS) @map("metode_fiskal")
+  masaManfaatFiskalBulan Int              @default(48) @map("masa_manfaat_fiskal_bulan")
+  nilaiResiduFiskal      Decimal          @default(0) @map("nilai_residu_fiskal") @db.Decimal(20, 2)
+
   /// Akun aset (debit saat perolehan, kredit saat dijual).
   akunAsetId      String @map("akun_aset_id") @db.Uuid
   /// Akun akumulasi (kontra-aset, kredit per bulan, debit saat dijual).
