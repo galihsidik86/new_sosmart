@@ -10,6 +10,15 @@ import {
 interface Row {
   kode: string; nama: string; kind: string; isIntercompany: boolean;
   combined: string; eliminasi: string; konsolidasi: string;
+  perEntity: Record<string, string>;
+}
+type Entity = { tenantId: string; nama: string; ownershipPct: string; isParent: boolean; netAssets: string; netIncome: string };
+
+/** Rupiah dengan angka negatif dalam kurung (konvensi laporan). '—' untuk nol. */
+function rp(v: string | number, dashZero = false): string {
+  const n = Number(v);
+  if (dashZero && n === 0) return '—';
+  return n < 0 ? `(${fmtRp(Math.abs(n))})` : fmtRp(n);
 }
 interface Report {
   group: { id: string; nama: string };
@@ -62,31 +71,50 @@ const KIND_LABEL: Record<string, string> = {
   BEBAN: 'Beban', BEBAN_POKOK: 'Beban Pokok', BEBAN_LAIN: 'Beban Lain',
 };
 
-function RowsTable({ rows }: { rows: Row[] }) {
+/**
+ * Kertas kerja konsolidasi: kolom per-entitas (nilai penyusun) → Gabungan →
+ * Eliminasi → Konsolidasi. Kode+Akun sticky saat scroll horizontal.
+ */
+function RowsTable({ rows, entities }: { rows: Row[]; entities: Entity[] }) {
+  const num = 'px-3 py-1.5 text-right font-mono tabular-nums whitespace-nowrap';
+  const numHead = 'px-3 py-2 text-right font-bold whitespace-nowrap';
   return (
-    <Table>
-      <THead>
-        <TH>Kode</TH>
-        <TH>Akun</TH>
-        <TH numeric>Gabungan</TH>
-        <TH numeric>Eliminasi</TH>
-        <TH numeric>Konsolidasi</TH>
-      </THead>
-      <TBody>
-        {rows.map((r) => (
-          <TR key={r.kode} className={r.isIntercompany ? 'bg-emas-50/50' : ''}>
-            <TD className="font-mono text-xs text-tanah-500">{r.kode}</TD>
-            <TD className="text-tanah-700">
-              {r.nama}
-              {r.isIntercompany && <Badge variant="neutral" className="ml-2">IC</Badge>}
-            </TD>
-            <TD className="text-right font-mono tabular-nums text-tanah-500">{fmtRp(r.combined)}</TD>
-            <TD className="text-right font-mono tabular-nums text-bata-700">{Number(r.eliminasi) ? fmtRp(r.eliminasi) : '—'}</TD>
-            <TD className="text-right font-mono tabular-nums font-semibold">{fmtRp(r.konsolidasi)}</TD>
-          </TR>
-        ))}
-      </TBody>
-    </Table>
+    <div className="overflow-x-auto lentera-scroll border border-cream-200 rounded-lg">
+      <table className="w-full text-xs border-collapse">
+        <thead className="bg-cream-50 text-[10px] uppercase tracking-wider text-tanah-500">
+          <tr>
+            <th className="px-3 py-2 text-left font-bold sticky left-0 bg-cream-50 z-10 w-20">Kode</th>
+            <th className="px-3 py-2 text-left font-bold sticky left-20 bg-cream-50 z-10 min-w-[180px]">Akun</th>
+            {entities.map((e) => (
+              <th key={e.tenantId} className={numHead} title={e.isParent ? 'Induk' : `Milik ${e.ownershipPct}%`}>
+                {e.nama}{e.isParent ? ' ⬦' : ''}
+              </th>
+            ))}
+            <th className={numHead}>Gabungan</th>
+            <th className={numHead + ' text-bata-700'}>Eliminasi</th>
+            <th className={numHead}>Konsolidasi</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-cream-100">
+          {rows.map((r) => (
+            <tr key={r.kode} className={r.isIntercompany ? 'bg-emas-50/50' : ''}>
+              <td className="px-3 py-1.5 font-mono text-tanah-500 sticky left-0 z-10 bg-inherit">{r.kode}</td>
+              <td className="px-3 py-1.5 text-tanah-700 sticky left-20 z-10 bg-inherit">
+                {r.nama}{r.isIntercompany && <Badge variant="neutral" className="ml-2">IC</Badge>}
+              </td>
+              {entities.map((e) => (
+                <td key={e.tenantId} className={num + ' text-tanah-500'}>
+                  {r.perEntity[e.tenantId] ? rp(r.perEntity[e.tenantId]) : <span className="text-tanah-300">—</span>}
+                </td>
+              ))}
+              <td className={num + ' text-tanah-600'}>{rp(r.combined)}</td>
+              <td className={num + ' text-bata-700'}>{rp(r.eliminasi, true)}</td>
+              <td className={num + ' font-semibold text-tanah-900'}>{rp(r.konsolidasi)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -229,7 +257,7 @@ export default async function KonsolidasiReportPage({
               neracaByKind(k).length ? (
                 <div key={k} className="mb-4">
                   <div className="text-[11px] uppercase tracking-wider text-tanah-500 font-bold mb-1">{KIND_LABEL[k]}</div>
-                  <RowsTable rows={neracaByKind(k)} />
+                  <RowsTable rows={neracaByKind(k)} entities={rep.entities} />
                 </div>
               ) : null,
             )}
@@ -251,7 +279,7 @@ export default async function KonsolidasiReportPage({
           {/* Laba rugi konsolidasi */}
           <Card padding="lg">
             <SectionHeader className="mb-3">Laba Rugi Konsolidasi</SectionHeader>
-            <RowsTable rows={rep.labaRugi.rows} />
+            <RowsTable rows={rep.labaRugi.rows} entities={rep.entities} />
             <dl className="text-sm space-y-1 border-t border-cream-200 pt-3 mt-2 max-w-sm ml-auto">
               <div className="flex justify-between"><dt className="text-tanah-500">Pendapatan</dt><dd className="font-mono tabular-nums">{fmtRp(rep.labaRugi.pendapatan)}</dd></div>
               <div className="flex justify-between"><dt className="text-tanah-500">Beban</dt><dd className="font-mono tabular-nums text-bata-700">({fmtRp(rep.labaRugi.beban)})</dd></div>
