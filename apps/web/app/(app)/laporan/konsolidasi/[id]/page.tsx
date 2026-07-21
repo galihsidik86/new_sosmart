@@ -115,7 +115,7 @@ export default async function KonsolidasiReportPage({
   const neracaByKind = (kind: string) => rep!.neraca.rows.filter((r) => r.kind === kind);
 
   return (
-    <PageContainer size="report">
+    <PageContainer size="wide">
       <Link href="/laporan/konsolidasi" className="text-sm text-sogan-500 hover:underline">← Grup</Link>
       <PageHeader
         className="mt-2"
