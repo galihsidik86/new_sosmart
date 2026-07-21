@@ -5,35 +5,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
-import { AccountKind, JournalStatus, NormalBalance, Prisma } from '@lentera/db';
+import { JournalStatus, NormalBalance, Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import {
+  computeConsolidation,
+  type EntityAccount,
+  type EntityMeta,
+  type IcDoc,
+  type IcSide,
+} from './consolidation.engine.js';
 
-export interface IcDoc {
-  nomor: string | null;
-  tanggal: Date;
-  kontak: string;
-  netto: string;
-  dibayar: string;
-  outstanding: string;
-}
-export interface IcSide {
-  total: Decimal;
-  docs: IcDoc[];
-}
-
-interface EntityAccount {
-  kode: string;
-  nama: string;
-  kind: AccountKind;
-  normalBalance: NormalBalance;
-  klasifikasiNeraca: string | null;
-  isIntercompany: boolean;
-  /** Saldo akhir signed (normal-positif) s/d endDate — untuk Neraca. */
-  neracaSigned: Decimal;
-  /** Mutasi signed dalam rentang [startDate,endDate] — untuk Laba Rugi. */
-  plSigned: Decimal;
-}
+export type { IcDoc, IcSide } from './consolidation.engine.js';
 
 @Injectable()
 export class ConsolidationService {
@@ -170,8 +153,12 @@ export class ConsolidationService {
     const names = await this.userTenantNames();
 
     // 3. Susun daftar entitas: induk (100%) + anggota terotorisasi.
-    const entities: Array<{ tenantId: string; nama: string; ownershipPct: Decimal; isParent: boolean }> = [
-      { tenantId: parentTenantId, nama: names.get(parentTenantId) ?? 'Induk', ownershipPct: new Decimal(100), isParent: true },
+    const entities: EntityMeta[] = [
+      {
+        tenantId: parentTenantId, nama: names.get(parentTenantId) ?? 'Induk',
+        ownershipPct: new Decimal(100), isParent: true,
+        acquisitionCost: null, acquisitionNetAssets: null,
+      },
     ];
     const skipped: string[] = [];
     for (const m of group.members) {
@@ -181,13 +168,15 @@ export class ConsolidationService {
           nama: names.get(m.memberTenantId)!,
           ownershipPct: new Decimal(m.ownershipPct),
           isParent: false,
+          acquisitionCost: m.acquisitionCost != null ? new Decimal(m.acquisitionCost) : null,
+          acquisitionNetAssets: m.acquisitionNetAssets != null ? new Decimal(m.acquisitionNetAssets) : null,
         });
       } else {
         skipped.push(m.memberTenantId);
       }
     }
 
-    // 4. Baca balances tiap entitas dalam konteks RLS-nya sendiri.
+    // 4. Baca balances tiap entitas dalam konteks RLS-nya sendiri (satu-satunya I/O).
     const groupTenantSet = new Set(entities.map((e) => e.tenantId));
     const perEntity = new Map<string, EntityAccount[]>();
     const perEntityIc = new Map<string, { receivable: Map<string, IcSide>; payable: Map<string, IcSide> }>();
@@ -200,170 +189,11 @@ export class ConsolidationService {
       perEntityIc.set(e.tenantId, data.ic);
     }
 
-    // 5. Agregasi per kode + eliminasi intercompany.
-    interface Row { kode: string; nama: string; kind: AccountKind; klasifikasi: string | null; isIntercompany: boolean; combined: Decimal; }
-    const neracaByKode = new Map<string, Row>();
-    const plByKode = new Map<string, Row>();
-    for (const e of entities) {
-      for (const a of perEntity.get(e.tenantId)!) {
-        const isPL =
-          a.kind === AccountKind.PENDAPATAN || a.kind === AccountKind.PENDAPATAN_LAIN ||
-          a.kind === AccountKind.BEBAN || a.kind === AccountKind.BEBAN_POKOK || a.kind === AccountKind.BEBAN_LAIN;
-        const target = isPL ? plByKode : neracaByKode;
-        const nilai = isPL
-          ? this.plContribution(a)
-          : this.neracaContribution(a);
-        const cur = target.get(a.kode) ?? {
-          kode: a.kode, nama: a.nama, kind: a.kind, klasifikasi: a.klasifikasiNeraca,
-          isIntercompany: a.isIntercompany, combined: new Decimal(0),
-        };
-        cur.combined = cur.combined.plus(nilai);
-        cur.isIntercompany = cur.isIntercompany || a.isIntercompany;
-        target.set(a.kode, cur);
-      }
-    }
-
-    const mkRows = (m: Map<string, Row>) =>
-      [...m.values()]
-        .filter((r) => !r.combined.eq(0) || r.isIntercompany)
-        .sort((a, b) => a.kode.localeCompare(b.kode))
-        .map((r) => ({
-          kode: r.kode, nama: r.nama, kind: r.kind, klasifikasi: r.klasifikasi,
-          isIntercompany: r.isIntercompany,
-          combined: r.combined.toFixed(2),
-          eliminasi: (r.isIntercompany ? r.combined.negated() : new Decimal(0)).toFixed(2),
-          konsolidasi: (r.isIntercompany ? new Decimal(0) : r.combined).toFixed(2),
-        }));
-
-    const neracaRows = mkRows(neracaByKode);
-    const plRows = mkRows(plByKode);
-
-    // 6. Goodwill (metode akuisisi) = biaya perolehan − milik% × aset bersih akuisisi.
-    let totalGoodwill = new Decimal(0);
-    const goodwillDetail: Array<{ nama: string; goodwill: string }> = [];
-    for (const e of entities) {
-      if (e.isParent) continue;
-      const gm = group.members.find((m) => m.memberTenantId === e.tenantId);
-      if (gm?.acquisitionCost != null && gm?.acquisitionNetAssets != null) {
-        const gw = new Decimal(gm.acquisitionCost).minus(
-          new Decimal(gm.acquisitionNetAssets).times(e.ownershipPct).div(100),
-        );
-        totalGoodwill = totalGoodwill.plus(gw);
-        goodwillDetail.push({ nama: e.nama, goodwill: gw.toFixed(2) });
-      }
-    }
-    if (!totalGoodwill.eq(0)) {
-      neracaRows.push({
-        kode: 'ZZ-GW', nama: 'Goodwill (konsolidasi)', kind: AccountKind.ASET,
-        klasifikasi: 'ASET_TETAP', isIntercompany: false,
-        combined: totalGoodwill.toFixed(2), eliminasi: '0.00', konsolidasi: totalGoodwill.toFixed(2),
-      });
-    }
-
-    // 7. Total Neraca (setelah eliminasi IC akun + goodwill).
-    const sumKons = (rows: typeof neracaRows, pred: (r: (typeof neracaRows)[number]) => boolean) =>
-      rows.filter(pred).reduce((a, r) => a.plus(new Decimal(r.konsolidasi)), new Decimal(0));
-
-    const totalAset = sumKons(neracaRows, (r) => r.kind === AccountKind.ASET);
-    const totalLiab = sumKons(neracaRows, (r) => r.kind === AccountKind.LIABILITAS);
-    const totalEkuitasKons = totalAset.minus(totalLiab); // identitas neraca (incl goodwill)
-    const ekuitasAkunKons = sumKons(neracaRows, (r) => r.kind === AccountKind.EKUITAS);
-
-    // 8. Laba Rugi konsolidasi.
-    const pendapatan = plRows
-      .filter((r) => r.kind === AccountKind.PENDAPATAN || r.kind === AccountKind.PENDAPATAN_LAIN)
-      .reduce((a, r) => a.plus(new Decimal(r.konsolidasi)), new Decimal(0));
-    const beban = plRows
-      .filter((r) => r.kind === AccountKind.BEBAN || r.kind === AccountKind.BEBAN_POKOK || r.kind === AccountKind.BEBAN_LAIN)
-      .reduce((a, r) => a.plus(new Decimal(r.konsolidasi)), new Decimal(0));
-    const labaBersihKons = pendapatan.minus(beban);
-    // Eliminasi ekuitas anak (investasi induk vs ekuitas akuisisi) = plug supaya
-    // baris ekuitas + laba berjalan + eliminasi = total ekuitas konsolidasi.
-    const eliminasiEkuitas = totalEkuitasKons.minus(ekuitasAkunKons).minus(labaBersihKons);
-
-    // 8. Kepentingan minoritas (NCI): per anak, minority% × aset bersih anak.
-    let nci = new Decimal(0);
-    let labaNci = new Decimal(0);
-    const entityDetail = entities.map((e) => {
-      const accts = perEntity.get(e.tenantId)!;
-      const aset = accts.filter((a) => a.kind === AccountKind.ASET)
-        .reduce((s, a) => s.plus(this.neracaContribution(a)), new Decimal(0));
-      const liab = accts.filter((a) => a.kind === AccountKind.LIABILITAS)
-        .reduce((s, a) => s.plus(this.neracaContribution(a)), new Decimal(0));
-      const netAssets = aset.minus(liab);
-      const inc = accts.reduce((s, a) => {
-        const isPL = a.kind === AccountKind.PENDAPATAN || a.kind === AccountKind.PENDAPATAN_LAIN ||
-          a.kind === AccountKind.BEBAN || a.kind === AccountKind.BEBAN_POKOK || a.kind === AccountKind.BEBAN_LAIN;
-        if (!isPL) return s;
-        const c = this.plContribution(a);
-        const isPend = a.kind === AccountKind.PENDAPATAN || a.kind === AccountKind.PENDAPATAN_LAIN;
-        return isPend ? s.plus(c) : s.minus(c);
-      }, new Decimal(0));
-      const minoritas = new Decimal(100).minus(e.ownershipPct).div(100);
-      if (!e.isParent) {
-        nci = nci.plus(netAssets.times(minoritas));
-        labaNci = labaNci.plus(inc.times(minoritas));
-      }
-      return {
-        tenantId: e.tenantId, nama: e.nama, ownershipPct: e.ownershipPct.toFixed(2),
-        isParent: e.isParent, netAssets: netAssets.toFixed(2), netIncome: inc.toFixed(2),
-      };
-    });
-
-    // 9. Rekonsiliasi intercompany level-transaksi (piutang E→P vs utang P→E).
-    const nameOf = (id: string) => names.get(id) ?? id;
-    const emptySide: IcSide = { total: new Decimal(0), docs: [] };
-    const icRekon: Array<{
-      dari: string; ke: string; piutang: string; utangLawan: string; selisih: string; cocok: boolean;
-      piutangDocs: IcDoc[]; utangDocs: IcDoc[];
-    }> = [];
-    for (const e of entities) {
-      for (const [partnerId, side] of perEntityIc.get(e.tenantId)!.receivable) {
-        if (!groupTenantSet.has(partnerId)) continue;
-        const partnerSide = perEntityIc.get(partnerId)?.payable.get(e.tenantId) ?? emptySide;
-        const d = side.total.minus(partnerSide.total);
-        icRekon.push({
-          dari: e.nama, ke: nameOf(partnerId),
-          piutang: side.total.toFixed(2), utangLawan: partnerSide.total.toFixed(2),
-          selisih: d.toFixed(2), cocok: d.abs().lte(new Decimal('0.5')),
-          piutangDocs: side.docs, utangDocs: partnerSide.docs,
-        });
-      }
-    }
-
-    const ekuitasInduk = totalEkuitasKons.minus(nci);
-    const labaInduk = labaBersihKons.minus(labaNci);
-
-    // Validasi: Aset = Liab + Ekuitas konsolidasi.
-    const selisih = totalAset.minus(totalLiab.plus(totalEkuitasKons));
-
-    return {
+    // 5. Semua perhitungan di mesin murni (deterministik, ter-unit-test).
+    return computeConsolidation({
       group: { id: group.id, nama: group.nama },
-      periode: { startDate: startDate ?? null, endDate },
-      entities: entityDetail,
-      skippedTenantIds: skipped,
-      goodwill: { total: totalGoodwill.toFixed(2), detail: goodwillDetail },
-      icRekon,
-      neraca: {
-        rows: neracaRows,
-        totalAset: totalAset.toFixed(2),
-        totalLiabilitas: totalLiab.toFixed(2),
-        totalEkuitasKonsolidasi: totalEkuitasKons.toFixed(2),
-        eliminasiEkuitasAkuisisi: eliminasiEkuitas.toFixed(2),
-        ekuitasIndukInduk: ekuitasInduk.toFixed(2),
-        kepentinganMinoritas: nci.toFixed(2),
-      },
-      labaRugi: {
-        rows: plRows,
-        pendapatan: pendapatan.toFixed(2),
-        beban: beban.toFixed(2),
-        labaBersihKonsolidasi: labaBersihKons.toFixed(2),
-        labaIndukInduk: labaInduk.toFixed(2),
-        labaMinoritas: labaNci.toFixed(2),
-      },
-      balanced: selisih.abs().lte(new Decimal('0.5')),
-      selisih: selisih.toFixed(2),
-    };
+      entities, perEntity, perEntityIc, names, skipped, startDate, endDate,
+    });
   }
 
   /**
@@ -427,21 +257,6 @@ export class ConsolidationService {
       });
     }
     return { receivable, payable };
-  }
-
-  /** Kontribusi akun ke seksi Neraca (kontra dibalik supaya mengurangi). */
-  private neracaContribution(a: EntityAccount): Decimal {
-    const expected = a.kind === AccountKind.ASET ? NormalBalance.DEBIT : NormalBalance.KREDIT;
-    return a.normalBalance === expected ? a.neracaSigned : a.neracaSigned.negated();
-  }
-
-  /** Kontribusi akun ke Laba Rugi (pendapatan/beban positif ke arah masing-masing). */
-  private plContribution(a: EntityAccount): Decimal {
-    const expected =
-      a.kind === AccountKind.PENDAPATAN || a.kind === AccountKind.PENDAPATAN_LAIN
-        ? NormalBalance.KREDIT
-        : NormalBalance.DEBIT;
-    return a.normalBalance === expected ? a.plSigned : a.plSigned.negated();
   }
 
   /** Saldo per akun (signed normal-positif) untuk satu tenant (dalam tx-nya). */
