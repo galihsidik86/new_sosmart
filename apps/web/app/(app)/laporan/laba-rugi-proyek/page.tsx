@@ -112,8 +112,8 @@ export default async function LabaRugiProyekPage({
         <Button type="submit" variant="secondary" size="sm" className="ml-auto self-end">Tampilkan</Button>
       </form>
 
-      {/* ---------- Ringkasan ---------- */}
-      {data && (
+      {/* ---------- Ringkasan (disembunyikan saat 1 proyek spesifik dipilih) ---------- */}
+      {data && (!detail || detail === 'all') && (
         <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden mt-4">
           <div className="px-5 py-3 bg-cream-50 border-b border-cream-200">
             <div className="font-display text-lg font-semibold text-wedel-900">
