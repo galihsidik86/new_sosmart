@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
-import { JournalStatus, NormalBalance, Prisma } from '@lentera/db';
+import { AuditAction, JournalStatus, NormalBalance, Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import {
@@ -180,20 +180,50 @@ export class ConsolidationService {
     const groupTenantSet = new Set(entities.map((e) => e.tenantId));
     const perEntity = new Map<string, EntityAccount[]>();
     const perEntityIc = new Map<string, { receivable: Map<string, IcSide>; payable: Map<string, IcSide> }>();
+    const entityPeriodStatus = new Map<string, string | null>();
     for (const e of entities) {
       const data = await this.tenancy.runAs(e.tenantId, userId, async (tx) => ({
         accounts: await this.entityBalances(tx, startDate, endDate),
         ic: await this.icBalances(tx, endDate, groupTenantSet),
+        // Status periode buku yang memuat endDate (untuk peringatan kelengkapan data).
+        period: await tx.fiscalPeriod.findFirst({
+          where: { startDate: { lte: endDate }, endDate: { gte: endDate } },
+          select: { status: true },
+        }),
       }));
       perEntity.set(e.tenantId, data.accounts);
       perEntityIc.set(e.tenantId, data.ic);
+      entityPeriodStatus.set(e.tenantId, data.period?.status ?? null);
     }
 
     // 5. Semua perhitungan di mesin murni (deterministik, ter-unit-test).
-    return computeConsolidation({
+    const result = computeConsolidation({
       group: { id: group.id, nama: group.nama },
-      entities, perEntity, perEntityIc, names, skipped, startDate, endDate,
+      entities, perEntity, perEntityIc, names, skipped, startDate, endDate, entityPeriodStatus,
     });
+
+    // 6. Audit trail: catat siapa men-generate laporan, kapan, dengan parameter apa.
+    // Best-effort — kegagalan audit tidak boleh menggagalkan laporan.
+    try {
+      await this.tenancy.run((tx) =>
+        tx.auditLog.create({
+          data: {
+            tenantId: parentTenantId, userId, action: AuditAction.GENERATE,
+            entity: 'ConsolidationReport', entityId: group.id,
+            after: {
+              groupNama: group.nama, startDate: opts.startDate ?? null, endDate: opts.endDate,
+              jumlahEntitas: entities.length, skipped: skipped.length,
+              balanced: result.integritas.neracaBalanced,
+              icTerekonsiliasi: result.integritas.icTerekonsiliasi,
+            },
+          },
+        }),
+      );
+    } catch {
+      /* audit best-effort */
+    }
+
+    return result;
   }
 
   /**

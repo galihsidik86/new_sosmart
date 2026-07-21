@@ -130,6 +130,7 @@ enum AuditAction {
   UNPOST
   LOGIN
   LOGOUT
+  GENERATE // generate laporan (mis. konsolidasi) — jejak siapa/kapan/parameter
 }
 
 /// Klasifikasi PPN per item — menentukan bagaimana item diperlakukan

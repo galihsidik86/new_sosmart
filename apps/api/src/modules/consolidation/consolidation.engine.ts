@@ -55,6 +55,8 @@ export interface ConsolidationInput {
   skipped: string[];
   startDate: Date | null;
   endDate: Date;
+  /** Status periode buku (OPEN/CLOSING/CLOSED) tiap entitas pada endDate. null = tak diketahui. */
+  entityPeriodStatus?: Map<string, string | null>;
 }
 
 const isPLKind = (k: AccountKind): boolean =>
@@ -80,6 +82,7 @@ const TOLERANSI = new Decimal('0.5');
 
 export function computeConsolidation(input: ConsolidationInput) {
   const { group, entities, perEntity, perEntityIc, names, skipped, startDate, endDate } = input;
+  const periodStatus = input.entityPeriodStatus ?? new Map<string, string | null>();
   const groupTenantSet = new Set(entities.map((e) => e.tenantId));
   const nameOf = (id: string) => names.get(id) ?? id;
 
@@ -187,6 +190,7 @@ export function computeConsolidation(input: ConsolidationInput) {
       tenantId: e.tenantId, nama: e.nama, ownershipPct: e.ownershipPct.toFixed(2),
       isParent: e.isParent, netAssets: netAssets.toFixed(2), netIncome: inc.toFixed(2),
       jumlahAkun,
+      periodeStatus: periodStatus.get(e.tenantId) ?? null,
     };
   });
 
@@ -223,6 +227,10 @@ export function computeConsolidation(input: ConsolidationInput) {
   const selisihNeraca = totalAset.minus(totalLiab.plus(totalEkuitasKons));
   // Sinyal integritas SEJATI = rekonsiliasi intercompany (piutang IC harus = utang lawan).
   const entitasTanpaData = entityDetail.filter((e) => e.jumlahAkun === 0).map((e) => e.nama);
+  // Kelengkapan data: entitas yang periode-nya BELUM tutup buku (OPEN/CLOSING) — angka bisa berubah.
+  const entitasBelumTutupBuku = entityDetail
+    .filter((e) => e.periodeStatus === 'OPEN' || e.periodeStatus === 'CLOSING')
+    .map((e) => ({ nama: e.nama, status: e.periodeStatus as string }));
 
   return {
     group: { id: group.id, nama: group.nama },
@@ -256,6 +264,7 @@ export function computeConsolidation(input: ConsolidationInput) {
       jumlahIcTidakCocok: icTidakCocok,
       icTerekonsiliasi: icTidakCocok === 0,
       entitasTanpaData,
+      entitasBelumTutupBuku,
     },
     // Kompat lama.
     balanced: selisihNeraca.abs().lte(TOLERANSI),

@@ -172,6 +172,33 @@ describe('computeConsolidation', () => {
     expect(r.neraca.totalAset).toBe('1700.00');
   });
 
+  it('Skenario F: entitas belum tutup buku (periode OPEN/CLOSING) ditandai; CLOSED tidak', () => {
+    const P = entity('P', 'Induk', 100, true);
+    const A = entity('A', 'Anak A', 100);
+    const B = entity('B', 'Anak B', 100);
+    const perEntity = new Map<string, EntityAccount[]>([
+      ['P', [acc('1-1', AccountKind.ASET, 100), acc('3-1', AccountKind.EKUITAS, 100)]],
+      ['A', [acc('1-1', AccountKind.ASET, 50), acc('3-1', AccountKind.EKUITAS, 50)]],
+      ['B', [acc('1-1', AccountKind.ASET, 30), acc('3-1', AccountKind.EKUITAS, 30)]],
+    ]);
+    const perEntityIc = new Map([['P', noIc()], ['A', noIc()], ['B', noIc()]]);
+    const entityPeriodStatus = new Map<string, string | null>([
+      ['P', 'CLOSED'], ['A', 'OPEN'], ['B', 'CLOSING'],
+    ]);
+    const r = computeConsolidation(baseInput({
+      entities: [P, A, B], perEntity, perEntityIc,
+      names: new Map([['P', 'Induk'], ['A', 'Anak A'], ['B', 'Anak B']]),
+      entityPeriodStatus,
+    }));
+    expect(r.integritas.entitasBelumTutupBuku).toEqual([
+      { nama: 'Anak A', status: 'OPEN' },
+      { nama: 'Anak B', status: 'CLOSING' },
+    ]);
+    // tanpa map (default) → tak ada yang ditandai (status tak diketahui, jangan false-warning)
+    const r2 = computeConsolidation(baseInput({ entities: [P, A], perEntity, perEntityIc }));
+    expect(r2.integritas.entitasBelumTutupBuku).toEqual([]);
+  });
+
   it('uang presisi: pecahan tidak hilang (0.1 + 0.2)', () => {
     const P = entity('P', 'Induk', 100, true);
     const A = entity('A', 'Anak A', 100);

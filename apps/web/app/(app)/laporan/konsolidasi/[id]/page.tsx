@@ -37,6 +37,12 @@ interface Report {
     rows: Row[]; pendapatan: string; beban: string;
     labaBersihKonsolidasi: string; labaIndukInduk: string; labaMinoritas: string;
   };
+  integritas: {
+    selisihNeraca: string; neracaBalanced: boolean;
+    totalSelisihIntercompany: string; jumlahIcTidakCocok: number; icTerekonsiliasi: boolean;
+    entitasTanpaData: string[];
+    entitasBelumTutupBuku: Array<{ nama: string; status: string }>;
+  };
   balanced: boolean; selisih: string;
 }
 
@@ -168,6 +174,43 @@ export default async function KonsolidasiReportPage({
 
       {rep && (
         <>
+          {/* ---- Peringatan integritas & kelengkapan data (keras, tapi laporan tetap tampil) ---- */}
+          {!rep.integritas.neracaBalanced && (
+            <div className="mb-3">
+              <StatusBanner tone="danger">
+                ⚠ Neraca konsolidasi TIDAK seimbang — selisih {rp(rep.integritas.selisihNeraca)} (Aset ≠ Liabilitas + Ekuitas). Angka di bawah tidak dapat diandalkan; telusuri akun/entitas penyumbang.
+              </StatusBanner>
+            </div>
+          )}
+          {!rep.integritas.icTerekonsiliasi && (
+            <div className="mb-3">
+              <StatusBanner tone="danger">
+                ⚠ {rep.integritas.jumlahIcTidakCocok} pasangan intercompany TIDAK cocok (total selisih {rp(rep.integritas.totalSelisihIntercompany)}). Piutang IC ≠ utang lawannya — eliminasi tidak sempurna. Lihat bagian Rekonsiliasi Intercompany di bawah untuk telusur faktur.
+              </StatusBanner>
+            </div>
+          )}
+          {rep.integritas.entitasBelumTutupBuku.length > 0 && (
+            <div className="mb-3">
+              <StatusBanner tone="warning">
+                📖 {rep.integritas.entitasBelumTutupBuku.length} entitas belum tutup buku periode ini
+                ({rep.integritas.entitasBelumTutupBuku.map((e) => `${e.nama} (${e.status})`).join(', ')})
+                — angkanya masih bisa berubah, bukan final.
+              </StatusBanner>
+            </div>
+          )}
+          {rep.integritas.entitasTanpaData.length > 0 && (
+            <div className="mb-3">
+              <StatusBanner tone="warning">
+                Entitas tanpa data pada periode ini: {rep.integritas.entitasTanpaData.join(', ')} — dianggap nol (bukan diabaikan diam-diam).
+              </StatusBanner>
+            </div>
+          )}
+          {rep.integritas.neracaBalanced && rep.integritas.icTerekonsiliasi
+            && rep.integritas.entitasBelumTutupBuku.length === 0 && rep.integritas.entitasTanpaData.length === 0 && (
+            <div className="mb-3">
+              <StatusBanner tone="success">✓ Konsolidasi seimbang & intercompany terekonsiliasi; semua entitas tutup buku.</StatusBanner>
+            </div>
+          )}
           {rep.skippedTenantIds.length > 0 && (
             <div className="mb-4">
               <StatusBanner tone="warning">
