@@ -527,10 +527,10 @@ model Account {
   /// konsolidasi grup — saldonya saling hapus lintas entitas dalam grup.
   isIntercompany Boolean      @default(false) @map("is_intercompany")
   /// Perlakuan fiskal default akun untuk Rekonsiliasi Fiskal (komersial vs pajak).
-  /// NONE = tak dikoreksi. Relevan untuk kind BEBAN*/PENDAPATAN*. Disunting di
-  /// Pengaturan › Atribut Fiskal Akun.
+  /// NONE = tak dikoreksi. Relevan untuk kind beban dan pendapatan. Disunting di
+  /// Pengaturan - Atribut Fiskal Akun.
   fiskalTreatment FiskalTreatment @default(NONE) @map("fiskal_treatment")
-  /// % yang boleh dibebankan untuk fiskalTreatment=PARTIAL (0..100). Sisanya dikoreksi (+).
+  /// Persen yang boleh dibebankan untuk fiskalTreatment PARTIAL (0..100). Sisanya dikoreksi positif.
   fiskalPersen   Decimal?      @map("fiskal_persen") @db.Decimal(5, 2)
   /// Pengelompokan baris di worksheet rekonsiliasi fiskal.
   fiskalKategori FiskalKategori? @map("fiskal_kategori")
