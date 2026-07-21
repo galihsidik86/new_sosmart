@@ -16,6 +16,8 @@ export {
   AccountKind,
   NormalBalance,
   KlasifikasiNeraca,
+  FiskalTreatment,
+  FiskalKategori,
   ApprovalDocType,
   ApprovalStatus,
   ApprovalActionType,
