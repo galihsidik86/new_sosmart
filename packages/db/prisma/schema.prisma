@@ -909,10 +909,59 @@ model FiscalYear {
 
   tenant  Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   periods FiscalPeriod[]
+  pphBadanSetting    PphBadanSetting?
+  kompensasiKerugian KompensasiKerugian[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
   @@map("fiscal_years")
+}
+
+// Skema PPh Badan per tahun fiskal (rekonsiliasi fiskal).
+enum SkemaPphBadan {
+  BADAN_UMUM  // tarif 22% (opsional fasilitas Pasal 31E)
+  UMKM_FINAL  // 0,5% final dari peredaran bruto (PP 55/2022)
+}
+
+// Parameter PPh Badan per tahun fiskal (input yang tak bisa diturunkan dari GL).
+model PphBadanSetting {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String        @map("tenant_id") @db.Uuid
+  fiscalYearId   String        @unique @map("fiscal_year_id") @db.Uuid
+  skema          SkemaPphBadan @default(BADAN_UMUM)
+  /// Peredaran bruto setahun, untuk fasilitas Pasal 31E dan skema UMKM final.
+  peredaranBruto Decimal       @default(0) @map("peredaran_bruto") @db.Decimal(20, 2)
+  useFasilitas31E Boolean      @default(true) @map("use_fasilitas_31e")
+  /// Tarif PPh Badan umum (persen), default 22.
+  tarif          Decimal       @default(22) @db.Decimal(5, 2)
+  /// Kredit pajak dibayar dimuka (PPh 22/23/25) yang di-input manual.
+  kreditPajakManual Decimal    @default(0) @map("kredit_pajak_manual") @db.Decimal(20, 2)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  fiscalYear FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("pph_badan_setting")
+}
+
+// Kompensasi kerugian fiskal (loss carry-forward, maks 5 tahun UU PPh).
+model KompensasiKerugian {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  /// Tahun PKP yang MEMAKAI kompensasi ini.
+  fiscalYearId String   @map("fiscal_year_id") @db.Uuid
+  /// Tahun terjadinya rugi fiskal, mis. "2022".
+  tahunRugi    String   @map("tahun_rugi")
+  nilaiRugi    Decimal  @map("nilai_rugi") @db.Decimal(20, 2)
+  dipakai      Decimal  @default(0) @db.Decimal(20, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  fiscalYear FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, fiscalYearId])
+  @@map("kompensasi_kerugian")
 }
 
 model FiscalPeriod {

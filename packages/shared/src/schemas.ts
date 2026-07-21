@@ -744,3 +744,33 @@ export const setSaldoAwalPersediaanInputSchema = z.object({
   lines: z.array(saldoAwalPersediaanLineInputSchema),
 });
 export type SetSaldoAwalPersediaanInput = z.infer<typeof setSaldoAwalPersediaanInputSchema>;
+
+// ---------- REKONSILIASI FISKAL: PPh Badan setting + kompensasi kerugian ----------
+
+export const pphSettingSchema = z.object({
+  fiscalYearId: z.string().uuid(),
+  skema: z.enum(['BADAN_UMUM', 'UMKM_FINAL']).default('BADAN_UMUM'),
+  peredaranBruto: moneyDecimal.default('0'),
+  useFasilitas31E: z.boolean().default(true),
+  tarif: z
+    .union([z.number(), z.string()])
+    .transform((v) => String(v))
+    .refine((v) => Number(v) >= 0 && Number(v) <= 100, 'Tarif harus 0–100')
+    .default('22'),
+  kreditPajakManual: moneyDecimal.default('0'),
+});
+export type PphSettingInput = z.infer<typeof pphSettingSchema>;
+
+export const kompensasiSchema = z.object({
+  fiscalYearId: z.string().uuid(),
+  items: z
+    .array(
+      z.object({
+        tahunRugi: z.string().regex(/^\d{4}$/, 'Tahun rugi format YYYY'),
+        nilaiRugi: moneyDecimal,
+        dipakai: moneyDecimal.default('0'),
+      }),
+    )
+    .max(5, 'Maksimal 5 tahun kompensasi (UU PPh)'),
+});
+export type KompensasiInput = z.infer<typeof kompensasiSchema>;

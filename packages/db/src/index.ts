@@ -18,6 +18,7 @@ export {
   KlasifikasiNeraca,
   FiskalTreatment,
   FiskalKategori,
+  SkemaPphBadan,
   ApprovalDocType,
   ApprovalStatus,
   ApprovalActionType,
@@ -88,4 +89,6 @@ export type {
   Project,
   ProjectMember,
   Budget,
+  PphBadanSetting,
+  KompensasiKerugian,
 } from '@prisma/client';

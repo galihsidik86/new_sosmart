@@ -129,3 +129,34 @@ export const hitungPphBadan = (penghasilanKenaPajak: MoneyInput, tarif = 22): Mo
 
 export const hitungPphUmkmFinal = (omzet: MoneyInput): Money =>
   new Decimal(omzet).mul(0.5).div(100).toDecimalPlaces(0, Decimal.ROUND_HALF_EVEN);
+
+/**
+ * PPh Badan dengan fasilitas Pasal 31E UU PPh (pengurangan 50% tarif atas
+ * bagian PKP dari peredaran bruto sampai Rp 4,8 M):
+ *   - bruto <= 4,8 M          : seluruh PKP kena tarif/2 (mis. 11%)
+ *   - 4,8 M < bruto <= 50 M    : (4,8M/bruto x PKP) kena tarif/2, sisanya tarif penuh
+ *   - bruto > 50 M            : tanpa fasilitas, tarif penuh
+ */
+export const hitungPphBadan31E = (
+  penghasilanKenaPajak: MoneyInput,
+  peredaranBruto: MoneyInput,
+  tarif = 22,
+): Money => {
+  const pkp = new Decimal(penghasilanKenaPajak);
+  if (pkp.lte(0)) return new Decimal(0);
+  const bruto = new Decimal(peredaranBruto);
+  const half = new Decimal(tarif).div(2);
+  const BATAS_FASILITAS = new Decimal('4800000000');
+  const BATAS_BRUTO = new Decimal('50000000000');
+  let pph: Decimal;
+  if (bruto.lte(BATAS_FASILITAS)) {
+    pph = pkp.mul(half).div(100);
+  } else if (bruto.lte(BATAS_BRUTO)) {
+    const pkpFasilitas = BATAS_FASILITAS.div(bruto).mul(pkp);
+    const pkpNormal = pkp.minus(pkpFasilitas);
+    pph = pkpFasilitas.mul(half).plus(pkpNormal.mul(tarif)).div(100);
+  } else {
+    pph = pkp.mul(tarif).div(100);
+  }
+  return pph.toDecimalPlaces(0, Decimal.ROUND_HALF_EVEN);
+};

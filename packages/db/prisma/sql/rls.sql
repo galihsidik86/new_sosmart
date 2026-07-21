@@ -476,6 +476,21 @@ CREATE POLICY project_tasks_isolation ON project_tasks
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- REKONSILIASI FISKAL (PPh Badan setting + kompensasi kerugian)
+ALTER TABLE pph_badan_setting ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pph_badan_setting FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS pph_badan_setting_isolation ON pph_badan_setting;
+CREATE POLICY pph_badan_setting_isolation ON pph_badan_setting
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
+ALTER TABLE kompensasi_kerugian ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kompensasi_kerugian FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS kompensasi_kerugian_isolation ON kompensasi_kerugian;
+CREATE POLICY kompensasi_kerugian_isolation ON kompensasi_kerugian
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity
