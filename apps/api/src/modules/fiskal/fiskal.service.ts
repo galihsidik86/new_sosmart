@@ -17,7 +17,7 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { aggregateAllAccounts, mutasiSigned, plKindContribution } from '../reports/helpers.js';
 
-interface KoreksiRow {
+export interface KoreksiRow {
   sumber: 'OTOMATIS' | 'MANUAL';
   jenis: 'POSITIF' | 'NEGATIF';
   beda: 'TETAP' | 'SEMENTARA';
