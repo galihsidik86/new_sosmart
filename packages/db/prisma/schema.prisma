@@ -927,6 +927,7 @@ model FiscalYear {
   pphBadanSetting    PphBadanSetting?
   kompensasiKerugian KompensasiKerugian[]
   koreksiFiskal      KoreksiFiskal[]
+  rekonsiliasiFiskal RekonsiliasiFiskal?
 
   @@unique([tenantId, kode])
   @@index([tenantId])
@@ -1001,6 +1002,31 @@ model KoreksiFiskal {
 
   @@index([tenantId, fiscalYearId])
   @@map("koreksi_fiskal")
+}
+
+// Snapshot rekonsiliasi fiskal yang DIFINALKAN (basis SPT). Adanya record =
+// tahun tsb sudah final (beku); reopen = hapus record → kembali dihitung live.
+model RekonsiliasiFiskal {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  fiscalYearId   String   @unique @map("fiscal_year_id") @db.Uuid
+  labaKomersial  Decimal  @map("laba_komersial") @db.Decimal(20, 2)
+  labaFiskal     Decimal  @map("laba_fiskal") @db.Decimal(20, 2)
+  pkp            Decimal  @db.Decimal(20, 2)
+  pphTerutang    Decimal  @map("pph_terutang") @db.Decimal(20, 2)
+  pphKurangBayar Decimal  @map("pph_kurang_bayar") @db.Decimal(20, 2)
+  /// Snapshot LENGKAP worksheet (response build()) di-freeze sebagai JSON.
+  snapshot       Json
+  catatan        String?
+  finalizedAt    DateTime @default(now()) @map("finalized_at")
+  finalizedById  String?  @map("finalized_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  fiscalYear FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("rekonsiliasi_fiskal")
 }
 
 model FiscalPeriod {

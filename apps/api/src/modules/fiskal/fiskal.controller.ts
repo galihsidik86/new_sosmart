@@ -115,4 +115,16 @@ export class FiskalController {
   rekonsiliasi(@Query('fiscalYearId') fiscalYearId: string) {
     return this.fiskal.build(fiscalYearId);
   }
+
+  @Post('rekonsiliasi/:fiscalYearId/finalize')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  finalize(@Param('fiscalYearId') fiscalYearId: string) {
+    return this.fiskal.finalize(fiscalYearId);
+  }
+
+  @Post('rekonsiliasi/:fiscalYearId/reopen')
+  @Roles('OWNER', 'ADMIN')
+  reopen(@Param('fiscalYearId') fiscalYearId: string) {
+    return this.fiskal.reopen(fiscalYearId);
+  }
 }

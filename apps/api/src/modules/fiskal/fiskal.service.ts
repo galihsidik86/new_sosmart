@@ -315,12 +315,24 @@ export class FiskalService {
 
   // ---------- Engine rekonsiliasi fiskal ----------
 
-  /** Bangun worksheet rekonsiliasi fiskal + ringkasan PPh Badan untuk 1 tahun fiskal. */
+  /** Worksheet rekonsiliasi: kalau sudah difinalkan → snapshot beku; else hitung live. */
   build(fiscalYearId: string) {
     return this.tenancy.run(async (tx) => {
       const fy = await tx.fiscalYear.findUnique({ where: { id: fiscalYearId } });
       if (!fy) throw new NotFoundException('Tahun fiskal tidak ditemukan');
+      const snap = await tx.rekonsiliasiFiskal.findUnique({ where: { fiscalYearId } });
+      if (snap) {
+        return { ...(snap.snapshot as Record<string, unknown>), finalized: true, finalizedAt: snap.finalizedAt };
+      }
+      const live = await this.computeLive(tx, fy);
+      return { ...live, finalized: false, finalizedAt: null as Date | null };
+    });
+  }
 
+  private async computeLive(
+    tx: Prisma.TransactionClient,
+    fy: { id: string; kode: string; startDate: Date; endDate: Date },
+  ) {
       // 1. Agregasi P&L → laba komersial + nilai per akun.
       const agg = await aggregateAllAccounts(tx, {
         startDate: fy.startDate,
@@ -447,6 +459,41 @@ export class FiskalService {
           kurangBayar: pphKurangBayar.toFixed(2), // + = PPh 29 kurang bayar, − = PPh 28A lebih bayar
         },
       };
+  }
+
+  // ---------- Finalize / reopen snapshot (basis SPT) ----------
+
+  getSnapshot(fiscalYearId: string) {
+    return this.tenancy.run((tx) => tx.rekonsiliasiFiskal.findUnique({ where: { fiscalYearId } }));
+  }
+
+  /** Bekukan rekonsiliasi tahun ini ke snapshot (upsert). */
+  finalize(fiscalYearId: string) {
+    const tenantId = this.ctx.require().tenantId;
+    const userId = this.ctx.require().userId;
+    return this.tenancy.run(async (tx) => {
+      const fy = await tx.fiscalYear.findUnique({ where: { id: fiscalYearId } });
+      if (!fy) throw new NotFoundException('Tahun fiskal tidak ditemukan');
+      const live = await this.computeLive(tx, fy);
+      const scalars = {
+        labaKomersial: live.labaKomersial,
+        labaFiskal: live.labaFiskal,
+        pkp: live.pkp,
+        pphTerutang: live.pph.terutang,
+        pphKurangBayar: live.pph.kurangBayar,
+        snapshot: live as unknown as Prisma.InputJsonValue,
+        finalizedById: userId,
+      };
+      return tx.rekonsiliasiFiskal.upsert({
+        where: { fiscalYearId },
+        create: { tenantId, fiscalYearId, ...scalars },
+        update: { ...scalars, finalizedAt: new Date() },
+      });
     });
+  }
+
+  /** Buka kembali (hapus snapshot) → kembali dihitung live. */
+  reopen(fiscalYearId: string) {
+    return this.tenancy.run((tx) => tx.rekonsiliasiFiskal.deleteMany({ where: { fiscalYearId } }));
   }
 }

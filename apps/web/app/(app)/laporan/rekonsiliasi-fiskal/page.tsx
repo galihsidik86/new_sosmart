@@ -1,3 +1,5 @@
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtPlain, fmtTanggal } from '@/lib/format';
@@ -30,6 +32,8 @@ interface Rekon {
     skema: string; tarif: string; peredaranBruto: string; useFasilitas31E: boolean;
     terutang: string; kreditPajak: string; kurangBayar: string;
   };
+  finalized?: boolean;
+  finalizedAt?: string | null;
 }
 
 const KAT_LABEL: Record<string, string> = {
@@ -58,12 +62,34 @@ export default async function RekonsiliasiFiskalPage({
   const negRows = rekon?.koreksi.filter((k) => k.jenis === 'NEGATIF') ?? [];
   const kurang = rekon ? Number(rekon.pph.kurangBayar) : 0;
 
+  async function finalize() {
+    'use server';
+    const t = await getActiveTenantId(); if (!t) redirect('/login');
+    if (fyId) await apiFetch(`/fiskal/rekonsiliasi/${fyId}/finalize`, { method: 'POST', tenantId: t });
+    revalidatePath('/laporan/rekonsiliasi-fiskal');
+  }
+  async function reopen() {
+    'use server';
+    const t = await getActiveTenantId(); if (!t) redirect('/login');
+    if (fyId) await apiFetch(`/fiskal/rekonsiliasi/${fyId}/reopen`, { method: 'POST', tenantId: t });
+    revalidatePath('/laporan/rekonsiliasi-fiskal');
+  }
+
   return (
     <PageContainer size="report">
       <PageHeader
         title="Rekonsiliasi Fiskal"
         subtitle="Laba komersial → koreksi fiskal → laba kena pajak → PPh Badan. Basis lampiran SPT Tahunan 1771."
-        actions={<Link href="/pajak/rekonsiliasi-fiskal" className={buttonClass('secondary')}>Kelola parameter</Link>}
+        actions={
+          <div className="flex items-center gap-2">
+            {rekon?.finalized ? (
+              <form action={reopen}><Button type="submit" variant="secondary" size="sm">Buka kembali</Button></form>
+            ) : rekon ? (
+              <form action={finalize}><Button type="submit" size="sm">Finalkan</Button></form>
+            ) : null}
+            <Link href="/pajak/rekonsiliasi-fiskal" className={buttonClass('secondary')}>Kelola parameter</Link>
+          </div>
+        }
       />
 
       <form className={filterBarClass}>
@@ -86,6 +112,11 @@ export default async function RekonsiliasiFiskalPage({
             <div className="text-xs text-tanah-500">
               {fmtTanggal(rekon.fiscalYear.startDate)} s/d {fmtTanggal(rekon.fiscalYear.endDate)}
             </div>
+            {rekon.finalized && (
+              <div className="mt-2 inline-block text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-padi-100 text-padi-700">
+                ✓ Final (beku){rekon.finalizedAt ? ` · ${fmtTanggal(rekon.finalizedAt)}` : ''}
+              </div>
+            )}
           </div>
 
           <div className="overflow-x-auto">

@@ -95,4 +95,5 @@ export type {
   PphBadanSetting,
   KompensasiKerugian,
   KoreksiFiskal,
+  RekonsiliasiFiskal,
 } from '@prisma/client';
