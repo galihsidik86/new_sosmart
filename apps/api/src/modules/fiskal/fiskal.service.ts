@@ -402,7 +402,7 @@ export class FiskalService {
       }
 
       // 4. Koreksi MANUAL.
-      const manual = await tx.koreksiFiskal.findMany({ where: { fiscalYearId } });
+      const manual = await tx.koreksiFiskal.findMany({ where: { fiscalYearId: fy.id } });
       for (const m of manual) {
         koreksi.push({
           sumber: 'MANUAL', jenis: m.jenis, beda: m.beda, kategori: m.kategori,
@@ -416,7 +416,7 @@ export class FiskalService {
       const labaFiskal = labaKomersial.plus(totalPositif).minus(totalNegatif);
 
       // 6. Kompensasi kerugian (dikap ≤ laba fiskal positif).
-      const komItems = await tx.kompensasiKerugian.findMany({ where: { fiscalYearId }, orderBy: { tahunRugi: 'asc' } });
+      const komItems = await tx.kompensasiKerugian.findMany({ where: { fiscalYearId: fy.id }, orderBy: { tahunRugi: 'asc' } });
       const totalDipakaiRaw = komItems.reduce((s, k) => s.plus(k.dipakai as unknown as string), new Decimal(0));
       const kompensasiTerpakai = Decimal.max(0, Decimal.min(totalDipakaiRaw, Decimal.max(0, labaFiskal)));
 
@@ -425,7 +425,7 @@ export class FiskalService {
       pkp = pkp.div(1000).floor().mul(1000);
 
       // 8. PPh Badan.
-      const setting = await tx.pphBadanSetting.findUnique({ where: { fiscalYearId } });
+      const setting = await tx.pphBadanSetting.findUnique({ where: { fiscalYearId: fy.id } });
       const skema = (setting?.skema ?? SkemaPphBadan.BADAN_UMUM) as SkemaPphBadan;
       const tarif = new Decimal((setting?.tarif as unknown as string) ?? '22');
       const bruto = new Decimal((setting?.peredaranBruto as unknown as string) ?? '0');
