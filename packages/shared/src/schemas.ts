@@ -774,3 +774,20 @@ export const kompensasiSchema = z.object({
     .max(5, 'Maksimal 5 tahun kompensasi (UU PPh)'),
 });
 export type KompensasiInput = z.infer<typeof kompensasiSchema>;
+
+export const createKoreksiFiskalSchema = z.object({
+  fiscalYearId: z.string().uuid(),
+  jenis: z.enum(['POSITIF', 'NEGATIF']),
+  beda: z.enum(['TETAP', 'SEMENTARA']).default('TETAP'),
+  kategori: fiskalKategoriSchema.default('LAINNYA'),
+  deskripsi: z.string().min(1).max(200),
+  akunId: z.string().uuid().nullable().optional(),
+  koreksi: moneyDecimal.refine((v) => Number(v) > 0, 'Nilai koreksi harus > 0'),
+  catatan: z.string().max(500).nullable().optional(),
+});
+export type CreateKoreksiFiskalInput = z.infer<typeof createKoreksiFiskalSchema>;
+
+export const updateKoreksiFiskalSchema = createKoreksiFiskalSchema.partial().extend({
+  id: z.string().uuid(),
+});
+export type UpdateKoreksiFiskalInput = z.infer<typeof updateKoreksiFiskalSchema>;

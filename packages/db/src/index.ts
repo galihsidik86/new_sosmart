@@ -19,6 +19,9 @@ export {
   FiskalTreatment,
   FiskalKategori,
   SkemaPphBadan,
+  KoreksiJenis,
+  KoreksiBeda,
+  KoreksiSumber,
   ApprovalDocType,
   ApprovalStatus,
   ApprovalActionType,
@@ -91,4 +94,5 @@ export type {
   Budget,
   PphBadanSetting,
   KompensasiKerugian,
+  KoreksiFiskal,
 } from '@prisma/client';

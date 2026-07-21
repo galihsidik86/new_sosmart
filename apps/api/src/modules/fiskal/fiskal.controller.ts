@@ -1,13 +1,17 @@
 import {
-  Body, Controller, Get, Patch, Put, Query, UseGuards, UseInterceptors,
+  Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import {
   bulkFiskalAttributeSchema,
+  createKoreksiFiskalSchema,
   kompensasiSchema,
   pphSettingSchema,
+  updateKoreksiFiskalSchema,
   type BulkFiskalAttributeInput,
+  type CreateKoreksiFiskalInput,
   type KompensasiInput,
   type PphSettingInput,
+  type UpdateKoreksiFiskalInput,
 } from '@lentera/shared/schemas';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import { TenantGuard } from '../../common/guards/tenant.guard.js';
@@ -72,5 +76,43 @@ export class FiskalController {
   @Get('penyusutan')
   penyusutanTahun(@Query('fiscalYearId') fiscalYearId: string) {
     return this.fiskal.penyusutanTahun(fiscalYearId);
+  }
+
+  // ---------- Koreksi fiskal manual ----------
+
+  @Get('koreksi')
+  listKoreksi(@Query('fiscalYearId') fiscalYearId: string) {
+    return this.fiskal.listKoreksi(fiscalYearId);
+  }
+
+  @Post('koreksi')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  createKoreksi(
+    @Body(new ZodValidationPipe(createKoreksiFiskalSchema)) body: CreateKoreksiFiskalInput,
+  ) {
+    return this.fiskal.createKoreksi(body);
+  }
+
+  @Patch('koreksi/:id')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  updateKoreksi(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateKoreksiFiskalSchema.omit({ id: true }).partial()))
+    body: Omit<UpdateKoreksiFiskalInput, 'id'>,
+  ) {
+    return this.fiskal.updateKoreksi({ ...body, id });
+  }
+
+  @Delete('koreksi/:id')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN')
+  deleteKoreksi(@Param('id') id: string) {
+    return this.fiskal.deleteKoreksi(id);
+  }
+
+  // ---------- Worksheet rekonsiliasi fiskal ----------
+
+  @Get('rekonsiliasi')
+  rekonsiliasi(@Query('fiscalYearId') fiscalYearId: string) {
+    return this.fiskal.build(fiscalYearId);
   }
 }

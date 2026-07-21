@@ -491,6 +491,13 @@ CREATE POLICY kompensasi_kerugian_isolation ON kompensasi_kerugian
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+ALTER TABLE koreksi_fiskal ENABLE ROW LEVEL SECURITY;
+ALTER TABLE koreksi_fiskal FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS koreksi_fiskal_isolation ON koreksi_fiskal;
+CREATE POLICY koreksi_fiskal_isolation ON koreksi_fiskal
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- =============================================================
 -- Verifikasi:
 --   SELECT tablename, rowsecurity, forcerowsecurity

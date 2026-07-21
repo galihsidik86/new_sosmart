@@ -76,6 +76,21 @@ enum FiskalKategori {
   LAINNYA
 }
 
+enum KoreksiJenis {
+  POSITIF // menambah laba fiskal
+  NEGATIF // mengurangi laba fiskal
+}
+
+enum KoreksiBeda {
+  TETAP     // beda permanen
+  SEMENTARA // beda waktu (timing) — mis. penyusutan, cadangan
+}
+
+enum KoreksiSumber {
+  OTOMATIS // dihitung dari atribut akun / penyusutan (tidak disimpan)
+  MANUAL   // input pengguna (disimpan di koreksi_fiskal)
+}
+
 enum BankReconciliationStatus {
   DRAFT
   SELESAI
@@ -911,6 +926,7 @@ model FiscalYear {
   periods FiscalPeriod[]
   pphBadanSetting    PphBadanSetting?
   kompensasiKerugian KompensasiKerugian[]
+  koreksiFiskal      KoreksiFiskal[]
 
   @@unique([tenantId, kode])
   @@index([tenantId])
@@ -962,6 +978,29 @@ model KompensasiKerugian {
 
   @@index([tenantId, fiscalYearId])
   @@map("kompensasi_kerugian")
+}
+
+// Koreksi fiskal MANUAL (yang otomatis dihitung on-the-fly, tak disimpan).
+model KoreksiFiskal {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String         @map("tenant_id") @db.Uuid
+  fiscalYearId String         @map("fiscal_year_id") @db.Uuid
+  jenis        KoreksiJenis
+  beda         KoreksiBeda    @default(TETAP)
+  kategori     FiskalKategori @default(LAINNYA)
+  deskripsi    String
+  /// Akun sumber (opsional) — hanya referensi, tak dijadikan relasi.
+  akunId       String?        @map("akun_id") @db.Uuid
+  koreksi      Decimal        @db.Decimal(20, 2)
+  sumber       KoreksiSumber  @default(MANUAL)
+  catatan      String?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  fiscalYear FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, fiscalYearId])
+  @@map("koreksi_fiskal")
 }
 
 model FiscalPeriod {
