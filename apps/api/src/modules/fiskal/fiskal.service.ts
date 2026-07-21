@@ -481,7 +481,8 @@ export class FiskalService {
         pkp: live.pkp,
         pphTerutang: live.pph.terutang,
         pphKurangBayar: live.pph.kurangBayar,
-        snapshot: live as unknown as Prisma.InputJsonValue,
+        // Sanitasi ke JSON murni: Date → ISO string, Decimal → string (toJSON).
+        snapshot: JSON.parse(JSON.stringify(live)) as Prisma.InputJsonValue,
         finalizedById: userId,
       };
       return tx.rekonsiliasiFiskal.upsert({
