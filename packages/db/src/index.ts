@@ -92,6 +92,7 @@ export type {
   Project,
   ProjectMember,
   Budget,
+  JenisProjek,
   PphBadanSetting,
   KompensasiKerugian,
   KoreksiFiskal,

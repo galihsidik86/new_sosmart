@@ -33,6 +33,7 @@ async function createProjectAction(_prev: FormState, formData: FormData): Promis
         pjUserId: String(formData.get('pjUserId') ?? '') || undefined,
         customerId: String(formData.get('customerId') ?? '') || undefined,
         industriId: String(formData.get('industriId') ?? '') || undefined,
+        jenisProjekId: String(formData.get('jenisProjekId') ?? '') || undefined,
       }),
     });
   } catch (e) {
@@ -45,10 +46,11 @@ async function createProjectAction(_prev: FormState, formData: FormData): Promis
 export default async function ProjectBaruPage() {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [industri, users, customers] = await Promise.all([
+  const [industri, users, customers, jenisProjek] = await Promise.all([
     apiFetch<IndustriOpt[]>('/industri', { tenantId }).catch(() => [] as IndustriOpt[]),
     apiFetch<UserOpt[]>('/users', { tenantId }).catch(() => [] as UserOpt[]),
     apiFetch<CustomerOpt[]>('/customers', { tenantId }).catch(() => [] as CustomerOpt[]),
+    apiFetch<{ id: string; nama: string }[]>('/jenis-projek', { tenantId }).catch(() => [] as { id: string; nama: string }[]),
   ]);
 
   return (
@@ -64,6 +66,7 @@ export default async function ProjectBaruPage() {
           users={users}
           customers={customers}
           industriList={industri}
+          jenisProjekList={jenisProjek}
         />
         <CancelButton href="/master/project" />
       </Card>

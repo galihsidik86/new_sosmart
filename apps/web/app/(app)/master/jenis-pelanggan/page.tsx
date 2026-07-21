@@ -67,7 +67,7 @@ export default async function JenisPelangganPage() {
           subtitle={
             <>
               Segmen/kategori pelanggan yang bisa Anda atur sendiri per perusahaan
-              (mis. Consumer Based, Brand Based, Personal Based). Dipilih di form pelanggan.
+              (mis. Distributor, Ritel, Korporat, Pemerintah). Dipilih di form pelanggan.
             </>
           }
         />
@@ -124,7 +124,7 @@ export default async function JenisPelangganPage() {
                 ))}
                 {list.length === 0 && (
                   <EmptyRow colSpan={4}>
-                    Belum ada jenis pelanggan. Tambah di panel kanan (mis. Consumer Based).
+                    Belum ada jenis pelanggan. Tambah di panel kanan (mis. Distributor).
                   </EmptyRow>
                 )}
               </TBody>
@@ -134,7 +134,7 @@ export default async function JenisPelangganPage() {
           <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Tambah Jenis</h2>
             <form action={createJenis} className="space-y-3">
-              <FormField label="Nama"><Input name="nama" required placeholder="Consumer Based" /></FormField>
+              <FormField label="Nama"><Input name="nama" required placeholder="Distributor" /></FormField>
               <FormField label="Urutan tampil"><Input name="urutan" type="number" min={0} defaultValue="0" numeric /></FormField>
               <Button type="submit" className="w-full">Simpan</Button>
             </form>

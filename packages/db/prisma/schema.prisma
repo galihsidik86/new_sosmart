@@ -903,6 +903,24 @@ model JenisPelanggan {
   @@map("jenis_pelanggan")
 }
 
+/// Master jenis/kategori PROJEK yang bisa dikelola per perusahaan (mis. Consumer
+/// Based, Brand Based, Personal Based). Dipilih di form projek & filter laporan proyek.
+model JenisProjek {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  nama      String
+  aktif     Boolean  @default(true)
+  urutan    Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  projects Project[]
+
+  @@unique([tenantId, nama])
+  @@index([tenantId, aktif])
+  @@map("jenis_projek")
+}
+
 // ===============================================================
 // PERIOD MANAGEMENT
 // ===============================================================
@@ -2165,6 +2183,8 @@ model Project {
   catatan        String?
   /// Klasifikasi jenis industri klien project (mis. Automotive utk project di Toyota).
   industriId     String?       @map("industri_id") @db.Uuid
+  /// Jenis/kategori projek (master JenisProjek, mis. Consumer Based).
+  jenisProjekId  String?       @map("jenis_projek_id") @db.Uuid
   /// Penanggung jawab (PIC) — user id. FK lunak (tanpa relasi Prisma), nama
   /// di-resolve di service.
   pjUserId       String?       @map("pj_user_id") @db.Uuid
@@ -2177,6 +2197,7 @@ model Project {
 
   tenant               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   industri             Industri?             @relation(fields: [industriId], references: [id], onDelete: SetNull)
+  jenisProjek          JenisProjek?          @relation(fields: [jenisProjekId], references: [id], onDelete: SetNull)
   members              ProjectMember[]
   tasks                ProjectTask[]
   budgets              Budget[]
@@ -2188,6 +2209,7 @@ model Project {
   @@unique([tenantId, kode])
   @@index([tenantId, status])
   @@index([industriId])
+  @@index([jenisProjekId])
   @@map("projects")
 }
 

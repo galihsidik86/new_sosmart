@@ -34,22 +34,24 @@ interface Resp {
 export default async function LabaRugiProyekPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periodId?: string; ytd?: string; industriId?: string; detail?: string }>;
+  searchParams: Promise<{ periodId?: string; ytd?: string; industriId?: string; jenisProjekId?: string; detail?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
 
-  const [years, industri] = await Promise.all([
+  const [years, industri, jenisProjek] = await Promise.all([
     apiFetch<PeriodYear[]>('/periods/years', { tenantId }),
     apiFetch<IndustriOpt[]>('/industri', { tenantId }).catch(() => [] as IndustriOpt[]),
+    apiFetch<IndustriOpt[]>('/jenis-projek', { tenantId }).catch(() => [] as IndustriOpt[]),
   ]);
   const periodId =
     sp.periodId ?? years[0]?.periods.find((p) => p.status === 'OPEN')?.id ?? years[0]?.periods[0]?.id;
   const ytd = sp.ytd === 'true';
   const industriId = sp.industriId ?? '';
+  const jenisProjekId = sp.jenisProjekId ?? '';
   const detail = sp.detail ?? ''; // '' = ringkasan saja | 'all' = detail semua | <projectId> = detail 1 proyek
-  const qsExtra = `${ytd ? '&ytd=true' : ''}${industriId ? '&industriId=' + industriId : ''}`;
+  const qsExtra = `${ytd ? '&ytd=true' : ''}${industriId ? '&industriId=' + industriId : ''}${jenisProjekId ? '&jenisProjekId=' + jenisProjekId : ''}`;
 
   let data: Resp | null = null;
   if (periodId) {
@@ -87,6 +89,15 @@ export default async function LabaRugiProyekPage({
             ))}
           </Select>
         </div>
+        {jenisProjek.length > 0 && (
+          <div>
+            <FilterLabel>Jenis Projek</FilterLabel>
+            <Select name="jenisProjekId" defaultValue={jenisProjekId} fullWidth={false} className="min-w-[150px]">
+              <option value="">Semua jenis projek</option>
+              {jenisProjek.map((j) => <option key={j.id} value={j.id}>{j.nama}</option>)}
+            </Select>
+          </div>
+        )}
         {industri.length > 0 && (
           <div>
             <FilterLabel>Industri</FilterLabel>

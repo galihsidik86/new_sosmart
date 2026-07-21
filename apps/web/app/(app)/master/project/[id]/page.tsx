@@ -51,6 +51,7 @@ interface ProjectDetail {
   catatan: string | null;
   pjUserId: string | null;
   customerId: string | null;
+  jenisProjekId: string | null;
   linkDokumen: string[];
   pjUser: UserLite | null;
   customer: { id: string; kode: string; nama: string } | null;
@@ -101,6 +102,7 @@ async function updateAction(_prev: FormState, formData: FormData): Promise<FormS
         pjUserId: (formData.get('pjUserId') as string) || null,
         customerId: (formData.get('customerId') as string) || null,
         catatan: (formData.get('catatan') as string) || null,
+        jenisProjekId: (formData.get('jenisProjekId') as string) || null,
       }),
     });
   } catch (e) {
@@ -243,11 +245,12 @@ export default async function ProjectDetailPage({
   const { id } = await params;
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
-  const [p, users, accounts, customers] = await Promise.all([
+  const [p, users, accounts, customers, jenisProjek] = await Promise.all([
     apiFetch<ProjectDetail>(`/projects/${id}`, { tenantId }),
     apiFetch<UserRow[]>('/users', { tenantId }),
     apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
     apiFetch<CustomerOpt[]>('/customers', { tenantId }).catch(() => [] as CustomerOpt[]),
+    apiFetch<{ id: string; nama: string }[]>('/jenis-projek', { tenantId }).catch(() => [] as { id: string; nama: string }[]),
   ]);
   const memberUserIds = new Set(p.members.map((m) => m.userId));
   const nonMembers = users.filter((u) => !memberUserIds.has(u.userId));
@@ -339,6 +342,7 @@ export default async function ProjectDetailPage({
               action={updateAction}
               users={users}
               customers={customers}
+              jenisProjekList={jenisProjek}
               defaults={p}
               submitLabel="Simpan"
             />

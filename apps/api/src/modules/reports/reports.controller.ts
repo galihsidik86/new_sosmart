@@ -133,8 +133,9 @@ export class ReportsController {
     @Query('projectId') projectId?: string,
     @Query('cabangId') cabangId?: string,
     @Query('industriId') industriId?: string,
+    @Query('jenisProjekId') jenisProjekId?: string,
   ) {
-    return this.ba.build({ periode, ytd: ytd === 'true', projectId, cabangId, industriId });
+    return this.ba.build({ periode, ytd: ytd === 'true', projectId, cabangId, industriId, jenisProjekId });
   }
 
   // --------------- Laba Rugi per Proyek (batch semua proyek) ---------------
@@ -145,8 +146,9 @@ export class ReportsController {
     @Query('ytd') ytd?: string,
     @Query('cabangId') cabangId?: string,
     @Query('industriId') industriId?: string,
+    @Query('jenisProjekId') jenisProjekId?: string,
   ) {
-    return this.lrp.build({ periodId, ytd: ytd === 'true', cabangId, industriId });
+    return this.lrp.build({ periodId, ytd: ytd === 'true', cabangId, industriId, jenisProjekId });
   }
 
   @Get('laba-rugi-proyek.pdf')
@@ -156,9 +158,10 @@ export class ReportsController {
     @Query('ytd') ytd?: string,
     @Query('cabangId') cabangId?: string,
     @Query('industriId') industriId?: string,
+    @Query('jenisProjekId') jenisProjekId?: string,
   ) {
     const [data, nama] = await Promise.all([
-      this.lrp.build({ periodId, ytd: ytd === 'true', cabangId, industriId }),
+      this.lrp.build({ periodId, ytd: ytd === 'true', cabangId, industriId, jenisProjekId }),
       this.brand(),
     ]);
     sendPdf(reply, 'laba-rugi-proyek.pdf', await this.pdf.buildLabaRugiProyek(data, nama.nama, nama.logo));
@@ -176,6 +179,7 @@ export class ReportsController {
     @Query('cabangId') cabangId?: string,
     @Query('search') search?: string,
     @Query('industriId') industriId?: string,
+    @Query('jenisProjekId') jenisProjekId?: string,
   ) {
     return this.audit.build({
       periodId,
@@ -184,6 +188,7 @@ export class ReportsController {
       sumber: (sumber || undefined) as JournalSource | undefined,
       projectId: normalizeProjectFilter(projectId),
       industriId,
+      jenisProjekId,
       cabangId,
       search,
     });

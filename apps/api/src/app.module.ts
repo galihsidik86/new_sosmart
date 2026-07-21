@@ -40,6 +40,7 @@ import { OpeningBalanceModule } from './modules/opening-balance/opening-balance.
 import { TermPembayaranModule } from './modules/term-pembayaran/term-pembayaran.module.js';
 import { FiskalModule } from './modules/fiskal/fiskal.module.js';
 import { JenisPelangganModule } from './modules/jenis-pelanggan/jenis-pelanggan.module.js';
+import { JenisProjekModule } from './modules/jenis-projek/jenis-projek.module.js';
 import { FiscalYearClosingModule } from './modules/fiscal-year/fiscal-year-closing.module.js';
 import { UploadsModule } from './modules/uploads/uploads.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
@@ -87,6 +88,7 @@ import { HealthController } from './modules/health/health.controller.js';
     OpeningBalanceModule,
     TermPembayaranModule,
     JenisPelangganModule,
+    JenisProjekModule,
     UploadsModule,
     FiskalModule,
   ],

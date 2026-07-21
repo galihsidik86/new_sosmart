@@ -55,6 +55,7 @@ export class JejakAuditService {
     sumber?: JournalSource;
     projectId?: string | null;
     industriId?: string;
+    jenisProjekId?: string;
     cabangId?: string;
     search?: string;
   }): Promise<JejakAuditResponse> {
@@ -88,11 +89,18 @@ export class JejakAuditService {
         ];
       }
       if (opts.projectId === null) where.lines = { some: { projectId: null } };
-      else if (opts.projectId || opts.industriId) {
+      else if (opts.projectId || opts.industriId || opts.jenisProjekId) {
         where.lines = {
           some: {
             ...(opts.projectId ? { projectId: opts.projectId } : {}),
-            ...(opts.industriId ? { project: { industriId: opts.industriId } } : {}),
+            ...(opts.industriId || opts.jenisProjekId
+              ? {
+                  project: {
+                    ...(opts.industriId ? { industriId: opts.industriId } : {}),
+                    ...(opts.jenisProjekId ? { jenisProjekId: opts.jenisProjekId } : {}),
+                  },
+                }
+              : {}),
           },
         };
       }

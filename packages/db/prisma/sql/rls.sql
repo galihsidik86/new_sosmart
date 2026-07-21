@@ -468,6 +468,14 @@ CREATE POLICY jenis_pelanggan_isolation ON jenis_pelanggan
   USING (tenant_id = app_current_tenant())
   WITH CHECK (tenant_id = app_current_tenant());
 
+-- ---------- MASTER JENIS PROJEK
+ALTER TABLE jenis_projek ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jenis_projek FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS jenis_projek_isolation ON jenis_projek;
+CREATE POLICY jenis_projek_isolation ON jenis_projek
+  USING (tenant_id = app_current_tenant())
+  WITH CHECK (tenant_id = app_current_tenant());
+
 -- ---------- TUGAS PROJECT
 ALTER TABLE project_tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_tasks FORCE ROW LEVEL SECURITY;

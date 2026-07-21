@@ -29,6 +29,7 @@ export interface ProjectDefaults {
   budgetTotal?: string | null;
   nilaiKontrak?: string | null;
   catatan?: string | null;
+  jenisProjekId?: string | null;
 }
 
 export function ProjectForm({
@@ -37,6 +38,7 @@ export function ProjectForm({
   users,
   customers,
   industriList,
+  jenisProjekList,
   defaults,
   submitLabel,
 }: {
@@ -45,6 +47,7 @@ export function ProjectForm({
   users: UserOpt[];
   customers: CustomerOpt[];
   industriList?: IndustriOpt[];
+  jenisProjekList?: IndustriOpt[];
   defaults?: ProjectDefaults;
   submitLabel?: string;
 }) {
@@ -115,6 +118,14 @@ export function ProjectForm({
         <FormField label="Budget (biaya)"><MoneyInput name="budgetTotal" defaultValue={v('budgetTotal', d.budgetTotal ?? '')} invalid={!!fe.budgetTotal} /></FormField>
         <FormField label="Nilai Kontrak"><MoneyInput name="nilaiKontrak" defaultValue={v('nilaiKontrak', d.nilaiKontrak ?? '')} invalid={!!fe.nilaiKontrak} /></FormField>
       </div>
+      {jenisProjekList && (
+        <FormField label="Jenis Projek (opsional)">
+          <Select name="jenisProjekId" defaultValue={v('jenisProjekId', d.jenisProjekId ?? '')}>
+            <option value="">— pilih jenis projek —</option>
+            {jenisProjekList.map((j) => <option key={j.id} value={j.id}>{j.nama}</option>)}
+          </Select>
+        </FormField>
+      )}
       {mode === 'create' && industriList && (
         <FormField label="Jenis Industri (opsional)">
           <Select name="industriId" defaultValue={v('industriId', '')}>

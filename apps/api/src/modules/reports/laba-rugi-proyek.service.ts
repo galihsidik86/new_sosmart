@@ -44,12 +44,14 @@ export class LabaRugiProyekService {
     ytd?: boolean;
     cabangId?: string;
     industriId?: string;
+    jenisProjekId?: string;
   }): Promise<LabaRugiProyekResponse> {
     const projects = await this.tenancy.run((tx) =>
       tx.project.findMany({
         where: {
           status: { in: [ProjectStatus.AKTIF, ProjectStatus.SELESAI] },
           ...(opts.industriId ? { industriId: opts.industriId } : {}),
+          ...(opts.jenisProjekId ? { jenisProjekId: opts.jenisProjekId } : {}),
         },
         orderBy: { kode: 'asc' },
         select: {

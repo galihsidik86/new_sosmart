@@ -31,6 +31,7 @@ export interface CreateProjectInput {
   nilaiKontrak?: string | null;
   catatan?: string;
   industriId?: string | null;
+  jenisProjekId?: string | null;
   pjUserId?: string | null;
   customerId?: string | null;
   linkDokumen?: string[];
@@ -47,6 +48,7 @@ export interface UpdateProjectInput {
   nilaiKontrak?: string | null;
   catatan?: string | null;
   industriId?: string | null;
+  jenisProjekId?: string | null;
   pjUserId?: string | null;
   customerId?: string | null;
   linkDokumen?: string[];
@@ -329,6 +331,7 @@ export class ProjectsService {
             nilaiKontrak: input.nilaiKontrak ?? null,
             catatan: input.catatan ?? null,
             industriId: input.industriId ?? null,
+            jenisProjekId: input.jenisProjekId ?? null,
             pjUserId: input.pjUserId ?? null,
             customerId: input.customerId ?? null,
             linkDokumen: input.linkDokumen ?? [],
@@ -370,6 +373,11 @@ export class ProjectsService {
       if (input.industriId !== undefined) {
         data.industri = input.industriId
           ? { connect: { id: input.industriId } }
+          : { disconnect: true };
+      }
+      if (input.jenisProjekId !== undefined) {
+        data.jenisProjek = input.jenisProjekId
+          ? { connect: { id: input.jenisProjekId } }
           : { disconnect: true };
       }
       return tx.project.update({ where: { id }, data });

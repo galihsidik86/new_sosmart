@@ -33,17 +33,18 @@ function docHref(sumber: string, sourceId: string | null): string | null {
 export default async function JejakAuditPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periodId?: string; sumber?: string; projectId?: string; search?: string; cabangId?: string; industriId?: string }>;
+  searchParams: Promise<{ periodId?: string; sumber?: string; projectId?: string; search?: string; cabangId?: string; industriId?: string; jenisProjekId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const sp = await searchParams;
 
-  const [years, projects, cabang, industri] = await Promise.all([
+  const [years, projects, cabang, industri, jenisProjek] = await Promise.all([
     apiFetch<PeriodYear[]>('/periods/years', { tenantId }),
     apiFetch<Project[]>('/projects', { tenantId }).catch(() => [] as Project[]),
     apiFetch<Project[]>('/cabang', { tenantId }).catch(() => [] as Project[]),
     apiFetch<Project[]>('/industri', { tenantId }).catch(() => [] as Project[]),
+    apiFetch<Project[]>('/jenis-projek', { tenantId }).catch(() => [] as Project[]),
   ]);
   const isPusat = ['OWNER', 'ADMIN', 'AKUNTAN'].includes(s.role ?? '');
   const periodId =
@@ -53,6 +54,7 @@ export default async function JejakAuditPage({
   const search = sp.search ?? '';
   const cabangId = sp.cabangId ?? '';
   const industriId = sp.industriId ?? '';
+  const jenisProjekId = sp.jenisProjekId ?? '';
 
   const qs = new URLSearchParams();
   if (periodId) qs.set('periodId', periodId);
@@ -61,6 +63,7 @@ export default async function JejakAuditPage({
   if (search) qs.set('search', search);
   if (cabangId) qs.set('cabangId', cabangId);
   if (industriId) qs.set('industriId', industriId);
+  if (jenisProjekId) qs.set('jenisProjekId', jenisProjekId);
 
   let data: Resp | null = null;
   if (periodId) data = await apiFetch<Resp>(`/reports/jejak-audit?${qs.toString()}`, { tenantId });
@@ -88,6 +91,12 @@ export default async function JejakAuditPage({
             <Select name="cabangId" defaultValue={cabangId} fullWidth={false}>
               <option value="">— semua cabang —</option>
               {cabang.map((c) => <option key={c.id} value={c.id}>{c.kode} — {c.nama}</option>)}
+            </Select>
+          )}
+          {jenisProjek.length > 0 && (
+            <Select name="jenisProjekId" defaultValue={jenisProjekId} fullWidth={false}>
+              <option value="">— semua jenis projek —</option>
+              {jenisProjek.map((j) => <option key={j.id} value={j.id}>{j.nama}</option>)}
             </Select>
           )}
           {industri.length > 0 && (

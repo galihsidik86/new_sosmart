@@ -52,7 +52,7 @@ function statusClass(s: BudgetStatus): string {
 export default async function BudgetActualPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periode?: string; projectId?: string; ytd?: string; industriId?: string }>;
+  searchParams: Promise<{ periode?: string; projectId?: string; ytd?: string; industriId?: string; jenisProjekId?: string }>;
 }) {
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
@@ -61,15 +61,18 @@ export default async function BudgetActualPage({
   const periode = sp.periode ?? periodeNow();
   const projectId = sp.projectId ?? '';
   const industriId = sp.industriId ?? '';
+  const jenisProjekId = sp.jenisProjekId ?? '';
   const ytd = sp.ytd === 'true';
   const projectQs = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
   const industriQs = industriId ? `&industriId=${encodeURIComponent(industriId)}` : '';
+  const jenisProjekQs = jenisProjekId ? `&jenisProjekId=${encodeURIComponent(jenisProjekId)}` : '';
   const ytdQs = ytd ? '&ytd=true' : '';
 
-  const [projects, industri, data] = await Promise.all([
+  const [projects, industri, jenisProjek, data] = await Promise.all([
     apiFetch<Project[]>('/projects', { tenantId }).catch(() => [] as Project[]),
     apiFetch<Project[]>('/industri', { tenantId }).catch(() => [] as Project[]),
-    apiFetch<Resp>(`/reports/budget-actual?periode=${periode}${ytdQs}${projectQs}${industriQs}`, { tenantId }),
+    apiFetch<Project[]>('/jenis-projek', { tenantId }).catch(() => [] as Project[]),
+    apiFetch<Resp>(`/reports/budget-actual?periode=${periode}${ytdQs}${projectQs}${industriQs}${jenisProjekQs}`, { tenantId }),
   ]);
 
   return (
@@ -102,6 +105,17 @@ export default async function BudgetActualPage({
                 <option value="">— semua project —</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.kode} — {p.nama}</option>
+                ))}
+              </Select>
+            </>
+          )}
+          {jenisProjek.length > 0 && (
+            <>
+              <FilterLabel>Jenis Projek</FilterLabel>
+              <Select name="jenisProjekId" defaultValue={jenisProjekId} fullWidth={false}>
+                <option value="">— semua jenis projek —</option>
+                {jenisProjek.map((j) => (
+                  <option key={j.id} value={j.id}>{j.nama}</option>
                 ))}
               </Select>
             </>
