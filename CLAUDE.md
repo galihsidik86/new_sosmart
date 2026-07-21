@@ -319,6 +319,22 @@ Modul `consolidation` — konsolidasi penuh lintas-tenant + eliminasi intercompa
 - **Goodwill / metode akuisisi**: `GroupMember.acquisitionCost/NetAssets/Date`. Goodwill = biaya − milik%×asetBersihAkuisisi (aset konsolidasi); eliminasi investasi induk vs ekuitas akuisisi via baris `eliminasiEkuitasAkuisisi` (plug), NCI = minoritas%×aset bersih anak. Teruji: induk(Kas100+Investasi80,Modal180)+anak80%(Kas60,Modal60), biaya 80 aset-bersih 60 → goodwill 32, elim ekuitas −48, NCI 12, induk 180, **seimbang**.
 - Web: Laporan › Konsolidasi Grup (kelola grup/anggota + input akuisisi + laporan goodwill/IC-rekon). Edit customer/vendor → dropdown entitas intra-grup.
 
+## Rekonsiliasi Fiskal
+
+Modul `fiskal` — **pembukuan komersial vs pajak dari SATU sumber GL** (bukan dua buku paralel). Laba komersial + koreksi fiskal → laba fiskal → PPh Badan, basis lampiran SPT Tahunan 1771. Semua angka dihitung **on-the-fly** (pola Fase 8); data yang persist hanya input yang tak bisa diturunkan dari GL.
+
+- **Data model**:
+  - `Account.fiskalTreatment` (`NONE|NON_DEDUCTIBLE|PARTIAL|FINAL_INCOME|NON_OBJECT|CADANGAN`) + `fiskalPersen` (utk PARTIAL) + `fiskalKategori` — perlakuan fiskal per akun beban/pendapatan.
+  - `AsetTetap.metodeFiskal/masaManfaatFiskalBulan/nilaiResiduFiskal` — parameter penyusutan fiskal (basis UU PPh). **Report-only, TIDAK menerbitkan jurnal**; penyusutan fiskal disimulasi bulan-per-bulan dari `mulaiPenyusutan`. Default saat create: masa = `MASA_MANFAAT_DEFAULT[kelompok]`, residu 0.
+  - `PphBadanSetting` (1:1 tahun fiskal): skema `BADAN_UMUM|UMKM_FINAL`, peredaranBruto (utk Ps.31E), useFasilitas31E, tarif, kreditPajakManual.
+  - `KompensasiKerugian` (maks 5 th UU PPh), `KoreksiFiskal` (koreksi MANUAL; otomatis dihitung on-the-fly, tak disimpan), `RekonsiliasiFiskal` (snapshot JSON beku saat finalize).
+- **Engine** `FiskalService.build(fiscalYearId)` (`apps/api/src/modules/fiskal/`): laba komersial via `aggregateAllAccounts` (kind P&L) → koreksi OTOMATIS dari `Account.fiskalTreatment` (NON_DEDUCTIBLE/CADANGAN → koreksi +, PARTIAL → +(100−%)×saldo, FINAL_INCOME/NON_OBJECT → koreksi −) + selisih penyusutan komersial (DepresiasiLine POSTED) vs fiskal (simulasi) + koreksi MANUAL → laba fiskal → kompensasi (dikap ≤ laba) → **PKP** (dibulatkan ribuan ke bawah) → **PPh Badan** (`hitungPphBadan`/`hitungPphBadan31E`/`hitungPphUmkmFinal`) → kredit pajak → PPh 29/28A → **pajak tangguhan PSAK 46** (dari beda SEMENTARA: neto × tarif; + manfaat/aset, − beban/liabilitas) → total beban pajak.
+- **Finalize/reopen**: `build()` snapshot-aware — kalau ada `RekonsiliasiFiskal` → tampilkan **beku** (JSON snapshot, di-sanitasi `JSON.parse(JSON.stringify())` karena Date/Decimal); else hitung live. `finalize` upsert snapshot (audit `finalizedById/At`), `reopen` (OWNER/ADMIN) hapus → kembali live.
+- **Helper baru** (`@lentera/shared`): `hitungPphBadan31E(pkp, bruto, tarif)` — fasilitas Pasal 31E 3-tingkat (bruto ≤4,8M → tarif/2; 4,8M–50M → proporsional; >50M → penuh).
+- **Endpoint** `/api/v1/fiskal/*`: `akun-attributes` (GET/PATCH bulk), `pph-setting` (GET/PUT), `kompensasi` (GET/PUT), `koreksi` (GET/POST/PATCH/DELETE), `penyusutan` (GET), `rekonsiliasi` (GET) + `rekonsiliasi/:fyId/finalize|reopen` (POST). Roles OWNER/ADMIN/AKUNTAN (reopen OWNER/ADMIN). Guard TenantGuard+RolesGuard+TenancyInterceptor; RLS tiap tabel di `rls.sql`.
+- **Web**: Pengaturan › **Atribut Fiskal** (bulk-edit akun), Pajak › **Kelola Rekon. Fiskal** (PPh setting + kompensasi + koreksi manual), Laporan › **Rekonsiliasi Fiskal** (worksheet + ringkasan PPh + pajak tangguhan + tombol Finalkan/Buka kembali + badge FINAL).
+- **Catatan**: perbandingan penyusutan komersial (POSTED) vs fiskal (setahun penuh) paling akurat di **akhir tahun buku** (12 bln komersial telah diposting). Pajak tangguhan **indikatif** (belum termasuk saldo tangguhan awal). Jembatan ke **SPT 1771 elektronik / e-Faktur = Fase 9 (Coretax)**.
+
 ## Coretax
 
 Adapter akan ditulis di Fase 9. Pendekatan: kontrak XML/JSON sesuai spec DJP public 2025, default mode `mock` (in-memory sandbox), switch ke `production` setelah Sertifikat Elektronik PKP tersedia.
