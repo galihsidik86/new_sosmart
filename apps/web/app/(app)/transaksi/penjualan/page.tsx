@@ -4,6 +4,7 @@ import { apiFetch } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import { PageContainer, PageHeader, StatusBadge, buttonClass, FilterLabel, DataTable } from '@/components/ui';
+import { LiveRefresh } from '@/components/LiveRefresh';
 import { ListFilters, type FilterOption } from '@/components/ListFilters';
 import { buildListHref } from '@/lib/list-query';
 
@@ -44,6 +45,7 @@ export default async function PenjualanPage({
 
   return (
     <>
+      <LiveRefresh intervalMs={8000} />
       <PageContainer size="list">
         <PageHeader
           title="Faktur Penjualan"

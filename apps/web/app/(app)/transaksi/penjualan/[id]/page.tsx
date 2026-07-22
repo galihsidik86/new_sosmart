@@ -12,6 +12,7 @@ import { canCancelPosted, canPostAccounting } from '@/lib/roles';
 import { runWithApprover } from '@/lib/stepUp';
 import { fmtPlain, fmtRp, fmtTanggal, fmtNpwp } from '@/lib/format';
 import { PageContainer, PageHeader, Card, StatusBadge, Button, buttonClass } from '@/components/ui';
+import { LiveRefresh } from '@/components/LiveRefresh';
 import { ApprovalPanel } from '@/components/ApprovalPanel';
 
 type Status = 'DRAFT' | 'POSTED' | 'PARTIAL' | 'PAID' | 'CANCELLED';
@@ -140,6 +141,7 @@ export default async function PenjualanDetailPage({
 
   return (
     <>
+      <LiveRefresh intervalMs={8000} />
       <PageContainer size="wide">
         <PageHeader
           title={inv.nomor ?? '— Draft —'}

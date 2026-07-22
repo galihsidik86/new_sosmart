@@ -7,6 +7,7 @@ import {
   PageContainer, PageHeader, Table, THead, TH, TBody, TR, TD, MoneyCell, EmptyRow,
   StatusBadge, Button, buttonClass, FilterLabel, Input, Select, filterBarClass,
 } from '@/components/ui';
+import { LiveRefresh } from '@/components/LiveRefresh';
 import { type FilterOption } from '@/components/ListFilters';
 import { buildListHref } from '@/lib/list-query';
 
@@ -73,6 +74,7 @@ export default async function JurnalPage({
 
   return (
     <>
+      <LiveRefresh intervalMs={8000} />
       <PageContainer size="list">
         <PageHeader
           title="Jurnal Umum"

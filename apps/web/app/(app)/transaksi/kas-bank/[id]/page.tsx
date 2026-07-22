@@ -11,6 +11,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { canPostAccounting, canPostCashBank } from '@/lib/roles';
 import { fmtPlain, fmtRp, fmtTanggal } from '@/lib/format';
 import { PageContainer, PageHeader, Card, StatusBadge, Button, buttonClass } from '@/components/ui';
+import { LiveRefresh } from '@/components/LiveRefresh';
 import { ApprovalPanel } from '@/components/ApprovalPanel';
 
 interface Detail {
@@ -108,6 +109,7 @@ export default async function KasBankDetailPage({
 
   return (
     <>
+      <LiveRefresh intervalMs={8000} />
       <PageContainer size="wide">
         <PageHeader
           title={e.nomor ?? '— Draft —'}

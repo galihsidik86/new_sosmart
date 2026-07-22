@@ -3,6 +3,7 @@ import type { Route } from 'next';
 import { getSession, getActiveTenantId } from '@/lib/session';
 import { apiFetch } from '@/lib/api';
 import { PageHeader, PageContainer, StatCard, Card, Badge, Icon } from '@/components/ui';
+import { LiveRefresh } from '@/components/LiveRefresh';
 
 interface PeriodYear {
   id: string; kode: string; status: string;
@@ -90,6 +91,7 @@ export default async function Dashboard() {
 
   return (
     <>
+      <LiveRefresh intervalMs={8000} />
       <PageContainer>
         <PageHeader
           title={`Halo, ${s.user.nama.split(' ')[0]}`}

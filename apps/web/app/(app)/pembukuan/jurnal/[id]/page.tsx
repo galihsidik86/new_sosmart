@@ -13,6 +13,7 @@ import { fmtPlain, fmtTanggal } from '@/lib/format';
 import {
   PageContainer, PageHeader, Card, StatusBadge, Button, buttonClass, Input,
 } from '@/components/ui';
+import { LiveRefresh } from '@/components/LiveRefresh';
 import { ApprovalPanel } from '@/components/ApprovalPanel';
 
 type Status = 'DRAFT' | 'POSTED' | 'REVERSED';
@@ -123,6 +124,7 @@ export default async function JurnalDetailPage({
 
   return (
     <>
+      <LiveRefresh intervalMs={8000} />
       <PageContainer size="wide">
         <PageHeader
           title={j.nomor ?? '— Draft —'}

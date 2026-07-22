@@ -9,6 +9,7 @@ import {
   PageContainer, PageHeader, Card, Button, Badge, Input,
   Table, THead, TH, TBody, TR, TD, EmptyRow,
 } from '@/components/ui';
+import { LiveRefresh } from '@/components/LiveRefresh';
 
 const DOC_LABEL: Record<string, string> = {
   PENJUALAN: 'Penjualan', PEMBELIAN: 'Pembelian', KAS_BANK: 'Kas/Bank', JURNAL: 'Jurnal',
@@ -48,6 +49,7 @@ export default async function ApprovalInboxPage() {
 
   return (
     <PageContainer size="list">
+      <LiveRefresh intervalMs={8000} />
       <PageHeader
         title="Kotak Approval"
         subtitle={`${items.length} dokumen menunggu persetujuan Anda (role ${s.role}).`}
