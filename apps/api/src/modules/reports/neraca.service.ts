@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { AccountKind, NormalBalance, Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
@@ -108,6 +108,7 @@ export class NeracaService {
     vertikal?: boolean;
     compareToPeriodId?: string;
   }): Promise<NeracaResponse> {
+    if (!opts.periodId) throw new BadRequestException('Periode wajib dipilih');
     return this.tenancy.run(async (tx) => {
       const current = await this.computeCore(tx, opts.periodId, opts.cabangId);
       const compare = opts.compareToPeriodId

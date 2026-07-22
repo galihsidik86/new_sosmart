@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { AccountKind, NormalBalance } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
@@ -50,6 +50,7 @@ export class TrialBalanceService {
     /// Filter per project. null = hanya tanpa project. undefined = semua.
     projectId?: string | null;
   }): Promise<TrialBalanceResponse> {
+    if (!opts.periodId) throw new BadRequestException('Periode wajib dipilih');
     return this.tenancy.run(async (tx) => {
       const period = await tx.fiscalPeriod.findUnique({
         where: { id: opts.periodId },
