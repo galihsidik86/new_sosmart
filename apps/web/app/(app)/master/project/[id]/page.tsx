@@ -256,6 +256,14 @@ export default async function ProjectDetailPage({
   ]);
   const memberUserIds = new Set(p.members.map((m) => m.userId));
   const nonMembers = users.filter((u) => !memberUserIds.has(u.userId));
+  // Boleh mengelola (ubah info, kelola anggota/dokumen/tugas/budget) = OWNER/ADMIN
+  // tenant ATAU MANAGER projek ini. Selain itu (mis. AKUNTAN/AUDITOR) read-only.
+  // API menegakkan hal yang sama (assertCanManage); ini menyembunyikan kontrol
+  // yang akan ditolak agar pengalaman read-only bersih.
+  const canManage =
+    s.role === 'OWNER' ||
+    s.role === 'ADMIN' ||
+    p.members.some((m) => m.userId === s.user.id && m.role === 'MANAGER');
   const postableAccounts = accounts.filter((a) => a.isPostable);
   const biaya = Number(p.realisasiBiaya);
   const pendapatan = Number(p.realisasiPendapatan);
@@ -341,15 +349,33 @@ export default async function ProjectDetailPage({
         <div className="grid grid-cols-2 gap-6 mb-6">
           <Card>
             <h2 className="font-semibold text-tanah-700 mb-3">Info & Status</h2>
-            <ProjectForm
-              mode="edit"
-              action={updateAction}
-              users={users}
-              customers={customers}
-              jenisProjekList={jenisProjek}
-              defaults={p}
-              submitLabel="Simpan"
-            />
+            {canManage ? (
+              <ProjectForm
+                mode="edit"
+                action={updateAction}
+                users={users}
+                customers={customers}
+                jenisProjekList={jenisProjek}
+                defaults={p}
+                submitLabel="Simpan"
+              />
+            ) : (
+              <dl className="space-y-2 text-sm">
+                {p.deskripsi && (
+                  <div><dt className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Deskripsi</dt><dd className="text-tanah-700">{p.deskripsi}</dd></div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div><dt className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Nilai Kontrak</dt><dd className="text-tanah-700 font-mono tabular-nums">{kontrak > 0 ? fmtRp(kontrak) : '—'}</dd></div>
+                  <div><dt className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Budget Total</dt><dd className="text-tanah-700 font-mono tabular-nums">{budget > 0 ? fmtRp(budget) : '—'}</dd></div>
+                  <div><dt className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Mulai</dt><dd className="text-tanah-700">{fmtTanggal(p.tanggalMulai)}</dd></div>
+                  <div><dt className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Selesai</dt><dd className="text-tanah-700">{p.tanggalSelesai ? fmtTanggal(p.tanggalSelesai) : '—'}</dd></div>
+                </div>
+                {p.catatan && (
+                  <div><dt className="text-xs uppercase tracking-wider text-tanah-500 font-bold">Catatan</dt><dd className="text-tanah-700">{p.catatan}</dd></div>
+                )}
+                <p className="text-xs text-tanah-400 pt-2 border-t border-cream-200">Mode baca-saja. Hanya OWNER/ADMIN atau Manager projek yang dapat mengubah.</p>
+              </dl>
+            )}
           </Card>
 
           <Card>
@@ -365,13 +391,15 @@ export default async function ProjectDetailPage({
                     <Badge variant={m.role === 'MANAGER' ? 'brand' : 'neutral'} size="sm">
                       {m.role}
                     </Badge>
-                    <form action={removeMemberAction} className="inline">
-                      <input type="hidden" name="id" value={p.id} />
-                      <input type="hidden" name="userId" value={m.userId} />
-                      <button className="text-xs text-bata-500 font-semibold hover:underline" type="submit">
-                        hapus
-                      </button>
-                    </form>
+                    {canManage && (
+                      <form action={removeMemberAction} className="inline">
+                        <input type="hidden" name="id" value={p.id} />
+                        <input type="hidden" name="userId" value={m.userId} />
+                        <button className="text-xs text-bata-500 font-semibold hover:underline" type="submit">
+                          hapus
+                        </button>
+                      </form>
+                    )}
                   </div>
                 </li>
               ))}
@@ -379,24 +407,26 @@ export default async function ProjectDetailPage({
                 <li className="text-sm text-tanah-500 py-2">Belum ada anggota.</li>
               )}
             </ul>
-            <form action={addMemberAction} className="space-y-2 text-sm pt-2 border-t border-cream-200">
-              <input type="hidden" name="id" value={p.id} />
-              <FormField label="Tambah user">
-                <Select name="userId" required>
-                  <option value="">— pilih user —</option>
-                  {nonMembers.map((u) => (
-                    <option key={u.userId} value={u.userId}>{u.nama} ({u.email})</option>
-                  ))}
-                </Select>
-              </FormField>
-              <div className="flex gap-2 items-end">
-                <Select name="role" defaultValue="MEMBER" fullWidth={false} className="flex-1">
-                  <option value="MEMBER">MEMBER</option>
-                  <option value="MANAGER">MANAGER</option>
-                </Select>
-                <Button type="submit">Tambah</Button>
-              </div>
-            </form>
+            {canManage && (
+              <form action={addMemberAction} className="space-y-2 text-sm pt-2 border-t border-cream-200">
+                <input type="hidden" name="id" value={p.id} />
+                <FormField label="Tambah user">
+                  <Select name="userId" required>
+                    <option value="">— pilih user —</option>
+                    {nonMembers.map((u) => (
+                      <option key={u.userId} value={u.userId}>{u.nama} ({u.email})</option>
+                    ))}
+                  </Select>
+                </FormField>
+                <div className="flex gap-2 items-end">
+                  <Select name="role" defaultValue="MEMBER" fullWidth={false} className="flex-1">
+                    <option value="MEMBER">MEMBER</option>
+                    <option value="MANAGER">MANAGER</option>
+                  </Select>
+                  <Button type="submit">Tambah</Button>
+                </div>
+              </form>
+            )}
           </Card>
         </div>
 
@@ -412,14 +442,18 @@ export default async function ProjectDetailPage({
               ))}
             </ul>
           )}
-          <form action={updateProjectDocsAction} className="space-y-2 pt-3 border-t border-cream-200">
-            <input type="hidden" name="id" value={p.id} />
-            <div className="text-xs text-tanah-500">
-              Tautan kontrak / proposal / SOW / brief (URL Google Drive, Dropbox, dll).
-            </div>
-            <DokumenLinksInput initial={p.linkDokumen} />
-            <Button type="submit" size="sm">Simpan dokumen</Button>
-          </form>
+          {canManage ? (
+            <form action={updateProjectDocsAction} className="space-y-2 pt-3 border-t border-cream-200">
+              <input type="hidden" name="id" value={p.id} />
+              <div className="text-xs text-tanah-500">
+                Tautan kontrak / proposal / SOW / brief (URL Google Drive, Dropbox, dll).
+              </div>
+              <DokumenLinksInput initial={p.linkDokumen} />
+              <Button type="submit" size="sm">Simpan dokumen</Button>
+            </form>
+          ) : (
+            p.linkDokumen.length === 0 && <p className="text-sm text-tanah-500">Belum ada dokumen.</p>
+          )}
         </Card>
 
         <Card className="mb-6">
@@ -431,25 +465,27 @@ export default async function ProjectDetailPage({
           <ul className="divide-y divide-cream-200 mb-4">
             {p.tasks.map((t) => (
               <li key={t.id} className="py-2.5 flex items-start gap-3">
-                {/* pemilih status: 3 tombol (Belum/Proses/Selesai) */}
-                <form className="flex rounded-lg overflow-hidden border border-cream-300 shrink-0">
-                  {TASK_STATUSES.map((st) => (
-                    <button
-                      key={st}
-                      type="submit"
-                      formAction={setTaskStatusAction.bind(null, p.id, t.id, st)}
-                      className={`px-2 py-1 text-[11px] font-semibold transition-colors ${
-                        t.status === st
-                          ? st === 'SELESAI' ? 'bg-padi-500 text-cream-50'
-                            : st === 'PROSES' ? 'bg-emas-300 text-emas-700'
-                            : 'bg-cream-300 text-tanah-700'
-                          : 'bg-white text-tanah-400 hover:bg-cream-50'
-                      }`}
-                    >
-                      {TASK_LABEL[st]}
-                    </button>
-                  ))}
-                </form>
+                {/* pemilih status: 3 tombol (Belum/Proses/Selesai) — hanya pengelola */}
+                {canManage && (
+                  <form className="flex rounded-lg overflow-hidden border border-cream-300 shrink-0">
+                    {TASK_STATUSES.map((st) => (
+                      <button
+                        key={st}
+                        type="submit"
+                        formAction={setTaskStatusAction.bind(null, p.id, t.id, st)}
+                        className={`px-2 py-1 text-[11px] font-semibold transition-colors ${
+                          t.status === st
+                            ? st === 'SELESAI' ? 'bg-padi-500 text-cream-50'
+                              : st === 'PROSES' ? 'bg-emas-300 text-emas-700'
+                              : 'bg-cream-300 text-tanah-700'
+                            : 'bg-white text-tanah-400 hover:bg-cream-50'
+                        }`}
+                      >
+                        {TASK_LABEL[st]}
+                      </button>
+                    ))}
+                  </form>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className={`text-sm font-medium ${t.status === 'SELESAI' ? 'line-through text-tanah-400' : 'text-tanah-700'}`}>
                     {t.nama}
@@ -471,24 +507,30 @@ export default async function ProjectDetailPage({
                           ))}
                         </ul>
                       )}
-                      <form action={updateTaskDocsAction} className="space-y-2">
-                        <input type="hidden" name="id" value={p.id} />
-                        <input type="hidden" name="taskId" value={t.id} />
-                        <DokumenLinksInput initial={t.linkDokumen} />
-                        <Button type="submit" size="sm" variant="secondary">Simpan dokumen tugas</Button>
-                      </form>
+                      {canManage ? (
+                        <form action={updateTaskDocsAction} className="space-y-2">
+                          <input type="hidden" name="id" value={p.id} />
+                          <input type="hidden" name="taskId" value={t.id} />
+                          <DokumenLinksInput initial={t.linkDokumen} />
+                          <Button type="submit" size="sm" variant="secondary">Simpan dokumen tugas</Button>
+                        </form>
+                      ) : (
+                        t.linkDokumen.length === 0 && <p className="text-xs text-tanah-500">Belum ada dokumen.</p>
+                      )}
                     </div>
                   </details>
                 </div>
-                <form>
-                  <button
-                    type="submit"
-                    formAction={deleteTaskAction.bind(null, p.id, t.id)}
-                    className="text-xs text-bata-500 font-semibold hover:underline shrink-0"
-                  >
-                    hapus
-                  </button>
-                </form>
+                {canManage && (
+                  <form>
+                    <button
+                      type="submit"
+                      formAction={deleteTaskAction.bind(null, p.id, t.id)}
+                      className="text-xs text-bata-500 font-semibold hover:underline shrink-0"
+                    >
+                      hapus
+                    </button>
+                  </form>
+                )}
               </li>
             ))}
             {p.tasks.length === 0 && (
@@ -496,26 +538,28 @@ export default async function ProjectDetailPage({
             )}
           </ul>
 
-          <form action={addTaskAction} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end pt-3 border-t border-cream-200">
-            <input type="hidden" name="id" value={p.id} />
-            <FormField label="Tugas / milestone" className="sm:col-span-5">
-              <Input name="nama" required placeholder="mis. Kickoff meeting" />
-            </FormField>
-            <FormField label="PIC" className="sm:col-span-3">
-              <Select name="pjUserId" defaultValue="">
-                <option value="">—</option>
-                {users.map((u) => (
-                  <option key={u.userId} value={u.userId}>{u.nama}</option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField label="Tenggat" className="sm:col-span-2">
-              <Input name="tenggat" type="date" />
-            </FormField>
-            <div className="sm:col-span-2">
-              <Button type="submit" className="w-full">+ Tambah</Button>
-            </div>
-          </form>
+          {canManage && (
+            <form action={addTaskAction} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end pt-3 border-t border-cream-200">
+              <input type="hidden" name="id" value={p.id} />
+              <FormField label="Tugas / milestone" className="sm:col-span-5">
+                <Input name="nama" required placeholder="mis. Kickoff meeting" />
+              </FormField>
+              <FormField label="PIC" className="sm:col-span-3">
+                <Select name="pjUserId" defaultValue="">
+                  <option value="">—</option>
+                  {users.map((u) => (
+                    <option key={u.userId} value={u.userId}>{u.nama}</option>
+                  ))}
+                </Select>
+              </FormField>
+              <FormField label="Tenggat" className="sm:col-span-2">
+                <Input name="tenggat" type="date" />
+              </FormField>
+              <div className="sm:col-span-2">
+                <Button type="submit" className="w-full">+ Tambah</Button>
+              </div>
+            </form>
+          )}
         </Card>
 
         <Card>
@@ -552,41 +596,45 @@ export default async function ProjectDetailPage({
                       >
                         realisasi
                       </Link>
-                      <form action={removeBudgetAction} className="inline">
-                        <input type="hidden" name="budgetId" value={b.id} />
-                        <input type="hidden" name="projectId" value={p.id} />
-                        <button className="text-xs text-bata-500 font-semibold hover:underline" type="submit">hapus</button>
-                      </form>
+                      {canManage && (
+                        <form action={removeBudgetAction} className="inline">
+                          <input type="hidden" name="budgetId" value={b.id} />
+                          <input type="hidden" name="projectId" value={p.id} />
+                          <button className="text-xs text-bata-500 font-semibold hover:underline" type="submit">hapus</button>
+                        </form>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
-          <form action={setBudgetAction} className="grid grid-cols-5 gap-2 text-sm items-end pt-3 border-t border-cream-200">
-            <input type="hidden" name="id" value={p.id} />
-            <FormField label="Akun (postable)" className="col-span-2">
-              <Select name="accountId" required>
-                <option value="">— pilih akun —</option>
-                {postableAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField label="Periode">
-              <Input name="periode" placeholder="2026-07" pattern="\d{4}-\d{2}" required mono />
-            </FormField>
-            <FormField label="Amount">
-              <MoneyInput name="amount" required />
-            </FormField>
-            <div>
-              <label className="flex items-center gap-1.5 text-xs text-tanah-500 mb-2">
-                <input type="checkbox" name="hardBlock" defaultChecked />
-                Hard block
-              </label>
-              <Button type="submit" className="w-full">Simpan</Button>
-            </div>
-          </form>
+          {canManage && (
+            <form action={setBudgetAction} className="grid grid-cols-5 gap-2 text-sm items-end pt-3 border-t border-cream-200">
+              <input type="hidden" name="id" value={p.id} />
+              <FormField label="Akun (postable)" className="col-span-2">
+                <Select name="accountId" required>
+                  <option value="">— pilih akun —</option>
+                  {postableAccounts.map((a) => (
+                    <option key={a.id} value={a.id}>{a.kode} {a.nama}</option>
+                  ))}
+                </Select>
+              </FormField>
+              <FormField label="Periode">
+                <Input name="periode" placeholder="2026-07" pattern="\d{4}-\d{2}" required mono />
+              </FormField>
+              <FormField label="Amount">
+                <MoneyInput name="amount" required />
+              </FormField>
+              <div>
+                <label className="flex items-center gap-1.5 text-xs text-tanah-500 mb-2">
+                  <input type="checkbox" name="hardBlock" defaultChecked />
+                  Hard block
+                </label>
+                <Button type="submit" className="w-full">Simpan</Button>
+              </div>
+            </form>
+          )}
         </Card>
       </PageContainer>
     </>

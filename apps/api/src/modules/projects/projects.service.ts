@@ -10,14 +10,23 @@ import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
 
 /**
+ * Peran tenant yang boleh MELIHAT semua projek (read-only untuk selain
+ * OWNER/ADMIN). AKUNTAN & AUDITOR butuh visibilitas penuh untuk pembukuan/
+ * audit (konsisten dgn laporan Laba Rugi per Proyek yang tak difilter
+ * keanggotaan). KASIR tetap dibatasi keanggotaan projek.
+ * Membuat/mengubah projek TETAP dibatasi (lihat create/assertCanManage).
+ */
+const VIEW_ALL_PROJECT_ROLES = new Set(['OWNER', 'ADMIN', 'AKUNTAN', 'AUDITOR']);
+
+/**
  * Project = wadah budgeting + reporting per-project.
  *
- * Aturan akses (fase A):
+ * Aturan akses:
  *  - OWNER/ADMIN tenant → lihat + kelola semua project di tenant.
- *  - User biasa → hanya lihat project yang dia jadi member (ProjectMember).
- *  - Semua mutasi (create/update/delete member) untuk fase A dibatasi ke
- *    OWNER/ADMIN + Project MANAGER. Ini akan diperluas di fase E (budget
- *    override step-up).
+ *  - AKUNTAN/AUDITOR → lihat SEMUA project (read-only), tak bisa buat/ubah.
+ *  - User biasa (mis. KASIR) → hanya lihat project yang dia jadi member.
+ *  - Mutasi (create) dibatasi OWNER/ADMIN; (update/member/budget/tugas)
+ *    dibatasi OWNER/ADMIN + Project MANAGER.
  */
 export interface CreateProjectInput {
   kode: string;
@@ -110,8 +119,9 @@ export class ProjectsService {
       if (!includeSelesai) {
         where.status = { notIn: [ProjectStatus.SELESAI, ProjectStatus.DIBATALKAN] };
       }
-      // Non OWNER/ADMIN → filter ke project yang dia jadi member
-      if (role !== 'OWNER' && role !== 'ADMIN') {
+      // Peran view-all (OWNER/ADMIN/AKUNTAN/AUDITOR) lihat semua; selain itu
+      // (mis. KASIR) hanya project yang dia jadi member.
+      if (!VIEW_ALL_PROJECT_ROLES.has(role)) {
         where.members = { some: { userId } };
       }
       const rows = await tx.project.findMany({
@@ -167,7 +177,7 @@ export class ProjectsService {
       if (!p || p.tenantId !== tenantId) {
         throw new NotFoundException('Project tidak ditemukan');
       }
-      if (role !== 'OWNER' && role !== 'ADMIN') {
+      if (!VIEW_ALL_PROJECT_ROLES.has(role)) {
         const isMember = p.members.some((m) => m.userId === userId);
         if (!isMember) throw new ForbiddenException('Tidak boleh lihat project ini');
       }

@@ -14,6 +14,8 @@ export default async function ProjectsPage({
   const includeSelesai = sp.semua === '1';
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
+  // Hanya OWNER/ADMIN yang boleh membuat projek (API menegakkan hal yang sama).
+  const canCreate = s.role === 'OWNER' || s.role === 'ADMIN';
   const projects = await apiFetch<ProjectRow[]>(
     `/projects${includeSelesai ? '?includeSelesai=true' : ''}`,
     { tenantId },
@@ -33,9 +35,11 @@ export default async function ProjectsPage({
               >
                 {includeSelesai ? 'sembunyikan yang selesai' : 'tampilkan yang selesai'}
               </Link>
-              <Link href="/master/project/baru" className={buttonClass('primary', 'sm')}>
-                + Tambah Project
-              </Link>
+              {canCreate && (
+                <Link href="/master/project/baru" className={buttonClass('primary', 'sm')}>
+                  + Tambah Project
+                </Link>
+              )}
             </div>
           }
         />
