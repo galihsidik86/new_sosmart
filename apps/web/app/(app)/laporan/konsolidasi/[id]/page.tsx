@@ -4,7 +4,7 @@ import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
   PageContainer, PageHeader, Card, Badge, StatusBanner, FormField, Input, Button,
-  Table, THead, TH, TBody, TR, TD, SectionHeader,
+  Table, THead, TH, TBody, TR, TD, SectionHeader, buttonClass,
 } from '@/components/ui';
 
 interface Row {
@@ -76,6 +76,40 @@ const KIND_LABEL: Record<string, string> = {
   PENDAPATAN: 'Pendapatan', PENDAPATAN_LAIN: 'Pendapatan Lain',
   BEBAN: 'Beban', BEBAN_POKOK: 'Beban Pokok', BEBAN_LAIN: 'Beban Lain',
 };
+
+/**
+ * Grafik kontribusi entitas — SVG inline (tanpa library chart). Bar horizontal
+ * per entitas: aset bersih (sogan) & laba bersih (padi/bata utk rugi).
+ */
+function ContribChart({ entities }: { entities: Entity[] }) {
+  const rows = entities.map((e) => ({ nama: e.nama, isParent: e.isParent, aset: Number(e.netAssets), laba: Number(e.netIncome) }));
+  const maxAbs = Math.max(1, ...rows.map((r) => Math.abs(r.aset)), ...rows.map((r) => Math.abs(r.laba)));
+  const barW = (v: number) => `${(Math.abs(v) / maxAbs) * 100}%`;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-4 text-[11px] text-tanah-500">
+        <span className="flex items-center gap-1"><span className="inline-block w-3 h-2 rounded-sm bg-sogan-500" /> Aset bersih</span>
+        <span className="flex items-center gap-1"><span className="inline-block w-3 h-2 rounded-sm bg-padi-500" /> Laba bersih</span>
+      </div>
+      {rows.map((r) => (
+        <div key={r.nama} className="text-xs">
+          <div className="flex justify-between mb-0.5">
+            <span className="text-tanah-700 font-medium truncate">{r.nama}{r.isParent ? ' ⬦' : ''}</span>
+            <span className="font-mono tabular-nums text-tanah-500">{rp(String(r.aset))} · {rp(String(r.laba))}</span>
+          </div>
+          <div className="space-y-0.5">
+            <div className="h-2.5 bg-cream-100 rounded-sm overflow-hidden">
+              <div className="h-full bg-sogan-500 rounded-sm" style={{ width: barW(r.aset) }} />
+            </div>
+            <div className="h-2.5 bg-cream-100 rounded-sm overflow-hidden">
+              <div className={`h-full rounded-sm ${r.laba < 0 ? 'bg-bata-500' : 'bg-padi-500'}`} style={{ width: barW(r.laba) }} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /**
  * Kertas kerja konsolidasi: kolom per-entitas (nilai penyusun) → Gabungan →
@@ -154,7 +188,15 @@ export default async function KonsolidasiReportPage({
       <PageHeader
         className="mt-2"
         title={rep ? `Konsolidasi — ${rep.group.nama}` : 'Konsolidasi'}
-        subtitle={`Per ${endDate}${sp.startDate ? ` · L/R sejak ${sp.startDate}` : ' · L/R sejak awal'}`}
+        subtitle={`Per ${endDate}${sp.startDate ? ` · L/R sejak ${sp.startDate}` : ' · L/R sejak awal'} · IDR`}
+        actions={rep ? (
+          <div className="flex items-center gap-2">
+            <a href={`/proxy/consolidation/report.pdf?groupId=${id}&endDate=${endDate}${sp.startDate ? `&startDate=${sp.startDate}` : ''}`}
+              target="_blank" rel="noopener noreferrer" className={buttonClass('soft-bata')}>PDF</a>
+            <a href={`/proxy/consolidation/report.xlsx?groupId=${id}&endDate=${endDate}${sp.startDate ? `&startDate=${sp.startDate}` : ''}`}
+              className={buttonClass('success')}>Excel</a>
+          </div>
+        ) : undefined}
       />
 
       {/* Periode */}
@@ -243,6 +285,14 @@ export default async function KonsolidasiReportPage({
               </TBody>
             </Table>
           </Card>
+
+          {/* Grafik kontribusi entitas */}
+          {rep.entities.length > 0 && (
+            <Card className="mb-6" padding="lg">
+              <SectionHeader className="mb-3">Kontribusi Entitas</SectionHeader>
+              <ContribChart entities={rep.entities} />
+            </Card>
+          )}
 
           {/* Goodwill (metode akuisisi) */}
           {Number(rep.goodwill.total) !== 0 && (

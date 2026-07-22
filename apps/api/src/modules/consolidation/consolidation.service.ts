@@ -8,6 +8,7 @@ import { Decimal } from 'decimal.js';
 import { AuditAction, JournalStatus, NormalBalance, Prisma } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { TenantContext } from '../../common/tenancy/tenant-context.js';
+import { readLogoDataUri } from '../../common/pdf/logo.js';
 import {
   computeConsolidation,
   type EntityAccount,
@@ -107,6 +108,12 @@ export class ConsolidationService {
       await tx.groupMember.delete({ where: { id: memberId } });
       return { removed: true };
     });
+  }
+
+  /** Nama + logo tenant induk (untuk header ekspor PDF/Excel). */
+  async brand(): Promise<{ nama: string; logo: string | null }> {
+    const t = await this.tenancy.run((tx) => tx.tenant.findFirst({ select: { nama: true, logoUrl: true } }));
+    return { nama: t?.nama ?? 'Perusahaan', logo: await readLogoDataUri(t?.logoUrl ?? null) };
   }
 
   /** Tenant kandidat anggota = tenant lain yang user-nya jadi anggota. */

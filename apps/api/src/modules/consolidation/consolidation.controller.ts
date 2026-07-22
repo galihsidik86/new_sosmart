@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -15,7 +16,9 @@ import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { TenancyInterceptor } from '../../common/interceptors/tenancy.interceptor.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
+import { type ReplyLike, sendPdf, sendXlsx } from '../../common/http/reply.js';
 import { ConsolidationService } from './consolidation.service.js';
+import { ConsolidationExportService } from './consolidation-export.service.js';
 
 const createGroupSchema = z.object({ nama: z.string().min(2).max(200) });
 type CreateGroupInput = z.infer<typeof createGroupSchema>;
@@ -33,7 +36,10 @@ type AddMemberInput = z.infer<typeof addMemberSchema>;
 @UseGuards(TenantGuard, RolesGuard)
 @UseInterceptors(TenancyInterceptor)
 export class ConsolidationController {
-  constructor(private readonly svc: ConsolidationService) {}
+  constructor(
+    private readonly svc: ConsolidationService,
+    private readonly exp: ConsolidationExportService,
+  ) {}
 
   @Get('groups')
   listGroups() {
@@ -52,6 +58,34 @@ export class ConsolidationController {
     @Query('startDate') startDate?: string,
   ) {
     return this.svc.consolidate({ groupId, startDate, endDate });
+  }
+
+  @Get('report.xlsx')
+  async reportXlsx(
+    @Res() reply: ReplyLike,
+    @Query('groupId') groupId: string,
+    @Query('endDate') endDate: string,
+    @Query('startDate') startDate?: string,
+  ) {
+    const [data, brand] = await Promise.all([
+      this.svc.consolidate({ groupId, startDate, endDate }),
+      this.svc.brand(),
+    ]);
+    sendXlsx(reply, `konsolidasi-${endDate}.xlsx`, await this.exp.buildExcel(data, brand.nama));
+  }
+
+  @Get('report.pdf')
+  async reportPdf(
+    @Res() reply: ReplyLike,
+    @Query('groupId') groupId: string,
+    @Query('endDate') endDate: string,
+    @Query('startDate') startDate?: string,
+  ) {
+    const [data, brand] = await Promise.all([
+      this.svc.consolidate({ groupId, startDate, endDate }),
+      this.svc.brand(),
+    ]);
+    sendPdf(reply, `konsolidasi-${endDate}.pdf`, await this.exp.buildPdf(data, brand.nama, brand.logo));
   }
 
   @Post('groups')
