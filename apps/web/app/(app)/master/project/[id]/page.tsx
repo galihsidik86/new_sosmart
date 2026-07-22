@@ -249,8 +249,10 @@ export default async function ProjectDetailPage({
   const tenantId = (await getActiveTenantId())!;
   const [p, users, accounts, customers, jenisProjek] = await Promise.all([
     apiFetch<ProjectDetail>(`/projects/${id}`, { tenantId }),
-    apiFetch<UserRow[]>('/users', { tenantId }),
-    apiFetch<Account[]>('/accounts?view=flat', { tenantId }),
+    // /users hanya OWNER/ADMIN → viewer read-only (AKUNTAN/AUDITOR) dapat 403.
+    // Daftar user hanya dipakai form yang di-gate canManage, jadi aman [] di sini.
+    apiFetch<UserRow[]>('/users', { tenantId }).catch(() => [] as UserRow[]),
+    apiFetch<Account[]>('/accounts?view=flat', { tenantId }).catch(() => [] as Account[]),
     apiFetch<CustomerOpt[]>('/customers', { tenantId }).catch(() => [] as CustomerOpt[]),
     apiFetch<{ id: string; nama: string }[]>('/jenis-projek', { tenantId }).catch(() => [] as { id: string; nama: string }[]),
   ]);
