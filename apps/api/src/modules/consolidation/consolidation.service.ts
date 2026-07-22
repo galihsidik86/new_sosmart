@@ -112,7 +112,10 @@ export class ConsolidationService {
 
   /** Nama + logo tenant induk (untuk header ekspor PDF/Excel). */
   async brand(): Promise<{ nama: string; logo: string | null }> {
-    const t = await this.tenancy.run((tx) => tx.tenant.findFirst({ select: { nama: true, logoUrl: true } }));
+    // Scope ke tenant induk aktif: RLS tenants_select mengizinkan user melihat
+    // semua tenant tempat ia jadi anggota, jadi findFirst polos bisa salah tenant.
+    const tenantId = this.ctx.require().tenantId;
+    const t = await this.tenancy.run((tx) => tx.tenant.findFirst({ where: { id: tenantId }, select: { nama: true, logoUrl: true } }));
     return { nama: t?.nama ?? 'Perusahaan', logo: await readLogoDataUri(t?.logoUrl ?? null) };
   }
 

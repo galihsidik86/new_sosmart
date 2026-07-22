@@ -10,6 +10,7 @@ import {
 import { TenantGuard } from '../../common/guards/tenant.guard.js';
 import { TenancyInterceptor } from '../../common/interceptors/tenancy.interceptor.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { type ReplyLike, sendXlsx } from '../../common/http/reply.js';
 import { normalizeProjectFilter } from '../../common/http/query.js';
 import { LedgerService } from './ledger.service.js';
@@ -25,11 +26,15 @@ export class LedgerController {
     private readonly tb: TrialBalanceService,
     private readonly xlsx: ReportsExcelService,
     private readonly tenancy: TenancyService,
+    private readonly ctx: TenantContext,
   ) {}
 
   private async tenantNama(): Promise<string> {
+    // Scope ke tenant aktif: RLS tenants_select mengizinkan user melihat semua
+    // tenant tempat ia jadi anggota, jadi findFirst polos bisa salah tenant.
+    const tenantId = this.ctx.require().tenantId;
     const t = await this.tenancy.run((tx) =>
-      tx.tenant.findFirst({ select: { nama: true } }),
+      tx.tenant.findFirst({ where: { id: tenantId }, select: { nama: true } }),
     );
     return t?.nama ?? 'Tenant';
   }

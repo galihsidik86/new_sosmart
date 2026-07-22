@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { type ReplyLike, sendXlsx, sendPdf } from '../../common/http/reply.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { JournalPdfService } from './journal-pdf.service.js';
 import {
   createJournalInputSchema,
@@ -37,11 +38,15 @@ export class JournalsController {
     private readonly journals: JournalsService,
     private readonly jurnalPdf: JournalPdfService,
     private readonly tenancy: TenancyService,
+    private readonly ctx: TenantContext,
   ) {}
 
   private async tenantNama(): Promise<string> {
+    // Scope ke tenant aktif: RLS tenants_select mengizinkan user melihat semua
+    // tenant tempat ia jadi anggota, jadi findFirst polos bisa salah tenant.
+    const tenantId = this.ctx.require().tenantId;
     const t = await this.tenancy.run((tx) =>
-      tx.tenant.findFirst({ select: { nama: true } }),
+      tx.tenant.findFirst({ where: { id: tenantId }, select: { nama: true } }),
     );
     return t?.nama ?? 'Tenant';
   }

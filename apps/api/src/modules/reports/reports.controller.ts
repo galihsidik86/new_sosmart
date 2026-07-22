@@ -2,6 +2,7 @@ import { Controller, Get, Query, Res, UseGuards, UseInterceptors } from '@nestjs
 import { TenantGuard } from '../../common/guards/tenant.guard.js';
 import { TenancyInterceptor } from '../../common/interceptors/tenancy.interceptor.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { type ReplyLike, sendPdf, sendXlsx } from '../../common/http/reply.js';
 import { normalizeProjectFilter } from '../../common/http/query.js';
 import { readLogoDataUri } from '../../common/pdf/logo.js';
@@ -35,19 +36,26 @@ export class ReportsController {
     private readonly pdf: ReportsPdfService,
     private readonly xlsx: ReportsExcelService,
     private readonly tenancy: TenancyService,
+    private readonly ctx: TenantContext,
   ) {}
 
   private async tenantNama(): Promise<string> {
+    // WAJIB scope ke tenant AKTIF: RLS tenants_select mengizinkan user
+    // melihat SEMUA tenant tempat ia jadi anggota (untuk tenant switcher),
+    // jadi findFirst() tanpa where bisa mengembalikan tenant lain.
+    const tenantId = this.ctx.require().tenantId;
     const t = await this.tenancy.run((tx) =>
-      tx.tenant.findFirst({ select: { nama: true } }),
+      tx.tenant.findFirst({ where: { id: tenantId }, select: { nama: true } }),
     );
     return t?.nama ?? 'Tenant';
   }
 
   /** Nama tenant + logo (data URI) untuk header cetak PDF. */
   private async brand(): Promise<{ nama: string; logo: string | null }> {
+    // Lihat catatan tenantNama(): harus filter by tenant aktif, bukan findFirst polos.
+    const tenantId = this.ctx.require().tenantId;
     const t = await this.tenancy.run((tx) =>
-      tx.tenant.findFirst({ select: { nama: true, logoUrl: true } }),
+      tx.tenant.findFirst({ where: { id: tenantId }, select: { nama: true, logoUrl: true } }),
     );
     const logo = await readLogoDataUri(t?.logoUrl);
     return { nama: t?.nama ?? 'Tenant', logo };

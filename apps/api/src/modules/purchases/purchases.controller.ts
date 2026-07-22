@@ -15,6 +15,7 @@ import {
 import { type ReplyLike, sendXlsx, sendPdf } from '../../common/http/reply.js';
 import { readLogoDataUri } from '../../common/pdf/logo.js';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
+import { TenantContext } from '../../common/tenancy/tenant-context.js';
 import { PurchasePdfService } from './purchase-pdf.service.js';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
@@ -38,11 +39,15 @@ export class PurchasesController {
     private readonly purchases: PurchasesService,
     private readonly purchPdf: PurchasePdfService,
     private readonly tenancy: TenancyService,
+    private readonly ctx: TenantContext,
   ) {}
 
   private async brand(): Promise<{ nama: string; logo: string | null }> {
+    // Scope ke tenant aktif: RLS tenants_select mengizinkan user melihat semua
+    // tenant tempat ia jadi anggota, jadi findFirst polos bisa salah tenant.
+    const tenantId = this.ctx.require().tenantId;
     const t = await this.tenancy.run((tx) =>
-      tx.tenant.findFirst({ select: { nama: true, logoUrl: true } }),
+      tx.tenant.findFirst({ where: { id: tenantId }, select: { nama: true, logoUrl: true } }),
     );
     return { nama: t?.nama ?? 'Tenant', logo: await readLogoDataUri(t?.logoUrl) };
   }
