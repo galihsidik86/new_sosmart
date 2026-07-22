@@ -224,7 +224,7 @@ export class SalesService {
 
         const customer = await tx.customer.findUnique({
           where: { id: input.customerId },
-          select: { id: true, nama: true, terminHari: true, isPkp: true },
+          select: { id: true, nama: true, terminHari: true },
         });
         if (!customer) throw new BadRequestException('Pelanggan tidak ditemukan');
 
@@ -242,10 +242,18 @@ export class SalesService {
           ? new Date(input.jatuhTempo + 'T00:00:00Z')
           : new Date(tanggal.getTime() + jatuhTempoHari * 86_400_000);
 
-        // PMK 131/2024: Faktur pajak (dan PPN keluaran) hanya diterbitkan
-        // untuk customer PKP. Untuk non-PKP: klasifikasi kena PPN (BKP/JKP)
-        // di-coerce ke NON_BKP supaya PPN tidak dihitung.
-        const lines = customer.isPkp
+        // UU PPN No. 42/2009: kewajiban memungut PPN & menerbitkan Faktur
+        // Pajak melekat pada status PKP PENJUAL, bukan pembeli. Penjual PKP
+        // WAJIB memungut PPN atas BKP/JKP ke SEMUA pelanggan — termasuk
+        // non-PKP (NPWP pembeli 00.000.000.0-000.000, faktur tak dapat
+        // dikreditkan pembeli). Hanya penjual NON-PKP yang tak boleh
+        // memungut PPN → klasifikasi kena PPN (BKP/JKP) di-coerce ke
+        // NON_BKP. Lalai terbitkan FP → sanksi STP Pasal 14(4) UU KUP.
+        const tenant = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          select: { isPkp: true },
+        });
+        const lines = tenant?.isPkp
           ? input.lines
           : input.lines.map((l) =>
               isPpnable(l.klasifikasiPpn)
@@ -360,7 +368,7 @@ export class SalesService {
       }
       const customer = await tx.customer.findUnique({
         where: { id: input.customerId },
-        select: { terminHari: true, isPkp: true },
+        select: { terminHari: true },
       });
       if (!customer) throw new BadRequestException('Pelanggan tidak ditemukan');
       let jatuhTempoHari = customer.terminHari;
@@ -376,8 +384,14 @@ export class SalesService {
         ? new Date(input.jatuhTempo + 'T00:00:00Z')
         : new Date(tanggal.getTime() + jatuhTempoHari * 86_400_000);
 
-      // PMK 131/2024: non-PKP → coerce BKP/JKP ke NON_BKP (tidak terbit FP).
-      const lines = customer.isPkp
+      // UU PPN No. 42/2009: PPN keluaran mengikuti status PKP PENJUAL, bukan
+      // pembeli. Penjual PKP tetap memungut PPN atas BKP/JKP ke non-PKP; hanya
+      // penjual non-PKP yang di-coerce ke NON_BKP (tidak boleh terbit FP).
+      const tenant = await tx.tenant.findUnique({
+        where: { id: tenantId },
+        select: { isPkp: true },
+      });
+      const lines = tenant?.isPkp
         ? input.lines
         : input.lines.map((l) =>
             isPpnable(l.klasifikasiPpn)
