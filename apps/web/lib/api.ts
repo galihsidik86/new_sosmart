@@ -83,7 +83,13 @@ export async function apiFetch<T>(
     const body = await res.text();
     throw new Error(`API ${res.status}: ${body}`);
   }
-  return res.json() as Promise<T>;
+  // 204 No Content atau body kosong (mis. DELETE draft yang tak return apa-apa)
+  // → tidak ada JSON untuk di-parse. `res.json()` pada body kosong akan throw
+  // SyntaxError yang naik ke error boundary (padahal request SUKSES), jadi
+  // parse hanya kalau memang ada isi.
+  if (res.status === 204) return undefined as T;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 export async function apiLogin(
