@@ -88,6 +88,13 @@ async function cancelAction(formData: FormData) {
   });
   revalidatePath(`/transaksi/kas-bank/${id}`);
 }
+async function deleteAction(formData: FormData) {
+  'use server';
+  const tenantId = await getActiveTenantId(); if (!tenantId) redirect('/login');
+  const id = String(formData.get('id'));
+  await apiFetch(`/cash-bank/${id}`, { method: 'DELETE', tenantId });
+  redirect('/transaksi/kas-bank');
+}
 
 export default async function KasBankDetailPage({
   params,
@@ -224,6 +231,12 @@ export default async function KasBankDetailPage({
               >
                 Edit Draft
               </Link>
+              {mayPost && (
+                <form action={deleteAction}>
+                  <input type="hidden" name="id" value={e.id} />
+                  <Button type="submit" variant="ghost">Hapus Draft</Button>
+                </form>
+              )}
             </>
           )}
           {e.status === 'POSTED' && mayCancel && (

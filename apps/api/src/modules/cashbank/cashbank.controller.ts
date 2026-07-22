@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   Param,
@@ -81,6 +82,12 @@ export class CashBankController {
     body: CreateCashBankInput,
   ) {
     return this.cb.updateDraft(id, body);
+  }
+
+  @Delete(':id')
+  @Roles('OWNER', 'ADMIN', 'AKUNTAN', 'KASIR')
+  deleteDraft(@Param('id') id: string) {
+    return this.cb.deleteDraft(id);
   }
 
   @Post(':id/post')

@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
-import { AccountKind, JournalStatus } from '@lentera/db';
+import { AccountKind, JournalStatus, NormalBalance } from '@lentera/db';
 import { TenancyService } from '../../common/tenancy/tenancy.service.js';
 import { GlConfigService } from '../../common/gl-config/gl-config.service.js';
 import { CabangScopeService } from '../../common/cabang-scope/cabang-scope.service.js';
 import { deriveIsKasSetara } from '@lentera/shared/enums';
-import { aggregateAllAccounts, mutasiSigned, plKindContribution, saldoAkhirSigned } from './helpers.js';
+import { aggregateAllAccounts, klasifikasiAset, klasifikasiLiabilitas, saldoAkhirSigned } from './helpers.js';
 import { JOURNAL_BALANCE_STATUSES } from '../../common/gl/journal-balance-statuses.js';
 
 export interface ArusKasLine {
@@ -124,10 +124,8 @@ export class ArusKasService {
         projectId: opts.projectId,
       });
 
-      // === Resolve akun configurable via GlConfig ===
-      const idPenyusutan = await this.glConfig.getAccountIdInTx(tx, 'BEBAN_PENYUSUTAN');
+      // === Resolve akun configurable via GlConfig (untuk itemisasi baris pendanaan) ===
       const idModal = await this.glConfig.getAccountIdInTx(tx, 'MODAL_DISETOR');
-      const idLabaDitahan = await this.glConfig.getAccountIdInTx(tx, 'LABA_DITAHAN');
       const idDividen = await this.glConfig.getAccountIdInTx(tx, 'DIVIDEN');
       // Utang Bank: pakai key config kalau ada; kalau akun-nya memang tidak ada,
       // pertahankan perilaku lama (delta 0) alih-alih throw.
@@ -136,119 +134,142 @@ export class ArusKasService {
         idUtangBank = await this.glConfig.getAccountIdInTx(tx, 'UTANG_BANK');
       } catch { /* akun utang bank belum ada → kontribusi 0 */ }
 
-      // === Helper: nilai mutasi akun signed (saldo normal positif) ===
-      const mut = (kode: string) => {
-        const acc = [...result.accounts.values()].find((a) => a.kode === kode);
-        if (!acc) return new Decimal(0);
-        return mutasiSigned(acc, result.mutasiByAcc.get(acc.id));
-      };
-      const mutById = (id: string) => {
-        const acc = result.accounts.get(id);
-        if (!acc) return new Decimal(0);
-        return mutasiSigned(acc, result.mutasiByAcc.get(id));
-      };
-      const sumMut = (kodePrefix: string) => {
-        let s = new Decimal(0);
-        for (const acc of result.accounts.values()) {
-          if (acc.kode.startsWith(kodePrefix)) {
-            s = s.plus(mutasiSigned(acc, result.mutasiByAcc.get(acc.id)));
-          }
-        }
-        return s;
-      };
-
-      // === Laba Bersih periode ===
-      let pendapatan = new Decimal(0);
-      let beban = new Decimal(0);
-      for (const acc of result.accounts.values()) {
-        // plKindContribution: koreksi arah untuk akun kontra (lihat helpers.ts).
-        const nilai = plKindContribution(acc, mutasiSigned(acc, result.mutasiByAcc.get(acc.id)));
-        if (acc.kind === AccountKind.PENDAPATAN || acc.kind === AccountKind.PENDAPATAN_LAIN) {
-          pendapatan = pendapatan.plus(nilai);
-        } else if (
-          acc.kind === AccountKind.BEBAN ||
-          acc.kind === AccountKind.BEBAN_POKOK ||
-          acc.kind === AccountKind.BEBAN_LAIN
-        ) {
-          beban = beban.plus(nilai);
-        }
-      }
-      const labaBersih = pendapatan.minus(beban);
-
-      // === Penyusutan (non-kas) — mutasi periode akun BEBAN_PENYUSUTAN ===
-      const penyusutan = mutById(idPenyusutan);
-
-      // === Δ Aset Lancar non-kas (positif = kenaikan = kurangi kas) ===
-      // Note: kenaikan piutang/persediaan → kas turun, jadi tanda dibalik.
-      const dPiutang = mut('1-103');
-      const dPersediaan = mut('1-104');
-      const dPpnMasukan = mut('1-105');
-      const dBebanDimuka = mut('1-106');
-      const dPph25 = mut('1-107');
-
-      // === Δ Liabilitas Jangka Pendek ===
-      const dUtangUsaha = mut('2-101');
-      const dUtangPajak = sumMut('2-102'); // semua 2-102x
-      // BPJS: 2-106 (karyawan) + 2-107 (kesehatan). Ambil langsung supaya
-      // tidak rapuh kalau seed COA berubah (dulu pakai subtract-chain dari
-      // sumMut('2-10') yang keliru match 2-110/2-111 juga).
-      const dBpjs = sumMut('2-106').plus(sumMut('2-107'));
-      const dBebanYMHD = mut('2-110');
-
-      // Operasi
-      const operasi: ArusKasLine[] = [
-        { label: 'Laba Bersih', nilai: labaBersih.toFixed(2) },
-        { label: 'Penyusutan (non-kas)', nilai: penyusutan.toFixed(2) },
-        { label: '(Kenaikan) / Penurunan Piutang Usaha', nilai: dPiutang.negated().toFixed(2) },
-        { label: '(Kenaikan) / Penurunan Persediaan', nilai: dPersediaan.negated().toFixed(2) },
-        { label: '(Kenaikan) / Penurunan PPN Masukan', nilai: dPpnMasukan.negated().toFixed(2) },
-        { label: '(Kenaikan) / Penurunan Beban Dibayar Dimuka', nilai: dBebanDimuka.negated().toFixed(2) },
-        { label: '(Kenaikan) / Penurunan PPh 23/25 Dibayar Dimuka', nilai: dPph25.negated().toFixed(2) },
-        { label: 'Kenaikan / (Penurunan) Utang Usaha', nilai: dUtangUsaha.toFixed(2) },
-        { label: 'Kenaikan / (Penurunan) Utang Pajak', nilai: dUtangPajak.toFixed(2) },
-        { label: 'Kenaikan / (Penurunan) Utang BPJS', nilai: dBpjs.toFixed(2) },
-        { label: 'Kenaikan / (Penurunan) Beban Masih Harus Dibayar', nilai: dBebanYMHD.toFixed(2) },
-      ];
-      const totalOperasi = operasi.reduce((a, r) => a.plus(new Decimal(r.nilai)), new Decimal(0));
-
-      // === Investasi ===
-      // Δ saldo aset tetap (perolehan vs disposal). Kenaikan = pengeluaran kas.
-      // Akun aset tetap: 1-201..1-208. Akumulasi (1-203, 1-205, 1-207) tidak masuk arus kas — itu non-kas.
-      const dTanah = mut('1-201');
-      const dBangunan = mut('1-202');
-      const dKendaraan = mut('1-204');
-      const dPeralatan = mut('1-206');
-
-      const investasi: ArusKasLine[] = [
-        { label: '(Pembelian) / Penjualan Tanah', nilai: dTanah.negated().toFixed(2) },
-        { label: '(Pembelian) / Penjualan Bangunan', nilai: dBangunan.negated().toFixed(2) },
-        { label: '(Pembelian) / Penjualan Kendaraan', nilai: dKendaraan.negated().toFixed(2) },
-        { label: '(Pembelian) / Penjualan Peralatan & Mesin', nilai: dPeralatan.negated().toFixed(2) },
-      ];
-      const totalInvestasi = investasi.reduce((a, r) => a.plus(new Decimal(r.nilai)), new Decimal(0));
-
-      // === Pendanaan ===
-      const dUtangBank = idUtangBank ? mutById(idUtangBank) : new Decimal(0);
-      const dModal = mutById(idModal);
-      const dSaldoLaba = mutById(idLabaDitahan); // biasanya dari closing entry — bisa diabaikan untuk YTD
-      const dDividen = mutById(idDividen).negated(); // saldo normal debit → mutasi positif = pembagian dividen (keluar kas)
-
-      const pendanaan: ArusKasLine[] = [
-        { label: 'Kenaikan / (Penurunan) Utang Bank', nilai: dUtangBank.toFixed(2) },
-        { label: 'Penambahan Modal Disetor', nilai: dModal.toFixed(2) },
-        { label: '(Pembagian Dividen / Prive)', nilai: dDividen.toFixed(2) },
-      ];
-      const totalPendanaan = pendanaan.reduce((a, r) => a.plus(new Decimal(r.nilai)), new Decimal(0));
-
-      const kenaikanKas = totalOperasi.plus(totalInvestasi).plus(totalPendanaan);
-
-      // === Kas Awal & Kas Akhir (semua akun kas & setara kas) ===
+      // === Set akun kas & setara (dikecualikan dari kategori — ini KAS-nya) ===
       // Sumber: field Account.isKasSetara. Fallback ke konvensi prefix HANYA
       // kalau belum ada satupun akun ditandai (data lama belum ter-backfill).
       let kasAccounts = [...result.accounts.values()].filter((a) => a.isKasSetara);
       if (kasAccounts.length === 0) {
         kasAccounts = [...result.accounts.values()].filter((a) => deriveIsKasSetara(a.kode));
       }
+      const kasIdSet = new Set(kasAccounts.map((a) => a.id));
+
+      // rawDelta = kredit − debit mutasi periode. Untuk akun NON-KAS ini adalah
+      // kontribusi BERSIH ke kas (aset naik → debit → negatif; utang/ekuitas naik
+      // → kredit → positif). Untuk akun L/R, Σ rawDelta = laba bersih. Karena tiap
+      // jurnal Σdebit=Σkredit, Σ rawDelta SEMUA akun non-kas = perubahan kas —
+      // sehingga operasi+investasi+pendanaan PASTI = Δkas (balanced by construction).
+      const rawDelta = (acc: { id: string }) => {
+        const m = result.mutasiByAcc.get(acc.id);
+        return m ? m.kredit.minus(m.debit) : new Decimal(0);
+      };
+      const rawByKode = (kode: string) => {
+        const acc = [...result.accounts.values()].find((a) => a.kode === kode);
+        return acc ? rawDelta(acc) : new Decimal(0);
+      };
+      const rawByKodePrefix = (prefix: string) => {
+        let s = new Decimal(0);
+        for (const acc of result.accounts.values()) {
+          if (acc.kode.startsWith(prefix)) s = s.plus(rawDelta(acc));
+        }
+        return s;
+      };
+      const rawById = (id: string | null) => {
+        if (!id) return new Decimal(0);
+        const acc = result.accounts.get(id);
+        return acc ? rawDelta(acc) : new Decimal(0);
+      };
+      const isPL = (k: AccountKind) =>
+        k === AccountKind.PENDAPATAN || k === AccountKind.PENDAPATAN_LAIN ||
+        k === AccountKind.BEBAN || k === AccountKind.BEBAN_POKOK || k === AccountKind.BEBAN_LAIN;
+
+      // === Partisi SEMUA akun non-kas ke bucket (cakupan penuh → pasti balance) ===
+      let labaBersih = new Decimal(0);   // Σ akun L/R (laba bersih)
+      let penyusutan = new Decimal(0);   // kontra-aset (akum. penyusutan/penyisihan) = add-back non-kas
+      let wcAssetTotal = new Decimal(0); // Δ aset lancar non-kas (modal kerja, operasi)
+      let wcLiabTotal = new Decimal(0);  // Δ liabilitas jangka pendek (modal kerja, operasi)
+      let investTotal = new Decimal(0);  // Δ aset tetap bruto (investasi)
+      let financeTotal = new Decimal(0); // Δ liabilitas jk panjang + ekuitas (pendanaan)
+      for (const acc of result.accounts.values()) {
+        if (kasIdSet.has(acc.id)) continue;
+        const d = rawDelta(acc);
+        if (d.isZero()) continue;
+        if (isPL(acc.kind)) {
+          labaBersih = labaBersih.plus(d);
+        } else if (acc.kind === AccountKind.ASET) {
+          if (acc.normalBalance === NormalBalance.KREDIT) {
+            penyusutan = penyusutan.plus(d);          // kontra-aset non-kas (add-back)
+          } else if (klasifikasiAset(acc) === 'LANCAR') {
+            wcAssetTotal = wcAssetTotal.plus(d);      // aset lancar → operasi
+          } else {
+            investTotal = investTotal.plus(d);        // aset tetap → investasi
+          }
+        } else if (acc.kind === AccountKind.LIABILITAS) {
+          if (klasifikasiLiabilitas(acc) === 'PENDEK') {
+            wcLiabTotal = wcLiabTotal.plus(d);        // utang lancar → operasi
+          } else {
+            financeTotal = financeTotal.plus(d);      // utang jk panjang → pendanaan
+          }
+        } else if (acc.kind === AccountKind.EKUITAS) {
+          financeTotal = financeTotal.plus(d);        // modal/dividen/saldo laba → pendanaan
+        }
+      }
+
+      // Itemisasi baris terkenal + baris "lainnya" (residual) supaya jumlah baris
+      // yang ditampilkan PERSIS = total bucket generik (tetap balance).
+      // rawDelta sudah bertanda kas → tak perlu negasi lagi.
+      const dPiutang = rawByKode('1-103');
+      const dPersediaan = rawByKode('1-104');
+      const dPpnMasukan = rawByKode('1-105');
+      const dBebanDimuka = rawByKode('1-106');
+      const dPph25 = rawByKode('1-107');
+      const wcAssetOther = wcAssetTotal
+        .minus(dPiutang).minus(dPersediaan).minus(dPpnMasukan).minus(dBebanDimuka).minus(dPph25);
+
+      const dUtangUsaha = rawByKode('2-101');
+      const dUtangPajak = rawByKodePrefix('2-102');
+      const dBpjs = rawByKodePrefix('2-106').plus(rawByKodePrefix('2-107'));
+      const dBebanYMHD = rawByKode('2-110');
+      const wcLiabOther = wcLiabTotal
+        .minus(dUtangUsaha).minus(dUtangPajak).minus(dBpjs).minus(dBebanYMHD);
+
+      const operasi: ArusKasLine[] = [
+        { label: 'Laba Bersih', nilai: labaBersih.toFixed(2) },
+        { label: 'Penyusutan & penyisihan (non-kas)', nilai: penyusutan.toFixed(2) },
+        { label: '(Kenaikan) / Penurunan Piutang Usaha', nilai: dPiutang.toFixed(2) },
+        { label: '(Kenaikan) / Penurunan Persediaan', nilai: dPersediaan.toFixed(2) },
+        { label: '(Kenaikan) / Penurunan PPN Masukan', nilai: dPpnMasukan.toFixed(2) },
+        { label: '(Kenaikan) / Penurunan Beban Dibayar Dimuka', nilai: dBebanDimuka.toFixed(2) },
+        { label: '(Kenaikan) / Penurunan PPh 23/25 Dibayar Dimuka', nilai: dPph25.toFixed(2) },
+        { label: 'Kenaikan / (Penurunan) Utang Usaha', nilai: dUtangUsaha.toFixed(2) },
+        { label: 'Kenaikan / (Penurunan) Utang Pajak', nilai: dUtangPajak.toFixed(2) },
+        { label: 'Kenaikan / (Penurunan) Utang BPJS', nilai: dBpjs.toFixed(2) },
+        { label: 'Kenaikan / (Penurunan) Beban Masih Harus Dibayar', nilai: dBebanYMHD.toFixed(2) },
+        { label: 'Perubahan Modal Kerja Lainnya', nilai: wcAssetOther.plus(wcLiabOther).toFixed(2) },
+      ];
+      const totalOperasi = labaBersih.plus(penyusutan).plus(wcAssetTotal).plus(wcLiabTotal);
+
+      // === Investasi: aset tetap bruto (perolehan = keluar kas) ===
+      const dTanah = rawByKode('1-201');
+      const dBangunan = rawByKode('1-202');
+      const dKendaraan = rawByKode('1-204');
+      const dPeralatan = rawByKode('1-206');
+      const investOther = investTotal
+        .minus(dTanah).minus(dBangunan).minus(dKendaraan).minus(dPeralatan);
+      const investasi: ArusKasLine[] = [
+        { label: '(Pembelian) / Penjualan Tanah', nilai: dTanah.toFixed(2) },
+        { label: '(Pembelian) / Penjualan Bangunan', nilai: dBangunan.toFixed(2) },
+        { label: '(Pembelian) / Penjualan Kendaraan', nilai: dKendaraan.toFixed(2) },
+        { label: '(Pembelian) / Penjualan Peralatan & Mesin', nilai: dPeralatan.toFixed(2) },
+        { label: '(Pembelian) / Penjualan Aset Tetap Lainnya', nilai: investOther.toFixed(2) },
+      ];
+      const totalInvestasi = investTotal;
+
+      // === Pendanaan: utang jangka panjang + ekuitas ===
+      const dUtangBank = rawById(idUtangBank);
+      const dModal = rawById(idModal);
+      const dDividen = rawById(idDividen);
+      const financeOther = financeTotal.minus(dUtangBank).minus(dModal).minus(dDividen);
+      const pendanaan: ArusKasLine[] = [
+        { label: 'Kenaikan / (Penurunan) Utang Bank', nilai: dUtangBank.toFixed(2) },
+        { label: 'Penambahan Modal Disetor', nilai: dModal.toFixed(2) },
+        { label: '(Pembagian Dividen / Prive)', nilai: dDividen.toFixed(2) },
+        { label: 'Pendanaan Lainnya', nilai: financeOther.toFixed(2) },
+      ];
+      const totalPendanaan = financeTotal;
+
+      const kenaikanKas = totalOperasi.plus(totalInvestasi).plus(totalPendanaan);
+
+      // === Kas Awal & Kas Akhir (akun kas & setara kas) ===
       let kasAwal = new Decimal(0);
       let kasAkhir = new Decimal(0);
       for (const acc of kasAccounts) {

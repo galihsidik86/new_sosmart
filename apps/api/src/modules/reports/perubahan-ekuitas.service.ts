@@ -78,23 +78,30 @@ export class PerubahanEkuitasService {
       });
 
       // Resolve akun via GlConfig (override per tenant, fallback ke kode default).
-      const idModal = await this.glConfig.getAccountIdInTx(tx, 'MODAL_DISETOR');
       const idLabaDitahan = await this.glConfig.getAccountIdInTx(tx, 'LABA_DITAHAN');
       const idDividen = await this.glConfig.getAccountIdInTx(tx, 'DIVIDEN');
 
-      const modalAcc = ekResult.accounts.get(idModal);
       const saldoLabaAcc = ekResult.accounts.get(idLabaDitahan);
       const dividenAcc = ekResult.accounts.get(idDividen);
 
-      const saldoAwalModal = modalAcc
-        ? ekResult.signedSaldoAwalByAcc.get(modalAcc.id) ?? new Decimal(0)
-        : new Decimal(0);
+      // "Modal" = SEMUA akun ekuitas KECUALI Saldo Laba (3-102) & Dividen (3-104) —
+      // mencakup Modal Disetor (3-101), Tambahan Modal Disetor/agio (3-106), Ikhtisar
+      // Laba Rugi (3-103), dst. Ini membuat total ekuitas laporan ini KONSISTEN dengan
+      // Neraca (yang menjumlah seluruh akun ekuitas), bukan hanya 3-101.
+      let saldoAwalModal = new Decimal(0);
+      let tambahanModal = new Decimal(0);
+      for (const acc of ekResult.accounts.values()) {
+        if (acc.id === idLabaDitahan || acc.id === idDividen) continue;
+        saldoAwalModal = saldoAwalModal.plus(
+          ekResult.signedSaldoAwalByAcc.get(acc.id) ?? new Decimal(0),
+        );
+        tambahanModal = tambahanModal.plus(
+          mutasiSigned(acc, ekResult.mutasiByAcc.get(acc.id)),
+        );
+      }
+
       const saldoAwalLaba = saldoLabaAcc
         ? ekResult.signedSaldoAwalByAcc.get(saldoLabaAcc.id) ?? new Decimal(0)
-        : new Decimal(0);
-
-      const tambahanModal = modalAcc
-        ? mutasiSigned(modalAcc, ekResult.mutasiByAcc.get(modalAcc.id))
         : new Decimal(0);
 
       // Dividen: saldo normal akun 3-104 adalah DEBIT (kontra-ekuitas), mutasiSigned

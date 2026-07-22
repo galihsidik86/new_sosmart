@@ -4,7 +4,9 @@ import {
   Delete,
   Get,
   Headers,
+  HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -93,7 +95,10 @@ export class SalesController {
   }
 
   @Get(':id')
-  byId(@Param('id') id: string) {
+  byId(
+    @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND }))
+    id: string,
+  ) {
     return this.sales.byId(id);
   }
 

@@ -285,6 +285,24 @@ export class CashBankService {
     });
   }
 
+  /**
+   * Hapus bukti kas/bank yang masih DRAFT (belum ter-posting). Konsisten dgn
+   * penjualan/pembelian/jurnal yang punya hapus-draft. POSTED tidak boleh
+   * dihapus — harus dibatalkan (reverse) lewat cancel().
+   */
+  async deleteDraft(id: string) {
+    return this.tenancy.run(async (tx) => {
+      const e = await tx.cashBankEntry.findUnique({ where: { id } });
+      if (!e) throw new NotFoundException('Bukti kas/bank tidak ditemukan');
+      this.cabangScope.assertAccess(e.cabangId);
+      if (e.status !== InvoiceStatus.DRAFT) {
+        throw new BadRequestException('Hanya draft yang bisa dihapus');
+      }
+      await tx.cashBankEntryLine.deleteMany({ where: { entryId: id } });
+      await tx.cashBankEntry.delete({ where: { id } });
+    });
+  }
+
   async post(
     id: string,
     opts?: { overrideBudget?: boolean; alasan?: string },
