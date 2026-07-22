@@ -2,11 +2,11 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiErrorMessage, isNextRedirectError } from '@/lib/api';
 import { getActiveTenantId, getSession } from '@/lib/session';
 import { fmtRp, fmtTanggal } from '@/lib/format';
 import {
-  PageContainer, PageHeader, Card, Button, Badge, Input,
+  PageContainer, PageHeader, Card, Button, Badge, Input, StatusBanner,
   Table, THead, TH, TBody, TR, TD, EmptyRow,
 } from '@/components/ui';
 import { LiveRefresh } from '@/components/LiveRefresh';
@@ -31,18 +31,31 @@ async function actAction(decision: 'SETUJU' | 'TOLAK', formData: FormData) {
   'use server';
   const tenantId = await getActiveTenantId();
   if (!tenantId) redirect('/login');
-  await apiFetch(`/approval/${formData.get('id')}/act`, {
-    method: 'POST',
-    tenantId,
-    body: JSON.stringify({
-      action: decision,
-      catatan: String(formData.get('catatan') ?? '') || undefined,
-    }),
-  });
+  const id = String(formData.get('id'));
+  try {
+    await apiFetch(`/approval/${id}/act`, {
+      method: 'POST',
+      tenantId,
+      body: JSON.stringify({
+        action: decision,
+        catatan: String(formData.get('catatan') ?? '') || undefined,
+      }),
+    });
+  } catch (e) {
+    if (isNextRedirectError(e)) throw e; // biarkan redirect (mis. /logout) lewat
+    // Tampilkan pesan API yang spesifik sbg banner, bukan error boundary generik.
+    redirect(`/approval?err=${encodeURIComponent(apiErrorMessage(e))}`);
+  }
   revalidatePath('/approval');
+  redirect('/approval'); // sukses → daftar segar & bersihkan ?err lama
 }
 
-export default async function ApprovalInboxPage() {
+export default async function ApprovalInboxPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ err?: string }>;
+}) {
+  const sp = await searchParams;
   const s = (await getSession())!;
   const tenantId = (await getActiveTenantId())!;
   const items = await apiFetch<InboxItem[]>('/approval/inbox', { tenantId });
@@ -54,6 +67,21 @@ export default async function ApprovalInboxPage() {
         title="Kotak Approval"
         subtitle={`${items.length} dokumen menunggu persetujuan Anda (role ${s.role}).`}
       />
+
+      {sp.err && (
+        <div className="mb-4">
+          <StatusBanner
+            tone="danger"
+            right={
+              <Link href={'/approval' as Route} className="text-xs font-semibold underline">
+                Tutup
+              </Link>
+            }
+          >
+            {sp.err}
+          </StatusBanner>
+        </div>
+      )}
 
       <Card padding="none">
         <div className="overflow-x-auto">

@@ -92,6 +92,41 @@ export async function apiFetch<T>(
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+/**
+ * Ambil pesan error MANUSIAWI dari error yang dilempar apiFetch — yang
+ * berformat `API <status>: <body>` (body biasanya JSON {message}). Dipakai
+ * untuk menampilkan pesan API yang spesifik (mis. "Langkah ini harus
+ * disetujui oleh OWNER") alih-alih error boundary generik.
+ */
+export function apiErrorMessage(
+  e: unknown,
+  fallback = 'Terjadi kesalahan. Coba lagi.',
+): string {
+  const raw = e instanceof Error ? e.message : String(e ?? '');
+  const m = raw.match(/^API \d+: ([\s\S]*)$/);
+  const body = m ? m[1] : raw;
+  try {
+    const j = JSON.parse(body);
+    if (Array.isArray(j?.message)) return j.message.join(', ');
+    if (typeof j?.message === 'string') return j.message;
+    if (typeof j?.error === 'string') return j.error;
+  } catch {
+    /* body bukan JSON */
+  }
+  return m && body && body.length < 240 ? body : fallback;
+}
+
+/** True kalau error ini adalah sinyal redirect Next (jangan ditangani sbg error). */
+export function isNextRedirectError(e: unknown): boolean {
+  return (
+    typeof e === 'object' &&
+    e !== null &&
+    'digest' in e &&
+    typeof (e as { digest?: unknown }).digest === 'string' &&
+    (e as { digest: string }).digest.startsWith('NEXT_REDIRECT')
+  );
+}
+
 export async function apiLogin(
   email: string,
   password: string,
