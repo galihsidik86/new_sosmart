@@ -67,6 +67,24 @@ setsid bash -c 'cd /srv/lentera && { git pull --ff-only origin main && bash scri
 
 **Jangan** lagi `rm -rf apps/web/.next` pada instance live, dan **jangan** `pm2 restart` yang memicu `next start` saat `.next` warna aktif tidak ada — itu penyebab crash-loop ENOENT lama yang sempat men-starve app tetangga. Rollback cepat: `sed` port Caddyfile balik ke warna lama + `systemctl reload caddy` + `pm2 restart lentera-web-<lama>`.
 
+### Gotcha deploy instance BARU (mis. server demo) — WAJIB diperiksa
+
+Pelajaran dari bring-up instance demo (`markplus.sosmartpro.com`). Kalau menyiapkan instance Lentera baru dari nol, tiga hal ini sering terlewat dan bikin gejala membingungkan:
+
+1. **Caddy WAJIB merutekan `/uploads/*` dan `/api/*` ke API, bukan hanya web.** File yang di-upload (logo perusahaan, bukti) disajikan `@fastify/static` di API (prefix `/uploads/`, lihat `apps/api/src/main.ts`). Browser memuat logo via `<img src="/uploads/logos/…">` ke origin — kalau Caddy hanya `reverse_proxy <web>`, path itu nyasar ke Next → **404, logo tak tampil** (file-nya ada, routing-nya yang salah). Pola benar (samakan dgn prod):
+   ```
+   domain {
+     encode gzip
+     handle /uploads/* { reverse_proxy 127.0.0.1:<API_PORT> }
+     handle /api/*     { reverse_proxy 127.0.0.1:<API_PORT> }
+     handle            { reverse_proxy 127.0.0.1:<WEB_PORT> }
+   }
+   ```
+2. **Nilai `.env` yang mengandung `&` HARUS di-kutip ganda** (mis. `APP_DATABASE_URL="postgresql://…?schema=public&connection_limit=20&pool_timeout=20"`). Kalau tidak, `set -a; . ./.env` (dipakai deploy & saat start PM2) menafsirkan `&` sebagai operator shell → URL terpotong / var tak ter-set, dan `pm2 restart --update-env` **tak menerapkannya** (proses jalan dgn pool default, senyap). Verifikasi env AKTUAL proses via `tr '\0' '\n' < /proc/$(pm2 pid <app>)/environ | grep APP_DATABASE_URL`, dan reboot-safe via `grep connection_limit /root/.pm2/dump.pm2`. Cara andal menerapkan perubahan env: `pm2 delete <app>; set -a; . ./.env; set +a; pm2 start <ecosystem> --only <app>; pm2 save` (bukan `--update-env`).
+3. **`pg_dump`/restore hanya membawa DATA, bukan file upload.** Kloning DB tak menyalin `/uploads/*` — logo & lampiran harus di-copy filesystem-nya terpisah (atau di-upload ulang di instance baru). `logo_url` di tabel `tenants` menunjuk file yang mungkin tak ada di server baru.
+
+Setup instance demo terisolasi: DB/Redis container nama+port sendiri (mis. `lentera_demo_postgres` :5434, redis :6381, bind `127.0.0.1`), ecosystem PM2 single-web (`infra/ecosystem.demo.config.cjs`, nama file HARUS `*.config.cjs` agar PM2 baca sebagai config bukan skrip), `pm2 startup systemd` + `pm2 save` untuk reboot. **Reset ke buku bersih** (buang transaksi, sisakan COA+saldo awal+master): DELETE semua tabel transaksi dgn `SET session_replication_role = replica` (matikan FK sementara), reset `sequences`, snapshot `aset_tetap`, dan `fiscal_periods/years` → OPEN.
+
 ## Arsitektur penting
 
 ### Multi-tenant + multi-cabang
