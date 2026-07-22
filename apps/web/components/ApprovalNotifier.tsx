@@ -20,8 +20,9 @@ const DOC_LABEL: Record<string, string> = {
   PENJUALAN: 'Penjualan', PEMBELIAN: 'Pembelian', KAS_BANK: 'Kas/Bank', JURNAL: 'Jurnal',
 };
 
-// Interval polling saat tab aktif. Approval bukan chat — 20s cukup responsif & hemat.
-const POLL_MS = 20_000;
+// Interval polling saat tab TERLIHAT. Cukup gesit untuk approval; saat tab
+// tak terlihat polling dihentikan (0 request) dan langsung poll begitu kembali.
+const POLL_MS = 5_000;
 
 /**
  * Pop-up daftar dokumen yang menunggu persetujuan user yang sedang login.
@@ -68,7 +69,9 @@ export function ApprovalNotifier({ items: initialItems, userId }: { items: Inbox
   }, [items, seenKey]);
 
   // Polling ringan ke inbox (lewat proxy → auth+tenant dari cookie httpOnly).
+  // Lewati saat tab tak terlihat → tak ada request sia-sia di background.
   const poll = useCallback(async () => {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
     try {
       const res = await fetch('/proxy/approval/inbox', { cache: 'no-store', redirect: 'manual' });
       if (!res.ok) return; // 401/redirect/sesi habis → diamkan, jangan ganggu
