@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Modal, Button, Badge, buttonClass } from '@/components/ui';
@@ -20,21 +20,78 @@ const DOC_LABEL: Record<string, string> = {
   PENJUALAN: 'Penjualan', PEMBELIAN: 'Pembelian', KAS_BANK: 'Kas/Bank', JURNAL: 'Jurnal',
 };
 
+// Interval polling saat tab aktif. Approval bukan chat — 20s cukup responsif & hemat.
+const POLL_MS = 20_000;
+
 /**
  * Pop-up daftar dokumen yang menunggu persetujuan user yang sedang login.
- * Muncul sekali per sesi per user (pakai sessionStorage) supaya tidak
- * mengganggu tiap pindah halaman. Kalau tidak ada yang menunggu → tidak render.
+ *
+ * REAL-TIME tanpa refresh: selain data awal dari server (render pertama),
+ * komponen ini MEM-POLLING `/approval/inbox` tiap 20 detik (dan segera saat
+ * tab kembali fokus). Begitu ada permintaan BARU (id yang belum pernah dilihat),
+ * popup langsung muncul — approver tak perlu refresh halaman.
+ *
+ * Anti-ganggu: id yang sudah pernah ditampilkan disimpan di sessionStorage,
+ * jadi pindah halaman / reload tak memunculkan ulang item yang sama; hanya
+ * permintaan baru yang memicu popup lagi.
  */
-export function ApprovalNotifier({ items, userId }: { items: InboxItem[]; userId: string }) {
+export function ApprovalNotifier({ items: initialItems, userId }: { items: InboxItem[]; userId: string }) {
+  const [items, setItems] = useState<InboxItem[]>(initialItems);
   const [open, setOpen] = useState(false);
+  const seenRef = useRef<Set<string> | null>(null);
+  const seenKey = `approval-seen:${userId}`;
+
+  // Muat daftar "sudah dilihat" dari sessionStorage (sekali).
+  if (seenRef.current === null) {
+    let s: Set<string>;
+    try {
+      s = new Set<string>(JSON.parse((typeof window !== 'undefined' && sessionStorage.getItem(seenKey)) || '[]'));
+    } catch {
+      s = new Set<string>();
+    }
+    seenRef.current = s;
+  }
+
+  // Setiap kali daftar berubah, cek apakah ada item BELUM dilihat → munculkan popup.
+  useEffect(() => {
+    const seen = seenRef.current!;
+    const unseen = items.filter((it) => !seen.has(it.id));
+    if (unseen.length > 0) {
+      unseen.forEach((it) => seen.add(it.id));
+      try {
+        sessionStorage.setItem(seenKey, JSON.stringify([...seen]));
+      } catch {
+        /* abaikan */
+      }
+      setOpen(true);
+    }
+  }, [items, seenKey]);
+
+  // Polling ringan ke inbox (lewat proxy → auth+tenant dari cookie httpOnly).
+  const poll = useCallback(async () => {
+    try {
+      const res = await fetch('/proxy/approval/inbox', { cache: 'no-store', redirect: 'manual' });
+      if (!res.ok) return; // 401/redirect/sesi habis → diamkan, jangan ganggu
+      const data = (await res.json()) as InboxItem[];
+      if (Array.isArray(data)) setItems(data);
+    } catch {
+      /* offline / gangguan sesaat → abaikan */
+    }
+  }, []);
 
   useEffect(() => {
-    if (items.length === 0) return;
-    const key = `approval-popup:${userId}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, '1');
-    setOpen(true);
-  }, [items.length, userId]);
+    const id = setInterval(poll, POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', poll);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', poll);
+    };
+  }, [poll]);
 
   if (items.length === 0) return null;
 
