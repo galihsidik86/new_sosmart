@@ -98,12 +98,12 @@ const moneyStringSchema = z
 export const createItemInputSchema = z.object({
   kode: z.string().min(1).max(50),
   nama: z.string().min(1).max(200),
-  kategori: z.string().max(100).optional(),
+  kategori: z.string().max(100).nullish(), // form edit kirim null utk kosong
   satuan: z.string().min(1).max(20).default('Pcs'),
   hargaJualDefault: moneyStringSchema.default('0'),
   klasifikasiPpn: z.nativeEnum(KlasifikasiPpn).default(KlasifikasiPpn.BKP),
   isJasa: z.boolean().default(false),
-  kodeSatuanDjp: z.string().max(10).optional(),
+  kodeSatuanDjp: z.string().max(10).nullish(),
   akunPendapatanId: z.string().uuid().optional().nullable(),
   akunPersediaanId: z.string().uuid().optional().nullable(),
   akunHppId: z.string().uuid().optional().nullable(),
@@ -111,7 +111,7 @@ export const createItemInputSchema = z.object({
   akunBebanId: z.string().uuid().optional().nullable(),
   /// Tarif PPh 23 preset — dipakai kalau isJasa=true.
   pph23TarifId: z.string().uuid().optional().nullable(),
-  catatan: z.string().max(500).optional(),
+  catatan: z.string().max(500).nullish(),
 });
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
 
@@ -122,18 +122,19 @@ export const createVendorInputSchema = z.object({
   nama: z.string().min(1).max(200),
   npwp: npwpSchema,
   isPkp: z.boolean().default(false),
-  kategori: z.string().max(100).optional(),
-  alamat: z.string().max(500).optional(),
-  kota: z.string().max(100).optional(),
-  provinsi: z.string().max(100).optional(),
-  kodePos: z.string().max(10).optional(),
-  telp: z.string().max(50).optional(),
-  email: z.string().email().optional().or(z.literal('').transform(() => undefined)),
-  contactPerson: z.string().max(100).optional(),
+  // Field string opsional pakai .nullish(): form edit kirim `null` utk kosong.
+  kategori: z.string().max(100).nullish(),
+  alamat: z.string().max(500).nullish(),
+  kota: z.string().max(100).nullish(),
+  provinsi: z.string().max(100).nullish(),
+  kodePos: z.string().max(10).nullish(),
+  telp: z.string().max(50).nullish(),
+  email: z.string().email().nullish().or(z.literal('').transform(() => null)),
+  contactPerson: z.string().max(100).nullish(),
   terminHari: z.coerce.number().int().min(0).max(365).default(30),
   /** Override akun utang usaha default (kalau null pakai 2-101). */
   akunUtangId: z.string().uuid().nullable().optional(),
-  catatan: z.string().max(500).optional(),
+  catatan: z.string().max(500).nullish(),
   /** Entitas intra-grup (untuk eliminasi konsolidasi). */
   partnerTenantId: z.string().uuid().nullable().optional(),
 });
@@ -148,18 +149,20 @@ export const createCustomerInputSchema = z.object({
   isPkp: z.boolean().default(false),
   /** Jenis pelanggan (master per-tenant). Opsional. */
   jenisPelangganId: z.string().uuid().nullable().optional(),
-  alamat: z.string().max(500).optional(),
-  kota: z.string().max(100).optional(),
-  provinsi: z.string().max(100).optional(),
-  kodePos: z.string().max(10).optional(),
-  telp: z.string().max(50).optional(),
-  email: z.string().email().optional().or(z.literal('').transform(() => undefined)),
-  contactPerson: z.string().max(100).optional(),
+  // Field string opsional pakai .nullish() (terima null & undefined): form edit
+  // mengirim `null` untuk field kosong; kolom DB memang nullable.
+  alamat: z.string().max(500).nullish(),
+  kota: z.string().max(100).nullish(),
+  provinsi: z.string().max(100).nullish(),
+  kodePos: z.string().max(10).nullish(),
+  telp: z.string().max(50).nullish(),
+  email: z.string().email().nullish().or(z.literal('').transform(() => null)),
+  contactPerson: z.string().max(100).nullish(),
   terminHari: z.coerce.number().int().min(0).max(365).default(14),
   kreditLimit: moneyStringSchema.default('0'),
   /** Override akun piutang usaha default (kalau null pakai 1-103). */
   akunPiutangId: z.string().uuid().nullable().optional(),
-  catatan: z.string().max(500).optional(),
+  catatan: z.string().max(500).nullish(),
   /** Entitas intra-grup (untuk eliminasi konsolidasi). */
   partnerTenantId: z.string().uuid().nullable().optional(),
 });
@@ -631,22 +634,23 @@ const moneyDecimal = z
 export const createKaryawanInputSchema = z.object({
   cabangId: z.string().uuid().optional().nullable(),
   kode: z.string().min(1).max(50),
-  nip: z.string().max(50).optional(),
+  // Field string opsional pakai .nullish(): form edit kirim `null` utk kosong.
+  nip: z.string().max(50).nullish(),
   nik: z.string().regex(/^\d{16}$/, 'NIK harus 16 digit'),
   nama: z.string().min(1).max(200),
-  email: z.string().email().optional().or(z.literal('').transform(() => undefined)),
-  telp: z.string().max(50).optional(),
-  alamat: z.string().max(500).optional(),
+  email: z.string().email().nullish().or(z.literal('').transform(() => null)),
+  telp: z.string().max(50).nullish(),
+  alamat: z.string().max(500).nullish(),
   npwp: npwpSchema,
   ptkpStatus: z.nativeEnum(PtkpStatus),
   jenisKaryawan: z.nativeEnum(JenisKaryawan).default(JenisKaryawan.PEGAWAI_TETAP),
-  jabatan: z.string().max(100).optional(),
+  jabatan: z.string().max(100).nullish(),
   tanggalMasuk: isoDateStrict,
   tanggalKeluar: isoDateStrict.optional(),
   gajiPokok: moneyDecimal,
   tunjanganTetap: moneyDecimal.default('0'),
   iuranBpjsKaryawan: moneyDecimal.default('0'),
-  catatan: z.string().max(500).optional(),
+  catatan: z.string().max(500).nullish(),
 });
 export type CreateKaryawanInput = z.infer<typeof createKaryawanInputSchema>;
 

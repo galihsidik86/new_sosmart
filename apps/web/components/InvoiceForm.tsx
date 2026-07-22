@@ -142,8 +142,18 @@ export function InvoiceForm({
   );
 
   const party = parties.find((p) => p.id === partyId);
-  const accountAr = party?.akunPiutangId;
-  const accountAp = party?.akunUtangId;
+  // Fallback akun AR/AP default (1-103 Piutang Usaha / 2-101 Utang Usaha) kalau
+  // pihak belum punya akun override — mirror default backend, supaya faktur tak
+  // gagal "akun piutang/utang belum di-set" untuk pelanggan/vendor tanpa override.
+  const defaultArApId = useMemo(() => {
+    const wantKode = mode === 'sales' ? '1-103' : '2-101';
+    const byKode = accounts.find((a) => a.isPostable && a.kode === wantKode);
+    if (byKode) return byKode.id;
+    const rx = mode === 'sales' ? /piutang usaha/i : /utang usaha/i;
+    return accounts.find((a) => a.isPostable && rx.test(a.nama))?.id ?? '';
+  }, [accounts, mode]);
+  const accountAr = party?.akunPiutangId ?? (defaultArApId || undefined);
+  const accountAp = party?.akunUtangId ?? (defaultArApId || undefined);
 
   const updLine = (i: number, p: Partial<Line>) =>
     setLines((prev) => prev.map((l, k) => (k === i ? { ...l, ...p } : l)));
