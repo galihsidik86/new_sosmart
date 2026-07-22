@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
+import { InstallAppButton } from '@/components/InstallAppButton';
 
 export const metadata: Metadata = {
   title: 'Lentera — Akuntansi & Pajak',
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="font-sans">
         <ServiceWorkerRegister />
         {children}
+        <InstallAppButton />
       </body>
     </html>
   );
