@@ -40,7 +40,10 @@ export class TenancyService {
         await tx.$executeRaw`SELECT set_config('app.user_id', ${ctx.userId}, true)`;
         return fn(tx);
       },
-      opts,
+      // maxWait: beri lebih banyak waktu MEMULAI transaksi saat pool sibuk
+      // (default 2s → 10s) supaya lonjakan singkat MENUNGGU koneksi, bukan
+      // langsung "Unable to start a transaction". timeout: durasi maks (5s → 20s).
+      { maxWait: 10_000, timeout: 20_000, ...opts },
     );
   }
 
@@ -55,10 +58,13 @@ export class TenancyService {
     fn: (tx: Prisma.TransactionClient) => Promise<T>,
   ): Promise<T> {
     assertUuid(userId, 'userId');
-    return this.prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
-      return fn(tx);
-    });
+    return this.prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
+        return fn(tx);
+      },
+      { maxWait: 10_000, timeout: 20_000 },
+    );
   }
 
   /** Bypass-aware: admin task lintas tenant (jarang dipakai). */
@@ -69,10 +75,13 @@ export class TenancyService {
   ): Promise<T> {
     assertUuid(tenantId, 'tenantId');
     assertUuid(userId, 'userId');
-    return this.prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
-      await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
-      return fn(tx);
-    });
+    return this.prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
+        await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
+        return fn(tx);
+      },
+      { maxWait: 10_000, timeout: 20_000 },
+    );
   }
 }
